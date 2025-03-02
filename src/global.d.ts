@@ -92,6 +92,7 @@ interface QortalRequestOptions {
 }
 
 declare function qortalRequest(options: QortalRequestOptions): Promise<any>;
+
 declare function qortalRequestWithTimeout(
   options: QortalRequestOptions,
   time: number
@@ -99,7 +100,7 @@ declare function qortalRequestWithTimeout(
 
 declare global {
   interface Window {
-    _qdnBase: any;
+    _qdnBase: any; // Replace 'any' with the appropriate type if you know it
     _qdnTheme: string;
   }
 }

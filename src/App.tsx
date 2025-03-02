@@ -1,10 +1,8 @@
 import * as React from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { createTheme } from '@mui/material/styles';
-import { AppProvider, type Session, type Navigation } from '@toolpad/core/AppProvider';
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { useDemoRouter } from '@toolpad/core/internal';
+import { Session, Navigation } from '@toolpad/core/AppProvider';
+import { ReactRouterAppProvider } from '@toolpad/core/react-router';
+import { Outlet, useNavigate } from 'react-router';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
 import qort from "/assets/qort.png";
 import btc from "/assets/btc.png";
@@ -62,6 +60,20 @@ const walletTheme = createTheme({
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
   colorSchemes: { light: true, dark: true },
+  palette: {
+    primary: {
+      light: '#757ce8',
+      main: '#03a9f4',
+      dark: '#002884',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ff7961',
+      main: '#03a9f4',
+      dark: '#ba000d',
+      contrastText: '#000',
+    },
+  },
   breakpoints: {
     values: {
       xs: 0,
@@ -73,33 +85,7 @@ const walletTheme = createTheme({
   },
 });
 
-function WalletPageContent({ pathname }: { pathname: string }) {
-  return (
-    <Box
-      sx={{
-        py: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-      }}
-    >
-      <Typography>Dashboard content for {pathname}</Typography>
-    </Box>
-  );
-}
-
-interface DemoProps {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window?: () => Window;
-}
-
-function App(props: DemoProps) {
-  const { window } = props;
-
+export default function App() {
   const [userInfo, setUserInfo] = React.useState<any>(null);
   const [qortalBalance, setQortalBalance] = React.useState<any>(null);
   const [balances, setBalances] = React.useState<any>({});
@@ -155,11 +141,6 @@ function App(props: DemoProps) {
     };
   }, []);
 
-  const router = useDemoRouter('/dashboard');
-
-  // Remove this const when copying and pasting into your project.
-  const demoWindow = window !== undefined ? window() : undefined;
-
   const getCoinLabel = React.useCallback((coin?: string) => {
     switch (coin || selectedCoin) {
       case "QORTAL": {
@@ -204,27 +185,19 @@ function App(props: DemoProps) {
   };
 
   return (
-    <AppProvider
+    <ReactRouterAppProvider
       session={session}
       authentication={authentication}
       navigation={NAVIGATION}
       branding={{
         logo: <img src={logo} alt="MWA Logo" />,
         title: 'Multi Wallet App',
-        homeUrl: '/toolpad/core/introduction',
       }}
-      router={router}
       theme={walletTheme}
-      window={demoWindow}
     >
       <WalletContext.Provider value={walletContextValue}>
-        <DashboardLayout>
-          <WalletPageContent pathname={router.pathname} />
-        </DashboardLayout>
+        <Outlet />
       </WalletContext.Provider>
-    </AppProvider>
-    // preview-end
+    </ReactRouterAppProvider>
   );
 }
-
-export default App;

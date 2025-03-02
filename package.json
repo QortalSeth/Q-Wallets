@@ -11,17 +11,20 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@fontsource/open-sans": "^5.1.1",
     "@fontsource/montserrat": "^5.1.1",
+    "@fontsource/open-sans": "^5.1.1",
     "@fontsource/poppins": "^5.1.1",
     "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
     "@toolpad/core": "^0.12.0",
+    "invariant": "^2.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-qr-code": "^2.0.15"
+    "react-qr-code": "^2.0.15",
+    "react-router": "^7.2.0"
   },
   "devDependencies": {
+    "@types/invariant": "^2.2.37",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",

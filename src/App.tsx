@@ -6,14 +6,14 @@ import { Route, Routes } from "react-router-dom";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
-import qort from "/assets/qort.png";
-import btc from "/assets/btc.png";
-import ltc from "/assets/ltc.png";
-import doge from "/assets/doge.png";
-import dgb from "/assets/dgb.png";
-import rvn from "/assets/rvn.png";
-import arrr from "/assets/arrr.png";
-import logo from "/assets/logo.png";
+import qort from "./assets/qort.png";
+import btc from "./assets/btc.png";
+import ltc from "./assets/ltc.png";
+import doge from "./assets/doge.png";
+import dgb from "./assets/dgb.png";
+import rvn from "./assets/rvn.png";
+import arrr from "./assets/arrr.png";
+import logo from "./assets/logo.png";
 import WelcomePage from "./pages/welcome/welcome";
 import QortalWallet from "./pages/qort/index";
 import LitecoinWallet from "./pages/ltc/index";
@@ -135,7 +135,7 @@ function App() {
     user: {
       name: 'Bharat Kashyap',
       email: 'bharatkashyap@outlook.com',
-      image: 'https://avatars.githubusercontent.com/u/19550456',
+      image: logo,
     },
   });
 
@@ -146,7 +146,7 @@ function App() {
           user: {
             name: 'Bharat Kashyap',
             email: 'bharatkashyap@outlook.com',
-            image: 'https://avatars.githubusercontent.com/u/19550456',
+            image: logo,
           },
         });
       },

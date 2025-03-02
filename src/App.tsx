@@ -2,7 +2,9 @@ import * as React from 'react';
 import { createTheme } from '@mui/material/styles';
 import { Session, Navigation } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
-import { Outlet, useNavigate } from 'react-router';
+import { Route, Routes } from "react-router-dom";
+import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { PageContainer } from '@toolpad/core/PageContainer';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
 import qort from "/assets/qort.png";
 import btc from "/assets/btc.png";
@@ -12,6 +14,14 @@ import dgb from "/assets/dgb.png";
 import rvn from "/assets/rvn.png";
 import arrr from "/assets/arrr.png";
 import logo from "/assets/logo.png";
+import WelcomePage from "./pages/welcome/welcome";
+import QortalWallet from "./pages/qort/index";
+import LitecoinWallet from "./pages/ltc/index";
+import BitcoinWallet from "./pages/btc/index";
+import DogecoinWallet from "./pages/doge/index";
+import DigibyteWallet from "./pages/dgb/index";
+import RavencoinWallet from "./pages/rvn/index";
+import PirateWallet from "./pages/arrr/index";
 
 const NAVIGATION: Navigation = [
   {
@@ -85,7 +95,12 @@ const walletTheme = createTheme({
   },
 });
 
-export default function App() {
+function App() {
+  const walletTitle = '';
+  const title = '';
+  const path = '';
+  const breadcrumbs = [{ title, path }];
+
   const [userInfo, setUserInfo] = React.useState<any>(null);
   const [qortalBalance, setQortalBalance] = React.useState<any>(null);
   const [balances, setBalances] = React.useState<any>({});
@@ -196,8 +211,23 @@ export default function App() {
       theme={walletTheme}
     >
       <WalletContext.Provider value={walletContextValue}>
-        <Outlet />
+        <DashboardLayout>
+          <PageContainer title={walletTitle} breadcrumbs={breadcrumbs}>
+            <Routes>
+              <Route path="/" element={<WelcomePage />} />
+              <Route path="/qortal" element={<QortalWallet />} />
+              <Route path="/litecoin" element={<LitecoinWallet />} />
+              <Route path="/bitcoin" element={<BitcoinWallet />} />
+              <Route path="/dogecoin" element={<DogecoinWallet />} />
+              <Route path="/digibyte" element={<DigibyteWallet />} />
+              <Route path="/ravencoin" element={<RavencoinWallet />} />
+              <Route path="/piratechain" element={<PirateWallet />} />
+            </Routes>
+          </PageContainer>
+        </DashboardLayout>
       </WalletContext.Provider>
     </ReactRouterAppProvider>
   );
 }
+
+export default App;

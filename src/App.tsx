@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
+import { AvatarContext, AvatarContextProps } from "./contexts/avatarContext";
 import qort from "./assets/qort.png";
 import btc from "./assets/btc.png";
 import ltc from "./assets/ltc.png";
@@ -13,7 +14,8 @@ import doge from "./assets/doge.png";
 import dgb from "./assets/dgb.png";
 import rvn from "./assets/rvn.png";
 import arrr from "./assets/arrr.png";
-import logo from "./assets/logo.png";
+import mvlogo from "./assets/mw-logo.png";
+import noavatar from "./assets/noavatar.png";
 import WelcomePage from "./pages/welcome/welcome";
 import QortalWallet from "./pages/qort/index";
 import LitecoinWallet from "./pages/ltc/index";
@@ -22,48 +24,6 @@ import DogecoinWallet from "./pages/doge/index";
 import DigibyteWallet from "./pages/dgb/index";
 import RavencoinWallet from "./pages/rvn/index";
 import PirateWallet from "./pages/arrr/index";
-
-const NAVIGATION: Navigation = [
-  {
-    kind: 'header',
-    title: 'WALLETS',
-  },
-  {
-    segment: 'qortal',
-    title: 'Qortal',
-    icon: <img src={qort} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'litecoin',
-    title: 'Litecoin',
-    icon: <img src={ltc} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'bitcoin',
-    title: 'Bitcoin',
-    icon: <img src={btc} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'dogecoin',
-    title: 'Dogecoin',
-    icon: <img src={doge} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'digibyte',
-    title: 'Digibyte',
-    icon: <img src={dgb} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'ravencoin',
-    title: 'Ravencoin',
-    icon: <img src={rvn} style={{ width: "24px", height: "auto", }} />,
-  },
-  {
-    segment: 'piratechain',
-    title: 'Pirate Chain',
-    icon: <img src={arrr} style={{ width: "24px", height: "auto", }} />,
-  },
-];
 
 const walletTheme = createTheme({
   cssVariables: {
@@ -115,6 +75,7 @@ function App() {
     Record<string, UserNameAvatar>
   >({});
   const [avatar, setAvatar] = React.useState<string>("");
+  const [session, setSession] = React.useState<Session | null>(null);
 
   const getIsUsingGateway = async () => {
     try {
@@ -128,30 +89,92 @@ function App() {
   }
 
   React.useEffect(() => {
-    getIsUsingGateway()
-  }, [])
+    getIsUsingGateway();
+  }, []);
 
-  const [session, setSession] = React.useState<Session | null>({
-    user: {
-      name: 'Bharat Kashyap',
-      email: 'bharatkashyap@outlook.com',
-      image: logo,
-    },
-  });
+    async function getInfo() {
+      const response = await fetch(`/admin/info`);
+      console.log("RESPONSE", response);
+      const data = await response.json();
+      console.log("DATA", data);
+    };
+  
+      React.useEffect(() => {
+        getInfo();
+      }, []);
+
+  const avatarContextValue: AvatarContextProps = {
+    avatar,
+    setAvatar,
+  };
+
+  let userSess = {};
+  let userAvatar = '';
+
+  async function getNameInfo(address: string) {
+    const response = await qortalRequest({
+      action: "GET_ACCOUNT_NAMES",
+      address: address,
+    });
+
+    const nameData = response;
+
+    if (nameData?.length > 0) {
+      return nameData[0].name;
+    } else {
+      return "No Registered Name";
+    }
+  };
+
+  const askForAccountInformation = React.useCallback(async () => {
+    try {
+      const account = await qortalRequest({
+        action: "GET_USER_ACCOUNT",
+      });
+
+      const name = await getNameInfo(account.address);
+
+      setUserInfo({ ...account, name });
+
+      if (name === "No Registered Name") {
+        userAvatar = noavatar;
+      } else {
+        userAvatar = `/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`;
+      }
+
+      userSess = {
+        user: {
+          name: name,
+          email: account?.address,
+          image: userAvatar,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  //if (!isAuthenticated) {
+  //  console.log("NO AUTH")
+  //  React.useEffect(() => {
+  //    askForAccountInformation();
+  //  }, [askForAccountInformation]);
+  //};
+
+  console.log("USER INFO", userInfo);
 
   const authentication = React.useMemo(() => {
     return {
-      signIn: () => {
-        setSession({
-          user: {
-            name: 'Bharat Kashyap',
-            email: 'bharatkashyap@outlook.com',
-            image: logo,
-          },
-        });
+      signIn: async () => {
+        await askForAccountInformation();
+        setSession(userSess);
+        setIsAuthenticated(true);
       },
       signOut: () => {
         setSession(null);
+        setIsAuthenticated(false);
+        setUserInfo(null);
+        setAvatar("");
       },
     };
   }, []);
@@ -199,13 +222,60 @@ function App() {
     getCoinLabel
   };
 
+  let Pirate = {};
+
+  if (!isUsingGateway)
+    Pirate = {
+      segment: 'piratechain',
+      title: 'Pirate Chain',
+      icon: <img src={arrr} style={{ width: "24px", height: "auto", }} />,
+    }
+
+  const NAVIGATION: Navigation = [
+    {
+      kind: 'header',
+      title: 'WALLETS',
+    },
+    {
+      segment: 'qortal',
+      title: 'Qortal',
+      icon: <img src={qort} style={{ width: "24px", height: "auto", }} />,
+    },
+    {
+      segment: 'litecoin',
+      title: 'Litecoin',
+      icon: <img src={ltc} style={{ width: "24px", height: "auto", }} />,
+    },
+    {
+      segment: 'bitcoin',
+      title: 'Bitcoin',
+      icon: <img src={btc} style={{ width: "24px", height: "auto", }} />,
+    },
+    {
+      segment: 'dogecoin',
+      title: 'Dogecoin',
+      icon: <img src={doge} style={{ width: "24px", height: "auto", }} />,
+    },
+    {
+      segment: 'digibyte',
+      title: 'Digibyte',
+      icon: <img src={dgb} style={{ width: "24px", height: "auto", }} />,
+    },
+    {
+      segment: 'ravencoin',
+      title: 'Ravencoin',
+      icon: <img src={rvn} style={{ width: "24px", height: "auto", }} />,
+    },
+    Pirate,
+  ];
+
   return (
     <ReactRouterAppProvider
       session={session}
       authentication={authentication}
       navigation={NAVIGATION}
       branding={{
-        logo: <img src={logo} alt="MWA Logo" />,
+        logo: <img src={mvlogo} alt="MWA Logo" />,
         title: 'Multi Wallet App',
       }}
       theme={walletTheme}

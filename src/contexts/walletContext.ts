@@ -11,8 +11,6 @@ export interface UserNameAvatar {
 }
 
 export interface IContextProps {
-  qortalBalance: number | null;
-  foreignCoinBalance: number | null;
   userInfo: any;
   setUserInfo: (val: any) => void;
   userNameAvatar: Record<string, UserNameAvatar>;
@@ -26,8 +24,6 @@ export interface IContextProps {
 }
 
 const defaultState: IContextProps = {
-  qortalBalance: null,
-  foreignCoinBalance: null,
   userInfo: null,
   setUserInfo: () => { },
   userNameAvatar: {},
@@ -35,7 +31,7 @@ const defaultState: IContextProps = {
   isAuthenticated: false,
   setIsAuthenticated: () => { },
   isUsingGateway: true,
-  selectedCoin: 'LITECOIN',
+  selectedCoin: 'QORTAL',
   setSelectedCoin: () => { },
   getCoinLabel: () => { }
 };

@@ -1,11 +1,11 @@
-import { createContext } from 'react';
+import * as React from 'react';
 
 export interface AvatarContextProps {
   avatar: string;
   setAvatar: (avatar: string) => void;
 };
 
-export const AvatarContext = createContext<AvatarContextProps>({
+export const AvatarContext = React.createContext<AvatarContextProps>({
   avatar: '',
-  setAvatar: () => {},
+  setAvatar: () => {}
 });

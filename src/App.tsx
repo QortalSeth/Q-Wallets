@@ -1,12 +1,11 @@
 import * as React from 'react';
+import { Container, Typography } from "@mui/material";
 import { createTheme } from '@mui/material/styles';
 import { Session, Navigation } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import { Route, Routes } from "react-router-dom";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { PageContainer } from '@toolpad/core/PageContainer';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
-import { AvatarContext, AvatarContextProps } from "./contexts/avatarContext";
 import qort from "./assets/qort.png";
 import btc from "./assets/btc.png";
 import ltc from "./assets/ltc.png";
@@ -14,8 +13,8 @@ import doge from "./assets/doge.png";
 import dgb from "./assets/dgb.png";
 import rvn from "./assets/rvn.png";
 import arrr from "./assets/arrr.png";
-import mvlogo from "./assets/mw-logo.png";
-import noavatar from "./assets/noavatar.png";
+import qwallets from "./assets/qw-logo.png";
+import noAvatar from "./assets/noavatar.png";
 import WelcomePage from "./pages/welcome/welcome";
 import QortalWallet from "./pages/qort/index";
 import LitecoinWallet from "./pages/ltc/index";
@@ -47,33 +46,20 @@ const walletTheme = createTheme({
   breakpoints: {
     values: {
       xs: 0,
-      sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1536,
+      sm: 576,
+      md: 768,
+      lg: 992,
+      xl: 1200
     },
   },
 });
 
 function App() {
-  const walletTitle = '';
-  const title = '';
-  const path = '';
-  const breadcrumbs = [{ title, path }];
-
   const [userInfo, setUserInfo] = React.useState<any>(null);
-  const [qortalBalance, setQortalBalance] = React.useState<any>(null);
-  const [balances, setBalances] = React.useState<any>({});
   const [selectedCoin, setSelectedCoin] = React.useState("QORTAL");
-  const foreignCoinBalance = React.useMemo(() => {
-    if (balances[selectedCoin] === 0) return 0
-    return balances[selectedCoin] || null
-  }, [balances, selectedCoin]);
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
   const [isUsingGateway, setIsUsingGateway] = React.useState(true);
-  const [userNameAvatar, setUserNameAvatar] = React.useState<
-    Record<string, UserNameAvatar>
-  >({});
+  const [userNameAvatar, setUserNameAvatar] = React.useState<Record<string, UserNameAvatar>>({});
   const [avatar, setAvatar] = React.useState<string>("");
   const [session, setSession] = React.useState<Session | null>(null);
 
@@ -82,7 +68,6 @@ function App() {
       const res = await qortalRequest({
         action: "IS_USING_PUBLIC_NODE"
       });
-      console.log("RES", res);
       setIsUsingGateway(res);
     } catch (error) {
     }
@@ -92,33 +77,14 @@ function App() {
     getIsUsingGateway();
   }, []);
 
-    async function getInfo() {
-      const response = await fetch(`/admin/info`);
-      console.log("RESPONSE", response);
-      const data = await response.json();
-      console.log("DATA", data);
-    };
-  
-      React.useEffect(() => {
-        getInfo();
-      }, []);
-
-  const avatarContextValue: AvatarContextProps = {
-    avatar,
-    setAvatar,
-  };
-
   let userSess = {};
-  let userAvatar = '';
 
   async function getNameInfo(address: string) {
     const response = await qortalRequest({
       action: "GET_ACCOUNT_NAMES",
       address: address,
     });
-
     const nameData = response;
-
     if (nameData?.length > 0) {
       return nameData[0].name;
     } else {
@@ -131,37 +97,28 @@ function App() {
       const account = await qortalRequest({
         action: "GET_USER_ACCOUNT",
       });
-
+      console.log("ACCOUNT", account);
       const name = await getNameInfo(account.address);
-
       setUserInfo({ ...account, name });
-
+      let sessAvatar = ''
       if (name === "No Registered Name") {
-        userAvatar = noavatar;
+        setAvatar(noAvatar);
+        sessAvatar = noAvatar;
       } else {
-        userAvatar = `/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`;
+        setAvatar(`/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`);
+        sessAvatar = `/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`;
       }
-
       userSess = {
         user: {
           name: name,
           email: account?.address,
-          image: userAvatar,
+          image: sessAvatar,
         },
       };
     } catch (error) {
       console.error(error);
     }
   }, []);
-
-  //if (!isAuthenticated) {
-  //  console.log("NO AUTH")
-  //  React.useEffect(() => {
-  //    askForAccountInformation();
-  //  }, [askForAccountInformation]);
-  //};
-
-  console.log("USER INFO", userInfo);
 
   const authentication = React.useMemo(() => {
     return {
@@ -212,8 +169,6 @@ function App() {
     setUserInfo,
     userNameAvatar,
     setUserNameAvatar,
-    foreignCoinBalance,
-    qortalBalance,
     isAuthenticated,
     setIsAuthenticated,
     isUsingGateway,
@@ -268,21 +223,25 @@ function App() {
     },
     Pirate,
   ];
-
+  
   return (
     <ReactRouterAppProvider
       session={session}
       authentication={authentication}
       navigation={NAVIGATION}
       branding={{
-        logo: <img src={mvlogo} alt="MWA Logo" />,
-        title: 'Multi Wallet App',
+        logo: <img src={qwallets} alt="MWA Logo" />,
+        title: (<Typography>
+          <span style={{ color: '#60d0fd', fontSize: "24px", fontWeight: 700 }}>QORTAL </span>
+          <span style={{ color: '#05a2e4', fontSize: "24px", fontWeight: 700 }}>WALLETS </span>
+          <span style={{ color: '#02648d', fontSize: "24px", fontWeight: 700 }}>APP</span>
+        </Typography>)
       }}
       theme={walletTheme}
     >
       <WalletContext.Provider value={walletContextValue}>
-        <DashboardLayout>
-          <PageContainer title={walletTitle} breadcrumbs={breadcrumbs}>
+        <DashboardLayout defaultSidebarCollapsed>
+          <Container sx={{ maxWidth: '100%' }} maxWidth={false}>
             <Routes>
               <Route path="/" element={<WelcomePage />} />
               <Route path="/qortal" element={<QortalWallet />} />
@@ -293,7 +252,7 @@ function App() {
               <Route path="/ravencoin" element={<RavencoinWallet />} />
               <Route path="/piratechain" element={<PirateWallet />} />
             </Routes>
-          </PageContainer>
+          </Container>
         </DashboardLayout>
       </WalletContext.Provider>
     </ReactRouterAppProvider>

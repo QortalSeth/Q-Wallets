@@ -15,8 +15,10 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
   Paper,
-  Slide,
   Slider,
   Table,
   TableBody,
@@ -34,6 +36,8 @@ import {
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
+import Slide, { SlideProps } from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -46,7 +50,9 @@ import {
   LastPage,
   CopyAllTwoTone,
   Close,
-  Send
+  Send,
+  Refresh,
+  PublishedWithChangesTwoTone
 } from '@mui/icons-material';
 import coinLogoDOGE from '../../assets/doge.png';
 
@@ -125,12 +131,43 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+function SlideTransition(props: SlideProps) {
+  return <Slide {...props} direction="up" />;
+}
+
 const DogeQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
   },
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
+const DogeElectrumDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
+const DogeSubmittDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
   },
 }));
 
@@ -223,6 +260,8 @@ export default function DogecoinWallet() {
   const [walletInfoDoge, setWalletInfoDoge] = React.useState<any>({});
   const [walletBalanceDoge, setWalletBalanceDoge] = React.useState<any>(null);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] = React.useState<boolean>(true);
+  const [allElectrumServersDoge, setAllElectrumServersDoge] = React.useState<any>([]);
+  const [currentElectrumServerDoge, setCurrentElectrumServerDoge] = React.useState<any>([]);
   const [allWalletAddressesDoge, setAllWalletAddressesDoge] = React.useState<any>([]);
   const [transactionsDoge, setTransactionsDoge] = React.useState<any>([]);
   const [isLoadingDogeTransactions, setIsLoadingDogeTransactions] = React.useState<boolean>(true);
@@ -231,9 +270,15 @@ export default function DogecoinWallet() {
   const [copyDogeAddress, setCopyDogeAddress] = React.useState('');
   const [copyDogeTxHash, setCopyDogeTxHash] = React.useState('');
   const [openDogeQR, setOpenDogeQR] = React.useState(false);
+  const [openDogeElectrum, setOpenDogeElectrum] = React.useState(false);
   const [openDogeSend, setOpenDogeSend] = React.useState(false);
-  const [amountDoge, setAmountDoge] = React.useState<number>(0);
-  const [feeDoge, setFeeDoge] = React.useState<number>(0);
+  const [dogeAmount, setDogeAmount] = React.useState<number>(0);
+  const [dogeRecipient, setDogeRecipient] = React.useState('');
+  const [dogeFee, setDogeFee] = React.useState<number>(0);
+  const [loadingRefreshDoge, setLoadingRefreshDoge] = React.useState(false);
+  const [openTxDogeSubmit, setOpenTxDogeSubmit] = React.useState(false);
+  const [openSendDogeSuccess, setOpenSendDogeSuccess] = React.useState(false);
+  const [openSendDogeeError, setOpenSendDogeError] = React.useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsDoge.length) : 0;
 
@@ -245,15 +290,30 @@ export default function DogecoinWallet() {
     setOpenDogeQR(false);
   }
 
+  const handleCloseDogeElectrum = () => {
+    setOpenDogeElectrum(false);
+  }
+
   const handleOpenDogeSend = () => {
-    setAmountDoge(0);
-    setFeeDoge(1000);
+    setDogeAmount(0);
+    setDogeRecipient('');
+    setDogeFee(1000);
     setOpenDogeSend(true);
   }
 
+  const validateCanSendDoge = () => {
+    if (dogeAmount <= 0 || null || !dogeAmount) {
+      return true;
+    }
+    if (dogeRecipient.length < 34 || '') {
+      return true;
+    }
+    return false;
+  }
+
   const handleCloseDogeSend = () => {
-    setAmountDoge(0);
-    setFeeDoge(0);
+    setDogeAmount(0);
+    setDogeFee(0);
     setOpenDogeSend(false);
   }
 
@@ -269,7 +329,7 @@ export default function DogecoinWallet() {
     setCopyDogeTxHash('');
   }
 
-  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
+  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
     setPage(newPage);
   };
 
@@ -278,13 +338,29 @@ export default function DogecoinWallet() {
     setPage(0);
   };
 
-  const handleChangeDogeAmount = (_: Event, newValue: number | number[]) => {
-    setAmountDoge(newValue as number);
-    console.log("AMOUNT DOGE", amountDoge)
+  const handleChangeDogeFee = (_: Event, newValue: number | number[]) => {
+    setDogeFee(newValue as number);
+    setDogeAmount(0);
   };
 
-  const handleChangeDogeFee = (_: Event, newValue: number | number[]) => {
-    setFeeDoge(newValue as number);
+  const handleCloseSendDogeSuccess = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSendDogeSuccess(false);
+  };
+
+  const handleCloseSendDogeError = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSendDogeError(false);
   };
 
   const getWalletInfoDoge = async () => {
@@ -337,6 +413,37 @@ export default function DogecoinWallet() {
     }
   }, [isAuthenticated]);
 
+  const getElectrumServersDoge = async () => {
+    try {
+      const response = await qortalRequest({
+        action: "GET_CROSSCHAIN_SERVER_INFO",
+        coin: "DOGE"
+      });
+      if (!response?.error) {
+        setAllElectrumServersDoge(response);
+        let currentDogeServer = response.filter(function (item: { isCurrent: boolean; }) {
+          return item.isCurrent === true;
+        });
+        setCurrentElectrumServerDoge(currentDogeServer);
+        console.log("GET DOGE SERVERS INFO", response);
+        console.log("CURRENT DOGE SERVER INFO", currentDogeServer);
+      }
+    } catch (error) {
+      setAllElectrumServersDoge({});
+      console.log("ERROR GET DOGE SERVERS INFO", error);
+    }
+  }
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    getElectrumServersDoge();
+  }, [isAuthenticated]);
+
+  const handleOpenDogeElectrum = async () => {
+    await getElectrumServersDoge();
+    setOpenDogeElectrum(true);
+  }
+
   const getTransactionsDoge = async () => {
     try {
       setIsLoadingDogeTransactions(true);
@@ -376,6 +483,21 @@ export default function DogecoinWallet() {
     getTransactionsDoge();
   }, [isAuthenticated]);
 
+  const handleLoadingRefreshDoge = async () => {
+    setLoadingRefreshDoge(true);
+    await getTransactionsDoge();
+    setLoadingRefreshDoge(false);
+  }
+
+  const handleSendMaxDoge = () => {
+    const maxDogeAmount = parseFloat((walletBalanceDoge - ((dogeFee * 1000) / 1e8)).toFixed(8));
+    if (maxDogeAmount <= 0) {
+      setDogeAmount(0);
+    } else {
+      setDogeAmount(maxDogeAmount);
+    }
+  }
+
   const DogeQrDialogPage = () => {
     return (
       <DogeQrDialog
@@ -407,6 +529,44 @@ export default function DogecoinWallet() {
     );
   }
 
+  const sendDogeRequest = async () => {
+    setOpenTxDogeSubmit(true);
+    const dogeFeeCalculated = Number(dogeFee / 1e8).toFixed(8);
+    console.log("RECIPIENT", dogeRecipient);
+    console.log("AMOUNT", dogeAmount);
+    console.log("FEE", dogeFeeCalculated);
+    try {
+      const sendRequest = await qortalRequest({
+        action: "SEND_COIN",
+        coin: "DOGE",
+        recipient: dogeRecipient,
+        amount: dogeAmount,
+        fee: dogeFeeCalculated
+      });
+      if (!sendRequest?.error) {
+        setDogeAmount(0);
+        setDogeRecipient('');
+        setDogeFee(1000);
+        setOpenTxDogeSubmit(false);
+        setOpenSendDogeSuccess(true);
+        setIsLoadingWalletBalanceDoge(true);
+        await timeoutDelay(3000);
+        getWalletBalanceDoge();
+        console.log("DOGE SENDED", sendRequest);
+      }
+    } catch (error) {
+      setDogeAmount(0);
+      setDogeRecipient('');
+      setDogeFee(1000);
+      setOpenTxDogeSubmit(false);
+      setOpenSendDogeError(true);
+      setIsLoadingWalletBalanceDoge(true);
+      await timeoutDelay(3000);
+      getWalletBalanceDoge();
+      console.log("ERROR SENDING DOGE", error);
+    }
+  }
+
   const DogeSendDialogPage = () => {
     return (
       <Dialog
@@ -415,6 +575,58 @@ export default function DogecoinWallet() {
         onClose={handleCloseDogeSend}
         slots={{ transition: Transition }}
       >
+        <DogeSubmittDialog
+          fullWidth={true}
+          maxWidth='xs'
+          open={openTxDogeSubmit}
+        >
+          <DialogContent>
+            <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{
+                width: "100%",
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <CircularProgress color="success" size={64} />
+              </div>
+              <div style={{
+                width: "100%",
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '20px'
+              }}>
+                <Typography variant="h6" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
+                  Processing Transaction Please Wait...
+                </Typography>
+              </div>
+            </Box>
+          </DialogContent>
+        </DogeSubmittDialog>
+        <Snackbar
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          open={openSendDogeSuccess}
+          autoHideDuration={4000}
+          slots={{ transition: SlideTransition }}
+          onClose={handleCloseSendDogeSuccess}>
+          <Alert
+            onClose={handleCloseSendDogeSuccess}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            Sent DOGE transaction was successful!
+          </Alert>
+        </Snackbar>
+        <Snackbar open={openSendDogeeError} autoHideDuration={4000} onClose={handleCloseSendDogeError}>
+          <Alert
+            onClose={handleCloseSendDogeError}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            Something went wrong, please try again!
+          </Alert>
+        </Snackbar>
         <AppBar sx={{ position: 'static' }}>
           <Toolbar>
             <IconButton
@@ -437,10 +649,11 @@ export default function DogecoinWallet() {
               Transfer DOGE
             </Typography>
             <Button
+              disabled={validateCanSendDoge()}
               variant="contained"
               startIcon={<Send />}
-              aria-label="send"
-              onClick={handleOpenDogeSend}
+              aria-label="send-doge"
+              onClick={sendDogeRequest}
               sx={{ backgroundColor: "#05a2e4", color: "white", "&:hover": { backgroundColor: "#02648d", } }}
             >
               SEND
@@ -468,7 +681,7 @@ export default function DogecoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceDoge + " DOGE"}
+            {isLoadingWalletBalanceDoge ? <Box sx={{ width: '175px' }}><LinearProgress /></Box> : walletBalanceDoge + " DOGE"}
           </Typography>
         </div>
         <div style={{
@@ -481,7 +694,6 @@ export default function DogecoinWallet() {
           <Typography
             variant="h5"
             align="center"
-            gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             Max Sendable:&nbsp;&nbsp;
@@ -489,11 +701,27 @@ export default function DogecoinWallet() {
           <Typography
             variant="h5"
             align="center"
-            gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceDoge - 0.05000000) + " DOGE"}
+            {(() => {
+              const newMaxDogeAmount = parseFloat((walletBalanceDoge - ((dogeFee * 1000) / 1e8)).toFixed(8));
+              if (newMaxDogeAmount < 0) {
+                return Number(0.00000000) + " DOGE"
+              } else {
+                return newMaxDogeAmount + " DOGE"
+              }
+            })()}
           </Typography>
+          <div style={{ marginInlineStart: '15px' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSendMaxDoge}
+              style={{ borderRadius: 50 }}
+            >
+              Send Max
+            </Button>
+          </div>
         </div>
         <Box
           sx={{
@@ -507,22 +735,32 @@ export default function DogecoinWallet() {
         >
           <NumericFormat
             decimalScale={8}
-            value={amountDoge}
+            defaultValue={0}
+            value={dogeAmount}
             allowNegative={false}
             customInput={TextField}
             valueIsNumericString
             variant="outlined"
             label="Amount (DOGE)"
+            isAllowed={(values) => {
+              const maxDogeCoin = (walletBalanceDoge - (dogeFee * 1000) / 1e8);
+              const { formattedValue, floatValue } = values;
+              return formattedValue === "" || floatValue <= maxDogeCoin;
+            }}
             onValueChange={(values) => {
-              setAmountDoge(values.floatValue);
+              setDogeAmount(values.floatValue);
             }}
             required
           />
           <TextField
             required
             label="Receiver Adress"
-            id="dogeaddress"
+            id="dogea-address"
             margin="normal"
+            value={dogeRecipient}
+            helperText="Doge Address 34 Characters long !"
+            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
+            onChange={(e) => setDogeRecipient(e.target.value)}
           />
         </Box>
         <div style={{
@@ -540,7 +778,7 @@ export default function DogecoinWallet() {
             width: '50ch'
           }}>
             <Typography id="doge-fee-slider" gutterBottom>
-              Current fee per byte : {feeDoge} SAT
+              Current fee per byte : {dogeFee} SAT
             </Typography>
             <Slider
               track={false}
@@ -554,6 +792,12 @@ export default function DogecoinWallet() {
               marks={dogeMarks}
               onChange={handleChangeDogeFee}
             />
+            <Typography
+              align="center"
+              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
+            >
+              Low fees may result in slow or unconfirmed transactions.
+            </Typography>
           </Box>
         </div>
       </Dialog>
@@ -602,8 +846,8 @@ export default function DogecoinWallet() {
               ? transactionsDoge.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsDoge
             ).map((row: {
-              inputs: { address: any; }[];
-              outputs: { address: any; }[];
+              inputs: { address: any; addressInWallet: boolean; }[];
+              outputs: { address: any; addressInWallet: boolean; }[];
               txHash: string;
               totalAmount: any;
               timestamp: number;
@@ -611,27 +855,31 @@ export default function DogecoinWallet() {
               <StyledTableRow>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
-                    if (allWalletAddressesDoge.some(dogeAll => dogeAll.address === row?.inputs[0].address)) {
-                      return <div style={{ color: '#05a2e4' }}>{row?.inputs[0].address}</div>;
+                    if (row?.totalAmount < 0) {
+                      let meWasSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === true;
+                      });
+                      return <div style={{ color: '#05a2e4' }}>{meWasSender[0]?.address}</div>;
                     } else {
-                      return row?.inputs[0].address;
+                      let meWasNotSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === false;
+                      });
+                      return meWasNotSender[0].address;
                     }
                   })()}
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
-                    if (row?.outputs[0].address === row?.inputs[0].address) {
-                      if (allWalletAddressesDoge.some((dogeAll: { address: any; }) => dogeAll.address === row?.outputs[1].address)) {
-                        return <div style={{ color: '#05a2e4' }}>{row?.outputs[1].address}</div>;
-                      } else {
-                        return row?.outputs[1].address;
-                      }
-                    } else {
-                      if (allWalletAddressesDoge.some((dogeAll: { address: any; }) => dogeAll.address === row?.outputs[0].address)) {
-                        return <div style={{ color: '#05a2e4' }}>{row?.outputs[0].address}</div>;
-                      } else {
-                        return row?.outputs[0].address;
-                      }
+                    if (row?.totalAmount < 0) {
+                      let meWasNotRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === false;
+                      });
+                      return meWasNotRecipient[0].address;
+                    } else if (row?.totalAmount > 0) {
+                      let meWasRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === true;
+                      });
+                      return <div style={{ color: '#05a2e4' }}>{meWasRecipient[0]?.address}</div>
                     }
                   })()}
                 </StyledTableCell>
@@ -644,7 +892,7 @@ export default function DogecoinWallet() {
                   </CustomWidthTooltip>
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {row?.outputs[0].address === walletInfoDoge?.address ?
+                  {row?.totalAmount > 0 ?
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
@@ -686,10 +934,77 @@ export default function DogecoinWallet() {
     );
   }
 
+  const setNewCurrentDogeServer = async (typeServer: string, hostServer: string, portServer: number) => {
+    console.log("SERVER CHHOSED", typeServer, hostServer, portServer);
+    try {
+      const setServer = await qortalRequest({
+        action: "SET_CURRENT_FOREIGN_SERVER",
+        coin: "DOGE",
+        type: typeServer,
+        host: hostServer,
+        port: portServer
+      });
+      if (!setServer?.error) {
+        await getElectrumServersDoge();
+        setOpenDogeElectrum(false);
+        await getWalletBalanceDoge();
+        await getTransactionsDoge();
+      }
+    } catch (error) {
+      await getElectrumServersDoge();
+      setOpenDogeElectrum(false);
+      console.log("ERROR GET DOGE SERVERS INFO", error);
+    }
+  }
+
+  const DogeElectrumDialogPage = () => {
+    return (
+      <DogeElectrumDialog
+        onClose={handleCloseDogeQR}
+        aria-labelledby="doge-electrum-servers"
+        open={openDogeElectrum}
+        keepMounted={false}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="doge-electrum-servers">
+          Available Dogecoin Electrum Servers.
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{
+            width: '100%',
+            maxWidth: 500,
+            position: 'relative',
+            overflow: 'auto',
+            maxHeight: 400
+          }}>
+            <List>
+              {(
+                allElectrumServersDoge
+              ).map((server: {
+                connectionType: string;
+                hostName: string;
+                port: number;
+              }) => (
+                <ListItemButton onClick={() => { setNewCurrentDogeServer(server?.connectionType, server?.hostName, server?.port) }}>
+                  <ListItemText primary={server?.hostName + ':' + server?.port} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={handleCloseDogeElectrum}>
+            CLOSE
+          </Button>
+        </DialogActions>
+      </DogeElectrumDialog>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {DogeSendDialogPage()}
       {DogeQrDialogPage()}
+      {DogeElectrumDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Dogecoin Wallet
       </Typography>
@@ -741,9 +1056,35 @@ export default function DogecoinWallet() {
           >
             {walletInfoDoge?.address}
           </Typography>
-          <Tooltip placement="top" title={copyDogeAddress ? copyDogeAddress : "Copy Address"}>
+          <Tooltip placement="right" title={copyDogeAddress ? copyDogeAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoDoge?.address), changeCopyDogeStatus() }}>
               <CopyAllTwoTone fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </div>
+        <div style={{
+          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            Electrum Server:&nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {currentElectrumServerDoge[0]?.hostName + ":" + currentElectrumServerDoge[0]?.port}
+          </Typography>
+          <Tooltip placement="right" title="CHange Server">
+            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenDogeElectrum}>
+              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>
@@ -779,9 +1120,27 @@ export default function DogecoinWallet() {
             Address Book
           </WalletButtons>
         </div>
-        <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-          Transactions:
-        </Typography>
+        <div style={{
+          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <Typography variant="h6" paddingTop={2} paddingBottom={2}>
+            Transactions:
+          </Typography>
+          <Button
+            size="small"
+            onClick={handleLoadingRefreshDoge}
+            loading={loadingRefreshDoge}
+            loadingPosition="start"
+            startIcon={<Refresh />}
+            variant="outlined"
+            style={{ borderRadius: 50 }}
+          >
+            Refresh
+          </Button>
+        </div>
         {isLoadingDogeTransactions ? tableLoader() : transactionsTable()}
       </WalleteCard>
     </Box>

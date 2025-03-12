@@ -29,7 +29,9 @@ interface QortalRequestOptions {
   tag5?: string;
   coin?: string;
   destinationAddress?: string;
-  amount?: number;
+  amount?: number | Number;
+  recipient?: string;
+  fee?: number | any;
   blob?: Blob;
   mimeType?: string;
   file?: File;
@@ -40,6 +42,8 @@ interface QortalRequestOptions {
   exactMatchNames?: boolean;
   creationBytes?: string;
   type?: string;
+  host?: string;
+  port?: number;
   assetId?: number;
   txType?: TransactionType[];
   confirmationStatus?: string;

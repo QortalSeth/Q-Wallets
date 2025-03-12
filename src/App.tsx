@@ -1,10 +1,11 @@
 import * as React from 'react';
+import packageJson from '../package.json';
 import { Container, Typography } from "@mui/material";
 import { createTheme } from '@mui/material/styles';
 import { Session, Navigation } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import { Route, Routes } from "react-router-dom";
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { DashboardLayout, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
 import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
 import qort from "./assets/qort.png";
 import btc from "./assets/btc.png";
@@ -223,24 +224,37 @@ function App() {
     },
     Pirate,
   ];
-  
+
+  function SidebarFooter({ mini }: SidebarFooterProps) {
+    return (
+      <Typography
+        variant="caption"
+        sx={{ m: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}
+      >
+        {mini ? `v${packageJson.version}` : `© ${new Date().getFullYear()} Qortal Wallets App v${packageJson.version}`}
+      </Typography>
+    );
+  }
+
+  const BRANDING = {
+    logo: <img src={qwallets} alt="MWA Logo" />,
+    title: <Typography>
+      <span style={{ color: '#60d0fd', fontSize: "24px", fontWeight: 700 }}>QORTAL </span>
+      <span style={{ color: '#05a2e4', fontSize: "24px", fontWeight: 700 }}>WALLETS </span>
+      <span style={{ color: '#02648d', fontSize: "24px", fontWeight: 700 }}>APP</span>
+    </Typography>
+  }
+
   return (
     <ReactRouterAppProvider
       session={session}
       authentication={authentication}
       navigation={NAVIGATION}
-      branding={{
-        logo: <img src={qwallets} alt="MWA Logo" />,
-        title: (<Typography>
-          <span style={{ color: '#60d0fd', fontSize: "24px", fontWeight: 700 }}>QORTAL </span>
-          <span style={{ color: '#05a2e4', fontSize: "24px", fontWeight: 700 }}>WALLETS </span>
-          <span style={{ color: '#02648d', fontSize: "24px", fontWeight: 700 }}>APP</span>
-        </Typography>)
-      }}
+      branding={BRANDING}
       theme={walletTheme}
     >
       <WalletContext.Provider value={walletContextValue}>
-        <DashboardLayout defaultSidebarCollapsed>
+        <DashboardLayout defaultSidebarCollapsed slots={{ sidebarFooter: SidebarFooter }}>
           <Container sx={{ maxWidth: '100%' }} maxWidth={false}>
             <Routes>
               <Route path="/" element={<WelcomePage />} />

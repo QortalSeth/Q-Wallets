@@ -15,8 +15,10 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
   Paper,
-  Slide,
   Slider,
   Table,
   TableBody,
@@ -34,6 +36,8 @@ import {
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
+import Slide, { SlideProps } from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -46,7 +50,9 @@ import {
   LastPage,
   CopyAllTwoTone,
   Close,
-  Send
+  Send,
+  Refresh,
+  PublishedWithChangesTwoTone
 } from '@mui/icons-material';
 import coinLogoLTC from '../../assets/ltc.png';
 
@@ -125,12 +131,43 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+function SlideTransition(props: SlideProps) {
+  return <Slide {...props} direction="up" />;
+}
+
 const LtcQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
   },
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
+const LtcElectrumDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
+const LtcSubmittDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
   },
 }));
 
@@ -212,7 +249,6 @@ export default function LitecoinWallet() {
   const { isAuthenticated } = React.useContext(WalletContext);
 
   if (!isAuthenticated) {
-    console.log("WE ARE NOT LOGGED IN");
     return (
       <Alert variant="filled" severity="error">
         You must sign in, to use the Litecoin wallet !!!
@@ -223,6 +259,8 @@ export default function LitecoinWallet() {
   const [walletInfoLtc, setWalletInfoLtc] = React.useState<any>({});
   const [walletBalanceLtc, setWalletBalanceLtc] = React.useState<any>(null);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] = React.useState<boolean>(true);
+  const [allElectrumServersLtc, setAllElectrumServersLtc] = React.useState<any>([]);
+  const [currentElectrumServerLtc, setCurrentElectrumServerLtc] = React.useState<any>([]);
   const [allWalletAddressesLtc, setAllWalletAddressesLtc] = React.useState<any>([]);
   const [transactionsLtc, setTransactionsLtc] = React.useState<any>([]);
   const [isLoadingLtcTransactions, setIsLoadingLtcTransactions] = React.useState<boolean>(true);
@@ -231,9 +269,15 @@ export default function LitecoinWallet() {
   const [copyLtcAddress, setCopyLtcAddress] = React.useState('');
   const [copyLtcTxHash, setCopyLtcTxHash] = React.useState('');
   const [openLtcQR, setOpenLtcQR] = React.useState(false);
+  const [openLtcElectrum, setOpenLtcElectrum] = React.useState(false);
   const [openLtcSend, setOpenLtcSend] = React.useState(false);
-  const [amountLtc, setAmountLtc] = React.useState<number>(0);
-  const [feeLtc, setFeeLtc] = React.useState<number>(0);
+  const [ltcAmount, setLtcAmount] = React.useState<number>(0);
+  const [ltcRecipient, setLtcRecipient] = React.useState('');
+  const [ltcFee, setLtcFee] = React.useState<number>(0);
+  const [loadingRefreshLtc, setLoadingRefreshLtc] = React.useState(false);
+  const [openTxLtcSubmit, setOpenTxLtcSubmit] = React.useState(false);
+  const [openSendLtcSuccess, setOpenSendLtcSuccess] = React.useState(false);
+  const [openSendLtceError, setOpenSendLtcError] = React.useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsLtc.length) : 0;
 
@@ -245,15 +289,30 @@ export default function LitecoinWallet() {
     setOpenLtcQR(false);
   }
 
+  const handleCloseLtcElectrum = () => {
+    setOpenLtcElectrum(false);
+  }
+
   const handleOpenLtcSend = () => {
-    setAmountLtc(0);
-    setFeeLtc(30);
+    setLtcAmount(0);
+    setLtcRecipient('');
+    setLtcFee(30);
     setOpenLtcSend(true);
   }
 
+  const validateCanSendLtc = () => {
+    if (ltcAmount <= 0 || null || !ltcAmount) {
+      return true;
+    }
+    if (ltcRecipient.length < 34 || '') {
+      return true;
+    }
+    return false;
+  }
+
   const handleCloseLtcSend = () => {
-    setAmountLtc(0);
-    setFeeLtc(0);
+    setLtcAmount(0);
+    setLtcFee(0);
     setOpenLtcSend(false);
   }
 
@@ -269,7 +328,7 @@ export default function LitecoinWallet() {
     setCopyLtcTxHash('');
   }
 
-  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
+  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
     setPage(newPage);
   };
 
@@ -278,12 +337,29 @@ export default function LitecoinWallet() {
     setPage(0);
   };
 
-  const handleChangeLtcAmount = (_: Event, newValue: number | number[]) => {
-    setAmountLtc(newValue as number);
+  const handleChangeLtcFee = (_: Event, newValue: number | number[]) => {
+    setLtcFee(newValue as number);
+    setLtcAmount(0);
   };
 
-  const handleChangeLtcFee = (_: Event, newValue: number | number[]) => {
-    setFeeLtc(newValue as number);
+  const handleCloseSendLtcSuccess = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSendLtcSuccess(false);
+  };
+
+  const handleCloseSendLtcError = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSendLtcError(false);
   };
 
   const getWalletInfoLtc = async () => {
@@ -294,11 +370,10 @@ export default function LitecoinWallet() {
       });
       if (!response?.error) {
         setWalletInfoLtc(response);
-        console.log("GET LTC WALLET INFO", response);
       }
     } catch (error) {
       setWalletInfoLtc({});
-      console.log("ERROR GET LTC WALLET INFO", error);
+      console.error("ERROR GET LTC WALLET INFO", error);
     }
   }
 
@@ -316,12 +391,11 @@ export default function LitecoinWallet() {
       if (!response?.error) {
         setWalletBalanceLtc(response);
         setIsLoadingWalletBalanceLtc(false);
-        console.log("GET LTC BALANCE", response);
       }
     } catch (error) {
       setWalletBalanceLtc(null);
       setIsLoadingWalletBalanceLtc(false);
-      console.log("ERROR GET LTC BALANCE", error);
+      console.error("ERROR GET LTC BALANCE", error);
     }
   }
 
@@ -335,6 +409,35 @@ export default function LitecoinWallet() {
       clearInterval(intervalGetWalletBalanceLtc);
     }
   }, [isAuthenticated]);
+
+  const getElectrumServersLtc = async () => {
+    try {
+      const response = await qortalRequest({
+        action: "GET_CROSSCHAIN_SERVER_INFO",
+        coin: "LTC"
+      });
+      if (!response?.error) {
+        setAllElectrumServersLtc(response);
+        let currentLtcServer = response.filter(function (item: { isCurrent: boolean; }) {
+          return item.isCurrent === true;
+        });
+        setCurrentElectrumServerLtc(currentLtcServer);
+      }
+    } catch (error) {
+      setAllElectrumServersLtc({});
+      console.error("ERROR GET LTC SERVERS INFO", error);
+    }
+  }
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    getElectrumServersLtc();
+  }, [isAuthenticated]);
+
+  const handleOpenLtcElectrum = async () => {
+    await getElectrumServersLtc();
+    setOpenLtcElectrum(true);
+  }
 
   const getTransactionsLtc = async () => {
     try {
@@ -351,22 +454,20 @@ export default function LitecoinWallet() {
         await responseLtcAllAddresses;
         if (!responseLtcAllAddresses?.error) {
           setAllWalletAddressesLtc(responseLtcAllAddresses);
-          console.log("GET LTC ALL ADDRESSES", responseLtcAllAddresses);
         }
       } catch (error) {
         setAllWalletAddressesLtc([]);
-        console.log("ERROR GET LTC ALL ADDRESSES", error);
+        console.error("ERROR GET LTC ALL ADDRESSES", error);
       }
       await responseLtcTransactions;
       if (!responseLtcTransactions?.error) {
         setTransactionsLtc(responseLtcTransactions);
         setIsLoadingLtcTransactions(false);
-        console.log("GET LTC TRANSACTIONS", responseLtcTransactions);
       }
     } catch (error) {
       setIsLoadingLtcTransactions(false);
       setTransactionsLtc([]);
-      console.log("ERROR GET LTC TRANSACTIONS", error);
+      console.error("ERROR GET LTC TRANSACTIONS", error);
     }
   }
 
@@ -374,6 +475,21 @@ export default function LitecoinWallet() {
     if (!isAuthenticated) return;
     getTransactionsLtc();
   }, [isAuthenticated]);
+
+  const handleLoadingRefreshLtc = async () => {
+    setLoadingRefreshLtc(true);
+    await getTransactionsLtc();
+    setLoadingRefreshLtc(false);
+  }
+
+  const handleSendMaxLtc = () => {
+    const maxLtcAmount = parseFloat((walletBalanceLtc - ((ltcFee * 1000) / 1e8)).toFixed(8));
+    if (maxLtcAmount <= 0) {
+      setLtcAmount(0);
+    } else {
+      setLtcAmount(maxLtcAmount);
+    }
+  }
 
   const LtcQrDialogPage = () => {
     return (
@@ -406,6 +522,40 @@ export default function LitecoinWallet() {
     );
   }
 
+  const sendLtcRequest = async () => {
+    setOpenTxLtcSubmit(true);
+    const ltcFeeCalculated = Number(ltcFee / 1e8).toFixed(8);
+    try {
+      const sendRequest = await qortalRequest({
+        action: "SEND_COIN",
+        coin: "LTC",
+        recipient: ltcRecipient,
+        amount: ltcAmount,
+        fee: ltcFeeCalculated
+      });
+      if (!sendRequest?.error) {
+        setLtcAmount(0);
+        setLtcRecipient('');
+        setLtcFee(30);
+        setOpenTxLtcSubmit(false);
+        setOpenSendLtcSuccess(true);
+        setIsLoadingWalletBalanceLtc(true);
+        await timeoutDelay(3000);
+        getWalletBalanceLtc();
+      }
+    } catch (error) {
+      setLtcAmount(0);
+      setLtcRecipient('');
+      setLtcFee(30);
+      setOpenTxLtcSubmit(false);
+      setOpenSendLtcError(true);
+      setIsLoadingWalletBalanceLtc(true);
+      await timeoutDelay(3000);
+      getWalletBalanceLtc();
+      console.error("ERROR SENDING LTC", error);
+    }
+  }
+
   const LtcSendDialogPage = () => {
     return (
       <Dialog
@@ -414,6 +564,58 @@ export default function LitecoinWallet() {
         onClose={handleCloseLtcSend}
         slots={{ transition: Transition }}
       >
+        <LtcSubmittDialog
+          fullWidth={true}
+          maxWidth='xs'
+          open={openTxLtcSubmit}
+        >
+          <DialogContent>
+            <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{
+                width: "100%",
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <CircularProgress color="success" size={64} />
+              </div>
+              <div style={{
+                width: "100%",
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '20px'
+              }}>
+                <Typography variant="h6" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
+                  Processing Transaction Please Wait...
+                </Typography>
+              </div>
+            </Box>
+          </DialogContent>
+        </LtcSubmittDialog>
+        <Snackbar
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          open={openSendLtcSuccess}
+          autoHideDuration={4000}
+          slots={{ transition: SlideTransition }}
+          onClose={handleCloseSendLtcSuccess}>
+          <Alert
+            onClose={handleCloseSendLtcSuccess}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            Sent LTC transaction was successful!
+          </Alert>
+        </Snackbar>
+        <Snackbar open={openSendLtceError} autoHideDuration={4000} onClose={handleCloseSendLtcError}>
+          <Alert
+            onClose={handleCloseSendLtcError}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            Something went wrong, please try again!
+          </Alert>
+        </Snackbar>
         <AppBar sx={{ position: 'static' }}>
           <Toolbar>
             <IconButton
@@ -436,10 +638,11 @@ export default function LitecoinWallet() {
               Transfer LTC
             </Typography>
             <Button
+              disabled={validateCanSendLtc()}
               variant="contained"
               startIcon={<Send />}
-              aria-label="send"
-              onClick={handleOpenLtcSend}
+              aria-label="send-ltc"
+              onClick={sendLtcRequest}
               sx={{ backgroundColor: "#05a2e4", color: "white", "&:hover": { backgroundColor: "#02648d", } }}
             >
               SEND
@@ -467,8 +670,47 @@ export default function LitecoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceLtc + " LTC"}
+            {isLoadingWalletBalanceLtc ? <Box sx={{ width: '175px' }}><LinearProgress /></Box> : walletBalanceLtc + " LTC"}
           </Typography>
+        </div>
+        <div style={{
+          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: '20px'
+        }}>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            Max Sendable:&nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {(() => {
+              const newMaxLtcAmount = parseFloat((walletBalanceLtc - ((ltcFee * 1000) / 1e8)).toFixed(8));
+              if (newMaxLtcAmount < 0) {
+                return Number(0.00000000) + " LTC"
+              } else {
+                return newMaxLtcAmount + " LTC"
+              }
+            })()}
+          </Typography>
+          <div style={{ marginInlineStart: '15px' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSendMaxLtc}
+              style={{ borderRadius: 50 }}
+            >
+              Send Max
+            </Button>
+          </div>
         </div>
         <Box
           sx={{
@@ -482,22 +724,32 @@ export default function LitecoinWallet() {
         >
           <NumericFormat
             decimalScale={8}
-            value={amountLtc}
+            defaultValue={0}
+            value={ltcAmount}
             allowNegative={false}
             customInput={TextField}
             valueIsNumericString
             variant="outlined"
             label="Amount (LTC)"
+            isAllowed={(values) => {
+              const maxLtcCoin = (walletBalanceLtc - (ltcFee * 1000) / 1e8);
+              const { formattedValue, floatValue } = values;
+              return formattedValue === "" || floatValue <= maxLtcCoin;
+            }}
             onValueChange={(values) => {
-              setAmountLtc(values.floatValue);
+              setLtcAmount(values.floatValue);
             }}
             required
           />
           <TextField
             required
             label="Receiver Adress"
-            id="ltcaddress"
+            id="ltca-address"
             margin="normal"
+            value={ltcRecipient}
+            helperText="Ltc Address 34 Characters long !"
+            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
+            onChange={(e) => setLtcRecipient(e.target.value)}
           />
         </Box>
         <div style={{
@@ -514,8 +766,8 @@ export default function LitecoinWallet() {
             flexDirection: 'column',
             width: '50ch'
           }}>
-            <Typography id="doge-fee-slider" gutterBottom>
-              Current fee per byte : {feeLtc} SAT
+            <Typography id="ltc-fee-slider" gutterBottom>
+              Current fee per byte : {ltcFee} SAT
             </Typography>
             <Slider
               track={false}
@@ -523,12 +775,18 @@ export default function LitecoinWallet() {
               min={10}
               max={100}
               valueLabelDisplay="auto"
-              aria-labelledby="doge-fee-slider"
+              aria-labelledby="ltc-fee-slider"
               getAriaValueText={valueTextLtc}
               defaultValue={30}
               marks={ltcMarks}
               onChange={handleChangeLtcFee}
             />
+            <Typography
+              align="center"
+              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
+            >
+              Low fees may result in slow or unconfirmed transactions.
+            </Typography>
           </Box>
         </div>
       </Dialog>
@@ -577,37 +835,40 @@ export default function LitecoinWallet() {
               ? transactionsLtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsLtc
             ).map((row: {
-              name: React.Key;
-              inputs: { address: any; }[];
-              outputs: { address: any; }[];
+              inputs: { address: any; addressInWallet: boolean; }[];
+              outputs: { address: any; addressInWallet: boolean; }[];
               txHash: string;
               totalAmount: any;
               timestamp: number;
             }) => (
-              <StyledTableRow key={row.name}>
+              <StyledTableRow>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
-                    if (allWalletAddressesLtc.some(ltcAll => ltcAll.address === row?.inputs[0].address)) {
-                      return <div style={{ color: '#05a2e4' }}>{row?.inputs[0].address}</div>;
+                    if (row?.totalAmount < 0) {
+                      let meWasSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === true;
+                      });
+                      return <div style={{ color: '#05a2e4' }}>{meWasSender[0]?.address}</div>;
                     } else {
-                      return row?.inputs[0].address;
+                      let meWasNotSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === false;
+                      });
+                      return meWasNotSender[0].address;
                     }
                   })()}
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
-                    if (row?.outputs[0].address === row?.inputs[0].address) {
-                      if (allWalletAddressesLtc.some(ltcAll => ltcAll.address === row?.outputs[1].address)) {
-                        return <div style={{ color: '#05a2e4' }}>{row?.outputs[1].address}</div>;
-                      } else {
-                        return row?.outputs[1].address;
-                      }
-                    } else {
-                      if (allWalletAddressesLtc.some(ltcAll => ltcAll.address === row?.outputs[0].address)) {
-                        return <div style={{ color: '#05a2e4' }}>{row?.outputs[0].address}</div>;
-                      } else {
-                        return row?.outputs[0].address;
-                      }
+                    if (row?.totalAmount < 0) {
+                      let meWasNotRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === false;
+                      });
+                      return meWasNotRecipient[0].address;
+                    } else if (row?.totalAmount > 0) {
+                      let meWasRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                        return item.addressInWallet === true;
+                      });
+                      return <div style={{ color: '#05a2e4' }}>{meWasRecipient[0]?.address}</div>
                     }
                   })()}
                 </StyledTableCell>
@@ -620,7 +881,7 @@ export default function LitecoinWallet() {
                   </CustomWidthTooltip>
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {row?.outputs[0].address === walletInfoLtc?.address ?
+                  {row?.totalAmount > 0 ?
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
@@ -662,10 +923,76 @@ export default function LitecoinWallet() {
     );
   }
 
+  const setNewCurrentLtcServer = async (typeServer: string, hostServer: string, portServer: number) => {
+    try {
+      const setServer = await qortalRequest({
+        action: "SET_CURRENT_FOREIGN_SERVER",
+        coin: "LTC",
+        type: typeServer,
+        host: hostServer,
+        port: portServer
+      });
+      if (!setServer?.error) {
+        await getElectrumServersLtc();
+        setOpenLtcElectrum(false);
+        await getWalletBalanceLtc();
+        await getTransactionsLtc();
+      }
+    } catch (error) {
+      await getElectrumServersLtc();
+      setOpenLtcElectrum(false);
+      console.error("ERROR GET LTC SERVERS INFO", error);
+    }
+  }
+
+  const LtcElectrumDialogPage = () => {
+    return (
+      <LtcElectrumDialog
+        onClose={handleCloseLtcQR}
+        aria-labelledby="ltc-electrum-servers"
+        open={openLtcElectrum}
+        keepMounted={false}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="ltc-electrum-servers">
+          Available Litecoin Electrum Servers.
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{
+            width: '100%',
+            maxWidth: 500,
+            position: 'relative',
+            overflow: 'auto',
+            maxHeight: 400
+          }}>
+            <List>
+              {(
+                allElectrumServersLtc
+              ).map((server: {
+                connectionType: string;
+                hostName: string;
+                port: number;
+              }) => (
+                <ListItemButton onClick={() => { setNewCurrentLtcServer(server?.connectionType, server?.hostName, server?.port) }}>
+                  <ListItemText primary={server?.hostName + ':' + server?.port} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={handleCloseLtcElectrum}>
+            CLOSE
+          </Button>
+        </DialogActions>
+      </LtcElectrumDialog>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {LtcSendDialogPage()}
       {LtcQrDialogPage()}
+      {LtcElectrumDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Litecoin Wallet
       </Typography>
@@ -717,9 +1044,35 @@ export default function LitecoinWallet() {
           >
             {walletInfoLtc?.address}
           </Typography>
-          <Tooltip placement="top" title={copyLtcAddress ? copyLtcAddress : "Copy Address"}>
+          <Tooltip placement="right" title={copyLtcAddress ? copyLtcAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoLtc?.address), changeCopyLtcStatus() }}>
               <CopyAllTwoTone fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </div>
+        <div style={{
+          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            Electrum Server:&nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {currentElectrumServerLtc[0]?.hostName + ":" + currentElectrumServerLtc[0]?.port}
+          </Typography>
+          <Tooltip placement="right" title="CHange Server">
+            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenLtcElectrum}>
+              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>
@@ -755,9 +1108,27 @@ export default function LitecoinWallet() {
             Address Book
           </WalletButtons>
         </div>
-        <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-          Transactions:
-        </Typography>
+        <div style={{
+          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <Typography variant="h6" paddingTop={2} paddingBottom={2}>
+            Transactions:
+          </Typography>
+          <Button
+            size="small"
+            onClick={handleLoadingRefreshLtc}
+            loading={loadingRefreshLtc}
+            loadingPosition="start"
+            startIcon={<Refresh />}
+            variant="outlined"
+            style={{ borderRadius: 50 }}
+          >
+            Refresh
+          </Button>
+        </div>
         {isLoadingLtcTransactions ? tableLoader() : transactionsTable()}
       </WalleteCard>
     </Box>

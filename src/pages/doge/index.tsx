@@ -249,7 +249,6 @@ export default function DogecoinWallet() {
   const { isAuthenticated } = React.useContext(WalletContext);
 
   if (!isAuthenticated) {
-    console.log("WE ARE NOT LOGGED IN");
     return (
       <Alert variant="filled" severity="error">
         You must sign in, to use the Dogecoin wallet !!!
@@ -371,11 +370,10 @@ export default function DogecoinWallet() {
       });
       if (!response?.error) {
         setWalletInfoDoge(response);
-        console.log("GET DOGE WALLET INFO", response);
       }
     } catch (error) {
       setWalletInfoDoge({});
-      console.log("ERROR GET DOGE WALLET INFO", error);
+      console.error("ERROR GET DOGE WALLET INFO", error);
     }
   }
 
@@ -393,12 +391,11 @@ export default function DogecoinWallet() {
       if (!response?.error) {
         setWalletBalanceDoge(response);
         setIsLoadingWalletBalanceDoge(false);
-        console.log("GET DOGE BALANCE", response);
       }
     } catch (error) {
       setWalletBalanceDoge(null);
       setIsLoadingWalletBalanceDoge(false);
-      console.log("ERROR GET DOGE BALANCE", error);
+      console.error("ERROR GET DOGE BALANCE", error);
     }
   }
 
@@ -425,12 +422,10 @@ export default function DogecoinWallet() {
           return item.isCurrent === true;
         });
         setCurrentElectrumServerDoge(currentDogeServer);
-        console.log("GET DOGE SERVERS INFO", response);
-        console.log("CURRENT DOGE SERVER INFO", currentDogeServer);
       }
     } catch (error) {
       setAllElectrumServersDoge({});
-      console.log("ERROR GET DOGE SERVERS INFO", error);
+      console.error("ERROR GET DOGE SERVERS INFO", error);
     }
   }
 
@@ -459,22 +454,20 @@ export default function DogecoinWallet() {
         await responseDogeAllAddresses;
         if (!responseDogeAllAddresses?.error) {
           setAllWalletAddressesDoge(responseDogeAllAddresses);
-          console.log("GET DOGE ALL ADDRESSES", responseDogeAllAddresses);
         }
       } catch (error) {
         setAllWalletAddressesDoge([]);
-        console.log("ERROR GET DOGE ALL ADDRESSES", error);
+        console.error("ERROR GET DOGE ALL ADDRESSES", error);
       }
       await responseDogeTransactions;
       if (!responseDogeTransactions?.error) {
         setTransactionsDoge(responseDogeTransactions);
         setIsLoadingDogeTransactions(false);
-        console.log("GET DOGE TRANSACTIONS", responseDogeTransactions);
       }
     } catch (error) {
       setIsLoadingDogeTransactions(false);
       setTransactionsDoge([]);
-      console.log("ERROR GET DOGE TRANSACTIONS", error);
+      console.error("ERROR GET DOGE TRANSACTIONS", error);
     }
   }
 
@@ -532,9 +525,6 @@ export default function DogecoinWallet() {
   const sendDogeRequest = async () => {
     setOpenTxDogeSubmit(true);
     const dogeFeeCalculated = Number(dogeFee / 1e8).toFixed(8);
-    console.log("RECIPIENT", dogeRecipient);
-    console.log("AMOUNT", dogeAmount);
-    console.log("FEE", dogeFeeCalculated);
     try {
       const sendRequest = await qortalRequest({
         action: "SEND_COIN",
@@ -552,7 +542,6 @@ export default function DogecoinWallet() {
         setIsLoadingWalletBalanceDoge(true);
         await timeoutDelay(3000);
         getWalletBalanceDoge();
-        console.log("DOGE SENDED", sendRequest);
       }
     } catch (error) {
       setDogeAmount(0);
@@ -563,7 +552,7 @@ export default function DogecoinWallet() {
       setIsLoadingWalletBalanceDoge(true);
       await timeoutDelay(3000);
       getWalletBalanceDoge();
-      console.log("ERROR SENDING DOGE", error);
+      console.error("ERROR SENDING DOGE", error);
     }
   }
 
@@ -851,35 +840,63 @@ export default function DogecoinWallet() {
               txHash: string;
               totalAmount: any;
               timestamp: number;
-            }) => (
-              <StyledTableRow>
+            }, k: React.Key) => (
+              <StyledTableRow key={k}>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
                     if (row?.totalAmount < 0) {
-                      let meWasSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === true;
                       });
-                      return <div style={{ color: '#05a2e4' }}>{meWasSender[0]?.address}</div>;
+                      if (meWasSenderOutputs[0]?.address) {
+                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
+                      } else {
+                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === true;
+                        });
+                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
+                      }
                     } else {
-                      let meWasNotSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === false;
                       });
-                      return meWasNotSender[0].address;
+                      if (meWasNotSenderOutputs[0]?.address) {
+                        return meWasNotSenderOutputs[0]?.address;
+                      } else {
+                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === false;
+                        });
+                        return meWasNotSenderInputs[0]?.address;
+                      }
                     }
                   })()}
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
                     if (row?.totalAmount < 0) {
-                      let meWasNotRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === false;
                       });
-                      return meWasNotRecipient[0].address;
+                      if (meWasNotRecipientOutputs[0]?.address) {
+                        return meWasNotRecipientOutputs[0]?.address;
+                      } else {
+                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === false;
+                        });
+                        return meWasNotRecipientInputs[0]?.address;
+                      }
                     } else if (row?.totalAmount > 0) {
-                      let meWasRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === true;
                       });
-                      return <div style={{ color: '#05a2e4' }}>{meWasRecipient[0]?.address}</div>
+                      if (meWasRecipientOutputs[0]?.address) {
+                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
+                      } else {
+                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === true;
+                        });
+                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
+                      }
                     }
                   })()}
                 </StyledTableCell>
@@ -935,7 +952,6 @@ export default function DogecoinWallet() {
   }
 
   const setNewCurrentDogeServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    console.log("SERVER CHHOSED", typeServer, hostServer, portServer);
     try {
       const setServer = await qortalRequest({
         action: "SET_CURRENT_FOREIGN_SERVER",
@@ -953,7 +969,7 @@ export default function DogecoinWallet() {
     } catch (error) {
       await getElectrumServersDoge();
       setOpenDogeElectrum(false);
-      console.log("ERROR GET DOGE SERVERS INFO", error);
+      console.error("ERROR GET DOGE SERVERS INFO", error);
     }
   }
 
@@ -983,9 +999,9 @@ export default function DogecoinWallet() {
                 connectionType: string;
                 hostName: string;
                 port: number;
-              }) => (
+              }, i: React.Key) => (
                 <ListItemButton onClick={() => { setNewCurrentDogeServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.hostName + ':' + server?.port} />
+                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
             </List>

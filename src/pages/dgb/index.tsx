@@ -228,15 +228,15 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 const dgbMarks = [
   {
-    value: 20,
+    value: 1,
     label: 'MIN',
   },
   {
-    value: 100,
+    value: 10,
     label: 'DEF',
   },
   {
-    value: 150,
+    value: 100,
     label: 'MAX',
   },
 ];
@@ -296,7 +296,7 @@ export default function DigibyteWallet() {
   const handleOpenDgbSend = () => {
     setDgbAmount(0);
     setDgbRecipient('');
-    setDgbFee(100);
+    setDgbFee(10);
     setOpenDgbSend(true);
   }
 
@@ -536,7 +536,7 @@ export default function DigibyteWallet() {
       if (!sendRequest?.error) {
         setDgbAmount(0);
         setDgbRecipient('');
-        setDgbFee(100);
+        setDgbFee(10);
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
         setIsLoadingWalletBalanceDgb(true);
@@ -546,7 +546,7 @@ export default function DigibyteWallet() {
     } catch (error) {
       setDgbAmount(0);
       setDgbRecipient('');
-      setDgbFee(100);
+      setDgbFee(10);
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
       setIsLoadingWalletBalanceDgb(true);
@@ -772,12 +772,12 @@ export default function DigibyteWallet() {
             <Slider
               track={false}
               step={5}
-              min={20}
-              max={150}
+              min={1}
+              max={100}
               valueLabelDisplay="auto"
               aria-labelledby="dgb-fee-slider"
               getAriaValueText={valueTextDgb}
-              defaultValue={100}
+              defaultValue={10}
               marks={dgbMarks}
               onChange={handleChangeDgbFee}
             />
@@ -840,35 +840,63 @@ export default function DigibyteWallet() {
               txHash: string;
               totalAmount: any;
               timestamp: number;
-            }) => (
-              <StyledTableRow>
+            }, k: React.Key) => (
+              <StyledTableRow key={k}>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
                     if (row?.totalAmount < 0) {
-                      let meWasSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === true;
                       });
-                      return <div style={{ color: '#05a2e4' }}>{meWasSender[0]?.address}</div>;
+                      if (meWasSenderOutputs[0]?.address) {
+                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
+                      } else {
+                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === true;
+                        });
+                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
+                      }
                     } else {
-                      let meWasNotSender = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === false;
                       });
-                      return meWasNotSender[0].address;
+                      if (meWasNotSenderOutputs[0]?.address) {
+                        return meWasNotSenderOutputs[0]?.address;
+                      } else {
+                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === false;
+                        });
+                        return meWasNotSenderInputs[0]?.address;
+                      }
                     }
                   })()}
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {(() => {
                     if (row?.totalAmount < 0) {
-                      let meWasNotRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === false;
                       });
-                      return meWasNotRecipient[0].address;
+                      if (meWasNotRecipientOutputs[0]?.address) {
+                        return meWasNotRecipientOutputs[0]?.address;
+                      } else {
+                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === false;
+                        });
+                        return meWasNotRecipientInputs[0]?.address;
+                      }
                     } else if (row?.totalAmount > 0) {
-                      let meWasRecipient = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
+                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
                         return item.addressInWallet === true;
                       });
-                      return <div style={{ color: '#05a2e4' }}>{meWasRecipient[0]?.address}</div>
+                      if (meWasRecipientOutputs[0]?.address) {
+                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
+                      } else {
+                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
+                          return item.addressInWallet === true;
+                        });
+                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
+                      }
                     }
                   })()}
                 </StyledTableCell>
@@ -971,9 +999,9 @@ export default function DigibyteWallet() {
                 connectionType: string;
                 hostName: string;
                 port: number;
-              }) => (
+              }, i: React.Key) => (
                 <ListItemButton onClick={() => { setNewCurrentDgbServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.hostName + ':' + server?.port} />
+                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
             </List>

@@ -50,6 +50,7 @@ interface QortalRequestOptions {
   startBlock?: number;
   blockLimit?: number;
   txGroupId?: number;
+  memo?: string;
 }
 
 declare function qortalRequest(

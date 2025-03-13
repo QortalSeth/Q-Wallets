@@ -6,7 +6,7 @@ import { Session, Navigation } from '@toolpad/core/AppProvider';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
 import { Route, Routes } from "react-router-dom";
 import { DashboardLayout, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
-import WalletContext, { IContextProps, UserNameAvatar } from './contexts/walletContext';
+import WalletContext, { IContextProps } from './contexts/walletContext';
 import qort from "./assets/qort.png";
 import btc from "./assets/btc.png";
 import ltc from "./assets/ltc.png";
@@ -57,11 +57,10 @@ const walletTheme = createTheme({
 
 function App() {
   const [userInfo, setUserInfo] = React.useState<any>(null);
-  const [selectedCoin, setSelectedCoin] = React.useState("QORTAL");
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
   const [isUsingGateway, setIsUsingGateway] = React.useState(true);
-  const [userNameAvatar, setUserNameAvatar] = React.useState<Record<string, UserNameAvatar>>({});
-  const [avatar, setAvatar] = React.useState<string>("");
+  const [avatar, setAvatar] = React.useState<string>('');
+  const [userSess, setUserSess] = React.useState<any>(null);
   const [session, setSession] = React.useState<Session | null>(null);
 
   const getIsUsingGateway = async () => {
@@ -78,8 +77,6 @@ function App() {
     getIsUsingGateway();
   }, []);
 
-  let userSess = {};
-
   async function getNameInfo(address: string) {
     const response = await qortalRequest({
       action: "GET_ACCOUNT_NAMES",
@@ -94,28 +91,26 @@ function App() {
   };
 
   const askForAccountInformation = React.useCallback(async () => {
+    let sessAvatar = ""
     try {
       const account = await qortalRequest({
         action: "GET_USER_ACCOUNT",
       });
-      console.log("ACCOUNT", account);
       const name = await getNameInfo(account.address);
       setUserInfo({ ...account, name });
-      let sessAvatar = ''
       if (name === "No Registered Name") {
         setAvatar(noAvatar);
-        sessAvatar = noAvatar;
       } else {
-        setAvatar(`/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`);
         sessAvatar = `/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`;
+        setAvatar(sessAvatar);
       }
-      userSess = {
+      setUserSess({
         user: {
           name: name,
           email: account?.address,
-          image: sessAvatar,
+          image: sessAvatar
         },
-      };
+      });
     } catch (error) {
       console.error(error);
     }
@@ -135,47 +130,19 @@ function App() {
         setAvatar("");
       },
     };
-  }, []);
-
-  const getCoinLabel = React.useCallback((coin?: string) => {
-    switch (coin || selectedCoin) {
-      case "QORTAL": {
-        return 'QORT'
-      }
-      case "LITECOIN": {
-        return 'LTC'
-      }
-      case "DOGECOIN": {
-        return 'DOGE'
-      }
-      case "BITCOIN": {
-        return 'BTC'
-      }
-      case "DIGIBYTE": {
-        return 'DGB'
-      }
-      case "RAVENCOIN": {
-        return 'RVN'
-      }
-      case "PIRATECHAIN": {
-        return 'ARRR'
-      }
-      default:
-        return null
-    }
-  }, [selectedCoin])
+  }, [userSess]);
 
   const walletContextValue: IContextProps = {
     userInfo,
     setUserInfo,
-    userNameAvatar,
-    setUserNameAvatar,
     isAuthenticated,
     setIsAuthenticated,
     isUsingGateway,
-    selectedCoin,
-    setSelectedCoin,
-    getCoinLabel
+    setIsUsingGateway,
+    avatar,
+    setAvatar,
+    userSess,
+    setUserSess
   };
 
   let Pirate = {};
@@ -237,7 +204,7 @@ function App() {
   }
 
   const BRANDING = {
-    logo: <img src={qwallets} alt="MWA Logo" />,
+    logo: <img src={qwallets} alt="QWA Logo" />,
     title: <Typography>
       <span style={{ color: '#60d0fd', fontSize: "24px", fontWeight: 700 }}>QORTAL </span>
       <span style={{ color: '#05a2e4', fontSize: "24px", fontWeight: 700 }}>WALLETS </span>

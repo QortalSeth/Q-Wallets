@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter, useNavigate } from "react-router-dom";
+import { BrowserRouter, To, useNavigate } from "react-router-dom";
 import App from './App';
 
 interface CustomWindow extends Window {
@@ -13,7 +13,7 @@ const baseUrl = customWindow?._qdnBase || "";
 export const useIframe = () => {
   const navigate = useNavigate();
   React.useEffect(() => {
-    function handleNavigation(event) {
+    function handleNavigation(event: { data: { action: string; path: To; }; }) {
       if (event.data?.action === "NAVIGATE_TO_PATH" && event.data.path) {
         navigate(event.data.path); // Navigate directly to the specified path
 

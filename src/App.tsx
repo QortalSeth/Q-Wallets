@@ -14,7 +14,7 @@ import doge from "./assets/doge.png";
 import dgb from "./assets/dgb.png";
 import rvn from "./assets/rvn.png";
 import arrr from "./assets/arrr.png";
-import qwallets from "./assets/qw-logo.png";
+import qwalletsTitle from "./assets/qw-title.png";
 import noAvatar from "./assets/noavatar.png";
 import WelcomePage from "./pages/welcome/welcome";
 import QortalWallet from "./pages/qort/index";
@@ -56,6 +56,7 @@ const walletTheme = createTheme({
 });
 
 function App() {
+  
   const [userInfo, setUserInfo] = React.useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
   const [isUsingGateway, setIsUsingGateway] = React.useState(true);
@@ -238,21 +239,15 @@ function App() {
     );
   }
 
-  const BRANDING = {
-    logo: <img src={qwallets} alt="QWA Logo" />,
-    title: <Typography>
-      <span style={{ color: '#60d0fd', fontSize: "24px", fontWeight: 700 }}>QORTAL </span>
-      <span style={{ color: '#05a2e4', fontSize: "24px", fontWeight: 700 }}>WALLETS </span>
-      <span style={{ color: '#02648d', fontSize: "24px", fontWeight: 700 }}>APP</span>
-    </Typography>
-  }
-
   return (
     <ReactRouterAppProvider
       session={session}
       authentication={authentication}
       navigation={NAVIGATION}
-      branding={BRANDING}
+      branding={{
+        logo: <img src={qwalletsTitle} alt="QWA Title" />,
+        title: ''
+      }}
       theme={walletTheme}
     >
       <WalletContext.Provider value={walletContextValue}>

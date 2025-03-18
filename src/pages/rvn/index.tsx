@@ -1141,7 +1141,7 @@ export default function RavencoinWallet() {
           >
             {currentElectrumServerRvn[0]?.hostName ? currentElectrumServerRvn[0]?.hostName + ":" + currentElectrumServerRvn[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
           </Typography>
-          <Tooltip placement="right" title="CHange Server">
+          <Tooltip placement="right" title="Change Server">
             <IconButton aria-label="open-electrum" size="small" onClick={handleOpenRvnElectrum}>
               <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>

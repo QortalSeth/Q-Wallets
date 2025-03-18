@@ -799,7 +799,7 @@ export default function PirateWallet() {
         >
           {currentLightwalletServerArrr[0]?.hostName ? currentLightwalletServerArrr[0]?.hostName + ":" + currentLightwalletServerArrr[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
         </Typography>
-        <Tooltip placement="right" title="CHange Server">
+        <Tooltip placement="right" title="Change Server">
           <IconButton aria-label="open-electrum" size="small" onClick={handleOpenArrrLightwallet}>
             <PublishedWithChangesTwoTone fontSize="small" />
           </IconButton>

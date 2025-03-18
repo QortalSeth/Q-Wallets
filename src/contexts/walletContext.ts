@@ -11,6 +11,8 @@ export interface IContextProps {
   setAvatar: (avatar: string) => void;
   userSess: any;
   setUserSess: (val: any) => void;
+  nodeInfo: any;
+  setNodeInfo: (val: any) => void;
 }
 
 const defaultState: IContextProps = {
@@ -23,7 +25,9 @@ const defaultState: IContextProps = {
   avatar: "",
   setAvatar: () => { },
   userSess: null,
-  setUserSess: () => { }
+  setUserSess: () => { },
+  nodeInfo: null,
+  setNodeInfo: () => { }
 };
 
 export default React.createContext(defaultState);

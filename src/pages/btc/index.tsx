@@ -42,17 +42,18 @@ import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import QRCode from 'react-qr-code';
-import { FaRegPaperPlane, FaBook, FaQrcode } from 'react-icons/fa6';
 import {
+  Close,
+  CopyAllTwoTone,
   FirstPage,
+  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  CopyAllTwoTone,
-  Close,
-  Send,
+  PublishedWithChangesTwoTone,
+  QrCode2,
   Refresh,
-  PublishedWithChangesTwoTone
+  Send
 } from '@mui/icons-material';
 import coinLogoBTC from '../../assets/btc.png';
 
@@ -135,6 +136,18 @@ function SlideTransition(props: SlideProps) {
   return <Slide {...props} direction="up" />;
 }
 
+const DialogGeneral = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
 const BtcQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -198,10 +211,10 @@ const CoinAvatar = styled(Avatar)({
 });
 
 const WalletButtons = styled(Button)({
-  width: "20%",
-  marginTop: "16px",
+  width: "auto",
   backgroundColor: "#05a2e4",
   color: "white",
+  padding: "auto",
   "&:hover": {
     backgroundColor: "#02648d",
   },
@@ -277,7 +290,8 @@ export default function BitcoinWallet() {
   const [loadingRefreshBtc, setLoadingRefreshBtc] = React.useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = React.useState(false);
   const [openSendBtcSuccess, setOpenSendBtcSuccess] = React.useState(false);
-  const [openSendBtceError, setOpenSendBtcError] = React.useState(false);
+  const [openSendBtcError, setOpenSendBtcError] = React.useState(false);
+  const [openBtcAddressBook, setOpenBtcAddressBook] = React.useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length) : 0;
 
@@ -291,6 +305,12 @@ export default function BitcoinWallet() {
 
   const handleCloseBtcElectrum = () => {
     setOpenBtcElectrum(false);
+  }
+
+  const handleOpenAddressBook = async () => {
+    setOpenBtcAddressBook(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setOpenBtcAddressBook(false);
   }
 
   const handleOpenBtcSend = () => {
@@ -606,7 +626,7 @@ export default function BitcoinWallet() {
             Sent BTC transaction was successful!
           </Alert>
         </Snackbar>
-        <Snackbar open={openSendBtceError} autoHideDuration={4000} onClose={handleCloseSendBtcError}>
+        <Snackbar open={openSendBtcError} autoHideDuration={4000} onClose={handleCloseSendBtcError}>
           <Alert
             onClose={handleCloseSendBtcError}
             severity="error"
@@ -743,11 +763,11 @@ export default function BitcoinWallet() {
           />
           <TextField
             required
-            label="Receiver Adress"
-            id="btca-address"
+            label="Receiver Address"
+            id="btc-address"
             margin="normal"
             value={btcRecipient}
-            helperText="Btc Address 34 Characters long !"
+            helperText="BTC address 34 characters long !"
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setBtcRecipient(e.target.value)}
           />
@@ -914,7 +934,9 @@ export default function BitcoinWallet() {
                   }
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {epochToAgo(row?.timestamp)}
+                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
+                    <div>{epochToAgo(row?.timestamp)}</div>
+                  </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
             ))}
@@ -1000,7 +1022,7 @@ export default function BitcoinWallet() {
                 hostName: string;
                 port: number;
               }, i: React.Key) => (
-                <ListItemButton onClick={() => { setNewCurrentBtcServer(server?.connectionType, server?.hostName, server?.port) }}>
+                <ListItemButton key={i} onClick={() => { setNewCurrentBtcServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
@@ -1016,11 +1038,32 @@ export default function BitcoinWallet() {
     );
   }
 
+  const BtcAddressBookDialogPage = () => {
+    return (
+      <DialogGeneral
+        aria-labelledby="btc-electrum-servers"
+        open={openBtcAddressBook}
+        keepMounted={false}
+      >
+        <DialogContent>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            Coming soon...
+          </Typography>
+        </DialogContent>
+      </DialogGeneral>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {BtcSendDialogPage()}
       {BtcQrDialogPage()}
       {BtcElectrumDialogPage()}
+      {BtcAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Bitcoin Wallet
       </Typography>
@@ -1096,7 +1139,7 @@ export default function BitcoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {currentElectrumServerBtc[0]?.hostName + ":" + currentElectrumServerBtc[0]?.port}
+            {currentElectrumServerBtc[0]?.hostName ? currentElectrumServerBtc[0]?.hostName + ":" + currentElectrumServerBtc[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
           </Typography>
           <Tooltip placement="right" title="CHange Server">
             <IconButton aria-label="open-electrum" size="small" onClick={handleOpenBtcElectrum}>
@@ -1105,33 +1148,37 @@ export default function BitcoinWallet() {
           </Tooltip>
         </div>
         <div style={{
-          width: "100%",
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-evenly'
+          justifyContent: 'center',
+          marginTop: "15px"
         }}>
           <WalletButtons
             loading={isLoadingWalletBalanceBtc}
             loadingPosition="start"
             variant="contained"
-            startIcon={<FaRegPaperPlane />}
+            startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenBtcSend}
           >
             Tranfer BTC
           </WalletButtons>
+          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
-            startIcon={<FaQrcode />}
+            startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenBtcQR}
           >
             Show QR Code
           </WalletButtons>
+          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
-            startIcon={<FaBook />}
+            startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
             aria-label="book"
+            onClick={handleOpenAddressBook}
           >
             Address Book
           </WalletButtons>

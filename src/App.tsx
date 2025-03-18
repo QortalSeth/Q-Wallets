@@ -62,6 +62,7 @@ function App() {
   const [avatar, setAvatar] = React.useState<string>('');
   const [userSess, setUserSess] = React.useState<any>(null);
   const [session, setSession] = React.useState<Session | null>(null);
+  const [nodeInfo, setNodeInfo] = React.useState<any>(null);
 
   const getIsUsingGateway = async () => {
     try {
@@ -70,11 +71,41 @@ function App() {
       });
       setIsUsingGateway(res);
     } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function getNodeInfo() {
+    try {
+      const nodeInfo = await qortalRequest({
+        action: "GET_NODE_INFO",
+      });
+      const nodeStatus = await qortalRequest({
+        action: "GET_NODE_STATUS",
+      });
+      return { ...nodeInfo, ...nodeStatus };
+    } catch (error) {
+      console.error(error);
     }
   }
 
   React.useEffect(() => {
     getIsUsingGateway();
+  }, []);
+
+  React.useEffect(() => {
+    let nodeInfoTimeoutId: string | number | NodeJS.Timeout;
+    (async () => {
+      nodeInfoTimeoutId = setInterval(async () => {
+        const infos = await getNodeInfo();
+        setNodeInfo(infos);
+      }, 60000);
+      const infos = await getNodeInfo();
+      setNodeInfo(infos);
+    })();
+    return () => {
+      clearInterval(nodeInfoTimeoutId);
+    };
   }, []);
 
   async function getNameInfo(address: string) {
@@ -104,13 +135,15 @@ function App() {
         sessAvatar = `/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`;
         setAvatar(sessAvatar);
       }
-      setUserSess({
+      const currentUser = {
         user: {
           name: name,
           email: account?.address,
           image: sessAvatar
         },
-      });
+      }
+      setUserSess(currentUser);
+      return currentUser
     } catch (error) {
       console.error(error);
     }
@@ -119,8 +152,8 @@ function App() {
   const authentication = React.useMemo(() => {
     return {
       signIn: async () => {
-        await askForAccountInformation();
-        setSession(userSess);
+        const response = await askForAccountInformation();
+        setSession(response);
         setIsAuthenticated(true);
       },
       signOut: () => {
@@ -142,7 +175,9 @@ function App() {
     avatar,
     setAvatar,
     userSess,
-    setUserSess
+    setUserSess,
+    nodeInfo,
+    setNodeInfo
   };
 
   let Pirate = {};

@@ -41,17 +41,18 @@ import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import QRCode from 'react-qr-code';
-import { FaRegPaperPlane, FaBook, FaQrcode } from 'react-icons/fa6';
 import {
+  Close,
+  CopyAllTwoTone,
   FirstPage,
+  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  CopyAllTwoTone,
-  Close,
-  Send,
+  PublishedWithChangesTwoTone,
+  QrCode2,
   Refresh,
-  PublishedWithChangesTwoTone
+  Send
 } from '@mui/icons-material';
 import coinLogoARRR from '../../assets/arrr.png';
 
@@ -134,6 +135,18 @@ function SlideTransition(props: SlideProps) {
   return <Slide {...props} direction="up" />;
 }
 
+const DialogGeneral = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
 const ArrrQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -197,10 +210,10 @@ const CoinAvatar = styled(Avatar)({
 });
 
 const WalletButtons = styled(Button)({
-  width: "20%",
-  marginTop: "16px",
+  width: "auto",
   backgroundColor: "#05a2e4",
   color: "white",
+  padding: "auto",
   "&:hover": {
     backgroundColor: "#02648d",
   },
@@ -239,7 +252,7 @@ export default function PirateWallet() {
   if (isUsingGateway) {
     return (
       <Alert variant="filled" severity="error">
-        You cannot use Pirate Chain wallet through the gateway. Please use your local node.
+        You cannot use Pirate Chain wallet through public node. Please use your local node.
       </Alert>
     );
   }
@@ -268,7 +281,9 @@ export default function PirateWallet() {
   const [loadingRefreshArrr, setLoadingRefreshArrr] = React.useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = React.useState(false);
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = React.useState(false);
-  const [openSendArrreError, setOpenSendArrrError] = React.useState(false);
+  const [openSendArrrError, setOpenSendArrrError] = React.useState(false);
+  const [openArrrAddressBook, setOpenArrrAddressBook] = React.useState(false);
+  const [retry, setRetry] = React.useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsArrr.length) : 0;
 
@@ -286,6 +301,12 @@ export default function PirateWallet() {
 
   const handleCloseArrrServerChange = () => {
     setOpenArrrServerChange(false);
+  }
+
+  const handleOpenAddressBook = async () => {
+    setOpenArrrAddressBook(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setOpenArrrAddressBook(false);
   }
 
   const handleOpenArrrSend = () => {
@@ -534,7 +555,9 @@ export default function PirateWallet() {
       setChangeServer(true);
       return;
     } catch (error) {
+      setSyncStatus(error);
       setIsSynced(false);
+      setRetry(true);
       console.error("ERROR GET ARRR SYNC STATUS", error);
     }
   }
@@ -547,6 +570,11 @@ export default function PirateWallet() {
   const handleOpenArrrServerChange = async () => {
     await getLightwalletServersArrr();
     setOpenArrrServerChange(true);
+  }
+
+  const handleRetry = async () => {
+    setRetry(false);
+    await getArrrSyncStatus();
   }
 
   const handleLoadingRefreshArrr = async () => {
@@ -690,7 +718,7 @@ export default function PirateWallet() {
                 hostName: string;
                 port: number;
               }, i: React.Key) => (
-                <ListItemButton onClick={() => { setNewCurrentArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
+                <ListItemButton key={i} onClick={() => { setNewCurrentArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
@@ -733,7 +761,7 @@ export default function PirateWallet() {
                 hostName: string;
                 port: number;
               }, i: React.Key) => (
-                <ListItemButton onClick={() => { setNewArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
+                <ListItemButton key={i} onClick={() => { setNewArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
@@ -783,33 +811,37 @@ export default function PirateWallet() {
   const ArrrWalletButtons = () => {
     return (
       <div style={{
-        width: "100%",
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-evenly'
+        justifyContent: 'center',
+        marginTop: "15px"
       }}>
         <WalletButtons
           loading={isLoadingWalletBalanceArrr}
           loadingPosition="start"
           variant="contained"
-          startIcon={<FaRegPaperPlane />}
+          startIcon={<Send style={{ marginBottom: '2px' }} />}
           aria-label="transfer"
           onClick={handleOpenArrrSend}
         >
           Tranfer ARRR
         </WalletButtons>
+        <div style={{ marginLeft: '20px' }} />
         <WalletButtons
           variant="contained"
-          startIcon={<FaQrcode />}
+          startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
           aria-label="QRcode"
           onClick={handleOpenArrrQR}
         >
           Show QR Code
         </WalletButtons>
+        <div style={{ marginLeft: '20px' }} />
         <WalletButtons
           variant="contained"
-          startIcon={<FaBook />}
+          startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
           aria-label="book"
+          onClick={handleOpenAddressBook}
         >
           Address Book
         </WalletButtons>
@@ -943,7 +975,9 @@ export default function PirateWallet() {
                   }
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {epochToAgo(row?.timestamp)}
+                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
+                    <div>{epochToAgo(row?.timestamp)}</div>
+                  </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
             ))}
@@ -1030,7 +1064,7 @@ export default function PirateWallet() {
             Sent ARRR transaction was successful!
           </Alert>
         </Snackbar>
-        <Snackbar open={openSendArrreError} autoHideDuration={4000} onClose={handleCloseSendArrrError}>
+        <Snackbar open={openSendArrrError} autoHideDuration={4000} onClose={handleCloseSendArrrError}>
           <Alert
             onClose={handleCloseSendArrrError}
             severity="error"
@@ -1160,11 +1194,11 @@ export default function PirateWallet() {
           />
           <TextField
             required
-            label="Receiver Adress"
+            label="Receiver Address"
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
-            helperText="Arrr Address 78 Characters long (starts with zs)!"
+            helperText="ARRR address 78 characters long (starts with zs) !"
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
             onChange={(e) => setArrrRecipient(e.target.value)}
           />
@@ -1173,7 +1207,7 @@ export default function PirateWallet() {
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}
-            helperText="Arrr memo maximal 40 character long!"
+            helperText="ARRR memo maximal 40 characters long !"
             slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
             onChange={(e) => setArrrMemo(e.target.value)}
           />
@@ -1215,6 +1249,26 @@ export default function PirateWallet() {
     );
   }
 
+  const retryButton = () => {
+    return (
+      <div style={{
+        width: "100%",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Button
+          size="small"
+          onClick={handleRetry}
+          variant="outlined"
+          style={{ borderRadius: 50 }}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   const showSyncStatus = () => {
     return (
       <Box>
@@ -1234,7 +1288,28 @@ export default function PirateWallet() {
           </Typography>
         </div>
         {changeServer ? changeServerButton() : ''}
+        {retry ? retryButton() : ''}
       </Box>
+    );
+  }
+
+  const ArrrAddressBookDialogPage = () => {
+    return (
+      <DialogGeneral
+        aria-labelledby="btc-electrum-servers"
+        open={openArrrAddressBook}
+        keepMounted={false}
+      >
+        <DialogContent>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            Coming soon...
+          </Typography>
+        </DialogContent>
+      </DialogGeneral>
     );
   }
 
@@ -1244,6 +1319,7 @@ export default function PirateWallet() {
       {ArrrLightwalletDialogPage()}
       {ArrrSendDialogPage()}
       {ArrrQrDialogPage()}
+      {ArrrAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Pirat Chain Wallet
       </Typography>

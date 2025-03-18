@@ -42,17 +42,18 @@ import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import QRCode from 'react-qr-code';
-import { FaRegPaperPlane, FaBook, FaQrcode } from 'react-icons/fa6';
 import {
+  Close,
+  CopyAllTwoTone,
   FirstPage,
+  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  CopyAllTwoTone,
-  Close,
-  Send,
+  PublishedWithChangesTwoTone,
+  QrCode2,
   Refresh,
-  PublishedWithChangesTwoTone
+  Send
 } from '@mui/icons-material';
 import coinLogoLTC from '../../assets/ltc.png';
 
@@ -135,6 +136,18 @@ function SlideTransition(props: SlideProps) {
   return <Slide {...props} direction="up" />;
 }
 
+const DialogGeneral = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+  "& .MuiDialog-paper": {
+    borderRadius: "15px",
+  },
+}));
+
 const LtcQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -198,10 +211,10 @@ const CoinAvatar = styled(Avatar)({
 });
 
 const WalletButtons = styled(Button)({
-  width: "20%",
-  marginTop: "16px",
+  width: "auto",
   backgroundColor: "#05a2e4",
   color: "white",
+  padding: "auto",
   "&:hover": {
     backgroundColor: "#02648d",
   },
@@ -277,7 +290,8 @@ export default function LitecoinWallet() {
   const [loadingRefreshLtc, setLoadingRefreshLtc] = React.useState(false);
   const [openTxLtcSubmit, setOpenTxLtcSubmit] = React.useState(false);
   const [openSendLtcSuccess, setOpenSendLtcSuccess] = React.useState(false);
-  const [openSendLtceError, setOpenSendLtcError] = React.useState(false);
+  const [openSendLtcError, setOpenSendLtcError] = React.useState(false);
+  const [openLtcAddressBook, setOpenLtcAddressBook] = React.useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsLtc.length) : 0;
 
@@ -291,6 +305,12 @@ export default function LitecoinWallet() {
 
   const handleCloseLtcElectrum = () => {
     setOpenLtcElectrum(false);
+  }
+
+  const handleOpenAddressBook = async () => {
+    setOpenLtcAddressBook(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setOpenLtcAddressBook(false);
   }
 
   const handleOpenLtcSend = () => {
@@ -606,7 +626,7 @@ export default function LitecoinWallet() {
             Sent LTC transaction was successful!
           </Alert>
         </Snackbar>
-        <Snackbar open={openSendLtceError} autoHideDuration={4000} onClose={handleCloseSendLtcError}>
+        <Snackbar open={openSendLtcError} autoHideDuration={4000} onClose={handleCloseSendLtcError}>
           <Alert
             onClose={handleCloseSendLtcError}
             severity="error"
@@ -743,11 +763,11 @@ export default function LitecoinWallet() {
           />
           <TextField
             required
-            label="Receiver Adress"
-            id="ltca-address"
+            label="Receiver Address"
+            id="ltc-address"
             margin="normal"
             value={ltcRecipient}
-            helperText="Ltc Address 34 Characters long !"
+            helperText="LTC address 34 characters long !"
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setLtcRecipient(e.target.value)}
           />
@@ -914,7 +934,9 @@ export default function LitecoinWallet() {
                   }
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {epochToAgo(row?.timestamp)}
+                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
+                    <div>{epochToAgo(row?.timestamp)}</div>
+                  </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
             ))}
@@ -1000,7 +1022,7 @@ export default function LitecoinWallet() {
                 hostName: string;
                 port: number;
               }, i: React.Key) => (
-                <ListItemButton onClick={() => { setNewCurrentLtcServer(server?.connectionType, server?.hostName, server?.port) }}>
+                <ListItemButton key={i} onClick={() => { setNewCurrentLtcServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
               ))}
@@ -1016,11 +1038,32 @@ export default function LitecoinWallet() {
     );
   }
 
+  const LtcAddressBookDialogPage = () => {
+    return (
+      <DialogGeneral
+        aria-labelledby="btc-electrum-servers"
+        open={openLtcAddressBook}
+        keepMounted={false}
+      >
+        <DialogContent>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            Coming soon...
+          </Typography>
+        </DialogContent>
+      </DialogGeneral>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {LtcSendDialogPage()}
       {LtcQrDialogPage()}
       {LtcElectrumDialogPage()}
+      {LtcAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Litecoin Wallet
       </Typography>
@@ -1096,7 +1139,7 @@ export default function LitecoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {currentElectrumServerLtc[0]?.hostName + ":" + currentElectrumServerLtc[0]?.port}
+            {currentElectrumServerLtc[0]?.hostName ? currentElectrumServerLtc[0]?.hostName + ":" + currentElectrumServerLtc[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
           </Typography>
           <Tooltip placement="right" title="CHange Server">
             <IconButton aria-label="open-electrum" size="small" onClick={handleOpenLtcElectrum}>
@@ -1105,33 +1148,37 @@ export default function LitecoinWallet() {
           </Tooltip>
         </div>
         <div style={{
-          width: "100%",
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-evenly'
+          justifyContent: 'center',
+          marginTop: "15px"
         }}>
           <WalletButtons
             loading={isLoadingWalletBalanceLtc}
             loadingPosition="start"
             variant="contained"
-            startIcon={<FaRegPaperPlane />}
+            startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenLtcSend}
           >
             Tranfer LTC
           </WalletButtons>
+          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
-            startIcon={<FaQrcode />}
+            startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenLtcQR}
           >
             Show QR Code
           </WalletButtons>
+          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
-            startIcon={<FaBook />}
+            startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
             aria-label="book"
+            onClick={handleOpenAddressBook}
           >
             Address Book
           </WalletButtons>

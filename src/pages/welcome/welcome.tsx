@@ -1,18 +1,12 @@
 import * as React from "react";
+import WalletContext from '../../contexts/walletContext';
 import {
   Box,
-  Button,
   Card,
   CardContent,
   Container,
   Typography,
-  styled,
-  IconButton,
-  Rating,
-  Chip,
-  Select,
-  MenuItem,
-  TextField
+  styled
 } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import { TbBlocks, TbAffiliate, TbHistoryToggle, TbBrandGit } from "react-icons/tb";
@@ -29,35 +23,7 @@ const FeatureCard = styled(Card)(() => ({
 }));
 
 function WelcomePage() {
-  const [nodeInfo, setNodeInfo] = React.useState<any>(null);
-
-  async function getNodeInfo() {
-    try {
-      const nodeInfo = await qortalRequest({
-        action: "GET_NODE_INFO",
-      });
-      const nodeStatus = await qortalRequest({
-        action: "GET_NODE_STATUS",
-      });
-      return { ...nodeInfo, ...nodeStatus };
-    } catch (error) {
-    }
-  }
-
-  React.useEffect(() => {
-    let nodeInfoTimeoutId: number;
-    (async () => {
-      const infos = await getNodeInfo();
-      setNodeInfo(infos);
-      nodeInfoTimeoutId = setTimeout(async () => {
-        const infos = await getNodeInfo();
-        setNodeInfo(infos);
-      }, 120000);
-    })();
-    return () => {
-      clearTimeout(nodeInfoTimeoutId);
-    };
-  }, []);
+  const { nodeInfo, isAuthenticated } = React.useContext(WalletContext);
 
   const features = [
     { icon: <TbBlocks size={32} />, title: nodeInfo?.height, description: "BLOCK HEIGHT" },
@@ -94,7 +60,7 @@ function WelcomePage() {
         </Grid>
         <Box sx={{ mt: 8 }}>
           <Typography variant="h4" gutterBottom align="center">
-            Features
+            {isAuthenticated ? '' : 'Please sign in to use Qortal Wallets !'}
           </Typography>
         </Box>
       </Container>

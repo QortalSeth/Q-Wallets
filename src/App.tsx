@@ -24,6 +24,7 @@ import DogecoinWallet from "./pages/doge/index";
 import DigibyteWallet from "./pages/dgb/index";
 import RavencoinWallet from "./pages/rvn/index";
 import PirateWallet from "./pages/arrr/index";
+import { useSearchParams } from "react-router-dom";
 
 const walletTheme = createTheme({
   cssVariables: {
@@ -64,6 +65,7 @@ function App() {
   const [userSess, setUserSess] = React.useState<any>(null);
   const [session, setSession] = React.useState<Session | null>(null);
   const [nodeInfo, setNodeInfo] = React.useState<any>(null);
+  const [searchParams] = useSearchParams();
 
   const getIsUsingGateway = async () => {
     try {
@@ -165,6 +167,16 @@ function App() {
       },
     };
   }, [userSess]);
+
+  React.useEffect(() => {
+    if (searchParams.get("authOnMount") === "true") {
+      (async () => {
+        const response = await askForAccountInformation();
+        setSession(response);
+        setIsAuthenticated(true);
+      })();
+    }
+  }, [searchParams]);
 
   const walletContextValue: IContextProps = {
     userInfo,

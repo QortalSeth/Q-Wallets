@@ -25,6 +25,7 @@ import DigibyteWallet from "./pages/dgb/index";
 import RavencoinWallet from "./pages/rvn/index";
 import PirateWallet from "./pages/arrr/index";
 import { useSearchParams } from "react-router-dom";
+import { useIframe } from './main';
 
 const walletTheme = createTheme({
   cssVariables: {
@@ -57,7 +58,7 @@ const walletTheme = createTheme({
 });
 
 function App() {
-  
+  useIframe()
   const [userInfo, setUserInfo] = React.useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
   const [isUsingGateway, setIsUsingGateway] = React.useState(true);

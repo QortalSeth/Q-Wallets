@@ -1150,9 +1150,11 @@ export default function RavencoinWallet() {
         <div style={{
           width: '100%',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: "15px"
+          gap: '15px',
+          marginTop: '15px'
         }}>
           <WalletButtons
             loading={isLoadingWalletBalanceRvn}
@@ -1162,9 +1164,8 @@ export default function RavencoinWallet() {
             aria-label="transfer"
             onClick={handleOpenRvnSend}
           >
-            Tranfer RVN
+            Transfer RVN
           </WalletButtons>
-          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
@@ -1173,7 +1174,6 @@ export default function RavencoinWallet() {
           >
             Show QR Code
           </WalletButtons>
-          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
             startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}

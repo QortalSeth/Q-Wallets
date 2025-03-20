@@ -1884,9 +1884,11 @@ export default function QortalWallet() {
         <div style={{
           width: '100%',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: "15px"
+          gap: '15px',
+          marginTop: '15px'
         }}>
           <WalletButtons
             variant="contained"
@@ -1894,9 +1896,8 @@ export default function QortalWallet() {
             aria-label="Transfer"
             onClick={handleOpenQortSend}
           >
-            Tranfer QORT
+            Transfer QORT
           </WalletButtons>
-          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
@@ -1905,7 +1906,6 @@ export default function QortalWallet() {
           >
             Show QR Code
           </WalletButtons>
-          <div style={{ marginLeft: '20px' }} />
           <WalletButtons
             variant="contained"
             startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}

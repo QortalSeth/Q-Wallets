@@ -813,9 +813,11 @@ export default function PirateWallet() {
       <div style={{
         width: '100%',
         display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: "15px"
+        gap: '15px',
+        marginTop: '15px'
       }}>
         <WalletButtons
           loading={isLoadingWalletBalanceArrr}
@@ -825,9 +827,8 @@ export default function PirateWallet() {
           aria-label="transfer"
           onClick={handleOpenArrrSend}
         >
-          Tranfer ARRR
+          Transfer ARRR
         </WalletButtons>
-        <div style={{ marginLeft: '20px' }} />
         <WalletButtons
           variant="contained"
           startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
@@ -836,7 +837,6 @@ export default function PirateWallet() {
         >
           Show QR Code
         </WalletButtons>
-        <div style={{ marginLeft: '20px' }} />
         <WalletButtons
           variant="contained"
           startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}

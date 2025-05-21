@@ -1321,7 +1321,7 @@ export default function PirateWallet() {
       {ArrrQrDialogPage()}
       {ArrrAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
-        Pirat Chain Wallet
+        Pirate Chain Wallet
       </Typography>
       <WalleteCard>
         <CoinAvatar

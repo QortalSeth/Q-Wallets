@@ -264,7 +264,7 @@ export default function BitcoinWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Bitcoin wallet !!!
+        You must sign in, to use the Bitcoin wallet.
       </Alert>
     );
   }
@@ -337,13 +337,13 @@ export default function BitcoinWallet() {
   }
 
   const changeCopyBtcStatus = async () => {
-    setCopyBtcAddress('Copied !!!');
+    setCopyBtcAddress('Copied');
     await timeoutDelay(2000);
     setCopyBtcAddress('');
   }
 
   const changeCopyBtcTxHash = async () => {
-    setCopyBtcTxHash('Copied !!!');
+    setCopyBtcTxHash('Copied');
     await timeoutDelay(2000);
     setCopyBtcTxHash('');
   }
@@ -623,7 +623,7 @@ export default function BitcoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent BTC transaction was successful!
+            Sent BTC transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendBtcError} autoHideDuration={4000} onClose={handleCloseSendBtcError}>
@@ -633,7 +633,7 @@ export default function BitcoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -767,7 +767,7 @@ export default function BitcoinWallet() {
             id="btc-address"
             margin="normal"
             value={btcRecipient}
-            helperText="BTC address 34 characters long !"
+            helperText="BTC address should be 34 characters long"
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setBtcRecipient(e.target.value)}
           />

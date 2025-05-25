@@ -767,7 +767,7 @@ export default function BitcoinWallet() {
             id="btc-address"
             margin="normal"
             value={btcRecipient}
-            helperText="BTC address should be 34 characters long"
+            helperText="BTC address should be 34 characters long."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setBtcRecipient(e.target.value)}
           />

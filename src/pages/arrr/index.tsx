@@ -1198,7 +1198,7 @@ export default function PirateWallet() {
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
-            helperText="ARRR address 78 characters long (starts with zs)"
+            helperText="ARRR address should be 78 characters long (starts with zs)"
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
             onChange={(e) => setArrrRecipient(e.target.value)}
           />

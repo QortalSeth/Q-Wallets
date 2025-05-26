@@ -264,7 +264,7 @@ export default function LitecoinWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Litecoin wallet !!!
+        You must sign in, to use the Litecoin wallet.
       </Alert>
     );
   }
@@ -337,13 +337,13 @@ export default function LitecoinWallet() {
   }
 
   const changeCopyLtcStatus = async () => {
-    setCopyLtcAddress('Copied !!!');
+    setCopyLtcAddress('Copied');
     await timeoutDelay(2000);
     setCopyLtcAddress('');
   }
 
   const changeCopyLtcTxHash = async () => {
-    setCopyLtcTxHash('Copied !!!');
+    setCopyLtcTxHash('Copied');
     await timeoutDelay(2000);
     setCopyLtcTxHash('');
   }
@@ -623,7 +623,7 @@ export default function LitecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent LTC transaction was successful!
+            Sent LTC transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendLtcError} autoHideDuration={4000} onClose={handleCloseSendLtcError}>
@@ -633,7 +633,7 @@ export default function LitecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -767,7 +767,7 @@ export default function LitecoinWallet() {
             id="ltc-address"
             margin="normal"
             value={ltcRecipient}
-            helperText="LTC address 34 characters long !"
+            helperText="LTC address should be 34 characters long."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setLtcRecipient(e.target.value)}
           />

@@ -264,7 +264,7 @@ export default function RavencoinWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Ravencoin wallet !!!
+        You must sign in, to use the Ravencoin wallet.
       </Alert>
     );
   }
@@ -337,13 +337,13 @@ export default function RavencoinWallet() {
   }
 
   const changeCopyRvnStatus = async () => {
-    setCopyRvnAddress('Copied !!!');
+    setCopyRvnAddress('Copied');
     await timeoutDelay(2000);
     setCopyRvnAddress('');
   }
 
   const changeCopyRvnTxHash = async () => {
-    setCopyRvnTxHash('Copied !!!');
+    setCopyRvnTxHash('Copied');
     await timeoutDelay(2000);
     setCopyRvnTxHash('');
   }
@@ -623,7 +623,7 @@ export default function RavencoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent RVN transaction was successful!
+            Sent RVN transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendRvnError} autoHideDuration={4000} onClose={handleCloseSendRvnError}>
@@ -633,7 +633,7 @@ export default function RavencoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -767,7 +767,7 @@ export default function RavencoinWallet() {
             id="rvn-address"
             margin="normal"
             value={rvnRecipient}
-            helperText="RVN address 34 characters long !"
+            helperText="RVN address should be 34 characters long."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setRvnRecipient(e.target.value)}
           />

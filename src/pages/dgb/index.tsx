@@ -264,7 +264,7 @@ export default function DigibyteWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Digibyte wallet !!!
+        You must sign in, to use the Digibyte wallet.
       </Alert>
     );
   }
@@ -337,13 +337,13 @@ export default function DigibyteWallet() {
   }
 
   const changeCopyDgbStatus = async () => {
-    setCopyDgbAddress('Copied !!!');
+    setCopyDgbAddress('Copied');
     await timeoutDelay(2000);
     setCopyDgbAddress('');
   }
 
   const changeCopyDgbTxHash = async () => {
-    setCopyDgbTxHash('Copied !!!');
+    setCopyDgbTxHash('Copied');
     await timeoutDelay(2000);
     setCopyDgbTxHash('');
   }
@@ -623,7 +623,7 @@ export default function DigibyteWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent DGB transaction was successful!
+            Sent DGB transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendDgbError} autoHideDuration={4000} onClose={handleCloseSendDgbError}>
@@ -633,7 +633,7 @@ export default function DigibyteWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -767,7 +767,7 @@ export default function DigibyteWallet() {
             id="dgb-address"
             margin="normal"
             value={dgbRecipient}
-            helperText="DGB address 34 characters long !"
+            helperText="DGB address should be 34 characters long."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setDgbRecipient(e.target.value)}
           />

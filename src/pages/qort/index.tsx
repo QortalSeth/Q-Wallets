@@ -222,7 +222,7 @@ export default function QortalWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Qortal wallet !!!
+        You must sign in, to use the Qortal wallet.
       </Alert>
     );
   }
@@ -288,7 +288,7 @@ export default function QortalWallet() {
   };
 
   const changeCopyQortcStatus = async () => {
-    setCopyQortAddress('Copied !!!');
+    setCopyQortAddress('Copied');
     await timeoutDelay(2000);
     setCopyQortAddress('');
   }
@@ -1661,7 +1661,7 @@ export default function QortalWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent QORT transaction was successful!
+            Sent QORT transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendQortError} autoHideDuration={4000} onClose={handleCloseSendQortError}>
@@ -1671,7 +1671,7 @@ export default function QortalWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -1798,7 +1798,7 @@ export default function QortalWallet() {
             id="qort-address"
             margin="normal"
             value={qortRecipient}
-            helperText="QORT address 34 characters long (Name min 3 characters) !"
+            helperText="QORT address should be 34 characters long (Name min 3 characters)."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 3 } }}
             onChange={(e) => validateCanSendQortAddress(e.target.value)}
           />

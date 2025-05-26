@@ -60,7 +60,7 @@ function WelcomePage() {
         </Grid>
         <Box sx={{ mt: 8 }}>
           <Typography variant="h4" gutterBottom align="center">
-            {isAuthenticated ? '' : 'Please sign in to use Qortal Wallets !'}
+            {isAuthenticated ? '' : 'Please sign in to use Qortal Wallets.'}
           </Typography>
         </Box>
       </Container>

@@ -264,7 +264,7 @@ export default function DogecoinWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Dogecoin wallet !!!
+        You must sign in, to use the Dogecoin wallet.
       </Alert>
     );
   }
@@ -337,13 +337,13 @@ export default function DogecoinWallet() {
   }
 
   const changeCopyDogeStatus = async () => {
-    setCopyDogeAddress('Copied !!!');
+    setCopyDogeAddress('Copied');
     await timeoutDelay(2000);
     setCopyDogeAddress('');
   }
 
   const changeCopyDogeTxHash = async () => {
-    setCopyDogeTxHash('Copied !!!');
+    setCopyDogeTxHash('Copied');
     await timeoutDelay(2000);
     setCopyDogeTxHash('');
   }
@@ -623,7 +623,7 @@ export default function DogecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent DOGE transaction was successful!
+            Sent DOGE transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendDogeError} autoHideDuration={4000} onClose={handleCloseSendDogeError}>
@@ -633,7 +633,7 @@ export default function DogecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -767,7 +767,7 @@ export default function DogecoinWallet() {
             id="doge-address"
             margin="normal"
             value={dogeRecipient}
-            helperText="DOGE address 34 characters long !"
+            helperText="DOGE address should be 34 characters long."
             slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
             onChange={(e) => setDogeRecipient(e.target.value)}
           />

@@ -244,7 +244,7 @@ export default function PirateWallet() {
   if (!isAuthenticated) {
     return (
       <Alert variant="filled" severity="error">
-        You must sign in, to use the Pirate Chain wallet !!!
+        You must sign in, to use the Pirate Chain wallet.
       </Alert>
     );
   }
@@ -334,13 +334,13 @@ export default function PirateWallet() {
   }
 
   const changeCopyArrrStatus = async () => {
-    setCopyArrrAddress('Copied !!!');
+    setCopyArrrAddress('Copied');
     await timeoutDelay(2000);
     setCopyArrrAddress('');
   }
 
   const changeCopyArrrTxHash = async () => {
-    setCopyArrrTxHash('Copied !!!');
+    setCopyArrrTxHash('Copied');
     await timeoutDelay(2000);
     setCopyArrrTxHash('');
   }
@@ -513,7 +513,7 @@ export default function PirateWallet() {
         if (!response?.error) {
           if (response.indexOf('<') > -1 || response !== "Synchronized" || response === "Not initialized yet") {
             if (response.indexOf('<') > -1) {
-              setSyncStatus('No Cennection To Pirate Chain Lightwallet Server!');
+              setSyncStatus('No Connection To Pirate Chain Lightwallet Server.');
               setChangeServer(false);
               setIsSynced(false);
               counter = 37;
@@ -551,7 +551,7 @@ export default function PirateWallet() {
         }
       }
       setIsSynced(false);
-      setSyncStatus('No Cennection To Pirate Chain Lightwallet Server!');
+      setSyncStatus('No Connection To Pirate Chain Lightwallet Server.');
       setChangeServer(true);
       return;
     } catch (error) {
@@ -1061,7 +1061,7 @@ export default function PirateWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent ARRR transaction was successful!
+            Sent ARRR transaction was successful.
           </Alert>
         </Snackbar>
         <Snackbar open={openSendArrrError} autoHideDuration={4000} onClose={handleCloseSendArrrError}>
@@ -1071,7 +1071,7 @@ export default function PirateWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again!
+            Something went wrong, please try again.
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -1198,7 +1198,7 @@ export default function PirateWallet() {
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
-            helperText="ARRR address 78 characters long (starts with zs) !"
+            helperText="ARRR address should be 78 characters long (starts with zs)"
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
             onChange={(e) => setArrrRecipient(e.target.value)}
           />
@@ -1207,7 +1207,7 @@ export default function PirateWallet() {
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}
-            helperText="ARRR memo maximal 40 characters long !"
+            helperText="ARRR memo maximal 40 characters long."
             slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
             onChange={(e) => setArrrMemo(e.target.value)}
           />

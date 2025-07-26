@@ -18,8 +18,9 @@ import {
   List,
   ListItemButton,
   ListItemText,
+
   Paper,
-  Slider,
+
   Table,
   TableBody,
   TableContainer,
@@ -28,6 +29,7 @@ import {
   TablePagination,
   TableRow,
   TextField,
+
   Toolbar,
   Tooltip,
   tooltipClasses,
@@ -56,6 +58,9 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoLTC from '../../assets/ltc.png';
+import { useRecommendedFees } from '../../hooks/useRecommendedFees';
+import { CoinActionContainer, CoinActionRow, CustomLabel, HeaderRow } from '../../styles/Fees-styles';
+import { FeeManager } from '../../components/FeeManager';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -286,12 +291,16 @@ export default function LitecoinWallet() {
   const [openLtcSend, setOpenLtcSend] = React.useState(false);
   const [ltcAmount, setLtcAmount] = React.useState<number>(0);
   const [ltcRecipient, setLtcRecipient] = React.useState('');
-  const [ltcFee, setLtcFee] = React.useState<number>(0);
+ 
   const [loadingRefreshLtc, setLoadingRefreshLtc] = React.useState(false);
   const [openTxLtcSubmit, setOpenTxLtcSubmit] = React.useState(false);
   const [openSendLtcSuccess, setOpenSendLtcSuccess] = React.useState(false);
   const [openSendLtcError, setOpenSendLtcError] = React.useState(false);
   const [openLtcAddressBook, setOpenLtcAddressBook] = React.useState(false);
+  const [inputFee, setInputFee] = React.useState(0)
+ 
+ const ltcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8)
+ const estimatedFeeCalculated = +ltcFeeCalculated * 1000
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsLtc.length) : 0;
 
@@ -316,7 +325,7 @@ export default function LitecoinWallet() {
   const handleOpenLtcSend = () => {
     setLtcAmount(0);
     setLtcRecipient('');
-    setLtcFee(30);
+
     setOpenLtcSend(true);
   }
 
@@ -332,7 +341,7 @@ export default function LitecoinWallet() {
 
   const handleCloseLtcSend = () => {
     setLtcAmount(0);
-    setLtcFee(0);
+    
     setOpenLtcSend(false);
   }
 
@@ -357,10 +366,7 @@ export default function LitecoinWallet() {
     setPage(0);
   };
 
-  const handleChangeLtcFee = (_: Event, newValue: number | number[]) => {
-    setLtcFee(newValue as number);
-    setLtcAmount(0);
-  };
+
 
   const handleCloseSendLtcSuccess = (
     _event?: React.SyntheticEvent | Event,
@@ -503,7 +509,7 @@ export default function LitecoinWallet() {
   }
 
   const handleSendMaxLtc = () => {
-    const maxLtcAmount = parseFloat((walletBalanceLtc - ((ltcFee * 1000) / 1e8)).toFixed(8));
+    const maxLtcAmount = +walletBalanceLtc - estimatedFeeCalculated
     if (maxLtcAmount <= 0) {
       setLtcAmount(0);
     } else {
@@ -543,8 +549,9 @@ export default function LitecoinWallet() {
   }
 
   const sendLtcRequest = async () => {
+    if(!ltcFeeCalculated) return
     setOpenTxLtcSubmit(true);
-    const ltcFeeCalculated = Number(ltcFee / 1e8).toFixed(8);
+   
     try {
       const sendRequest = await qortalRequest({
         action: "SEND_COIN",
@@ -556,7 +563,7 @@ export default function LitecoinWallet() {
       if (!sendRequest?.error) {
         setLtcAmount(0);
         setLtcRecipient('');
-        setLtcFee(30);
+    
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
@@ -566,7 +573,7 @@ export default function LitecoinWallet() {
     } catch (error) {
       setLtcAmount(0);
       setLtcRecipient('');
-      setLtcFee(30);
+     
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
@@ -713,7 +720,7 @@ export default function LitecoinWallet() {
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
             {(() => {
-              const newMaxLtcAmount = parseFloat((walletBalanceLtc - ((ltcFee * 1000) / 1e8)).toFixed(8));
+              const newMaxLtcAmount = +walletBalanceLtc - estimatedFeeCalculated
               if (newMaxLtcAmount < 0) {
                 return Number(0.00000000) + " LTC"
               } else {
@@ -752,7 +759,7 @@ export default function LitecoinWallet() {
             variant="outlined"
             label="Amount (LTC)"
             isAllowed={(values) => {
-              const maxLtcCoin = (walletBalanceLtc - (ltcFee * 1000) / 1e8);
+              const maxLtcCoin = +walletBalanceLtc - estimatedFeeCalculated
               const { formattedValue, floatValue } = values;
               return formattedValue === "" || floatValue <= maxLtcCoin;
             }}
@@ -772,43 +779,7 @@ export default function LitecoinWallet() {
             onChange={(e) => setLtcRecipient(e.target.value)}
           />
         </Box>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
-            flexDirection: 'column',
-            width: '50ch'
-          }}>
-            <Typography id="ltc-fee-slider" gutterBottom>
-              Current fee per byte : {ltcFee} SAT
-            </Typography>
-            <Slider
-              track={false}
-              step={5}
-              min={10}
-              max={100}
-              valueLabelDisplay="auto"
-              aria-labelledby="ltc-fee-slider"
-              getAriaValueText={valueTextLtc}
-              defaultValue={30}
-              marks={ltcMarks}
-              onChange={handleChangeLtcFee}
-            />
-            <Typography
-              align="center"
-              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-            >
-              Low fees may result in slow or unconfirmed transactions.
-            </Typography>
-          </Box>
-        </div>
+       <FeeManager coin='LTC' onChange={setInputFee} />
       </Dialog>
     );
   }
@@ -854,7 +825,7 @@ export default function LitecoinWallet() {
             {(rowsPerPage > 0
               ? transactionsLtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsLtc
-            ).map((row: {
+            )?.map((row: {
               inputs: { address: any; addressInWallet: boolean; }[];
               outputs: { address: any; addressInWallet: boolean; }[];
               txHash: string;
@@ -1017,7 +988,7 @@ export default function LitecoinWallet() {
             <List>
               {(
                 allElectrumServersLtc
-              ).map((server: {
+              )?.map((server: {
                 connectionType: string;
                 hostName: string;
                 port: number;

@@ -56,6 +56,7 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoDOGE from '../../assets/doge.png';
+import { FeeManager } from '../../components/FeeManager';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -286,12 +287,16 @@ export default function DogecoinWallet() {
   const [openDogeSend, setOpenDogeSend] = React.useState(false);
   const [dogeAmount, setDogeAmount] = React.useState<number>(0);
   const [dogeRecipient, setDogeRecipient] = React.useState('');
-  const [dogeFee, setDogeFee] = React.useState<number>(0);
   const [loadingRefreshDoge, setLoadingRefreshDoge] = React.useState(false);
   const [openTxDogeSubmit, setOpenTxDogeSubmit] = React.useState(false);
   const [openSendDogeSuccess, setOpenSendDogeSuccess] = React.useState(false);
   const [openSendDogeError, setOpenSendDogeError] = React.useState(false);
   const [openDogeAddressBook, setOpenDogeAddressBook] = React.useState(false);
+
+    const [inputFee, setInputFee] = React.useState(0)
+   
+   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8)
+   const estimatedFeeCalculated = +dogeFeeCalculated * 5000
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsDoge.length) : 0;
 
@@ -316,7 +321,6 @@ export default function DogecoinWallet() {
   const handleOpenDogeSend = () => {
     setDogeAmount(0);
     setDogeRecipient('');
-    setDogeFee(1000);
     setOpenDogeSend(true);
   }
 
@@ -332,7 +336,6 @@ export default function DogecoinWallet() {
 
   const handleCloseDogeSend = () => {
     setDogeAmount(0);
-    setDogeFee(0);
     setOpenDogeSend(false);
   }
 
@@ -357,10 +360,7 @@ export default function DogecoinWallet() {
     setPage(0);
   };
 
-  const handleChangeDogeFee = (_: Event, newValue: number | number[]) => {
-    setDogeFee(newValue as number);
-    setDogeAmount(0);
-  };
+
 
   const handleCloseSendDogeSuccess = (
     _event?: React.SyntheticEvent | Event,
@@ -503,7 +503,7 @@ export default function DogecoinWallet() {
   }
 
   const handleSendMaxDoge = () => {
-    const maxDogeAmount = parseFloat((walletBalanceDoge - ((dogeFee * 1000) / 1e8)).toFixed(8));
+    const maxDogeAmount = +walletBalanceDoge - estimatedFeeCalculated;
     if (maxDogeAmount <= 0) {
       setDogeAmount(0);
     } else {
@@ -543,8 +543,9 @@ export default function DogecoinWallet() {
   }
 
   const sendDogeRequest = async () => {
+        if(!dogeFeeCalculated) return
+
     setOpenTxDogeSubmit(true);
-    const dogeFeeCalculated = Number(dogeFee / 1e8).toFixed(8);
     try {
       const sendRequest = await qortalRequest({
         action: "SEND_COIN",
@@ -556,7 +557,6 @@ export default function DogecoinWallet() {
       if (!sendRequest?.error) {
         setDogeAmount(0);
         setDogeRecipient('');
-        setDogeFee(1000);
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
@@ -566,7 +566,6 @@ export default function DogecoinWallet() {
     } catch (error) {
       setDogeAmount(0);
       setDogeRecipient('');
-      setDogeFee(1000);
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
@@ -713,7 +712,7 @@ export default function DogecoinWallet() {
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
             {(() => {
-              const newMaxDogeAmount = parseFloat((walletBalanceDoge - ((dogeFee * 1000) / 1e8)).toFixed(8));
+              const newMaxDogeAmount = +walletBalanceDoge - estimatedFeeCalculated;
               if (newMaxDogeAmount < 0) {
                 return Number(0.00000000) + " DOGE"
               } else {
@@ -752,7 +751,7 @@ export default function DogecoinWallet() {
             variant="outlined"
             label="Amount (DOGE)"
             isAllowed={(values) => {
-              const maxDogeCoin = (walletBalanceDoge - (dogeFee * 1000) / 1e8);
+              const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
               return formattedValue === "" || floatValue <= maxDogeCoin;
             }}
@@ -772,43 +771,7 @@ export default function DogecoinWallet() {
             onChange={(e) => setDogeRecipient(e.target.value)}
           />
         </Box>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
-            flexDirection: 'column',
-            width: '50ch'
-          }}>
-            <Typography id="doge-fee-slider" gutterBottom>
-              Current fee per byte : {dogeFee} SAT
-            </Typography>
-            <Slider
-              track={false}
-              step={100}
-              min={100}
-              max={10000}
-              valueLabelDisplay="auto"
-              aria-labelledby="doge-fee-slider"
-              getAriaValueText={valueTextDoge}
-              defaultValue={1000}
-              marks={dogeMarks}
-              onChange={handleChangeDogeFee}
-            />
-            <Typography
-              align="center"
-              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-            >
-              Low fees may result in slow or unconfirmed transactions.
-            </Typography>
-          </Box>
-        </div>
+         <FeeManager coin='DOGE' onChange={setInputFee} />
       </Dialog>
     );
   }
@@ -854,7 +817,7 @@ export default function DogecoinWallet() {
             {(rowsPerPage > 0
               ? transactionsDoge.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsDoge
-            ).map((row: {
+            )?.map((row: {
               inputs: { address: any; addressInWallet: boolean; }[];
               outputs: { address: any; addressInWallet: boolean; }[];
               txHash: string;
@@ -1017,7 +980,7 @@ export default function DogecoinWallet() {
             <List>
               {(
                 allElectrumServersDoge
-              ).map((server: {
+              )?.map((server: {
                 connectionType: string;
                 hostName: string;
                 port: number;

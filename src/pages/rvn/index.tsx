@@ -160,18 +160,6 @@ const RvnQrDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const RvnElectrumDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
-  },
-}));
-
 const RvnSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -272,9 +260,6 @@ export default function RavencoinWallet() {
   const [walletInfoRvn, setWalletInfoRvn] = React.useState<any>({});
   const [walletBalanceRvn, setWalletBalanceRvn] = React.useState<any>(null);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] = React.useState<boolean>(true);
-  const [allElectrumServersRvn, setAllElectrumServersRvn] = React.useState<any>([]);
-  const [currentElectrumServerRvn, setCurrentElectrumServerRvn] = React.useState<any>([]);
-  const [allWalletAddressesRvn, setAllWalletAddressesRvn] = React.useState<any>([]);
   const [transactionsRvn, setTransactionsRvn] = React.useState<any>([]);
   const [isLoadingRvnTransactions, setIsLoadingRvnTransactions] = React.useState<boolean>(true);
   const [page, setPage] = React.useState(0);
@@ -282,11 +267,10 @@ export default function RavencoinWallet() {
   const [copyRvnAddress, setCopyRvnAddress] = React.useState('');
   const [copyRvnTxHash, setCopyRvnTxHash] = React.useState('');
   const [openRvnQR, setOpenRvnQR] = React.useState(false);
-  const [openRvnElectrum, setOpenRvnElectrum] = React.useState(false);
   const [openRvnSend, setOpenRvnSend] = React.useState(false);
   const [rvnAmount, setRvnAmount] = React.useState<number>(0);
   const [rvnRecipient, setRvnRecipient] = React.useState('');
-  const [rvnFee, setRvnFee] = React.useState<number>(0);
+  const [addressFormatError, setAddressFormatError] = React.useState(false);const [rvnFee, setRvnFee] = React.useState<number>(0);
   const [loadingRefreshRvn, setLoadingRefreshRvn] = React.useState(false);
   const [openTxRvnSubmit, setOpenTxRvnSubmit] = React.useState(false);
   const [openSendRvnSuccess, setOpenSendRvnSuccess] = React.useState(false);
@@ -301,10 +285,6 @@ export default function RavencoinWallet() {
 
   const handleCloseRvnQR = () => {
     setOpenRvnQR(false);
-  }
-
-  const handleCloseRvnElectrum = () => {
-    setOpenRvnElectrum(false);
   }
 
   const handleOpenAddressBook = async () => {
@@ -324,13 +304,27 @@ export default function RavencoinWallet() {
     if (rvnAmount <= 0 || null || !rvnAmount) {
       return true;
     }
-    if (rvnRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
   }
 
-  const handleCloseRvnSend = () => {
+    const handleRecipientChange = (e) => {
+        const value = e.target.value;
+        const pattern = /^(R[1-9A-HJ-NP-Za-km-z]{33})$/
+
+        setRvnRecipient(value);
+
+        if( pattern.test(value) || value === '') {
+            setAddressFormatError(false);
+        }
+        else {
+            setAddressFormatError(true);
+        }
+    };
+
+    const handleCloseRvnSend = () => {
     setRvnAmount(0);
     setRvnFee(0);
     setOpenRvnSend(false);
@@ -430,56 +424,15 @@ export default function RavencoinWallet() {
     }
   }, [isAuthenticated]);
 
-  const getElectrumServersRvn = async () => {
-    try {
-      const response = await qortalRequest({
-        action: "GET_CROSSCHAIN_SERVER_INFO",
-        coin: "RVN"
-      });
-      if (!response?.error) {
-        setAllElectrumServersRvn(response);
-        let currentRvnServer = response.filter(function (item: { isCurrent: boolean; }) {
-          return item.isCurrent === true;
-        });
-        setCurrentElectrumServerRvn(currentRvnServer);
-      }
-    } catch (error) {
-      setAllElectrumServersRvn({});
-      console.error("ERROR GET RVN SERVERS INFO", error);
-    }
-  }
-
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    getElectrumServersRvn();
-  }, [isAuthenticated]);
-
-  const handleOpenRvnElectrum = async () => {
-    await getElectrumServersRvn();
-    setOpenRvnElectrum(true);
-  }
-
   const getTransactionsRvn = async () => {
     try {
       setIsLoadingRvnTransactions(true);
-      const responseRvnAllAddresses = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_INFO",
-        coin: "RVN",
-      }, 120000);
+      
       const responseRvnTransactions = await qortalRequestWithTimeout({
         action: "GET_USER_WALLET_TRANSACTIONS",
         coin: 'RVN'
       }, 300000);
-      try {
-        await responseRvnAllAddresses;
-        if (!responseRvnAllAddresses?.error) {
-          setAllWalletAddressesRvn(responseRvnAllAddresses);
-        }
-      } catch (error) {
-        setAllWalletAddressesRvn([]);
-        console.error("ERROR GET RVN ALL ADDRESSES", error);
-      }
-      await responseRvnTransactions;
+      
       if (!responseRvnTransactions?.error) {
         setTransactionsRvn(responseRvnTransactions);
         setIsLoadingRvnTransactions(false);
@@ -767,9 +720,9 @@ export default function RavencoinWallet() {
             id="rvn-address"
             margin="normal"
             value={rvnRecipient}
-            helperText="RVN address should be 34 characters long."
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
-            onChange={(e) => setRvnRecipient(e.target.value)}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={addressFormatError ? 'Invalid RVN address' : 'RVN addresses should be 34 characters long for BIP44 (R prefix).'}
           />
         </Box>
         <div style={{
@@ -855,71 +808,30 @@ export default function RavencoinWallet() {
               ? transactionsRvn.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsRvn
             ).map((row: {
-              inputs: { address: any; addressInWallet: boolean; }[];
-              outputs: { address: any; addressInWallet: boolean; }[];
+              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
+              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasSenderOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
-                      } else {
-                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
-                      }
-                    } else {
-                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotSenderOutputs[0]?.address) {
-                        return meWasNotSenderOutputs[0]?.address;
-                      } else {
-                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotSenderInputs[0]?.address;
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotRecipientOutputs[0]?.address) {
-                        return meWasNotRecipientOutputs[0]?.address;
-                      } else {
-                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotRecipientInputs[0]?.address;
-                      }
-                    } else if (row?.totalAmount > 0) {
-                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasRecipientOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
-                      } else {
-                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {cropString(row?.txHash)}
                   <CustomWidthTooltip placement="top" title={copyRvnTxHash ? copyRvnTxHash : "Copy Hash: " + row?.txHash}>
@@ -933,9 +845,16 @@ export default function RavencoinWallet() {
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.totalAmount <= 0 ?
+                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                          :
+                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      }
+                </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
-                    <div>{epochToAgo(row?.timestamp)}</div>
+                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
+                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
                   </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
@@ -973,71 +892,6 @@ export default function RavencoinWallet() {
     );
   }
 
-  const setNewCurrentRvnServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    try {
-      const setServer = await qortalRequest({
-        action: "SET_CURRENT_FOREIGN_SERVER",
-        coin: "RVN",
-        type: typeServer,
-        host: hostServer,
-        port: portServer
-      });
-      if (!setServer?.error) {
-        await getElectrumServersRvn();
-        setOpenRvnElectrum(false);
-        await getWalletBalanceRvn();
-        await getTransactionsRvn();
-      }
-    } catch (error) {
-      await getElectrumServersRvn();
-      setOpenRvnElectrum(false);
-      console.error("ERROR GET RVN SERVERS INFO", error);
-    }
-  }
-
-  const RvnElectrumDialogPage = () => {
-    return (
-      <RvnElectrumDialog
-        onClose={handleCloseRvnQR}
-        aria-labelledby="rvn-electrum-servers"
-        open={openRvnElectrum}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="rvn-electrum-servers">
-          Available Ravencoin Electrum Servers.
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{
-            width: '100%',
-            maxWidth: 500,
-            position: 'relative',
-            overflow: 'auto',
-            maxHeight: 400
-          }}>
-            <List>
-              {(
-                allElectrumServersRvn
-              ).map((server: {
-                connectionType: string;
-                hostName: string;
-                port: number;
-              }, i: React.Key) => (
-                <ListItemButton key={i} onClick={() => { setNewCurrentRvnServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseRvnElectrum}>
-            CLOSE
-          </Button>
-        </DialogActions>
-      </RvnElectrumDialog>
-    );
-  }
-
   const RvnAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -1062,7 +916,6 @@ export default function RavencoinWallet() {
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {RvnSendDialogPage()}
       {RvnQrDialogPage()}
-      {RvnElectrumDialogPage()}
       {RvnAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Ravencoin Wallet
@@ -1118,32 +971,6 @@ export default function RavencoinWallet() {
           <Tooltip placement="right" title={copyRvnAddress ? copyRvnAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoRvn?.address), changeCopyRvnStatus() }}>
               <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            Electrum Server:&nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {currentElectrumServerRvn[0]?.hostName ? currentElectrumServerRvn[0]?.hostName + ":" + currentElectrumServerRvn[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
-          </Typography>
-          <Tooltip placement="right" title="Change Server">
-            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenRvnElectrum}>
-              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>

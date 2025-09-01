@@ -18,9 +18,7 @@ import {
   List,
   ListItemButton,
   ListItemText,
-
   Paper,
-
   Table,
   TableBody,
   TableContainer,
@@ -29,7 +27,6 @@ import {
   TablePagination,
   TableRow,
   TextField,
-
   Toolbar,
   Tooltip,
   tooltipClasses,
@@ -165,18 +162,6 @@ const LtcQrDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const LtcElectrumDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
-  },
-}));
-
 const LtcSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -277,9 +262,6 @@ export default function LitecoinWallet() {
   const [walletInfoLtc, setWalletInfoLtc] = React.useState<any>({});
   const [walletBalanceLtc, setWalletBalanceLtc] = React.useState<any>(null);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] = React.useState<boolean>(true);
-  const [allElectrumServersLtc, setAllElectrumServersLtc] = React.useState<any>([]);
-  const [currentElectrumServerLtc, setCurrentElectrumServerLtc] = React.useState<any>([]);
-  const [allWalletAddressesLtc, setAllWalletAddressesLtc] = React.useState<any>([]);
   const [transactionsLtc, setTransactionsLtc] = React.useState<any>([]);
   const [isLoadingLtcTransactions, setIsLoadingLtcTransactions] = React.useState<boolean>(true);
   const [page, setPage] = React.useState(0);
@@ -287,11 +269,11 @@ export default function LitecoinWallet() {
   const [copyLtcAddress, setCopyLtcAddress] = React.useState('');
   const [copyLtcTxHash, setCopyLtcTxHash] = React.useState('');
   const [openLtcQR, setOpenLtcQR] = React.useState(false);
-  const [openLtcElectrum, setOpenLtcElectrum] = React.useState(false);
   const [openLtcSend, setOpenLtcSend] = React.useState(false);
   const [ltcAmount, setLtcAmount] = React.useState<number>(0);
   const [ltcRecipient, setLtcRecipient] = React.useState('');
- 
+  const [addressFormatError, setAddressFormatError] = React.useState(false);
+
   const [loadingRefreshLtc, setLoadingRefreshLtc] = React.useState(false);
   const [openTxLtcSubmit, setOpenTxLtcSubmit] = React.useState(false);
   const [openSendLtcSuccess, setOpenSendLtcSuccess] = React.useState(false);
@@ -312,10 +294,6 @@ export default function LitecoinWallet() {
     setOpenLtcQR(false);
   }
 
-  const handleCloseLtcElectrum = () => {
-    setOpenLtcElectrum(false);
-  }
-
   const handleOpenAddressBook = async () => {
     setOpenLtcAddressBook(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -333,13 +311,27 @@ export default function LitecoinWallet() {
     if (ltcAmount <= 0 || null || !ltcAmount) {
       return true;
     }
-    if (ltcRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
   }
 
-  const handleCloseLtcSend = () => {
+    const handleRecipientChange = (e) => {
+        const value = e.target.value;
+        const pattern = /^(L[1-9A-HJ-NP-Za-km-z]{33}|M[1-9A-HJ-NP-Za-km-z]{33}|ltc1[2-9A-HJ-NP-Za-z]{39})$/
+
+        setLtcRecipient(value);
+
+        if( pattern.test(value) || value === '') {
+            setAddressFormatError(false);
+        }
+        else {
+            setAddressFormatError(true);
+        }
+    };
+
+    const handleCloseLtcSend = () => {
     setLtcAmount(0);
     
     setOpenLtcSend(false);
@@ -365,8 +357,6 @@ export default function LitecoinWallet() {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
-
 
   const handleCloseSendLtcSuccess = (
     _event?: React.SyntheticEvent | Event,
@@ -436,56 +426,16 @@ export default function LitecoinWallet() {
     }
   }, [isAuthenticated]);
 
-  const getElectrumServersLtc = async () => {
-    try {
-      const response = await qortalRequest({
-        action: "GET_CROSSCHAIN_SERVER_INFO",
-        coin: "LTC"
-      });
-      if (!response?.error) {
-        setAllElectrumServersLtc(response);
-        let currentLtcServer = response.filter(function (item: { isCurrent: boolean; }) {
-          return item.isCurrent === true;
-        });
-        setCurrentElectrumServerLtc(currentLtcServer);
-      }
-    } catch (error) {
-      setAllElectrumServersLtc({});
-      console.error("ERROR GET LTC SERVERS INFO", error);
-    }
-  }
-
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    getElectrumServersLtc();
-  }, [isAuthenticated]);
-
-  const handleOpenLtcElectrum = async () => {
-    await getElectrumServersLtc();
-    setOpenLtcElectrum(true);
-  }
 
   const getTransactionsLtc = async () => {
     try {
       setIsLoadingLtcTransactions(true);
-      const responseLtcAllAddresses = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_INFO",
-        coin: "LTC",
-      }, 120000);
+
       const responseLtcTransactions = await qortalRequestWithTimeout({
         action: "GET_USER_WALLET_TRANSACTIONS",
         coin: 'LTC'
       }, 300000);
-      try {
-        await responseLtcAllAddresses;
-        if (!responseLtcAllAddresses?.error) {
-          setAllWalletAddressesLtc(responseLtcAllAddresses);
-        }
-      } catch (error) {
-        setAllWalletAddressesLtc([]);
-        console.error("ERROR GET LTC ALL ADDRESSES", error);
-      }
-      await responseLtcTransactions;
+     
       if (!responseLtcTransactions?.error) {
         setTransactionsLtc(responseLtcTransactions);
         setIsLoadingLtcTransactions(false);
@@ -551,7 +501,7 @@ export default function LitecoinWallet() {
   const sendLtcRequest = async () => {
     if(!ltcFeeCalculated) return
     setOpenTxLtcSubmit(true);
-   
+
     try {
       const sendRequest = await qortalRequest({
         action: "SEND_COIN",
@@ -563,7 +513,7 @@ export default function LitecoinWallet() {
       if (!sendRequest?.error) {
         setLtcAmount(0);
         setLtcRecipient('');
-    
+
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
@@ -573,7 +523,7 @@ export default function LitecoinWallet() {
     } catch (error) {
       setLtcAmount(0);
       setLtcRecipient('');
-     
+
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
@@ -774,9 +724,9 @@ export default function LitecoinWallet() {
             id="ltc-address"
             margin="normal"
             value={ltcRecipient}
-            helperText="LTC address should be 34 characters long."
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
-            onChange={(e) => setLtcRecipient(e.target.value)}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={addressFormatError ? 'Invalid LTC address' : 'LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix).'}
           />
         </Box>
        <FeeManager coin='LTC' onChange={setInputFee} />
@@ -818,6 +768,7 @@ export default function LitecoinWallet() {
               <StyledTableCell align="left">Receiver</StyledTableCell>
               <StyledTableCell align="left">TX Hash</StyledTableCell>
               <StyledTableCell align="left">Total Amount</StyledTableCell>
+              <StyledTableCell align="left">Fee</StyledTableCell>
               <StyledTableCell align="left">Time</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -826,71 +777,30 @@ export default function LitecoinWallet() {
               ? transactionsLtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsLtc
             )?.map((row: {
-              inputs: { address: any; addressInWallet: boolean; }[];
-              outputs: { address: any; addressInWallet: boolean; }[];
+              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
+              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasSenderOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
-                      } else {
-                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
-                      }
-                    } else {
-                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotSenderOutputs[0]?.address) {
-                        return meWasNotSenderOutputs[0]?.address;
-                      } else {
-                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotSenderInputs[0]?.address;
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotRecipientOutputs[0]?.address) {
-                        return meWasNotRecipientOutputs[0]?.address;
-                      } else {
-                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotRecipientInputs[0]?.address;
-                      }
-                    } else if (row?.totalAmount > 0) {
-                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasRecipientOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
-                      } else {
-                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {cropString(row?.txHash)}
                   <CustomWidthTooltip placement="top" title={copyLtcTxHash ? copyLtcTxHash : "Copy Hash: " + row?.txHash}>
@@ -904,9 +814,16 @@ export default function LitecoinWallet() {
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.totalAmount <= 0 ?
+                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                          :
+                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      }
+                </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
-                    <div>{epochToAgo(row?.timestamp)}</div>
+                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
+                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
                   </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
@@ -944,71 +861,6 @@ export default function LitecoinWallet() {
     );
   }
 
-  const setNewCurrentLtcServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    try {
-      const setServer = await qortalRequest({
-        action: "SET_CURRENT_FOREIGN_SERVER",
-        coin: "LTC",
-        type: typeServer,
-        host: hostServer,
-        port: portServer
-      });
-      if (!setServer?.error) {
-        await getElectrumServersLtc();
-        setOpenLtcElectrum(false);
-        await getWalletBalanceLtc();
-        await getTransactionsLtc();
-      }
-    } catch (error) {
-      await getElectrumServersLtc();
-      setOpenLtcElectrum(false);
-      console.error("ERROR GET LTC SERVERS INFO", error);
-    }
-  }
-
-  const LtcElectrumDialogPage = () => {
-    return (
-      <LtcElectrumDialog
-        onClose={handleCloseLtcQR}
-        aria-labelledby="ltc-electrum-servers"
-        open={openLtcElectrum}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="ltc-electrum-servers">
-          Available Litecoin Electrum Servers.
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{
-            width: '100%',
-            maxWidth: 500,
-            position: 'relative',
-            overflow: 'auto',
-            maxHeight: 400
-          }}>
-            <List>
-              {(
-                allElectrumServersLtc
-              )?.map((server: {
-                connectionType: string;
-                hostName: string;
-                port: number;
-              }, i: React.Key) => (
-                <ListItemButton key={i} onClick={() => { setNewCurrentLtcServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseLtcElectrum}>
-            CLOSE
-          </Button>
-        </DialogActions>
-      </LtcElectrumDialog>
-    );
-  }
-
   const LtcAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -1033,7 +885,6 @@ export default function LitecoinWallet() {
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {LtcSendDialogPage()}
       {LtcQrDialogPage()}
-      {LtcElectrumDialogPage()}
       {LtcAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Litecoin Wallet
@@ -1089,32 +940,6 @@ export default function LitecoinWallet() {
           <Tooltip placement="right" title={copyLtcAddress ? copyLtcAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoLtc?.address), changeCopyLtcStatus() }}>
               <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            Electrum Server:&nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {currentElectrumServerLtc[0]?.hostName ? currentElectrumServerLtc[0]?.hostName + ":" + currentElectrumServerLtc[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
-          </Typography>
-          <Tooltip placement="right" title="Change Server">
-            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenLtcElectrum}>
-              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>

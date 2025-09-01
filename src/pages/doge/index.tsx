@@ -161,18 +161,6 @@ const DogeQrDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const DogeElectrumDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
-  },
-}));
-
 const DogeSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -273,9 +261,6 @@ export default function DogecoinWallet() {
   const [walletInfoDoge, setWalletInfoDoge] = React.useState<any>({});
   const [walletBalanceDoge, setWalletBalanceDoge] = React.useState<any>(null);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] = React.useState<boolean>(true);
-  const [allElectrumServersDoge, setAllElectrumServersDoge] = React.useState<any>([]);
-  const [currentElectrumServerDoge, setCurrentElectrumServerDoge] = React.useState<any>([]);
-  const [allWalletAddressesDoge, setAllWalletAddressesDoge] = React.useState<any>([]);
   const [transactionsDoge, setTransactionsDoge] = React.useState<any>([]);
   const [isLoadingDogeTransactions, setIsLoadingDogeTransactions] = React.useState<boolean>(true);
   const [page, setPage] = React.useState(0);
@@ -283,10 +268,11 @@ export default function DogecoinWallet() {
   const [copyDogeAddress, setCopyDogeAddress] = React.useState('');
   const [copyDogeTxHash, setCopyDogeTxHash] = React.useState('');
   const [openDogeQR, setOpenDogeQR] = React.useState(false);
-  const [openDogeElectrum, setOpenDogeElectrum] = React.useState(false);
   const [openDogeSend, setOpenDogeSend] = React.useState(false);
   const [dogeAmount, setDogeAmount] = React.useState<number>(0);
   const [dogeRecipient, setDogeRecipient] = React.useState('');
+  const [addressFormatError, setAddressFormatError] = React.useState(false);
+
   const [loadingRefreshDoge, setLoadingRefreshDoge] = React.useState(false);
   const [openTxDogeSubmit, setOpenTxDogeSubmit] = React.useState(false);
   const [openSendDogeSuccess, setOpenSendDogeSuccess] = React.useState(false);
@@ -308,10 +294,6 @@ export default function DogecoinWallet() {
     setOpenDogeQR(false);
   }
 
-  const handleCloseDogeElectrum = () => {
-    setOpenDogeElectrum(false);
-  }
-
   const handleOpenAddressBook = async () => {
     setOpenDogeAddressBook(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -328,13 +310,27 @@ export default function DogecoinWallet() {
     if (dogeAmount <= 0 || null || !dogeAmount) {
       return true;
     }
-    if (dogeRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
   }
 
-  const handleCloseDogeSend = () => {
+    const handleRecipientChange = (e) => {
+        const value = e.target.value;
+        const pattern = /^(D[1-9A-HJ-NP-Za-km-z]{33})$/
+
+        setDogeRecipient(value);
+
+        if( pattern.test(value) || value === '') {
+            setAddressFormatError(false);
+        }
+        else {
+            setAddressFormatError(true);
+        }
+    };
+
+    const handleCloseDogeSend = () => {
     setDogeAmount(0);
     setOpenDogeSend(false);
   }
@@ -430,56 +426,15 @@ export default function DogecoinWallet() {
     }
   }, [isAuthenticated]);
 
-  const getElectrumServersDoge = async () => {
-    try {
-      const response = await qortalRequest({
-        action: "GET_CROSSCHAIN_SERVER_INFO",
-        coin: "DOGE"
-      });
-      if (!response?.error) {
-        setAllElectrumServersDoge(response);
-        let currentDogeServer = response.filter(function (item: { isCurrent: boolean; }) {
-          return item.isCurrent === true;
-        });
-        setCurrentElectrumServerDoge(currentDogeServer);
-      }
-    } catch (error) {
-      setAllElectrumServersDoge({});
-      console.error("ERROR GET DOGE SERVERS INFO", error);
-    }
-  }
-
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    getElectrumServersDoge();
-  }, [isAuthenticated]);
-
-  const handleOpenDogeElectrum = async () => {
-    await getElectrumServersDoge();
-    setOpenDogeElectrum(true);
-  }
-
   const getTransactionsDoge = async () => {
     try {
       setIsLoadingDogeTransactions(true);
-      const responseDogeAllAddresses = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_INFO",
-        coin: "DOGE",
-      }, 120000);
+     
       const responseDogeTransactions = await qortalRequestWithTimeout({
         action: "GET_USER_WALLET_TRANSACTIONS",
         coin: 'DOGE'
       }, 300000);
-      try {
-        await responseDogeAllAddresses;
-        if (!responseDogeAllAddresses?.error) {
-          setAllWalletAddressesDoge(responseDogeAllAddresses);
-        }
-      } catch (error) {
-        setAllWalletAddressesDoge([]);
-        console.error("ERROR GET DOGE ALL ADDRESSES", error);
-      }
-      await responseDogeTransactions;
+      
       if (!responseDogeTransactions?.error) {
         setTransactionsDoge(responseDogeTransactions);
         setIsLoadingDogeTransactions(false);
@@ -760,16 +715,17 @@ export default function DogecoinWallet() {
             }}
             required
           />
-          <TextField
-            required
-            label="Receiver Address"
-            id="doge-address"
-            margin="normal"
-            value={dogeRecipient}
-            helperText="DOGE address should be 34 characters long."
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
-            onChange={(e) => setDogeRecipient(e.target.value)}
-          />
+
+            <TextField
+                required
+                label="Receiver Address"
+                id="doge-address"
+                margin="normal"
+                value={dogeRecipient}
+                onChange={handleRecipientChange}
+                error={addressFormatError}
+                helperText={addressFormatError ? 'Invalid DOGE address' : 'DOGE addresses should be 34 characters long for BIP44 (D prefix).'}
+            />
         </Box>
          <FeeManager coin='DOGE' onChange={setInputFee} />
       </Dialog>
@@ -810,6 +766,7 @@ export default function DogecoinWallet() {
               <StyledTableCell align="left">Receiver</StyledTableCell>
               <StyledTableCell align="left">TX Hash</StyledTableCell>
               <StyledTableCell align="left">Total Amount</StyledTableCell>
+              <StyledTableCell align="left">Fee</StyledTableCell>
               <StyledTableCell align="left">Time</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -818,71 +775,30 @@ export default function DogecoinWallet() {
               ? transactionsDoge.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsDoge
             )?.map((row: {
-              inputs: { address: any; addressInWallet: boolean; }[];
-              outputs: { address: any; addressInWallet: boolean; }[];
+              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
+              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasSenderOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
-                      } else {
-                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
-                      }
-                    } else {
-                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotSenderOutputs[0]?.address) {
-                        return meWasNotSenderOutputs[0]?.address;
-                      } else {
-                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotSenderInputs[0]?.address;
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotRecipientOutputs[0]?.address) {
-                        return meWasNotRecipientOutputs[0]?.address;
-                      } else {
-                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotRecipientInputs[0]?.address;
-                      }
-                    } else if (row?.totalAmount > 0) {
-                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasRecipientOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
-                      } else {
-                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {cropString(row?.txHash)}
                   <CustomWidthTooltip placement="top" title={copyDogeTxHash ? copyDogeTxHash : "Copy Hash: " + row?.txHash}>
@@ -896,9 +812,16 @@ export default function DogecoinWallet() {
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.totalAmount <= 0 ?
+                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                          :
+                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      }
+                </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
-                    <div>{epochToAgo(row?.timestamp)}</div>
+                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
+                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
                   </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
@@ -936,71 +859,6 @@ export default function DogecoinWallet() {
     );
   }
 
-  const setNewCurrentDogeServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    try {
-      const setServer = await qortalRequest({
-        action: "SET_CURRENT_FOREIGN_SERVER",
-        coin: "DOGE",
-        type: typeServer,
-        host: hostServer,
-        port: portServer
-      });
-      if (!setServer?.error) {
-        await getElectrumServersDoge();
-        setOpenDogeElectrum(false);
-        await getWalletBalanceDoge();
-        await getTransactionsDoge();
-      }
-    } catch (error) {
-      await getElectrumServersDoge();
-      setOpenDogeElectrum(false);
-      console.error("ERROR GET DOGE SERVERS INFO", error);
-    }
-  }
-
-  const DogeElectrumDialogPage = () => {
-    return (
-      <DogeElectrumDialog
-        onClose={handleCloseDogeQR}
-        aria-labelledby="doge-electrum-servers"
-        open={openDogeElectrum}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="doge-electrum-servers">
-          Available Dogecoin Electrum Servers.
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{
-            width: '100%',
-            maxWidth: 500,
-            position: 'relative',
-            overflow: 'auto',
-            maxHeight: 400
-          }}>
-            <List>
-              {(
-                allElectrumServersDoge
-              )?.map((server: {
-                connectionType: string;
-                hostName: string;
-                port: number;
-              }, i: React.Key) => (
-                <ListItemButton key={i} onClick={() => { setNewCurrentDogeServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseDogeElectrum}>
-            CLOSE
-          </Button>
-        </DialogActions>
-      </DogeElectrumDialog>
-    );
-  }
-
   const DogeAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -1025,7 +883,6 @@ export default function DogecoinWallet() {
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {DogeSendDialogPage()}
       {DogeQrDialogPage()}
-      {DogeElectrumDialogPage()}
       {DogeAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Dogecoin Wallet
@@ -1081,32 +938,6 @@ export default function DogecoinWallet() {
           <Tooltip placement="right" title={copyDogeAddress ? copyDogeAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoDoge?.address), changeCopyDogeStatus() }}>
               <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            Electrum Server:&nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {currentElectrumServerDoge[0]?.hostName ? currentElectrumServerDoge[0]?.hostName + ":" + currentElectrumServerDoge[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
-          </Typography>
-          <Tooltip placement="right" title="Change Server">
-            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenDogeElectrum}>
-              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>

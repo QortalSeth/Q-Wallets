@@ -1,9 +1,7 @@
-import * as React from 'react';
 import packageJson from '../package.json';
 import { Container, Typography } from "@mui/material";
 import { createTheme } from '@mui/material/styles';
-import { Session, Navigation } from '@toolpad/core/AppProvider';
-import { ReactRouterAppProvider } from '@toolpad/core/react-router';
+import { Navigation } from '@toolpad/core/AppProvider';
 import { Route, Routes } from "react-router-dom";
 import { DashboardLayout, type SidebarFooterProps } from '@toolpad/core/DashboardLayout';
 import WalletContext, { IContextProps } from './contexts/walletContext';
@@ -14,7 +12,6 @@ import doge from "./assets/doge.png";
 import dgb from "./assets/dgb.png";
 import rvn from "./assets/rvn.png";
 import arrr from "./assets/arrr.png";
-import qwalletsTitle from "./assets/qw-title.png";
 import noAvatar from "./assets/noavatar.png";
 import WelcomePage from "./pages/welcome/welcome";
 import QortalWallet from "./pages/qort/index";
@@ -25,7 +22,9 @@ import DigibyteWallet from "./pages/dgb/index";
 import RavencoinWallet from "./pages/rvn/index";
 import PirateWallet from "./pages/arrr/index";
 import { useSearchParams } from "react-router-dom";
-import { useIframe } from './main';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@emotion/react';
 
 const walletTheme = createTheme({
   cssVariables: {
@@ -58,14 +57,15 @@ const walletTheme = createTheme({
 });
 
 function App() {
-  useIframe()
-  const [userInfo, setUserInfo] = React.useState<any>(null);
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
-  const [isUsingGateway, setIsUsingGateway] = React.useState(true);
-  const [avatar, setAvatar] = React.useState<string>('');
-  const [userSess, setUserSess] = React.useState<any>(null);
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [nodeInfo, setNodeInfo] = React.useState<any>(null);
+  const { t } = useTranslation(['core']);
+  const theme = useTheme();
+
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isUsingGateway, setIsUsingGateway] = useState(true);
+  const [avatar, setAvatar] = useState<string>('');
+  const [userSess, setUserSess] = useState<any>(null);
+  const [nodeInfo, setNodeInfo] = useState<any>(null);
   const [searchParams] = useSearchParams();
 
   const getIsUsingGateway = async () => {
@@ -93,11 +93,11 @@ function App() {
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     getIsUsingGateway();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let nodeInfoTimeoutId: string | number | NodeJS.Timeout;
     (async () => {
       nodeInfoTimeoutId = setInterval(async () => {
@@ -125,12 +125,13 @@ function App() {
     }
   };
 
-  const askForAccountInformation = React.useCallback(async () => {
+  const askForAccountInformation = useCallback(async () => {
     let sessAvatar = ""
     try {
       const account = await qortalRequest({
         action: "GET_USER_ACCOUNT",
       });
+
       const name = await getNameInfo(account.address);
       setUserInfo({ ...account, name });
       if (name === "No Registered Name") {
@@ -153,31 +154,31 @@ function App() {
     }
   }, []);
 
-  const authentication = React.useMemo(() => {
-    return {
-      signIn: async () => {
-        const response = await askForAccountInformation();
-        setSession(response);
-        setIsAuthenticated(true);
-      },
-      signOut: () => {
-        setSession(null);
-        setIsAuthenticated(false);
-        setUserInfo(null);
-        setAvatar("");
-      },
-    };
-  }, [userSess]);
+  // const authentication = useMemo(() => {
+  //   return {
+  //     signIn: async () => {
+  //       const response = await askForAccountInformation();
+  //       setSession(response);
+  //       setIsAuthenticated(true);
+  //     },
+  //     signOut: () => {
+  //       setSession(null);
+  //       setIsAuthenticated(false);
+  //       setUserInfo(null);
+  //       setAvatar("");
+  //     },
+  //   };
+  // }, [userSess]);
 
-  React.useEffect(() => {
-    if (searchParams.get("authOnMount") === "true") {
-      (async () => {
-        const response = await askForAccountInformation();
-        setSession(response);
-        setIsAuthenticated(true);
-      })();
-    }
-  }, [searchParams]);
+  // useEffect(() => {
+  //   if (searchParams.get("authOnMount") === "true") {
+  //     (async () => {
+  //       const response = await askForAccountInformation();
+  //       setSession(response);
+  //       setIsAuthenticated(true);
+  //     })();
+  //   }
+  // }, [searchParams]);
 
   const walletContextValue: IContextProps = {
     userInfo,
@@ -253,33 +254,22 @@ function App() {
   }
 
   return (
-    <ReactRouterAppProvider
-      session={session}
-      authentication={authentication}
-      navigation={NAVIGATION}
-      branding={{
-        logo: <img src={qwalletsTitle} alt="QWA Title" />,
-        title: ''
-      }}
-      theme={walletTheme}
-    >
-      <WalletContext.Provider value={walletContextValue}>
-        <DashboardLayout defaultSidebarCollapsed slots={{ sidebarFooter: SidebarFooter }}>
-          <Container sx={{ maxWidth: '100%' }} maxWidth={false}>
-            <Routes>
-              <Route path="/" element={<WelcomePage />} />
-              <Route path="/qortal" element={<QortalWallet />} />
-              <Route path="/litecoin" element={<LitecoinWallet />} />
-              <Route path="/bitcoin" element={<BitcoinWallet />} />
-              <Route path="/dogecoin" element={<DogecoinWallet />} />
-              <Route path="/digibyte" element={<DigibyteWallet />} />
-              <Route path="/ravencoin" element={<RavencoinWallet />} />
-              <Route path="/piratechain" element={<PirateWallet />} />
-            </Routes>
-          </Container>
-        </DashboardLayout>
-      </WalletContext.Provider>
-    </ReactRouterAppProvider>
+    <WalletContext.Provider value={walletContextValue}>
+      <DashboardLayout defaultSidebarCollapsed slots={{ sidebarFooter: SidebarFooter }}>
+        <Container sx={{ maxWidth: '100%' }} maxWidth={false}>
+          <Routes>
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/qortal" element={<QortalWallet />} />
+            <Route path="/litecoin" element={<LitecoinWallet />} />
+            <Route path="/bitcoin" element={<BitcoinWallet />} />
+            <Route path="/dogecoin" element={<DogecoinWallet />} />
+            <Route path="/digibyte" element={<DigibyteWallet />} />
+            <Route path="/ravencoin" element={<RavencoinWallet />} />
+            <Route path="/piratechain" element={<PirateWallet />} />
+          </Routes>
+        </Container>
+      </DashboardLayout>
+    </WalletContext.Provider>
   );
 }
 

@@ -5,10 +5,10 @@ import {
   Card,
   CardContent,
   Container,
+  Grid,
   Typography,
   styled
 } from "@mui/material";
-import Grid from '@mui/material/Grid2';
 import { TbBlocks, TbAffiliate, TbHistoryToggle, TbBrandGit } from "react-icons/tb";
 import { secondsToDhms } from "../../common/functions";
 

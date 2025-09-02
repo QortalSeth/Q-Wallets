@@ -273,9 +273,6 @@ export default function BitcoinWallet() {
   const [walletInfoBtc, setWalletInfoBtc] = React.useState<any>({});
   const [walletBalanceBtc, setWalletBalanceBtc] = React.useState<any>(null);
   const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] = React.useState<boolean>(true);
-  const [allElectrumServersBtc, setAllElectrumServersBtc] = React.useState<any>([]);
-  const [currentElectrumServerBtc, setCurrentElectrumServerBtc] = React.useState<any>([]);
-  const [allWalletAddressesBtc, setAllWalletAddressesBtc] = React.useState<any>([]);
   const [transactionsBtc, setTransactionsBtc] = React.useState<any>([]);
   const [isLoadingBtcTransactions, setIsLoadingBtcTransactions] = React.useState<boolean>(true);
   const [page, setPage] = React.useState(0);
@@ -283,10 +280,11 @@ export default function BitcoinWallet() {
   const [copyBtcAddress, setCopyBtcAddress] = React.useState('');
   const [copyBtcTxHash, setCopyBtcTxHash] = React.useState('');
   const [openBtcQR, setOpenBtcQR] = React.useState(false);
-  const [openBtcElectrum, setOpenBtcElectrum] = React.useState(false);
   const [openBtcSend, setOpenBtcSend] = React.useState(false);
   const [btcAmount, setBtcAmount] = React.useState<number>(0);
   const [btcRecipient, setBtcRecipient] = React.useState('');
+  const [addressFormatError, setAddressFormatError] = React.useState(false);
+
   const [loadingRefreshBtc, setLoadingRefreshBtc] = React.useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = React.useState(false);
   const [openSendBtcSuccess, setOpenSendBtcSuccess] = React.useState(false);
@@ -306,10 +304,6 @@ export default function BitcoinWallet() {
     setOpenBtcQR(false);
   }
 
-  const handleCloseBtcElectrum = () => {
-    setOpenBtcElectrum(false);
-  }
-
   const handleOpenAddressBook = async () => {
     setOpenBtcAddressBook(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -326,13 +320,27 @@ export default function BitcoinWallet() {
     if (btcAmount <= 0 || null || !btcAmount) {
       return true;
     }
-    if (btcRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
   }
 
-  const handleCloseBtcSend = () => {
+    const handleRecipientChange = (e) => {
+        const value = e.target.value;
+        const pattern = /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[02-9A-HJ-NP-Za-z]{39})$/
+
+        setBtcRecipient(value);
+
+        if( pattern.test(value) || value === '') {
+            setAddressFormatError(false);
+        }
+        else {
+            setAddressFormatError(true);
+        }
+    };
+
+    const handleCloseBtcSend = () => {
     setBtcAmount(0);
     setOpenBtcSend(false);
   }
@@ -356,10 +364,6 @@ export default function BitcoinWallet() {
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
-
-  const handleChangeBtcFee = (_: Event, newValue: number | number[]) => {
-    setBtcAmount(0);
   };
 
   const handleCloseSendBtcSuccess = (
@@ -430,56 +434,15 @@ export default function BitcoinWallet() {
     }
   }, [isAuthenticated]);
 
-  const getElectrumServersBtc = async () => {
-    try {
-      const response = await qortalRequest({
-        action: "GET_CROSSCHAIN_SERVER_INFO",
-        coin: "BTC"
-      });
-      if (!response?.error) {
-        setAllElectrumServersBtc(response);
-        let currentBtcServer = response.filter(function (item: { isCurrent: boolean; }) {
-          return item.isCurrent === true;
-        });
-        setCurrentElectrumServerBtc(currentBtcServer);
-      }
-    } catch (error) {
-      setAllElectrumServersBtc({});
-      console.error("ERROR GET BTC SERVERS INFO", error);
-    }
-  }
-
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    getElectrumServersBtc();
-  }, [isAuthenticated]);
-
-  const handleOpenBtcElectrum = async () => {
-    await getElectrumServersBtc();
-    setOpenBtcElectrum(true);
-  }
-
   const getTransactionsBtc = async () => {
     try {
       setIsLoadingBtcTransactions(true);
-      const responseBtcAllAddresses = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_INFO",
-        coin: "BTC",
-      }, 120000);
+     
       const responseBtcTransactions = await qortalRequestWithTimeout({
         action: "GET_USER_WALLET_TRANSACTIONS",
         coin: 'BTC'
       }, 300000);
-      try {
-        await responseBtcAllAddresses;
-        if (!responseBtcAllAddresses?.error) {
-          setAllWalletAddressesBtc(responseBtcAllAddresses);
-        }
-      } catch (error) {
-        setAllWalletAddressesBtc([]);
-        console.error("ERROR GET BTC ALL ADDRESSES", error);
-      }
-      await responseBtcTransactions;
+
       if (!responseBtcTransactions?.error) {
         setTransactionsBtc(responseBtcTransactions);
         setIsLoadingBtcTransactions(false);
@@ -765,9 +728,9 @@ export default function BitcoinWallet() {
             id="btc-address"
             margin="normal"
             value={btcRecipient}
-            helperText="BTC address should be 34 characters long."
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
-            onChange={(e) => setBtcRecipient(e.target.value)}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={addressFormatError ? 'Invalid BTC address' : 'BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix).'}
           />
         </Box>
           <FeeManager coin='BTC' onChange={setInputFee} />
@@ -809,6 +772,7 @@ export default function BitcoinWallet() {
               <StyledTableCell align="left">Receiver</StyledTableCell>
               <StyledTableCell align="left">TX Hash</StyledTableCell>
               <StyledTableCell align="left">Total Amount</StyledTableCell>
+              <StyledTableCell align="left">Fee</StyledTableCell>
               <StyledTableCell align="left">Time</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -817,71 +781,30 @@ export default function BitcoinWallet() {
               ? transactionsBtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsBtc
             )?.map((row: {
-              inputs: { address: any; addressInWallet: boolean; }[];
-              outputs: { address: any; addressInWallet: boolean; }[];
+              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
+              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasSenderOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
-                      } else {
-                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
-                      }
-                    } else {
-                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotSenderOutputs[0]?.address) {
-                        return meWasNotSenderOutputs[0]?.address;
-                      } else {
-                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotSenderInputs[0]?.address;
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotRecipientOutputs[0]?.address) {
-                        return meWasNotRecipientOutputs[0]?.address;
-                      } else {
-                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotRecipientInputs[0]?.address;
-                      }
-                    } else if (row?.totalAmount > 0) {
-                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasRecipientOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
-                      } else {
-                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {cropString(row?.txHash)}
                   <CustomWidthTooltip placement="top" title={copyBtcTxHash ? copyBtcTxHash : "Copy Hash: " + row?.txHash}>
@@ -895,9 +818,16 @@ export default function BitcoinWallet() {
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.totalAmount <= 0 ?
+                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                          :
+                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      }
+                </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
-                    <div>{epochToAgo(row?.timestamp)}</div>
+                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
+                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
                   </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
@@ -935,71 +865,6 @@ export default function BitcoinWallet() {
     );
   }
 
-  const setNewCurrentBtcServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    try {
-      const setServer = await qortalRequest({
-        action: "SET_CURRENT_FOREIGN_SERVER",
-        coin: "BTC",
-        type: typeServer,
-        host: hostServer,
-        port: portServer
-      });
-      if (!setServer?.error) {
-        await getElectrumServersBtc();
-        setOpenBtcElectrum(false);
-        await getWalletBalanceBtc();
-        await getTransactionsBtc();
-      }
-    } catch (error) {
-      await getElectrumServersBtc();
-      setOpenBtcElectrum(false);
-      console.error("ERROR GET BTC SERVERS INFO", error);
-    }
-  }
-
-  const BtcElectrumDialogPage = () => {
-    return (
-      <BtcElectrumDialog
-        onClose={handleCloseBtcQR}
-        aria-labelledby="btc-electrum-servers"
-        open={openBtcElectrum}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="btc-electrum-servers">
-          Available Bitcoin Electrum Servers.
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{
-            width: '100%',
-            maxWidth: 500,
-            position: 'relative',
-            overflow: 'auto',
-            maxHeight: 400
-          }}>
-            <List>
-              {(
-                allElectrumServersBtc
-              )?.map((server: {
-                connectionType: string;
-                hostName: string;
-                port: number;
-              }, i: React.Key) => (
-                <ListItemButton key={i} onClick={() => { setNewCurrentBtcServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseBtcElectrum}>
-            CLOSE
-          </Button>
-        </DialogActions>
-      </BtcElectrumDialog>
-    );
-  }
-
   const BtcAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -1024,7 +889,6 @@ export default function BitcoinWallet() {
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {BtcSendDialogPage()}
       {BtcQrDialogPage()}
-      {BtcElectrumDialogPage()}
       {BtcAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Bitcoin Wallet
@@ -1080,32 +944,6 @@ export default function BitcoinWallet() {
           <Tooltip placement="right" title={copyBtcAddress ? copyBtcAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoBtc?.address), changeCopyBtcStatus() }}>
               <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            Electrum Server:&nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {currentElectrumServerBtc[0]?.hostName ? currentElectrumServerBtc[0]?.hostName + ":" + currentElectrumServerBtc[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
-          </Typography>
-          <Tooltip placement="right" title="Change Server">
-            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenBtcElectrum}>
-              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>

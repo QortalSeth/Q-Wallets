@@ -160,18 +160,6 @@ const DgbQrDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const DgbElectrumDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
-  },
-}));
-
 const DgbSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -272,9 +260,6 @@ export default function DigibyteWallet() {
   const [walletInfoDgb, setWalletInfoDgb] = React.useState<any>({});
   const [walletBalanceDgb, setWalletBalanceDgb] = React.useState<any>(null);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] = React.useState<boolean>(true);
-  const [allElectrumServersDgb, setAllElectrumServersDgb] = React.useState<any>([]);
-  const [currentElectrumServerDgb, setCurrentElectrumServerDgb] = React.useState<any>([]);
-  const [allWalletAddressesDgb, setAllWalletAddressesDgb] = React.useState<any>([]);
   const [transactionsDgb, setTransactionsDgb] = React.useState<any>([]);
   const [isLoadingDgbTransactions, setIsLoadingDgbTransactions] = React.useState<boolean>(true);
   const [page, setPage] = React.useState(0);
@@ -282,10 +267,10 @@ export default function DigibyteWallet() {
   const [copyDgbAddress, setCopyDgbAddress] = React.useState('');
   const [copyDgbTxHash, setCopyDgbTxHash] = React.useState('');
   const [openDgbQR, setOpenDgbQR] = React.useState(false);
-  const [openDgbElectrum, setOpenDgbElectrum] = React.useState(false);
   const [openDgbSend, setOpenDgbSend] = React.useState(false);
   const [dgbAmount, setDgbAmount] = React.useState<number>(0);
   const [dgbRecipient, setDgbRecipient] = React.useState('');
+  const [addressFormatError, setAddressFormatError] = React.useState(false);
   const [dgbFee, setDgbFee] = React.useState<number>(0);
   const [loadingRefreshDgb, setLoadingRefreshDgb] = React.useState(false);
   const [openTxDgbSubmit, setOpenTxDgbSubmit] = React.useState(false);
@@ -301,10 +286,6 @@ export default function DigibyteWallet() {
 
   const handleCloseDgbQR = () => {
     setOpenDgbQR(false);
-  }
-
-  const handleCloseDgbElectrum = () => {
-    setOpenDgbElectrum(false);
   }
 
   const handleOpenAddressBook = async () => {
@@ -330,7 +311,21 @@ export default function DigibyteWallet() {
     return false;
   }
 
-  const handleCloseDgbSend = () => {
+    const handleRecipientChange = (e) => {
+        const value = e.target.value;
+        const pattern = /^(D[1-9A-HJ-NP-Za-km-z]{33}|S[1-9A-HJ-NP-Za-km-z]{33}|dgb1[2-9A-HJ-NP-Za-z]{39})$/
+
+        setDgbRecipient(value);
+
+        if( pattern.test(value) || value === '') {
+            setAddressFormatError(false);
+        }
+        else {
+            setAddressFormatError(true);
+        }
+    };
+
+    const handleCloseDgbSend = () => {
     setDgbAmount(0);
     setDgbFee(0);
     setOpenDgbSend(false);
@@ -430,56 +425,15 @@ export default function DigibyteWallet() {
     }
   }, [isAuthenticated]);
 
-  const getElectrumServersDgb = async () => {
-    try {
-      const response = await qortalRequest({
-        action: "GET_CROSSCHAIN_SERVER_INFO",
-        coin: "DGB"
-      });
-      if (!response?.error) {
-        setAllElectrumServersDgb(response);
-        let currentDgbServer = response.filter(function (item: { isCurrent: boolean; }) {
-          return item.isCurrent === true;
-        });
-        setCurrentElectrumServerDgb(currentDgbServer);
-      }
-    } catch (error) {
-      setAllElectrumServersDgb({});
-      console.error("ERROR GET DGB SERVERS INFO", error);
-    }
-  }
-
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-    getElectrumServersDgb();
-  }, [isAuthenticated]);
-
-  const handleOpenDgbElectrum = async () => {
-    await getElectrumServersDgb();
-    setOpenDgbElectrum(true);
-  }
-
   const getTransactionsDgb = async () => {
     try {
       setIsLoadingDgbTransactions(true);
-      const responseDgbAllAddresses = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_INFO",
-        coin: "DGB",
-      }, 120000);
+      
       const responseDgbTransactions = await qortalRequestWithTimeout({
         action: "GET_USER_WALLET_TRANSACTIONS",
         coin: 'DGB'
       }, 300000);
-      try {
-        await responseDgbAllAddresses;
-        if (!responseDgbAllAddresses?.error) {
-          setAllWalletAddressesDgb(responseDgbAllAddresses);
-        }
-      } catch (error) {
-        setAllWalletAddressesDgb([]);
-        console.error("ERROR GET DGB ALL ADDRESSES", error);
-      }
-      await responseDgbTransactions;
+     
       if (!responseDgbTransactions?.error) {
         setTransactionsDgb(responseDgbTransactions);
         setIsLoadingDgbTransactions(false);
@@ -767,9 +721,9 @@ export default function DigibyteWallet() {
             id="dgb-address"
             margin="normal"
             value={dgbRecipient}
-            helperText="DGB address should be 34 characters long."
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 34 } }}
-            onChange={(e) => setDgbRecipient(e.target.value)}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={addressFormatError ? 'Invalid DGB address' : 'DGB addresses should be 34 characters long for BIP44 (D prefix) and BIP49 (S prefix) or 43 characters long for BIP84 (dgb1 prefix).'}
           />
         </Box>
         <div style={{
@@ -847,6 +801,7 @@ export default function DigibyteWallet() {
               <StyledTableCell align="left">Receiver</StyledTableCell>
               <StyledTableCell align="left">TX Hash</StyledTableCell>
               <StyledTableCell align="left">Total Amount</StyledTableCell>
+              <StyledTableCell align="left">Fee</StyledTableCell>
               <StyledTableCell align="left">Time</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -855,71 +810,30 @@ export default function DigibyteWallet() {
               ? transactionsDgb.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsDgb
             ).map((row: {
-              inputs: { address: any; addressInWallet: boolean; }[];
-              outputs: { address: any; addressInWallet: boolean; }[];
+              inputs: { address: any; addressInWallet: boolean; amount: any; }[];
+              outputs: { address: any; addressInWallet: boolean; amount: any;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasSenderOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderOutputs[0]?.address}</div>;
-                      } else {
-                        let meWasSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasSenderInputs[0]?.address}</div>;
-                      }
-                    } else {
-                      let meWasNotSenderOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotSenderOutputs[0]?.address) {
-                        return meWasNotSenderOutputs[0]?.address;
-                      } else {
-                        let meWasNotSenderInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotSenderInputs[0]?.address;
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {(() => {
-                    if (row?.totalAmount < 0) {
-                      let meWasNotRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === false;
-                      });
-                      if (meWasNotRecipientOutputs[0]?.address) {
-                        return meWasNotRecipientOutputs[0]?.address;
-                      } else {
-                        let meWasNotRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === false;
-                        });
-                        return meWasNotRecipientInputs[0]?.address;
-                      }
-                    } else if (row?.totalAmount > 0) {
-                      let meWasRecipientOutputs = row?.outputs.filter(function (item: { addressInWallet: boolean; }) {
-                        return item.addressInWallet === true;
-                      });
-                      if (meWasRecipientOutputs[0]?.address) {
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientOutputs[0]?.address}</div>
-                      } else {
-                        let meWasRecipientInputs = row?.inputs.filter(function (item: { addressInWallet: boolean; }) {
-                          return item.addressInWallet === true;
-                        });
-                        return <div style={{ color: '#05a2e4' }}>{meWasRecipientInputs[0]?.address}</div>
-                      }
-                    }
-                  })()}
-                </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
+                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {cropString(row?.txHash)}
                   <CustomWidthTooltip placement="top" title={copyDgbTxHash ? copyDgbTxHash : "Copy Hash: " + row?.txHash}>
@@ -933,9 +847,16 @@ export default function DigibyteWallet() {
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
                   }
                 </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.totalAmount <= 0 ?
+                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                          :
+                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      }
+                </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={new Date(row?.timestamp).toLocaleString()}>
-                    <div>{epochToAgo(row?.timestamp)}</div>
+                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
+                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
                   </CustomWidthTooltip>
                 </StyledTableCell>
               </StyledTableRow>
@@ -973,71 +894,6 @@ export default function DigibyteWallet() {
     );
   }
 
-  const setNewCurrentDgbServer = async (typeServer: string, hostServer: string, portServer: number) => {
-    try {
-      const setServer = await qortalRequest({
-        action: "SET_CURRENT_FOREIGN_SERVER",
-        coin: "DGB",
-        type: typeServer,
-        host: hostServer,
-        port: portServer
-      });
-      if (!setServer?.error) {
-        await getElectrumServersDgb();
-        setOpenDgbElectrum(false);
-        await getWalletBalanceDgb();
-        await getTransactionsDgb();
-      }
-    } catch (error) {
-      await getElectrumServersDgb();
-      setOpenDgbElectrum(false);
-      console.error("ERROR GET DGB SERVERS INFO", error);
-    }
-  }
-
-  const DgbElectrumDialogPage = () => {
-    return (
-      <DgbElectrumDialog
-        onClose={handleCloseDgbQR}
-        aria-labelledby="dgb-electrum-servers"
-        open={openDgbElectrum}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '14px' }} id="dgb-electrum-servers">
-          Available Digibyte Electrum Servers.
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{
-            width: '100%',
-            maxWidth: 500,
-            position: 'relative',
-            overflow: 'auto',
-            maxHeight: 400
-          }}>
-            <List>
-              {(
-                allElectrumServersDgb
-              ).map((server: {
-                connectionType: string;
-                hostName: string;
-                port: number;
-              }, i: React.Key) => (
-                <ListItemButton key={i} onClick={() => { setNewCurrentDgbServer(server?.connectionType, server?.hostName, server?.port) }}>
-                  <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
-                </ListItemButton>
-              ))}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseDgbElectrum}>
-            CLOSE
-          </Button>
-        </DialogActions>
-      </DgbElectrumDialog>
-    );
-  }
-
   const DgbAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -1062,7 +918,6 @@ export default function DigibyteWallet() {
     <Box sx={{ width: '100%', marginTop: "20px" }}>
       {DgbSendDialogPage()}
       {DgbQrDialogPage()}
-      {DgbElectrumDialogPage()}
       {DgbAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
         Digibyte Wallet
@@ -1118,32 +973,6 @@ export default function DigibyteWallet() {
           <Tooltip placement="right" title={copyDgbAddress ? copyDgbAddress : "Copy Address"}>
             <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoDgb?.address), changeCopyDgbStatus() }}>
               <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            Electrum Server:&nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {currentElectrumServerDgb[0]?.hostName ? currentElectrumServerDgb[0]?.hostName + ":" + currentElectrumServerDgb[0]?.port : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
-          </Typography>
-          <Tooltip placement="right" title="Change Server">
-            <IconButton aria-label="open-electrum" size="small" onClick={handleOpenDgbElectrum}>
-              <PublishedWithChangesTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>

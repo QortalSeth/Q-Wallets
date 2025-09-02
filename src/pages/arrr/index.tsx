@@ -1,6 +1,6 @@
 import * as React from 'react';
 import WalletContext from '../../contexts/walletContext';
-import { epochToAgo, timeoutDelay } from '../../common/functions'
+import {cropString, epochToAgo, timeoutDelay} from '../../common/functions'
 import { styled } from "@mui/system";
 import { useTheme } from '@mui/material/styles';
 import {
@@ -937,10 +937,12 @@ export default function PirateWallet() {
         <Table stickyHeader sx={{ width: '100%' }} aria-label="transactions table" >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">Type</StyledTableCell>
-              <StyledTableCell align="left">TX Hash</StyledTableCell>
+             <StyledTableCell align="left">Sender</StyledTableCell>
+             <StyledTableCell align="left">Receiver</StyledTableCell>
+             <StyledTableCell align="left">TX Hash</StyledTableCell>
               <StyledTableCell align="left">Memo</StyledTableCell>
               <StyledTableCell align="left">Total Amount</StyledTableCell>
+              <StyledTableCell align="left">Fee</StyledTableCell>
               <StyledTableCell align="left">Time</StyledTableCell>
             </TableRow>
           </TableHead>
@@ -949,29 +951,52 @@ export default function PirateWallet() {
               ? transactionsArrr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsArrr
             ).map((row: {
+              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
+              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
               txHash: string;
               totalAmount: any;
+              feeAmount: any;
               memo: string;
               timestamp: number;
             }, k: React.Key) => (
               <StyledTableRow key={k}>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  PAYMENT
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {row?.txHash}
-                  <CustomWidthTooltip placement="top" title={copyArrrTxHash ? copyArrrTxHash : "Copy Hash: " + row?.txHash}>
-                    <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(row?.txHash), changeCopyArrrTxHash() }}>
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
-                  </CustomWidthTooltip>
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.inputs.map((input, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{cropString(input.address)}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row.outputs.map((output, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
+                              <span style={{ flex: 1, textAlign: 'left' }}>{cropString(output.address)}</span>
+                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
+                          </div>
+                      ))}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {cropString(row?.txHash)}
+                      <CustomWidthTooltip placement="top" title={copyArrrTxHash ? copyArrrTxHash : "Copy Hash: " + row?.txHash}>
+                          <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(row?.txHash), changeCopyArrrTxHash() }}>
+                              <CopyAllTwoTone fontSize="small" />
+                          </IconButton>
+                      </CustomWidthTooltip>
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
                   {row?.memo ? row?.memo : ''}
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">
                   {row?.totalAmount > 0 ?
                     <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
+                  }
+                </StyledTableCell>
+                <StyledTableCell style={{ width: 'auto' }} align="right">
+                  {row?.totalAmount <= 0 ?
+                      <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                      :
+                      <div></div>
                   }
                 </StyledTableCell>
                 <StyledTableCell style={{ width: 'auto' }} align="left">

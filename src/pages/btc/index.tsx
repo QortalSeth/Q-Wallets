@@ -56,6 +56,7 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoBTC from '../../assets/btc.png';
+import { FeeManager } from '../../components/FeeManager';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -286,13 +287,15 @@ export default function BitcoinWallet() {
   const [openBtcSend, setOpenBtcSend] = React.useState(false);
   const [btcAmount, setBtcAmount] = React.useState<number>(0);
   const [btcRecipient, setBtcRecipient] = React.useState('');
-  const [btcFee, setBtcFee] = React.useState<number>(0);
   const [loadingRefreshBtc, setLoadingRefreshBtc] = React.useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = React.useState(false);
   const [openSendBtcSuccess, setOpenSendBtcSuccess] = React.useState(false);
   const [openSendBtcError, setOpenSendBtcError] = React.useState(false);
   const [openBtcAddressBook, setOpenBtcAddressBook] = React.useState(false);
-
+    const [inputFee, setInputFee] = React.useState(0)
+  
+ const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8)
+ const estimatedFeeCalculated = +btcFeeCalculated * 500
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length) : 0;
 
   const handleOpenBtcQR = () => {
@@ -316,7 +319,6 @@ export default function BitcoinWallet() {
   const handleOpenBtcSend = () => {
     setBtcAmount(0);
     setBtcRecipient('');
-    setBtcFee(100);
     setOpenBtcSend(true);
   }
 
@@ -332,7 +334,6 @@ export default function BitcoinWallet() {
 
   const handleCloseBtcSend = () => {
     setBtcAmount(0);
-    setBtcFee(0);
     setOpenBtcSend(false);
   }
 
@@ -358,7 +359,6 @@ export default function BitcoinWallet() {
   };
 
   const handleChangeBtcFee = (_: Event, newValue: number | number[]) => {
-    setBtcFee(newValue as number);
     setBtcAmount(0);
   };
 
@@ -503,7 +503,7 @@ export default function BitcoinWallet() {
   }
 
   const handleSendMaxBtc = () => {
-    const maxBtcAmount = parseFloat((walletBalanceBtc - ((btcFee * 1000) / 1e8)).toFixed(8));
+    const maxBtcAmount = +walletBalanceBtc - estimatedFeeCalculated
     if (maxBtcAmount <= 0) {
       setBtcAmount(0);
     } else {
@@ -543,8 +543,8 @@ export default function BitcoinWallet() {
   }
 
   const sendBtcRequest = async () => {
+    if(!btcFeeCalculated) return
     setOpenTxBtcSubmit(true);
-    const btcFeeCalculated = Number(btcFee / 1e8).toFixed(8);
     try {
       const sendRequest = await qortalRequest({
         action: "SEND_COIN",
@@ -556,7 +556,6 @@ export default function BitcoinWallet() {
       if (!sendRequest?.error) {
         setBtcAmount(0);
         setBtcRecipient('');
-        setBtcFee(100);
         setOpenTxBtcSubmit(false);
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
@@ -566,7 +565,6 @@ export default function BitcoinWallet() {
     } catch (error) {
       setBtcAmount(0);
       setBtcRecipient('');
-      setBtcFee(100);
       setOpenTxBtcSubmit(false);
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
@@ -713,7 +711,7 @@ export default function BitcoinWallet() {
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
             {(() => {
-              const newMaxBtcAmount = parseFloat((walletBalanceBtc - ((btcFee * 1000) / 1e8)).toFixed(8));
+              const newMaxBtcAmount = +walletBalanceBtc - estimatedFeeCalculated
               if (newMaxBtcAmount < 0) {
                 return Number(0.00000000) + " BTC"
               } else {
@@ -752,7 +750,7 @@ export default function BitcoinWallet() {
             variant="outlined"
             label="Amount (BTC)"
             isAllowed={(values) => {
-              const maxBtcCoin = (walletBalanceBtc - (btcFee * 1000) / 1e8);
+              const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated
               const { formattedValue, floatValue } = values;
               return formattedValue === "" || floatValue <= maxBtcCoin;
             }}
@@ -772,43 +770,7 @@ export default function BitcoinWallet() {
             onChange={(e) => setBtcRecipient(e.target.value)}
           />
         </Box>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
-            flexDirection: 'column',
-            width: '50ch'
-          }}>
-            <Typography id="btc-fee-slider" gutterBottom>
-              Current fee per byte : {btcFee} SAT
-            </Typography>
-            <Slider
-              track={false}
-              step={5}
-              min={20}
-              max={150}
-              valueLabelDisplay="auto"
-              aria-labelledby="btc-fee-slider"
-              getAriaValueText={valueTextBtc}
-              defaultValue={100}
-              marks={btcMarks}
-              onChange={handleChangeBtcFee}
-            />
-            <Typography
-              align="center"
-              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-            >
-              Low fees may result in slow or unconfirmed transactions.
-            </Typography>
-          </Box>
-        </div>
+          <FeeManager coin='BTC' onChange={setInputFee} />
       </Dialog>
     );
   }
@@ -854,7 +816,7 @@ export default function BitcoinWallet() {
             {(rowsPerPage > 0
               ? transactionsBtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               : transactionsBtc
-            ).map((row: {
+            )?.map((row: {
               inputs: { address: any; addressInWallet: boolean; }[];
               outputs: { address: any; addressInWallet: boolean; }[];
               txHash: string;
@@ -1017,7 +979,7 @@ export default function BitcoinWallet() {
             <List>
               {(
                 allElectrumServersBtc
-              ).map((server: {
+              )?.map((server: {
                 connectionType: string;
                 hostName: string;
                 port: number;

@@ -97,7 +97,6 @@ function App() {
     if (setWalletState) {
       setWalletState(walletContextValue);
     }
-    // Only run when these values change
   }, [address, avatarUrl, name, isUsingGateway, nodeInfo]);
 
   // let Pirate = {};

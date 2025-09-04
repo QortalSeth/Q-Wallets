@@ -1,6 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from '../App';
 import { AppWrapper } from '../AppWrapper';
+import QortalWallet from '../pages/qort';
+import LitecoinWallet from '../pages/ltc';
+import BitcoinWallet from '../pages/btc';
+import DogecoinWallet from '../pages/doge';
+import DigibyteWallet from '../pages/dgb';
+import RavencoinWallet from '../pages/rvn';
+import PirateWallet from '../pages/arrr';
 
 interface CustomWindow extends Window {
   _qdnBase: string;
@@ -19,6 +26,13 @@ export function Routes() {
             index: true,
             element: <App />,
           },
+          { path: 'qortal', element: <QortalWallet /> },
+          { path: 'litecoin', element: <LitecoinWallet /> },
+          { path: 'bitcoin', element: <BitcoinWallet /> },
+          { path: 'dogecoin', element: <DogecoinWallet /> },
+          { path: 'digibyte', element: <DigibyteWallet /> },
+          { path: 'ravencoin', element: <RavencoinWallet /> },
+          { path: 'piratechain', element: <PirateWallet /> },
         ],
       },
     ],

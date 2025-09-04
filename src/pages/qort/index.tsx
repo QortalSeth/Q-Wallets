@@ -217,15 +217,7 @@ const QortSubmittDialog = styled(Dialog)(({ theme }) => ({
 }));
 
 export default function QortalWallet() {
-  const { isAuthenticated, userInfo, nodeInfo } = React.useContext(WalletContext);
-
-  if (!isAuthenticated) {
-    return (
-      <Alert variant="filled" severity="error">
-        You must sign in, to use the Qortal wallet.
-      </Alert>
-    );
-  }
+  const { address, nodeInfo } = React.useContext(WalletContext);
 
   const [walletBalanceQort, setWalletBalanceQort] = React.useState<any>(null);
   const [copyQortAddress, setCopyQortAddress] = React.useState('');
@@ -379,22 +371,22 @@ export default function QortalWallet() {
   const getQortalTransactions = async () => {
     setLoadingRefreshQort(true);
 
-    const paymentLink = `/transactions/search?txType=PAYMENT&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingPollLink = `/transactions/unconfirmed?txType=CREATE_POLL&txType=VOTE_ON_POLL&creator=${userInfo?.address}&limit=0&reverse=true`;
-    const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${userInfo?.address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingRewardshareLink = `/transactions/unconfirmed?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&creator=${userInfo?.address}&limit=0&reverse=true`;
+    const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${address}&limit=0&reverse=true`;
+    const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
+    const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
+    const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
+    const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;
+    const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${address}&limit=0&reverse=true`;
+    const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingPollLink = `/transactions/unconfirmed?txType=CREATE_POLL&txType=VOTE_ON_POLL&creator=${address}&limit=0&reverse=true`;
+    const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingRewardshareLink = `/transactions/unconfirmed?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&creator=${address}&limit=0&reverse=true`;
 
     const compareFn = (a: { timestamp: number; }, b: { timestamp: number; }) => {
       return b.timestamp - a.timestamp
@@ -504,7 +496,7 @@ export default function QortalWallet() {
 
   const getWalletBalanceQort = async () => {
     try {
-      const balanceLink = `/addresses/balance/${userInfo?.address}`;
+      const balanceLink = `/addresses/balance/${address}`;
       const response = await fetch(balanceLink);
       const data = await response.json();
       setWalletBalanceQort(data);
@@ -515,7 +507,7 @@ export default function QortalWallet() {
   }
 
   React.useEffect(() => {
-    if (!userInfo?.address) return;
+    if (!address) return;
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
     }, 60000);
@@ -523,12 +515,12 @@ export default function QortalWallet() {
     return () => {
       clearInterval(intervalGetWalletBalance);
     }
-  }, [userInfo?.address]);
+  }, [address]);
 
   React.useEffect(() => {
-    if (!userInfo?.address) return;
+    if (!address) return;
     getQortalTransactions();
-  }, [userInfo?.address]);
+  }, [address]);
 
   const sendQortRequest = async () => {
     setOpenTxQortSubmit(true);
@@ -569,14 +561,14 @@ export default function QortalWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address : {userInfo?.address}
+          Address : {address}
         </DialogTitle>
         <DialogContent dividers>
           <div style={{ height: "auto", margin: "0 auto", maxWidth: 256, width: "100%" }}>
             <QRCode
               size={256}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-              value={userInfo?.address}
+              value={address}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -659,17 +651,17 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.recipient === userInfo?.address ?
+                    {row?.recipient === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.recipient}</div> : row?.recipient
                     }
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.recipient === userInfo?.address ?
+                    {row?.recipient === address ?
                       <div style={{ color: '#66bb6a' }}>+ {row?.amount}</div> : <div style={{ color: '#f44336' }}>- {row?.amount}</div>
                     }
                   </StyledTableCell>
@@ -770,7 +762,7 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
@@ -878,14 +870,14 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {(() => {
                       if (row?.recipient) {
-                        if (row?.recipient === userInfo?.address) {
+                        if (row?.recipient === address) {
                           return <div style={{ color: '#05a2e4' }}>{row?.recipient}</div>;
                         } else {
                           return row?.recipient;
@@ -898,7 +890,7 @@ export default function QortalWallet() {
                     })()}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.recipient === userInfo?.address ?
+                    {row?.recipient === address ?
                       <div style={{ color: '#66bb6a' }}>+ {row?.amount}</div> : <div style={{ color: '#f44336' }}>- {row?.amount}</div>
                     }
                   </StyledTableCell>
@@ -1004,7 +996,7 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
@@ -1025,7 +1017,7 @@ export default function QortalWallet() {
                       } else if (row?.type === "GROUP_KICK") {
                         return "Kicked: " + row?.member + " ID: " + row?.groupId;
                       } else if (row?.type === "GROUP_INVITE") {
-                        if (row?.invitee === userInfo?.address) {
+                        if (row?.invitee === address) {
                           return <div>Invitee:<span style={{ color: '#05a2e4', marginLeft: '5px', marginRight: '5px' }}>{row?.invitee}</span>ID: {row?.groupId}</div>;
                         } else {
                           return "Invitee: " + row?.invitee + " ID: " + row?.groupId;
@@ -1141,7 +1133,7 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
@@ -1260,14 +1252,14 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {(() => {
                       if (row?.type === "TRANSFER_ASSET") {
-                        return row?.recipient === userInfo?.address ? <div style={{ color: '#05a2e4' }}>{row?.recipient}</div> : row?.recipient;
+                        return row?.recipient === address ? <div style={{ color: '#05a2e4' }}>{row?.recipient}</div> : row?.recipient;
                       } else if (row?.type === "ISSUE_ASSET") {
                         return "Asset name: " + row?.assetName;
                       }
@@ -1371,7 +1363,7 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
@@ -1476,12 +1468,12 @@ export default function QortalWallet() {
                     {row?.type}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.creatorAddress === userInfo?.address ?
+                    {row?.creatorAddress === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.creatorAddress}</div> : row?.creatorAddress
                     }
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.recipient === userInfo?.address ?
+                    {row?.recipient === address ?
                       <div style={{ color: '#05a2e4' }}>{row?.recipient}</div> : row?.recipient
                     }
                   </StyledTableCell>
@@ -1873,10 +1865,10 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {userInfo?.address}
+            {address}
           </Typography>
           <Tooltip placement="right" title={copyQortAddress ? copyQortAddress : "Copy Address"}>
-            <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(userInfo?.address), changeCopyQortcStatus() }}>
+            <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(address), changeCopyQortcStatus() }}>
               <CopyAllTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -1936,6 +1928,8 @@ export default function QortalWallet() {
         </div>
         {loadingRefreshQort ? tableLoader() : qortalTables()}
       </WalleteCard>
+
+       <Typography>{address}</Typography>
     </Box>
   );
 }

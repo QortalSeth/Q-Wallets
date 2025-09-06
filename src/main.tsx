@@ -15,6 +15,7 @@ function WalletProvider({ children }) {
     </WalletContext.Provider>
   );
 }
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProviderWrapper>

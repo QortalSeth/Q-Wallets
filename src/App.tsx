@@ -1,41 +1,44 @@
 import {
   Box,
-  Card,
-  CardContent,
   Container,
-  Grid,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListSubheader,
+  Tooltip,
   Typography,
-  styled,
   useTheme,
 } from '@mui/material';
-import {
-  TbBlocks,
-  TbAffiliate,
-  TbHistoryToggle,
-  TbBrandGit,
-} from 'react-icons/tb';
+import { AltRoute, GridView, HistoryToggleOff, Home, Hub, Wallet } from '@mui/icons-material';
+import Grid from '@mui/material/Grid';
 import { secondsToDhms } from './common/functions';
-import { useTranslation } from 'react-i18next';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useAuth } from 'qapp-core';
 import walletContext, { IContextProps } from './contexts/walletContext';
-import { NavLink } from 'react-router';
+import qort from './assets/qort.png';
+import btc from './assets/btc.png';
+import ltc from './assets/ltc.png';
+import doge from './assets/doge.png';
+import dgb from './assets/dgb.png';
+import rvn from './assets/rvn.png';
+import arrr from './assets/arrr.png';
+import { useTranslation } from 'react-i18next';
+import NodeWidget from './components/NodeWidget';
 
-const FeatureCard = styled(Card)(() => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'transform 0.2s',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-  },
-}));
+const drawerWidth = 88;
 
-function App() {
-  // const { t } = useTranslation(['core']);
-  // const theme = useTheme();
+type Props = {
+  currentSegment?: string; 
+  onNavigate?: (segment: string) => void;
+};
 
-  const { setWalletState } = useContext(walletContext)
+function App({ currentSegment, onNavigate = () => {} }: Props) {
+  const { t } = useTranslation(['core']);
+  const theme = useTheme();
+
+  const { setWalletState } = useContext(walletContext);
   const [isUsingGateway, setIsUsingGateway] = useState(true);
   const [nodeInfo, setNodeInfo] = useState<any>(null);
   const { address, avatarUrl, name } = useAuth();
@@ -66,11 +69,11 @@ function App() {
   }
 
   useEffect(() => {
-      getIsUsingGateway();
+    getIsUsingGateway();
   }, []);
 
   useEffect(() => {
-    let nodeInfoTimeoutId: number;;
+    let nodeInfoTimeoutId: number;
     (async () => {
       nodeInfoTimeoutId = setInterval(async () => {
         const infos = await getNodeInfo();
@@ -85,13 +88,13 @@ function App() {
   }, []);
 
   const walletContextValue: IContextProps = {
-      address: address ?? '',
-      avatar: avatarUrl ?? '',
-      name: name ?? '',
-      isAuthenticated: !!address,
-      isUsingGateway: isUsingGateway,
-      nodeInfo: nodeInfo,
-    };
+    address: address ?? '',
+    avatar: avatarUrl ?? '',
+    name: name ?? '',
+    isAuthenticated: !!address,
+    isUsingGateway: isUsingGateway,
+    nodeInfo: nodeInfo,
+  };
 
   useEffect(() => {
     if (setWalletState) {
@@ -99,79 +102,212 @@ function App() {
     }
   }, [address, avatarUrl, name, isUsingGateway, nodeInfo]);
 
-  // let Pirate = {};
-
-  // if (!isUsingGateway)
-  //   Pirate = {
-  //     segment: 'piratechain',
-  //     title: 'Pirate Chain',
-  //     icon: <img src={arrr} style={{ width: '24px', height: 'auto' }} />,
-  //   };
-
   const features = [
     {
-      icon: <TbBlocks size={32} />,
+      icon: GridView,
       title: nodeInfo?.height,
       description: 'BLOCK HEIGHT',
     },
     {
-      icon: <TbAffiliate size={32} />,
+      icon: Hub,
       title: nodeInfo?.numberOfConnections,
       description: 'CONNECTED PEERS',
     },
     {
-      icon: <TbHistoryToggle size={32} />,
+      icon: HistoryToggleOff,
       title: secondsToDhms(nodeInfo?.uptime / 1000),
       description: 'NODE UPTIME',
     },
     {
-      icon: <TbBrandGit size={32} />,
+      icon: AltRoute,
       title: nodeInfo?.buildVersion.replace('qortal-', 'v'),
       description: 'CORE VERSION',
     },
   ];
 
-  return (
-    <Box>
-      <Container maxWidth="lg" sx={{ my: 8 }}>
-        <Typography variant="h3" gutterBottom align="center">
-          Welcome To <span style={{ color: '#60d0fd' }}>Qortal</span>{' '}
-          <span style={{ color: '#05a2e4' }}>Wallets</span>{' '}
-          <span style={{ color: '#02648d' }}>App</span>!
-        </Typography>
-        <Typography variant="h4" gutterBottom align="center">
-          Qortal Node Information
-        </Typography>
-        <Grid container spacing={4} sx={{ mt: 4 }}>
-          {features.map((feature, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-              <FeatureCard>
-                <CardContent>
-                  <Box sx={{ mb: 2 }}>{feature.icon}</Box>
-                  <Typography variant="h6" gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </FeatureCard>
-            </Grid>
-          ))}
-        </Grid>
-        <Box sx={{ mt: 8 }}>
-          <Typography variant="h4" gutterBottom align="center">
-            {!!address ? '' : 'Please sign in to use Qortal Wallets.'}
-          </Typography>
-        </Box>
-      </Container>
+  let Pirate = {};
 
-      <NavLink
-              to="qortal"
-             
-            >
-              Qortal
-            </NavLink>
+  if (!isUsingGateway)
+    Pirate = {
+      segment: 'piratechain',
+      title: 'Pirate Chain',
+      icon: <img src={arrr} style={{ width: '24px', height: 'auto' }} />,
+    };
+
+  type NavHeader = { kind: 'header'; title: string };
+  type NavSegment = { segment: string; title: string; icon: React.ReactNode };
+  type Navigation = Array<NavHeader | NavSegment>;
+
+  const NAVIGATION: Navigation = [
+    { kind: 'header', title: 'WALLETS' },
+    { segment: '/', title: 'Home', icon: <Wallet /> },
+    {
+      segment: 'qortal',
+      title: 'Qortal',
+      icon: <img src={qort} style={{ width: 24, height: 'auto' }} />,
+    },
+    {
+      segment: 'litecoin',
+      title: 'Litecoin',
+      icon: <img src={ltc} style={{ width: 24, height: 'auto' }} />,
+    },
+    {
+      segment: 'bitcoin',
+      title: 'Bitcoin',
+      icon: <img src={btc} style={{ width: 24, height: 'auto' }} />,
+    },
+    {
+      segment: 'dogecoin',
+      title: 'Dogecoin',
+      icon: <img src={doge} style={{ width: 24, height: 'auto' }} />,
+    },
+    {
+      segment: 'digibyte',
+      title: 'Digibyte',
+      icon: <img src={dgb} style={{ width: 24, height: 'auto' }} />,
+    },
+    {
+      segment: 'ravencoin',
+      title: 'Ravencoin',
+      icon: <img src={rvn} style={{ width: 24, height: 'auto' }} />,
+    },
+    // If "Pirate" is another wallet, add it here as a proper NavSegment object:
+    // { segment: "pirate", title: "Pirate", icon: <img src={pirate} style={{ width: 24, height: "auto" }} /> },
+  ];
+
+  const [selectedSegment, setSelectedSegment] = useState(currentSegment ?? '/');
+
+  // keep local state in sync if parent controls it
+  useEffect(() => {
+    if (currentSegment) setSelectedSegment(currentSegment);
+  }, [currentSegment]);
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      {/* Left vertical navigation */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            alignItems: 'center',
+            pt: 1,
+            overflowX: 'hidden',
+          },
+        }}
+      >
+        <List
+          disablePadding
+          subheader={
+            NAVIGATION.find(
+              (i): i is NavHeader => (i as any).kind === 'header'
+            ) ? (
+              <ListSubheader
+                component="div"
+                sx={{
+                  textAlign: 'center',
+                  lineHeight: 1.2,
+                  py: 1.5,
+                  fontSize: 11,
+                  letterSpacing: 1.2,
+                }}
+              >
+                {
+                  (
+                    NAVIGATION.find(
+                      (i): i is NavHeader => (i as any).kind === 'header'
+                    ) as NavHeader
+                  ).title
+                }
+              </ListSubheader>
+            ) : undefined
+          }
+        >
+          {NAVIGATION.filter(
+            (item): item is NavSegment =>
+              (item as any).segment && (item as any).icon
+          ).map((item) => {
+            const selected = selectedSegment === item.segment;
+            return (
+              <ListItem
+                key={item.segment}
+                disablePadding
+                sx={{ justifyContent: 'center' }}
+              >
+                <Tooltip title={item.title} placement="right">
+                  <ListItemButton
+                    onClick={() => {
+                      setSelectedSegment(item.segment);
+                      onNavigate(item.segment);
+                    }}
+                    selected={selected}
+                    sx={{
+                      justifyContent: 'center',
+                      py: 2,
+                      minHeight: 56,
+                      '&.Mui-selected': {
+                        borderRight: (theme) =>
+                          `3px solid ${theme.palette.primary.main}`,
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 0 }}>
+                      <Box
+                        sx={{ width: 24, height: 24, display: 'inline-flex' }}
+                      >
+                        {item.icon}
+                      </Box>
+                    </ListItemIcon>
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Drawer>
+      
+      {/* Right side content */}
+      <Box component="main" sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
+        <Container maxWidth="lg" sx={{ my: 8 }}>
+          {selectedSegment === '/' && (
+            <>
+              <Typography variant="h3" gutterBottom align="center">
+                Welcome To <span style={{ color: '#60d0fd' }}>Qortal</span>{' '}
+                <span style={{ color: '#05a2e4' }}>Wallets</span>{' '}
+                <span style={{ color: '#02648d' }}>App</span>!
+              </Typography>
+
+              <Typography variant="h4" gutterBottom align="center">
+                Qortal Node Information
+              </Typography>
+
+              <Grid
+                container
+                spacing={4}
+                sx={{ mt: 4 }}
+                justifyContent="center"
+                alignItems="flex-start"
+              >
+                {features.map((feature, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <NodeWidget
+                      icon={feature.icon}
+                      subtitle={feature.title ?? '-'} 
+                      title={feature.description}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          )}
+
+          {selectedSegment === 'bitcoin' && <div>Bitcoin wallet UI…</div>}
+          {selectedSegment === 'litecoin' && <div>Litecoin wallet UI…</div>}
+        </Container>
+      </Box>
     </Box>
   );
 }

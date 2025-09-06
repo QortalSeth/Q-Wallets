@@ -1,6 +1,6 @@
 import { GlobalProvider } from 'qapp-core';
-import Layout from './styles/Layout';
 import { publicSalt } from './qapp-config';
+import AppLayout from './AppLayout';
 
 export const AppWrapper = () => {
 
@@ -18,7 +18,7 @@ export const AppWrapper = () => {
         publicSalt: publicSalt,
       }}
     >
-      <Layout />
+      <AppLayout />
     </GlobalProvider>
   );
 };

@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App from '../AppLayout';
 import { AppWrapper } from '../AppWrapper';
 import QortalWallet from '../pages/qort';
 import LitecoinWallet from '../pages/ltc';

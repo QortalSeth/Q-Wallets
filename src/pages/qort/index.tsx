@@ -1928,8 +1928,6 @@ export default function QortalWallet() {
         </div>
         {loadingRefreshQort ? tableLoader() : qortalTables()}
       </WalleteCard>
-
-       <Typography>{address}</Typography>
     </Box>
   );
 }

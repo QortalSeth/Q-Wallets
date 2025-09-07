@@ -56,6 +56,7 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
+import { useTranslation } from 'react-i18next';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -68,6 +69,7 @@ interface TablePaginationActionsProps {
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
+  const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
@@ -94,28 +96,36 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
-        aria-label="first page"
+        aria-label={t('core:page.first', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <LastPage /> : <FirstPage />}
       </IconButton>
       <IconButton
         onClick={handleBackButtonClick}
         disabled={page === 0}
-        aria-label="previous page"
+        aria-label={t('core:page.previous', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
+        aria-label={t('core:page.next', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
+        aria-label={t('core:page.last', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <FirstPage /> : <LastPage />}
       </IconButton>
@@ -217,6 +227,8 @@ const QortSubmittDialog = styled(Dialog)(({ theme }) => ({
 }));
 
 export default function QortalWallet() {
+  const { t } = useTranslation(['core']);
+
   const { address, nodeInfo } = React.useContext(WalletContext);
 
   const [walletBalanceQort, setWalletBalanceQort] = React.useState<any>(null);
@@ -576,7 +588,9 @@ export default function QortalWallet() {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseQortQR}>
-            CLOSE
+                {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </DialogActions>
       </DialogGeneral>
@@ -1685,7 +1699,10 @@ export default function QortalWallet() {
                 flexGrow: 1, display: { xs: 'none', sm: 'block', paddingLeft: '10px', paddingTop: '3px' }
               }}
             >
-              Transfer QORT
+              {t('core:action.transfer_coin', {
+            coin: 'QORT',
+            postProcess: 'capitalizeFirstChar',
+          })}
             </Typography>
             <Button
               disabled={sendDisabled}
@@ -1888,7 +1905,10 @@ export default function QortalWallet() {
             aria-label="Transfer"
             onClick={handleOpenQortSend}
           >
-            Transfer QORT
+            {t('core:action.transfer_coin', {
+            coin: 'QORT',
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"

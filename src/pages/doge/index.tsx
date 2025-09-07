@@ -57,6 +57,7 @@ import {
 } from '@mui/icons-material';
 import coinLogoDOGE from '../../assets/doge.png';
 import { FeeManager } from '../../components/FeeManager';
+import { useTranslation } from 'react-i18next';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -69,6 +70,7 @@ interface TablePaginationActionsProps {
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
+  const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
@@ -95,28 +97,36 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
-        aria-label="first page"
+        aria-label={t('core:page.first', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <LastPage /> : <FirstPage />}
       </IconButton>
       <IconButton
         onClick={handleBackButtonClick}
         disabled={page === 0}
-        aria-label="previous page"
+        aria-label={t('core:page.previous', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
+        aria-label={t('core:page.next', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
+        aria-label={t('core:page.last', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <FirstPage /> : <LastPage />}
       </IconButton>
@@ -490,7 +500,9 @@ export default function DogecoinWallet() {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseDogeQR}>
-            CLOSE
+                {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </DialogActions>
       </DogeQrDialog>
@@ -609,7 +621,10 @@ export default function DogecoinWallet() {
                 flexGrow: 1, display: { xs: 'none', sm: 'block', paddingLeft: '10px', paddingTop: '3px' }
               }}
             >
-              Transfer DOGE
+              {t('core:action.transfer_coin', {
+            coin: 'DOGE',
+            postProcess: 'capitalizeFirstChar',
+          })}
             </Typography>
             <Button
               disabled={validateCanSendDoge()}
@@ -958,7 +973,10 @@ export default function DogecoinWallet() {
             aria-label="transfer"
             onClick={handleOpenDogeSend}
           >
-            Transfer DOGE
+            {t('core:action.transfer_coin', {
+            coin: 'DOGE',
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"

@@ -56,6 +56,7 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoRVN from '../../assets/rvn.png';
+import { useTranslation } from 'react-i18next';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -68,6 +69,7 @@ interface TablePaginationActionsProps {
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
+  const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
@@ -94,28 +96,36 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
-        aria-label="first page"
+        aria-label={t('core:page.first', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <LastPage /> : <FirstPage />}
       </IconButton>
       <IconButton
         onClick={handleBackButtonClick}
         disabled={page === 0}
-        aria-label="previous page"
+        aria-label={t('core:page.previous', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
+        aria-label={t('core:page.next', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
+        aria-label={t('core:page.last', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <FirstPage /> : <LastPage />}
       </IconButton>
@@ -247,15 +257,9 @@ function valueTextRvn(value: number) {
 }
 
 export default function RavencoinWallet() {
-  const { isAuthenticated } = React.useContext(WalletContext);
+  const { t } = useTranslation(['core']);
 
-  if (!isAuthenticated) {
-    return (
-      <Alert variant="filled" severity="error">
-        You must sign in, to use the Ravencoin wallet.
-      </Alert>
-    );
-  }
+  const { isAuthenticated } = React.useContext(WalletContext);
 
   const [walletInfoRvn, setWalletInfoRvn] = React.useState<any>({});
   const [walletBalanceRvn, setWalletBalanceRvn] = React.useState<any>(null);
@@ -488,7 +492,9 @@ export default function RavencoinWallet() {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseRvnQR}>
-            CLOSE
+                {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </DialogActions>
       </RvnQrDialog>
@@ -608,7 +614,10 @@ export default function RavencoinWallet() {
                 flexGrow: 1, display: { xs: 'none', sm: 'block', paddingLeft: '10px', paddingTop: '3px' }
               }}
             >
-              Transfer RVN
+              {t('core:action.transfer_coin', {
+            coin: 'DGV',
+            postProcess: 'capitalizeFirstChar',
+          })}
             </Typography>
             <Button
               disabled={validateCanSendRvn()}
@@ -991,7 +1000,10 @@ export default function RavencoinWallet() {
             aria-label="transfer"
             onClick={handleOpenRvnSend}
           >
-            Transfer RVN
+            {t('core:action.transfer_coin', {
+            coin: 'DGV',
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"

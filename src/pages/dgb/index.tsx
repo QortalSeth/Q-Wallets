@@ -15,9 +15,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
   Paper,
   Slider,
   Table,
@@ -50,12 +47,12 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  PublishedWithChangesTwoTone,
   QrCode2,
   Refresh,
   Send
 } from '@mui/icons-material';
 import coinLogoDGB from '../../assets/dgb.png';
+import { useTranslation } from 'react-i18next';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -68,6 +65,7 @@ interface TablePaginationActionsProps {
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
+  const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
@@ -94,28 +92,36 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
-        aria-label="first page"
+        aria-label={t('core:page.first', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <LastPage /> : <FirstPage />}
       </IconButton>
       <IconButton
         onClick={handleBackButtonClick}
         disabled={page === 0}
-        aria-label="previous page"
+        aria-label={t('core:page.previous', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
+        aria-label={t('core:page.next', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
+        aria-label={t('core:page.last', {
+        postProcess: 'capitalizeAll',
+      })}
       >
         {theme.direction === 'rtl' ? <FirstPage /> : <LastPage />}
       </IconButton>
@@ -489,7 +495,9 @@ export default function DigibyteWallet() {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseDgbQR}>
-            CLOSE
+                {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </DialogActions>
       </DgbQrDialog>
@@ -609,7 +617,10 @@ export default function DigibyteWallet() {
                 flexGrow: 1, display: { xs: 'none', sm: 'block', paddingLeft: '10px', paddingTop: '3px' }
               }}
             >
-              Transfer DGB
+              {t('core:action.transfer_coin', {
+            coin: 'DGB',
+            postProcess: 'capitalizeFirstChar',
+          })}
             </Typography>
             <Button
               disabled={validateCanSendDgb()}
@@ -993,7 +1004,10 @@ export default function DigibyteWallet() {
             aria-label="transfer"
             onClick={handleOpenDgbSend}
           >
-            Transfer DGB
+            {t('core:action.transfer_coin', {
+            coin: 'DGB',
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"

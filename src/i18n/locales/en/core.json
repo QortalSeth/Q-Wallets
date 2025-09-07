@@ -4,10 +4,16 @@
     "add_peer": "add new peer",
     "add_minting_account": "add minting account",
     "cancel": "cancel",
+    "change_server": "change server",
+    "close": "close",
+    "copy_address": "copy address",
     "force_sync": "force sync",
-    "remove": "remove"
+    "remove": "remove",
+    "transfer_coin": "transfer {{ coin }}"
   },
-   "coins": {
+  "address": "address:",
+  "balance": "balance:",
+  "coins": {
     "bitcoin": "Bitcoin",
     "digibyte": "Digibyte",
     "dogecoin": "Dogecoin",
@@ -19,9 +25,23 @@
   "home": "home",
   "message": {
     "generic": {
+      "initializing_wallet": "Initializing wallet...",
+      "lightwallet_server": "Lightwallet Server:",
       "node_info": "Qortal Node Information",
+      "not_initialized_yet": "Not initialized yet",
+      "pirate_chain_servers": "Available Pirate Chain Lightwallet Servers.",
       "welcome": "Welcome to <brand>Qortal Wallets</brand>"
-      }
+      },
+    "error": {
+      "pirate_chain_gateway": "You cannot use Pirate Chain wallet through public node. Please use your local node.",
+      "pirate_chain_no_server": "No Connection To Pirate Chain Lightwallet Server."
+    }
+  },
+  "page": {
+    "last": "last",
+    "first": "first",
+    "next": "next",
+    "previous": "previous"
   },
   "table_headers": {
     "peers": {

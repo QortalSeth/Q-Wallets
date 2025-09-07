@@ -9,7 +9,6 @@ import walletContext from '../contexts/walletContext';
 export default function Home() {
   const { t } = useTranslation(['core']);
   const { nodeInfo } = useContext(walletContext);
-
   const features = [
     {
       icon: GridView,

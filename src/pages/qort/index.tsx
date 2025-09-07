@@ -1701,7 +1701,10 @@ export default function QortalWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent QORT transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'QORT',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendQortError} autoHideDuration={4000} onClose={handleCloseSendQortError}>

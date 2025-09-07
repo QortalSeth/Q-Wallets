@@ -591,7 +591,10 @@ export default function DogecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent DOGE transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'DOGE',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendDogeError} autoHideDuration={4000} onClose={handleCloseSendDogeError}>

@@ -594,7 +594,10 @@ export default function LitecoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent LTC transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'LTC',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendLtcError} autoHideDuration={4000} onClose={handleCloseSendLtcError}>

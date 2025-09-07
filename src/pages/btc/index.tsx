@@ -593,7 +593,10 @@ export default function BitcoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent BTC transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'BTC',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendBtcError} autoHideDuration={4000} onClose={handleCloseSendBtcError}>

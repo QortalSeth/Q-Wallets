@@ -584,7 +584,10 @@ export default function RavencoinWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent RVN transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'RVN',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendRvnError} autoHideDuration={4000} onClose={handleCloseSendRvnError}>

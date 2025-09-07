@@ -587,7 +587,10 @@ export default function DigibyteWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent DGB transaction was successful.
+                   {t('core:message.generic.sent_transaction', {
+              coin: 'DGB',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar open={openSendDgbError} autoHideDuration={4000} onClose={handleCloseSendDgbError}>

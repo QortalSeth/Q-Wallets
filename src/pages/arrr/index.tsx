@@ -1166,27 +1166,41 @@ export default function PirateWallet() {
         >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">{t('core:sender', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:receiver', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:transaction_hash', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:memo', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:total_amount', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:fee', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
-              <StyledTableCell align="left">{t('core:time', {
-              postProcess: 'capitalizeFirstChar',
-            })}</StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:sender', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:receiver', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:transaction_hash', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:memo', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:total_amount', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:fee', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:time', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1391,7 +1405,9 @@ export default function PirateWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeAll',
+                  })}
                 </Typography>
               </div>
             </Box>
@@ -1410,7 +1426,10 @@ export default function PirateWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent ARRR transaction was successful.
+            {t('core:message.generic.sent_transaction', {
+              coin: 'ARRR',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <Snackbar

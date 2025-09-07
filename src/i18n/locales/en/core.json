@@ -10,6 +10,9 @@
     "force_sync": "force sync",
     "refresh": "refresh",
     "remove": "remove",
+    "retry": "retry",
+    "send": "send",
+    "send max": "send max",
     "show_qrcode": "show QR code",
     "transfer_coin": "transfer {{ coin }}"
   },
@@ -36,6 +39,8 @@
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
       "pirate_chain_servers": "Available Pirate Chain Lightwallet Servers.",
+      "processing_transaction": "Processing Transaction, please wait...",
+      "sent_transaction": "Sent {{ coin }} transaction was successful.",
       "welcome": "Welcome to <brand>Qortal Wallets</brand>"
       },
     "error": {

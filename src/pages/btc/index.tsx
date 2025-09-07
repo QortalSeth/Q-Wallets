@@ -1,7 +1,18 @@
-import * as React from 'react';
+import {
+  ChangeEvent,
+  forwardRef,
+  Key,
+  MouseEvent,
+  ReactElement,
+  Ref,
+  SyntheticEvent,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import WalletContext from '../../contexts/walletContext';
-import { epochToAgo, timeoutDelay, cropString } from '../../common/functions'
-import { styled } from "@mui/system";
+import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
+import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -15,11 +26,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
   Paper,
-  Slider,
   Table,
   TableBody,
   TableContainer,
@@ -32,7 +39,7 @@ import {
   Tooltip,
   tooltipClasses,
   TooltipProps,
-  Typography
+  Typography,
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
@@ -50,43 +57,39 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  PublishedWithChangesTwoTone,
   QrCode2,
   Refresh,
-  Send
+  Send,
 } from '@mui/icons-material';
 import coinLogoBTC from '../../assets/btc.png';
 import { FeeManager } from '../../components/FeeManager';
+import { useTranslation } from 'react-i18next';
 
 interface TablePaginationActionsProps {
   count: number;
   page: number;
   rowsPerPage: number;
-  onPageChange: (
-    event: React.MouseEvent<HTMLButtonElement>,
-    newPage: number,
-  ) => void;
+  onPageChange: (event: MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
+  const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
-  const handleFirstPageButtonClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleFirstPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, 0);
   };
 
-  const handleBackButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleBackButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page - 1);
   };
 
-  const handleNextButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleNextButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page + 1);
   };
 
-  const handleLastPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLastPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
   };
 
@@ -95,28 +98,44 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
-        aria-label="first page"
+        aria-label={t('core:page.first', {
+          postProcess: 'capitalizeAll',
+        })}
       >
         {theme.direction === 'rtl' ? <LastPage /> : <FirstPage />}
       </IconButton>
       <IconButton
         onClick={handleBackButtonClick}
         disabled={page === 0}
-        aria-label="previous page"
+        aria-label={t('core:page.previous', {
+          postProcess: 'capitalizeAll',
+        })}
       >
-        {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
+        {theme.direction === 'rtl' ? (
+          <KeyboardArrowRight />
+        ) : (
+          <KeyboardArrowLeft />
+        )}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
+        aria-label={t('core:page.next', {
+          postProcess: 'capitalizeAll',
+        })}
       >
-        {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
+        {theme.direction === 'rtl' ? (
+          <KeyboardArrowLeft />
+        ) : (
+          <KeyboardArrowRight />
+        )}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
+        aria-label={t('core:page.last', {
+          postProcess: 'capitalizeAll',
+        })}
       >
         {theme.direction === 'rtl' ? <FirstPage /> : <LastPage />}
       </IconButton>
@@ -124,11 +143,11 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   );
 }
 
-const Transition = React.forwardRef(function Transition(
+const Transition = forwardRef(function Transition(
   props: TransitionProps & {
-    children: React.ReactElement<unknown>;
+    children: ReactElement<unknown>;
   },
-  ref: React.Ref<unknown>,
+  ref: Ref<unknown>
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -144,8 +163,8 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
   },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
+  '& .MuiDialog-paper': {
+    borderRadius: '15px',
   },
 }));
 
@@ -156,8 +175,8 @@ const BtcQrDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
   },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
+  '& .MuiDialog-paper': {
+    borderRadius: '15px',
   },
 }));
 
@@ -168,8 +187,8 @@ const BtcElectrumDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
   },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
+  '& .MuiDialog-paper': {
+    borderRadius: '15px',
   },
 }));
 
@@ -180,8 +199,8 @@ const BtcSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
   },
-  "& .MuiDialog-paper": {
-    borderRadius: "15px",
+  '& .MuiDialog-paper': {
+    borderRadius: '15px',
   },
 }));
 
@@ -194,30 +213,30 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
 });
 
 const WalleteCard = styled(Card)({
-  maxWidth: "100%",
-  margin: "20px, auto",
-  padding: "24px",
+  maxWidth: '100%',
+  margin: '20px, auto',
+  padding: '24px',
   borderRadius: 16,
-  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
 });
 
 const CoinAvatar = styled(Avatar)({
   width: 120,
   height: 120,
-  margin: "0 auto 16px",
-  transition: "transform 0.3s",
-  "&:hover": {
-    transform: "scale(1.05)",
+  margin: '0 auto 16px',
+  transition: 'transform 0.3s',
+  '&:hover': {
+    transform: 'scale(1.05)',
   },
 });
 
 const WalletButtons = styled(Button)({
-  width: "auto",
-  backgroundColor: "#05a2e4",
-  color: "white",
-  padding: "auto",
-  "&:hover": {
-    backgroundColor: "#02648d",
+  width: 'auto',
+  backgroundColor: '#05a2e4',
+  color: 'white',
+  padding: 'auto',
+  '&:hover': {
+    backgroundColor: '#02648d',
   },
 });
 
@@ -240,81 +259,61 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const btcMarks = [
-  {
-    value: 20,
-    label: 'MIN',
-  },
-  {
-    value: 100,
-    label: 'DEF',
-  },
-  {
-    value: 150,
-    label: 'MAX',
-  },
-];
-
-function valueTextBtc(value: number) {
-  return `${value} SAT`;
-}
-
 export default function BitcoinWallet() {
-  const { isAuthenticated } = React.useContext(WalletContext);
+  const { t } = useTranslation(['core']);
 
-  if (!isAuthenticated) {
-    return (
-      <Alert variant="filled" severity="error">
-        You must sign in, to use the Bitcoin wallet.
-      </Alert>
-    );
-  }
+  const { isAuthenticated } = useContext(WalletContext);
 
-  const [walletInfoBtc, setWalletInfoBtc] = React.useState<any>({});
-  const [walletBalanceBtc, setWalletBalanceBtc] = React.useState<any>(null);
-  const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] = React.useState<boolean>(true);
-  const [transactionsBtc, setTransactionsBtc] = React.useState<any>([]);
-  const [isLoadingBtcTransactions, setIsLoadingBtcTransactions] = React.useState<boolean>(true);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [copyBtcAddress, setCopyBtcAddress] = React.useState('');
-  const [copyBtcTxHash, setCopyBtcTxHash] = React.useState('');
-  const [openBtcQR, setOpenBtcQR] = React.useState(false);
-  const [openBtcSend, setOpenBtcSend] = React.useState(false);
-  const [btcAmount, setBtcAmount] = React.useState<number>(0);
-  const [btcRecipient, setBtcRecipient] = React.useState('');
-  const [addressFormatError, setAddressFormatError] = React.useState(false);
+  const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
+  const [walletBalanceBtc, setWalletBalanceBtc] = useState<any>(null);
+  const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] =
+    useState<boolean>(true);
+  const [transactionsBtc, setTransactionsBtc] = useState<any>([]);
+  const [isLoadingBtcTransactions, setIsLoadingBtcTransactions] =
+    useState<boolean>(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [copyBtcAddress, setCopyBtcAddress] = useState('');
+  const [copyBtcTxHash, setCopyBtcTxHash] = useState('');
+  const [openBtcQR, setOpenBtcQR] = useState(false);
+  const [openBtcSend, setOpenBtcSend] = useState(false);
+  const [btcAmount, setBtcAmount] = useState<number>(0);
+  const [btcRecipient, setBtcRecipient] = useState('');
+  const [addressFormatError, setAddressFormatError] = useState(false);
 
-  const [loadingRefreshBtc, setLoadingRefreshBtc] = React.useState(false);
-  const [openTxBtcSubmit, setOpenTxBtcSubmit] = React.useState(false);
-  const [openSendBtcSuccess, setOpenSendBtcSuccess] = React.useState(false);
-  const [openSendBtcError, setOpenSendBtcError] = React.useState(false);
-  const [openBtcAddressBook, setOpenBtcAddressBook] = React.useState(false);
-    const [inputFee, setInputFee] = React.useState(0)
-  
- const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8)
- const estimatedFeeCalculated = +btcFeeCalculated * 500
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length) : 0;
+  const [loadingRefreshBtc, setLoadingRefreshBtc] = useState(false);
+  const [openTxBtcSubmit, setOpenTxBtcSubmit] = useState(false);
+  const [openSendBtcSuccess, setOpenSendBtcSuccess] = useState(false);
+  const [openSendBtcError, setOpenSendBtcError] = useState(false);
+  const [openBtcAddressBook, setOpenBtcAddressBook] = useState(false);
+  const [inputFee, setInputFee] = useState(0);
+
+  const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
+  const estimatedFeeCalculated = +btcFeeCalculated * 500;
+  const emptyRows =
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length)
+      : 0;
 
   const handleOpenBtcQR = () => {
     setOpenBtcQR(true);
-  }
+  };
 
   const handleCloseBtcQR = () => {
     setOpenBtcQR(false);
-  }
+  };
 
   const handleOpenAddressBook = async () => {
     setOpenBtcAddressBook(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setOpenBtcAddressBook(false);
-  }
+  };
 
   const handleOpenBtcSend = () => {
     setBtcAmount(0);
     setBtcRecipient('');
     setOpenBtcSend(true);
-  }
+  };
 
   const validateCanSendBtc = () => {
     if (btcAmount <= 0 || null || !btcAmount) {
@@ -324,51 +323,56 @@ export default function BitcoinWallet() {
       return true;
     }
     return false;
-  }
+  };
 
-    const handleRecipientChange = (e) => {
-        const value = e.target.value;
-        const pattern = /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[02-9A-HJ-NP-Za-z]{39})$/
+  const handleRecipientChange = (e) => {
+    const value = e.target.value;
+    const pattern =
+      /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[02-9A-HJ-NP-Za-z]{39})$/;
 
-        setBtcRecipient(value);
+    setBtcRecipient(value);
 
-        if( pattern.test(value) || value === '') {
-            setAddressFormatError(false);
-        }
-        else {
-            setAddressFormatError(true);
-        }
-    };
+    if (pattern.test(value) || value === '') {
+      setAddressFormatError(false);
+    } else {
+      setAddressFormatError(true);
+    }
+  };
 
-    const handleCloseBtcSend = () => {
+  const handleCloseBtcSend = () => {
     setBtcAmount(0);
     setOpenBtcSend(false);
-  }
+  };
 
   const changeCopyBtcStatus = async () => {
     setCopyBtcAddress('Copied');
     await timeoutDelay(2000);
     setCopyBtcAddress('');
-  }
+  };
 
   const changeCopyBtcTxHash = async () => {
     setCopyBtcTxHash('Copied');
     await timeoutDelay(2000);
     setCopyBtcTxHash('');
-  }
+  };
 
-  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
+  const handleChangePage = (
+    _event: MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
+  const handleChangeRowsPerPage = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
   const handleCloseSendBtcSuccess = (
-    _event?: React.SyntheticEvent | Event,
-    reason?: SnackbarCloseReason,
+    _event?: SyntheticEvent | Event,
+    reason?: SnackbarCloseReason
   ) => {
     if (reason === 'clickaway') {
       return;
@@ -377,8 +381,8 @@ export default function BitcoinWallet() {
   };
 
   const handleCloseSendBtcError = (
-    _event?: React.SyntheticEvent | Event,
-    reason?: SnackbarCloseReason,
+    _event?: SyntheticEvent | Event,
+    reason?: SnackbarCloseReason
   ) => {
     if (reason === 'clickaway') {
       return;
@@ -389,29 +393,32 @@ export default function BitcoinWallet() {
   const getWalletInfoBtc = async () => {
     try {
       const response = await qortalRequest({
-        action: "GET_USER_WALLET",
-        coin: "BTC"
+        action: 'GET_USER_WALLET',
+        coin: 'BTC',
       });
       if (!response?.error) {
         setWalletInfoBtc(response);
       }
     } catch (error) {
       setWalletInfoBtc({});
-      console.error("ERROR GET BTC WALLET INFO", error);
+      console.error('ERROR GET BTC WALLET INFO', error);
     }
-  }
+  };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) return;
     getWalletInfoBtc();
   }, [isAuthenticated]);
 
   const getWalletBalanceBtc = async () => {
     try {
-      const response = await qortalRequestWithTimeout({
-        action: "GET_WALLET_BALANCE",
-        coin: 'BTC'
-      }, 300000);
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: 'BTC',
+        },
+        300000
+      );
       if (!response?.error) {
         setWalletBalanceBtc(response);
         setIsLoadingWalletBalanceBtc(false);
@@ -419,11 +426,11 @@ export default function BitcoinWallet() {
     } catch (error) {
       setWalletBalanceBtc(null);
       setIsLoadingWalletBalanceBtc(false);
-      console.error("ERROR GET BTC BALANCE", error);
+      console.error('ERROR GET BTC BALANCE', error);
     }
-  }
+  };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) return;
     const intervalGetWalletBalanceBtc = setInterval(() => {
       getWalletBalanceBtc();
@@ -431,17 +438,20 @@ export default function BitcoinWallet() {
     getWalletBalanceBtc();
     return () => {
       clearInterval(intervalGetWalletBalanceBtc);
-    }
+    };
   }, [isAuthenticated]);
 
   const getTransactionsBtc = async () => {
     try {
       setIsLoadingBtcTransactions(true);
-     
-      const responseBtcTransactions = await qortalRequestWithTimeout({
-        action: "GET_USER_WALLET_TRANSACTIONS",
-        coin: 'BTC'
-      }, 300000);
+
+      const responseBtcTransactions = await qortalRequestWithTimeout(
+        {
+          action: 'GET_USER_WALLET_TRANSACTIONS',
+          coin: 'BTC',
+        },
+        300000
+      );
 
       if (!responseBtcTransactions?.error) {
         setTransactionsBtc(responseBtcTransactions);
@@ -450,11 +460,11 @@ export default function BitcoinWallet() {
     } catch (error) {
       setIsLoadingBtcTransactions(false);
       setTransactionsBtc([]);
-      console.error("ERROR GET BTC TRANSACTIONS", error);
+      console.error('ERROR GET BTC TRANSACTIONS', error);
     }
-  }
+  };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) return;
     getTransactionsBtc();
   }, [isAuthenticated]);
@@ -463,16 +473,16 @@ export default function BitcoinWallet() {
     setLoadingRefreshBtc(true);
     await getTransactionsBtc();
     setLoadingRefreshBtc(false);
-  }
+  };
 
   const handleSendMaxBtc = () => {
-    const maxBtcAmount = +walletBalanceBtc - estimatedFeeCalculated
+    const maxBtcAmount = +walletBalanceBtc - estimatedFeeCalculated;
     if (maxBtcAmount <= 0) {
       setBtcAmount(0);
     } else {
       setBtcAmount(maxBtcAmount);
     }
-  }
+  };
 
   const BtcQrDialogPage = () => {
     return (
@@ -483,13 +493,23 @@ export default function BitcoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address : {walletInfoBtc?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoBtc?.address}
         </DialogTitle>
         <DialogContent dividers>
-          <div style={{ height: "auto", margin: "0 auto", maxWidth: 256, width: "100%" }}>
+          <div
+            style={{
+              height: 'auto',
+              margin: '0 auto',
+              maxWidth: 256,
+              width: '100%',
+            }}
+          >
             <QRCode
               size={256}
-              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
               value={walletInfoBtc?.address}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
@@ -498,23 +518,25 @@ export default function BitcoinWallet() {
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseBtcQR}>
-            CLOSE
+            {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </DialogActions>
       </BtcQrDialog>
     );
-  }
+  };
 
   const sendBtcRequest = async () => {
-    if(!btcFeeCalculated) return
+    if (!btcFeeCalculated) return;
     setOpenTxBtcSubmit(true);
     try {
       const sendRequest = await qortalRequest({
-        action: "SEND_COIN",
-        coin: "BTC",
+        action: 'SEND_COIN',
+        coin: 'BTC',
         recipient: btcRecipient,
         amount: btcAmount,
-        fee: btcFeeCalculated
+        fee: btcFeeCalculated,
       });
       if (!sendRequest?.error) {
         setBtcAmount(0);
@@ -533,9 +555,9 @@ export default function BitcoinWallet() {
       setIsLoadingWalletBalanceBtc(true);
       await timeoutDelay(3000);
       getWalletBalanceBtc();
-      console.error("ERROR SENDING BTC", error);
+      console.error('ERROR SENDING BTC', error);
     }
-  }
+  };
 
   const BtcSendDialogPage = () => {
     return (
@@ -545,28 +567,43 @@ export default function BitcoinWallet() {
         onClose={handleCloseBtcSend}
         slots={{ transition: Transition }}
       >
-        <BtcSubmittDialog
-          fullWidth={true}
-          maxWidth='xs'
-          open={openTxBtcSubmit}
-        >
+        <BtcSubmittDialog fullWidth={true} maxWidth="xs" open={openTxBtcSubmit}>
           <DialogContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <div style={{
-                width: "100%",
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <CircularProgress color="success" size={64} />
-              </div>
-              <div style={{
-                width: "100%",
+            <Box
+              sx={{
                 display: 'flex',
                 justifyContent: 'center',
-                marginTop: '20px'
-              }}>
-                <Typography variant="h6" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
-                  Processing Transaction Please Wait...
+                flexWrap: 'wrap',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
+                <CircularProgress color="success" size={64} />
+              </div>
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginTop: '20px',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'primary.main',
+                    fontStyle: 'italic',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>
@@ -577,24 +614,34 @@ export default function BitcoinWallet() {
           open={openSendBtcSuccess}
           autoHideDuration={4000}
           slots={{ transition: SlideTransition }}
-          onClose={handleCloseSendBtcSuccess}>
+          onClose={handleCloseSendBtcSuccess}
+        >
           <Alert
             onClose={handleCloseSendBtcSuccess}
             severity="success"
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Sent BTC transaction was successful.
+            {t('core:message.generic.sent_transaction', {
+              coin: 'BTC',
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
-        <Snackbar open={openSendBtcError} autoHideDuration={4000} onClose={handleCloseSendBtcError}>
+        <Snackbar
+          open={openSendBtcError}
+          autoHideDuration={4000}
+          onClose={handleCloseSendBtcError}
+        >
           <Alert
             onClose={handleCloseSendBtcError}
             severity="error"
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again.
+            {t('core:message.error.something_went_wrong', {
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -607,16 +654,29 @@ export default function BitcoinWallet() {
             >
               <Close />
             </IconButton>
-            <Avatar sx={{ width: 28, height: 28 }} alt="BTC Logo" src={coinLogoBTC} />
+            <Avatar
+              sx={{ width: 28, height: 28 }}
+              alt="BTC Logo"
+              src={coinLogoBTC}
+            />
             <Typography
               variant="h6"
               noWrap
               component="div"
               sx={{
-                flexGrow: 1, display: { xs: 'none', sm: 'block', paddingLeft: '10px', paddingTop: '3px' }
+                flexGrow: 1,
+                display: {
+                  xs: 'none',
+                  sm: 'block',
+                  paddingLeft: '10px',
+                  paddingTop: '3px',
+                },
               }}
             >
-              Transfer BTC
+              {t('core:action.transfer_coin', {
+                coin: 'BTC',
+                postProcess: 'capitalizeFirstChar',
+              })}
             </Typography>
             <Button
               disabled={validateCanSendBtc()}
@@ -624,26 +684,37 @@ export default function BitcoinWallet() {
               startIcon={<Send />}
               aria-label="send-btc"
               onClick={sendBtcRequest}
-              sx={{ backgroundColor: "#05a2e4", color: "white", "&:hover": { backgroundColor: "#02648d", } }}
+              sx={{
+                backgroundColor: '#05a2e4',
+                color: 'white',
+                '&:hover': { backgroundColor: '#02648d' },
+              }}
             >
-              SEND
+              {t('core:action.send', {
+                postProcess: 'capitalizeAll',
+              })}
             </Button>
           </Toolbar>
         </AppBar>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: '20px'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
           <Typography
             variant="h5"
             align="center"
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -651,22 +722,33 @@ export default function BitcoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {isLoadingWalletBalanceBtc ? <Box sx={{ width: '175px' }}><LinearProgress /></Box> : walletBalanceBtc + " BTC"}
+            {isLoadingWalletBalanceBtc ? (
+              <Box sx={{ width: '175px' }}>
+                <LinearProgress />
+              </Box>
+            ) : (
+              walletBalanceBtc + ' BTC'
+            )}
           </Typography>
         </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: '20px'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
           <Typography
             variant="h5"
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Max Sendable:&nbsp;&nbsp;
+            {t('core:max_sendable', {
+              postProcess: 'capitalizeAll',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -674,11 +756,12 @@ export default function BitcoinWallet() {
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
             {(() => {
-              const newMaxBtcAmount = +walletBalanceBtc - estimatedFeeCalculated
+              const newMaxBtcAmount =
+                +walletBalanceBtc - estimatedFeeCalculated;
               if (newMaxBtcAmount < 0) {
-                return Number(0.00000000) + " BTC"
+                return Number(0.0) + ' BTC';
               } else {
-                return newMaxBtcAmount + " BTC"
+                return newMaxBtcAmount + ' BTC';
               }
             })()}
           </Typography>
@@ -689,7 +772,9 @@ export default function BitcoinWallet() {
               onClick={handleSendMaxBtc}
               style={{ borderRadius: 50 }}
             >
-              Send Max
+              {t('core:action.send_max', {
+                postProcess: 'capitalizeAll',
+              })}
             </Button>
           </div>
         </div>
@@ -713,134 +798,264 @@ export default function BitcoinWallet() {
             variant="outlined"
             label="Amount (BTC)"
             isAllowed={(values) => {
-              const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated
+              const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === "" || floatValue <= maxBtcCoin;
+              return formattedValue === '' || (floatValue ?? 0) <= maxBtcCoin;
             }}
             onValueChange={(values) => {
-              setBtcAmount(values.floatValue);
+              setBtcAmount(values.floatValue ?? 0);
             }}
             required
           />
           <TextField
             required
-            label="Receiver Address"
+            label="{t('core:receiver_address', {
+              postProcess: 'capitalizeFirstChar',
+            })}"
             id="btc-address"
             margin="normal"
             value={btcRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
-            helperText={addressFormatError ? 'Invalid BTC address' : 'BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix).'}
+            helperText={
+              addressFormatError
+                ? t('core:message.error.bitcoin_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.bitcoin_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
           />
         </Box>
-          <FeeManager coin='BTC' onChange={setInputFee} />
+        <FeeManager coin="BTC" onChange={setInputFee} />
       </Dialog>
     );
-  }
+  };
 
   const tableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
           <CircularProgress />
         </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: '20px'
-        }}>
-          <Typography variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
-            Loading Transactions Please Wait...
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
+          >
+            {t('core:message.generic.loading_transactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </div>
       </Box>
     );
-  }
+  };
 
   const transactionsTable = () => {
     return (
       <TableContainer component={Paper}>
-        <Table stickyHeader sx={{ width: '100%' }} aria-label="transactions table" >
+        <Table
+          stickyHeader
+          sx={{ width: '100%' }}
+          aria-label="transactions table"
+        >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">Sender</StyledTableCell>
-              <StyledTableCell align="left">Receiver</StyledTableCell>
-              <StyledTableCell align="left">TX Hash</StyledTableCell>
-              <StyledTableCell align="left">Total Amount</StyledTableCell>
-              <StyledTableCell align="left">Fee</StyledTableCell>
-              <StyledTableCell align="left">Time</StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:sender', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:receiver', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:transaction_hash', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:total_amount', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:fee.fee', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
+                {t('core:time', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {(rowsPerPage > 0
-              ? transactionsBtc.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              ? transactionsBtc.slice(
+                  page * rowsPerPage,
+                  page * rowsPerPage + rowsPerPage
+                )
               : transactionsBtc
-            )?.map((row: {
-              inputs: { address: any; addressInWallet: boolean; amount: number;}[];
-              outputs: { address: any; addressInWallet: boolean; amount: number;}[];
-              txHash: string;
-              totalAmount: any;
-              feeAmount: any;
-              timestamp: number;
-            }, k: React.Key) => (
-              <StyledTableRow key={k}>
+            )?.map(
+              (
+                row: {
+                  inputs: {
+                    address: any;
+                    addressInWallet: boolean;
+                    amount: number;
+                  }[];
+                  outputs: {
+                    address: any;
+                    addressInWallet: boolean;
+                    amount: number;
+                  }[];
+                  txHash: string;
+                  totalAmount: any;
+                  feeAmount: any;
+                  timestamp: number;
+                },
+                k: Key
+              ) => (
+                <StyledTableRow key={k}>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row.inputs.map((input, index) => (
-                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: input.addressInWallet ? undefined : 'grey'  }}>
-                                <span style={{ flex: 1, textAlign: 'left' }}>{input.address}</span>
-                                <span style={{ flex: 1, textAlign: 'right' }}>{(Number(input.amount) / 1e8).toFixed(8)}</span>
-                          </div>
-                      ))}
+                    {row.inputs.map((input, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          color: input.addressInWallet ? undefined : 'grey',
+                        }}
+                      >
+                        <span style={{ flex: 1, textAlign: 'left' }}>
+                          {input.address}
+                        </span>
+                        <span style={{ flex: 1, textAlign: 'right' }}>
+                          {(Number(input.amount) / 1e8).toFixed(8)}
+                        </span>
+                      </div>
+                    ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row.outputs.map((output, index) => (
-                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', color: output.addressInWallet ? undefined : 'grey'  }}>
-                              <span style={{ flex: 1, textAlign: 'left' }}>{output.address}</span>
-                              <span style={{ flex: 1, textAlign: 'right' }}>{(Number(output.amount) / 1e8).toFixed(8)}</span>
-                          </div>
-                      ))}
+                    {row.outputs.map((output, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          color: output.addressInWallet ? undefined : 'grey',
+                        }}
+                      >
+                        <span style={{ flex: 1, textAlign: 'left' }}>
+                          {output.address}
+                        </span>
+                        <span style={{ flex: 1, textAlign: 'right' }}>
+                          {(Number(output.amount) / 1e8).toFixed(8)}
+                        </span>
+                      </div>
+                    ))}
                   </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {cropString(row?.txHash)}
-                  <CustomWidthTooltip placement="top" title={copyBtcTxHash ? copyBtcTxHash : "Copy Hash: " + row?.txHash}>
-                    <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(row?.txHash), changeCopyBtcTxHash() }}>
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
-                  </CustomWidthTooltip>
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  {row?.totalAmount > 0 ?
-                    <div style={{ color: '#66bb6a' }}>+{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div> : <div style={{ color: '#f44336' }}>{(Number(row?.totalAmount) / 1e8).toFixed(8)}</div>
-                  }
-                </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="right">
-                      {row?.totalAmount <= 0 ?
-                          <div style={{ color: '#f44336' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
-                          :
-                          <div style={{ color: 'grey' }}>-{(Number(row?.feeAmount) / 1e8).toFixed(8)}</div>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                    {cropString(row?.txHash)}
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        copyBtcTxHash
+                          ? copyBtcTxHash
+                          : t('core:action.copy_hash', {
+                              hash: row?.txHash,
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
-                </StyledTableCell>
-                <StyledTableCell style={{ width: 'auto' }} align="left">
-                  <CustomWidthTooltip placement="top" title={row?.timestamp ? new Date(row?.timestamp).toLocaleString() : "Waiting for Confirmation"}>
-                    <div>{row?.timestamp ? epochToAgo(row?.timestamp) : "UNCONFIRMED"}</div>
-                  </CustomWidthTooltip>
-                </StyledTableCell>
-              </StyledTableRow>
-            ))}
+                    >
+                      <IconButton
+                        aria-label="copy"
+                        size="small"
+                        onClick={() => {
+                          (navigator.clipboard.writeText(row?.txHash),
+                            changeCopyBtcTxHash());
+                        }}
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </CustomWidthTooltip>
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                    {row?.totalAmount > 0 ? (
+                      <div style={{ color: '#66bb6a' }}>
+                        +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
+                      </div>
+                    ) : (
+                      <div style={{ color: '#f44336' }}>
+                        {(Number(row?.totalAmount) / 1e8).toFixed(8)}
+                      </div>
+                    )}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="right">
+                    {row?.totalAmount <= 0 ? (
+                      <div style={{ color: '#f44336' }}>
+                        -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'grey' }}>
+                        -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
+                      </div>
+                    )}
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: 'auto' }} align="left">
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        row?.timestamp
+                          ? new Date(row?.timestamp).toLocaleString()
+                          : t('core:message.generic.waiting_confirmation', {
+                              postProcess: 'capitalizeFirstChar',
+                            })
+                      }
+                    >
+                      <div>
+                        {row?.timestamp
+                          ? epochToAgo(row?.timestamp)
+                          : t('core:message.generic.unconfirmed_transaction', {
+                              postProcess: 'capitalizeFirstChar',
+                            })}
+                      </div>
+                    </CustomWidthTooltip>
+                  </StyledTableCell>
+                </StyledTableRow>
+              )
+            )}
             {emptyRows > 0 && (
               <TableRow style={{ height: 53 * emptyRows }}>
                 <TableCell colSpan={6} />
               </TableRow>
             )}
           </TableBody>
-          <TableFooter sx={{ width: "100%" }}>
+          <TableFooter sx={{ width: '100%' }}>
             <TableRow>
               <TablePagination
+                labelRowsPerPage={t('core:rows_per_page', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
                 rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                 colSpan={5}
                 count={transactionsBtc.length}
@@ -863,7 +1078,7 @@ export default function BitcoinWallet() {
         </Table>
       </TableContainer>
     );
-  }
+  };
 
   const BtcAddressBookDialogPage = () => {
     return (
@@ -878,39 +1093,49 @@ export default function BitcoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            Coming soon...
+            {t('core:message.generic.coming_soon', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </DialogContent>
       </DialogGeneral>
     );
-  }
+  };
 
   return (
-    <Box sx={{ width: '100%', marginTop: "20px" }}>
+    <Box sx={{ width: '100%', marginTop: '20px' }}>
       {BtcSendDialogPage()}
       {BtcQrDialogPage()}
       {BtcAddressBookDialogPage()}
-      <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
-        Bitcoin Wallet
+      <Typography
+        gutterBottom
+        variant="h5"
+        sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
+      >
+        {t('core:message.generic.bitcoin_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
-        <CoinAvatar
-          src={coinLogoBTC}
-          alt="Coinlogo"
-        />
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
+        <CoinAvatar src={coinLogoBTC} alt="Coinlogo" />
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Typography
             variant="h5"
             align="center"
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -918,21 +1143,32 @@ export default function BitcoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceBtc ? walletBalanceBtc + " BTC" : <Box sx={{ width: '175px' }}><LinearProgress /></Box>}
+            {walletBalanceBtc ? (
+              walletBalanceBtc + ' BTC'
+            ) : (
+              <Box sx={{ width: '175px' }}>
+                <LinearProgress />
+              </Box>
+            )}
           </Typography>
         </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Typography
             variant="subtitle1"
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Address:&nbsp;&nbsp;
+            {t('core:address', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="subtitle1"
@@ -941,21 +1177,39 @@ export default function BitcoinWallet() {
           >
             {walletInfoBtc?.address}
           </Typography>
-          <Tooltip placement="right" title={copyBtcAddress ? copyBtcAddress : "Copy Address"}>
-            <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(walletInfoBtc?.address), changeCopyBtcStatus() }}>
+          <Tooltip
+            placement="right"
+            title={
+              copyBtcAddress
+                ? copyBtcAddress
+                : t('core:action.copy_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
+          >
+            <IconButton
+              aria-label="copy"
+              size="small"
+              onClick={() => {
+                (navigator.clipboard.writeText(walletInfoBtc?.address),
+                  changeCopyBtcStatus());
+              }}
+            >
               <CopyAllTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '15px',
-          marginTop: '15px'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '15px',
+            marginTop: '15px',
+          }}
+        >
           <WalletButtons
             loading={isLoadingWalletBalanceBtc}
             loadingPosition="start"
@@ -964,7 +1218,10 @@ export default function BitcoinWallet() {
             aria-label="transfer"
             onClick={handleOpenBtcSend}
           >
-            Transfer BTC
+            {t('core:action.transfer_coin', {
+              coin: 'BTC',
+              postProcess: 'capitalizeFirstChar',
+            })}
           </WalletButtons>
           <WalletButtons
             variant="contained"
@@ -972,7 +1229,9 @@ export default function BitcoinWallet() {
             aria-label="QRcode"
             onClick={handleOpenBtcQR}
           >
-            Show QR Code
+            {t('core:action.show_qrcode', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </WalletButtons>
           <WalletButtons
             variant="contained"
@@ -980,17 +1239,23 @@ export default function BitcoinWallet() {
             aria-label="book"
             onClick={handleOpenAddressBook}
           >
-            Address Book
+            {t('core:address_book', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </WalletButtons>
         </div>
-        <div style={{
-          width: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-            Transactions:
+            {t('core:transactions', {
+              postProcess: 'capitalizeAll',
+            })}
           </Typography>
           <Button
             size="small"
@@ -1001,7 +1266,9 @@ export default function BitcoinWallet() {
             variant="outlined"
             style={{ borderRadius: 50 }}
           >
-            Refresh
+            {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </div>
         {isLoadingBtcTransactions ? tableLoader() : transactionsTable()}

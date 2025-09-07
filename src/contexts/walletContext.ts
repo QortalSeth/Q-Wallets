@@ -1,33 +1,23 @@
-import * as React from 'react';
+import { SetStateAction } from 'jotai';
+import { createContext, Dispatch } from 'react';
 
 export interface IContextProps {
-  userInfo: any;
-  setUserInfo: (val: any) => void;
+  address: string | null;
+  avatar: string | null;
+  name: string | null;
   isAuthenticated: boolean;
-  setIsAuthenticated: (val: any) => void;
   isUsingGateway: boolean;
-  setIsUsingGateway: (val: any) => void;
-  avatar: string;
-  setAvatar: (avatar: string) => void;
-  userSess: any;
-  setUserSess: (val: any) => void;
   nodeInfo: any;
-  setNodeInfo: (val: any) => void;
+  setWalletState?: Dispatch<SetStateAction<IContextProps>>;
 }
 
-const defaultState: IContextProps = {
-  userInfo: null,
-  setUserInfo: () => { },
+export const defaultState: IContextProps = {
+  address: '',
+  avatar: '',
+  name: '',
   isAuthenticated: false,
-  setIsAuthenticated: () => { },
   isUsingGateway: true,
-  setIsUsingGateway: () => { },
-  avatar: "",
-  setAvatar: () => { },
-  userSess: null,
-  setUserSess: () => { },
   nodeInfo: null,
-  setNodeInfo: () => { }
 };
 
-export default React.createContext(defaultState);
+export default createContext(defaultState);

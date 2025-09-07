@@ -1,41 +1,26 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter, To, useNavigate } from "react-router-dom";
-import App from './App';
+import { StrictMode, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import ThemeProviderWrapper from './styles/theme/theme-provider.tsx';
+import './index.css';
+import { Routes } from './routes/Routes.tsx';
+import WalletContext, { defaultState } from './contexts/walletContext.ts';
 
-interface CustomWindow extends Window {
-  _qdnBase: string;
+function WalletProvider({ children }) {
+  const [walletState, setWalletState] = useState(defaultState);
+
+  return (
+    <WalletContext.Provider value={{ ...walletState, setWalletState }}>
+      {children}
+    </WalletContext.Provider>
+  );
 }
 
-const customWindow = window as unknown as CustomWindow;
-const baseUrl = customWindow?._qdnBase || "";
-
-export const useIframe = () => {
-  const navigate = useNavigate();
-  React.useEffect(() => {
-    function handleNavigation(event: { data: { action: string; path: To; }; }) {
-      if (event.data?.action === "NAVIGATE_TO_PATH" && event.data.path) {
-        navigate(event.data.path); // Navigate directly to the specified path
-
-        // Send a response back to the parent window after navigation is handled
-        window.parent.postMessage(
-          { action: "NAVIGATION_SUCCESS", path: event.data.path },
-          "*"
-        );
-      }
-    }
-
-    window.addEventListener("message", handleNavigation);
-
-    return () => {
-      window.removeEventListener("message", handleNavigation);
-    };
-  }, [navigate]);
-  return { navigate };
-};
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <BrowserRouter basename={baseUrl}>
-    <App />
-  </BrowserRouter>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ThemeProviderWrapper>
+      <WalletProvider>
+        <Routes />
+      </WalletProvider>
+    </ThemeProviderWrapper>
+  </StrictMode>
 );

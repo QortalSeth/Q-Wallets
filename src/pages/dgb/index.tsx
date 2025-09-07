@@ -907,7 +907,9 @@ export default function DigibyteWallet() {
             variant="h5"
             sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
           >
-            Loading Transactions Please Wait...
+            {t('core:message.generic.loading_transactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </div>
       </Box>

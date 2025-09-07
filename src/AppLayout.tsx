@@ -111,42 +111,42 @@ export default function AppLayout() {
     },
     {
       segment: '/',
-      title: t('core:home', { postProcess: 'capitalizeFirst' }),
+      title: t('core:home', { postProcess: 'capitalizeFirstChar' }),
       icon: <Wallet />,
     },
     {
       segment: 'qortal',
-      title: t('core:coins.qortal', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.qortal', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={qort} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'litecoin',
-      title: t('core:coins.litecoin', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.litecoin', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={ltc} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'bitcoin',
-      title: t('core:coins.bitcoin', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.bitcoin', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={btc} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'dogecoin',
-      title: t('core:coins.dogecoin', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.dogecoin', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={doge} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'digibyte',
-      title: t('core:coins.digibyte', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.digibyte', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={dgb} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'ravencoin',
-      title: t('core:coins.ravencoin', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.ravencoin', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={rvn} style={{ width: 24, height: 'auto' }} />,
     },
     {
       segment: 'piratechain',
-      title: t('core:coins.piratechain', { postProcess: 'capitalizeFirst' }),
+      title: t('core:coins.piratechain', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={arrr} style={{ width: 24, height: 'auto' }} />,
     },
   ];

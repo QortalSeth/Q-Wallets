@@ -24,8 +24,6 @@ import { useIframe } from './hooks/useIframeListener';
 import { Wallet } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
-const drawerWidth = 88;
-
 export default function AppLayout() {
   useIframe();
 
@@ -159,10 +157,10 @@ export default function AppLayout() {
       <Drawer
         variant="permanent"
         sx={{
-          width: drawerWidth,
+          width: 88,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: 88,
             boxSizing: 'border-box',
             alignItems: 'center',
             pt: 1,
@@ -232,7 +230,7 @@ export default function AppLayout() {
       </Drawer>
 
       {/* Right side content */}
-      <Box component="main" sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
+      <Box component="main" sx={{ flexGrow: 1 }}>
         <Container maxWidth="xl" sx={{ my: 8 }}>
           {/* The active route renders here */}
           <Outlet />

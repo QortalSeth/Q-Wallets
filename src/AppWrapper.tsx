@@ -17,7 +17,9 @@ export const AppWrapper = () => {
         publicSalt: publicSalt,
       }}
     >
-      <AppLayout />
+      <main>
+        <AppLayout />
+      </main>
     </GlobalProvider>
   );
 };

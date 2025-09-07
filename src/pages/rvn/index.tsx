@@ -827,9 +827,13 @@ export default function RavencoinWallet() {
             onChange={handleRecipientChange}
             error={addressFormatError}
             helperText={
-              addressFormatError
-                ? 'Invalid RVN address'
-                : 'RVN addresses should be 34 characters long for BIP44 (R prefix).'
+               addressFormatError
+                 ? t('core:message.error.ravencoin_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.ravencoin_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
             }
           />
         </Box>

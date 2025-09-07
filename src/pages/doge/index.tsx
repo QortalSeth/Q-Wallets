@@ -809,8 +809,12 @@ export default function DogecoinWallet() {
             error={addressFormatError}
             helperText={
               addressFormatError
-                ? 'Invalid DOGE address'
-                : 'DOGE addresses should be 34 characters long for BIP44 (D prefix).'
+                ? t('core:message.error.doge_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.doge_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
             }
           />
         </Box>

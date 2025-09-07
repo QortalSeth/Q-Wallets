@@ -833,8 +833,12 @@ export default function DigibyteWallet() {
             error={addressFormatError}
             helperText={
               addressFormatError
-                ? 'Invalid DGB address'
-                : 'DGB addresses should be 34 characters long for BIP44 (D prefix) and BIP49 (S prefix) or 43 characters long for BIP84 (dgb1 prefix).'
+                ? t('core:message.error.digibyte_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.digibyte_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
             }
           />
         </Box>

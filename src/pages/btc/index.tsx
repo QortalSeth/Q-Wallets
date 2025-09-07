@@ -814,8 +814,12 @@ export default function BitcoinWallet() {
             error={addressFormatError}
             helperText={
               addressFormatError
-                ? 'Invalid BTC address'
-                : 'BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix).'
+                ? t('core:message.error.bitcoin_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.bitcoin_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
             }
           />
         </Box>

@@ -808,8 +808,12 @@ export default function LitecoinWallet() {
             error={addressFormatError}
             helperText={
               addressFormatError
-                ? 'Invalid LTC address'
-                : 'LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix).'
+                 ? t('core:message.error.litecoin_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.litecoin_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
             }
           />
         </Box>

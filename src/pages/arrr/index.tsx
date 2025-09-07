@@ -1412,7 +1412,7 @@ export default function PirateWallet() {
                   }}
                 >
                   {t('core:message.generic.processing_transaction', {
-                    postProcess: 'capitalizeAll',
+                    postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>
               </div>

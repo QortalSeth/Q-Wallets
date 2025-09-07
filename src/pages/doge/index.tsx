@@ -482,7 +482,10 @@ export default function DogecoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="doge-qr-code">
-          Address: {walletInfoDoge?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoDoge?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div

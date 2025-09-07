@@ -484,7 +484,10 @@ export default function LitecoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="ltc-qr-code">
-          Address: {walletInfoLtc?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoLtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div

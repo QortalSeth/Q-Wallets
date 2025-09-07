@@ -493,7 +493,10 @@ export default function BitcoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address: {walletInfoBtc?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoBtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div

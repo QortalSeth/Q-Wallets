@@ -607,7 +607,10 @@ export default function QortalWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address: {address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {address}
         </DialogTitle>
         <DialogContent dividers>
           <div

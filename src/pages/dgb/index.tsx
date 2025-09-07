@@ -506,7 +506,10 @@ export default function DigibyteWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="dgb-qr-code">
-          Address: {walletInfoDgb?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoDgb?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div

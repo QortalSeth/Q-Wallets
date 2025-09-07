@@ -505,7 +505,10 @@ export default function RavencoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="rvn-qr-code">
-          Address: {walletInfoRvn?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoRvn?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div

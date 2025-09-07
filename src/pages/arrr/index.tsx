@@ -555,7 +555,7 @@ export default function PirateWallet() {
       setChangeServer(true);
       return;
     } catch (error) {
-      setSyncStatus(error);
+      setSyncStatus(String(error));
       setIsSynced(false);
       setRetry(true);
       console.error("ERROR GET ARRR SYNC STATUS", error);
@@ -1210,10 +1210,10 @@ export default function PirateWallet() {
             isAllowed={(values) => {
               const maxArrrCoin = (walletBalanceArrr - 0.00010000);
               const { formattedValue, floatValue } = values;
-              return formattedValue === "" || floatValue <= maxArrrCoin;
+              return formattedValue === "" || (floatValue !== undefined && floatValue <= maxArrrCoin);
             }}
             onValueChange={(values) => {
-              setArrrAmount(values.floatValue);
+              setArrrAmount(values.floatValue ?? 0);
             }}
             required
           />

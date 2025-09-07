@@ -1630,7 +1630,9 @@ export default function PirateWallet() {
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}
-            helperText="ARRR memo maximal 40 characters long."
+            helperText="{t('core:message.generic.pirate_chain_max_chars', {
+              postProcess: 'capitalizeFirstChar',
+            })}"
             slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
             onChange={(e) => setArrrMemo(e.target.value)}
           />

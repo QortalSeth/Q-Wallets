@@ -18,6 +18,7 @@
   },
   "address": "address:",
   "address_book": "address book",
+  "amount": "amount",
   "balance": "balance:",
   "balance_available": "available balance:",
   "coins": {
@@ -29,8 +30,11 @@
     "qortal": "Qortal",
     "ravencoin": "Ravencoin"
   },
+  "creator": "creator",
   "fee": "fee:",
   "home": "home",
+  "identifier": "identifier",
+  "info": "info",
   "max_sendable": "max sendable:",
   "memo": "memo",
   "message": {
@@ -47,9 +51,11 @@
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
       "pirate_chain_address": "ARRR address should be 78 characters long (starts with zs)",
+      "pirate_chain_max_chars": "ARRR memo maximal 40 characters long",
       "pirate_chain_servers": "Available Pirate Chain Lightwallet Servers.",
       "pirate_chain_wallet": "Pirate Chain Wallet",
       "processing_transaction": "Processing Transaction, please wait...",
+      "qortal_address": "Qortal address should be 34 characters long (Name min 3 characters)",
       "qortal_wallet": "Qortal Wallet",
       "revencoin_wallet": "Ravencoin Wallet",
       "sending_fee": "Current sending fee is {{ quantity }} {{ coin }}.",
@@ -69,9 +75,13 @@
     "previous": "previous"
   },
   "receiver": "receiver",
+  "receiver_address_name": "receiver address or name",
+  "recipient": "recipient",
   "receiver_address": "receiver address",
   "rows_per_page": "rows per page",
   "sender": "sender",
+  "size": "size",
+  "status":"status",
   "table_headers": {
     "peers": {
       "actions": "actions",
@@ -90,6 +100,7 @@
     }
   },
   "time": "time",
+  "type": "type:",
   "total_amount": "total amount",
   "transactions":"transactions:",
   "transaction_hash": "TX Hash",

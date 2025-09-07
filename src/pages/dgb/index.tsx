@@ -866,7 +866,10 @@ export default function DigibyteWallet() {
             }}
           >
             <Typography id="dgb-fee-slider" gutterBottom>
-              Current fee per byte : {dgbFee} SAT
+              {t('core:message.generic.current_fee', {
+                fee: dgbFee,
+                postProcess: 'capitalizeFirstChar',
+              })}
             </Typography>
             <Slider
               track={false}
@@ -884,7 +887,9 @@ export default function DigibyteWallet() {
               align="center"
               sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
             >
-              Low fees may result in slow or unconfirmed transactions.
+              {t('core:message.generic.low_fee_transation', {
+                postProcess: 'capitalizeFirstChar',
+              })}
             </Typography>
           </Box>
         </div>
@@ -956,7 +961,7 @@ export default function DigibyteWallet() {
                 })}
               </StyledTableCell>
               <StyledTableCell align="left">
-                {t('core:fee', {
+                {t('core:fee.fee', {
                   postProcess: 'capitalizeFirstChar',
                 })}
               </StyledTableCell>

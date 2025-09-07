@@ -700,7 +700,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
@@ -904,7 +904,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT
@@ -1096,7 +1096,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
@@ -1299,7 +1299,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT
@@ -1559,7 +1559,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT
@@ -1758,7 +1758,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Recipent / Desc.</StyledTableCell>
                 <StyledTableCell align="left">Amount / QTY</StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT
@@ -1945,7 +1945,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Poll Name</StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT
@@ -2133,7 +2133,7 @@ export default function QortalWallet() {
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {t('core:fee', {
+                  {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
                   })}{' '}
                   QORT

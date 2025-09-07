@@ -891,7 +891,7 @@ export default function LitecoinWallet() {
                 })}
               </StyledTableCell>
               <StyledTableCell align="left">
-                {t('core:fee', {
+                {t('core:fee.fee', {
                   postProcess: 'capitalizeFirstChar',
                 })}
               </StyledTableCell>

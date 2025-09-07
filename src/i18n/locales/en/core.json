@@ -32,7 +32,15 @@
     "ravencoin": "Ravencoin"
   },
   "creator": "creator",
-  "fee": "fee:",
+  "fee": {
+    "fee": "fee",
+    "custom": "custom fee",
+    "current": "current fee: {{ fee }} sat/kB",
+    "low": "low",
+    "medium": "medium",
+    "high": "high",
+    "publisher": "fee publisher"
+  },
   "home": "home",
   "identifier": "identifier",
   "info": "info",
@@ -43,6 +51,7 @@
       "bitcoin_address": "BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix)",
       "bitcoin_wallet": "Bitcoin Wallet",
       "coming_soon": "Coming soon...",
+      "current_fee": "Current fee per byte: {{ fee }} SAT",
       "digibyte_address": "DGB addresses should be 34 characters long for BIP44 (D prefix) and BIP49 (S prefix) or 43 characters long for BIP84 (dgb1 prefix)",
       "digibyte_wallet": "Digibyte Wallet",
       "doge_address": "DOGE addresses should be 34 characters long for BIP44 (D prefix)",
@@ -52,6 +61,7 @@
       "litecoin_address": "LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix)",
       "litecoin_wallet": "Litecoin Wallet",
       "loading_transactions": "Loading transactions, please Wait...",
+      "low_fee_transation": "Low fees may result in slow or unconfirmed transactions",
       "no_arbitrary_translactions": "No ARBITRARY transactions yet...",
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",

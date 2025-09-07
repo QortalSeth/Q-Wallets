@@ -7,7 +7,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import React, { useEffect } from 'react';
+import { MouseEvent, useEffect } from 'react';
 import {
   CoinActionContainer,
   CoinActionRow,
@@ -15,8 +15,11 @@ import {
   HeaderRow,
 } from '../styles/Fees-styles';
 import { useRecommendedFees } from '../hooks/useRecommendedFees';
+import { useTranslation } from 'react-i18next';
 
 export const FeeManager = ({ coin, onChange }) => {
+  const { t } = useTranslation('core');
+
   const {
     selectedFeePublisher,
     setSelectedFeePublisher,
@@ -29,7 +32,7 @@ export const FeeManager = ({ coin, onChange }) => {
   } = useRecommendedFees({ selectedCoin: coin });
 
   const handleChangeRecommended = (
-    event: React.MouseEvent<HTMLElement>,
+    event: MouseEvent<HTMLElement>,
     newAlignment: string
   ) => {
     if (newAlignment) {
@@ -74,10 +77,9 @@ export const FeeManager = ({ coin, onChange }) => {
             }}
           >
             <Typography>
-              {t('core:fee', {
+              {t('core:fee.publisher', {
                 postProcess: 'capitalizeFirstChar',
-              })}{' '}
-              publisher
+              })}
             </Typography>
             <Select
               size="small"
@@ -94,6 +96,7 @@ export const FeeManager = ({ coin, onChange }) => {
               <MenuItem value={'JSON.Bridge'}>JSON.Bridge</MenuItem>
             </Select>
           </Box>
+
           <ToggleButtonGroup
             color="primary"
             value={selectFeeType}
@@ -103,21 +106,41 @@ export const FeeManager = ({ coin, onChange }) => {
           >
             {data && (
               <>
-                <ToggleButton value="low">Low</ToggleButton>
-                <ToggleButton value="medium">Medium</ToggleButton>
-                <ToggleButton value="high">High</ToggleButton>
+                <ToggleButton value="low">
+                  {t('core:fee.low', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </ToggleButton>
+                <ToggleButton value="medium">
+                  {t('core:fee.medium', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </ToggleButton>
+                <ToggleButton value="high">
+                  {t('core:fee.high', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </ToggleButton>
               </>
             )}
 
-            <ToggleButton value="custom">Custom</ToggleButton>
+            <ToggleButton value="custom">
+              {t('core:fee.custom', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </ToggleButton>
           </ToggleButtonGroup>
+
           {selectFeeType === 'custom' && (
             <CoinActionRow>
               <HeaderRow>
                 <Box>
                   <CustomLabel htmlFor="standard-adornment-name">
-                    Custom fee
+                    {t('core:fee.custom', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
                   </CustomLabel>
+
                   <TextField
                     id="standard-adornment-name"
                     type="number"
@@ -137,14 +160,19 @@ export const FeeManager = ({ coin, onChange }) => {
             marginTop: '15px',
           }}
         >
-          Current fee : {currentFee} sat/kB
+          {t('core:fee.current', {
+            fee: currentFee,
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Typography>
 
         <Typography
           align="center"
           sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
         >
-          Low fees may result in slow or unconfirmed transactions.
+          {t('core:message.generic.low_fee_transation', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Typography>
       </Box>
     </div>

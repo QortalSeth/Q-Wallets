@@ -861,7 +861,10 @@ export default function RavencoinWallet() {
             }}
           >
             <Typography id="rvn-fee-slider" gutterBottom>
-              Current fee per byte : {rvnFee} SAT
+              {t('core:message.generic.current_fee', {
+                fee: rvnFee,
+                postProcess: 'capitalizeFirstChar',
+              })}
             </Typography>
             <Slider
               track={false}
@@ -879,7 +882,9 @@ export default function RavencoinWallet() {
               align="center"
               sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
             >
-              Low fees may result in slow or unconfirmed transactions.
+              {t('core:message.generic.low_fee_transation', {
+                postProcess: 'capitalizeFirstChar',
+              })}
             </Typography>
           </Box>
         </div>

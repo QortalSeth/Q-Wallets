@@ -1,4 +1,15 @@
-import * as React from 'react';
+import {
+  ChangeEvent,
+  forwardRef,
+  Key,
+  MouseEvent,
+  ReactElement,
+  Ref,
+  SyntheticEvent,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, humanFileSize, timeoutDelay } from '../../common/functions'
 import { styled } from "@mui/system";
@@ -52,9 +63,7 @@ import {
   KeyboardArrowRight,
   LastPage,
   QrCode2,
-    {t('core:action.refresh', {
-              postProcess: 'capitalizeFirstChar',
-            })},
+  Refresh,
   Send
 } from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
@@ -65,7 +74,7 @@ interface TablePaginationActionsProps {
   page: number;
   rowsPerPage: number;
   onPageChange: (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
     newPage: number,
   ) => void;
 }
@@ -76,20 +85,20 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   const { count, page, rowsPerPage, onPageChange } = props;
 
   const handleFirstPageButtonClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
   ) => {
     onPageChange(event, 0);
   };
 
-  const handleBackButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleBackButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page - 1);
   };
 
-  const handleNextButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleNextButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page + 1);
   };
 
-  const handleLastPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLastPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
   };
 
@@ -135,11 +144,11 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   );
 }
 
-const Transition = React.forwardRef(function Transition(
+const Transition = forwardRef(function Transition(
   props: TransitionProps & {
-    children: React.ReactElement<unknown>;
+    children: ReactElement<unknown>;
   },
-  ref: React.Ref<unknown>,
+  ref: Ref<unknown>,
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -231,31 +240,31 @@ const QortSubmittDialog = styled(Dialog)(({ theme }) => ({
 export default function QortalWallet() {
   const { t } = useTranslation(['core']);
 
-  const { address, nodeInfo } = React.useContext(WalletContext);
+  const { address, nodeInfo } = useContext(WalletContext);
 
-  const [walletBalanceQort, setWalletBalanceQort] = React.useState<any>(null);
-  const [copyQortAddress, setCopyQortAddress] = React.useState('');
-  const [paymentInfo, setPaymentInfo] = React.useState<any>([]);
-  const [arbitraryInfo, setArbitraryInfo] = React.useState<any>([]);
-  const [atInfo, setAtInfo] = React.useState<any>([]);
-  const [groupInfo, setGroupInfo] = React.useState<any>([]);
-  const [nameInfo, setNameInfo] = React.useState<any>([]);
-  const [assetInfo, setAssetInfo] = React.useState<any>([]);
-  const [pollInfo, setPollInfo] = React.useState<any>([]);
-  const [rewardshareInfo, setRewardshareInfo] = React.useState<any>([]);
-  const [value, setValue] = React.useState('One');
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [openQortQR, setOpenQortQR] = React.useState(false);
-  const [openQortAddressBook, setOpenQortAddressBook] = React.useState(false);
-  const [loadingRefreshQort, setLoadingRefreshQort] = React.useState(false);
-  const [openQortSend, setOpenQortSend] = React.useState(false);
-  const [openTxQortSubmit, setOpenTxQortSubmit] = React.useState(false);
-  const [openSendQortSuccess, setOpenSendQortSuccess] = React.useState(false);
-  const [openSendQortError, setOpenSendQortError] = React.useState(false);
-  const [sendDisabled, setSendDisabled] = React.useState(true);
-  const [qortAmount, setQortAmount] = React.useState<number>(0);
-  const [qortRecipient, setQortRecipient] = React.useState('');
+  const [walletBalanceQort, setWalletBalanceQort] = useState<any>(null);
+  const [copyQortAddress, setCopyQortAddress] = useState('');
+  const [paymentInfo, setPaymentInfo] = useState<any>([]);
+  const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);
+  const [atInfo, setAtInfo] = useState<any>([]);
+  const [groupInfo, setGroupInfo] = useState<any>([]);
+  const [nameInfo, setNameInfo] = useState<any>([]);
+  const [assetInfo, setAssetInfo] = useState<any>([]);
+  const [pollInfo, setPollInfo] = useState<any>([]);
+  const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
+  const [value, setValue] = useState('One');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [openQortQR, setOpenQortQR] = useState(false);
+  const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
+  const [loadingRefreshQort, setLoadingRefreshQort] = useState(false);
+  const [openQortSend, setOpenQortSend] = useState(false);
+  const [openTxQortSubmit, setOpenTxQortSubmit] = useState(false);
+  const [openSendQortSuccess, setOpenSendQortSuccess] = useState(false);
+  const [openSendQortError, setOpenSendQortError] = useState(false);
+  const [sendDisabled, setSendDisabled] = useState(true);
+  const [qortAmount, setQortAmount] = useState<number>(0);
+  const [qortRecipient, setQortRecipient] = useState('');
 
   const emptyRowsPayment = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo.length) : 0;
   const emptyRowsArbitrary = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - arbitraryInfo.length) : 0;
@@ -280,15 +289,15 @@ export default function QortalWallet() {
     setOpenQortAddressBook(false);
   }
 
-  const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
+  const handleChange = (_event: SyntheticEvent, newValue: string) => {
     setValue(newValue);
   };
 
-  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
+  const handleChangePage = (_event: MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -312,7 +321,7 @@ export default function QortalWallet() {
   }
 
   const handleCloseSendQortSuccess = (
-    _event?: React.SyntheticEvent | Event,
+    _event?: SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
     if (reason === 'clickaway') {
@@ -322,7 +331,7 @@ export default function QortalWallet() {
   };
 
   const handleCloseSendQortError = (
-    _event?: React.SyntheticEvent | Event,
+    _event?: SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
     if (reason === 'clickaway') {
@@ -342,11 +351,13 @@ export default function QortalWallet() {
     }
   }
 
-  const validateCanSendQortAmount = async (qAmount: number) => {
+  const validateCanSendQortAmount = async (qAmount: number | undefined) => {
     let checkAmount = 0;
-    checkAmount = qAmount;
+    if (typeof qAmount === 'number' && !isNaN(qAmount)) {
+      checkAmount = qAmount;
+    }
     setQortAmount(checkAmount);
-    if (checkAmount <= 0 || null || !checkAmount) {
+    if (checkAmount <= 0 || !checkAmount) {
       setSendDisabled(true);
     } else if (qortRecipient.length < 3 || qortRecipient === '') {
       setSendDisabled(true);
@@ -520,7 +531,7 @@ export default function QortalWallet() {
 
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!address) return;
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
@@ -531,7 +542,7 @@ export default function QortalWallet() {
     }
   }, [address]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!address) return;
     getQortalTransactions();
   }, [address]);
@@ -582,7 +593,7 @@ export default function QortalWallet() {
             <QRCode
               size={256}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-              value={address}
+              value={address ?? ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -612,7 +623,9 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            Coming soon...
+                    {t('core:message.generic.coming_soon', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
           </Typography>
         </DialogContent>
       </DialogGeneral>
@@ -656,7 +669,7 @@ export default function QortalWallet() {
                 creatorAddress: string;
                 senderPublicKey: string;
                 amount: number;
-              }, a: React.Key) => (
+              }, a: Key) => (
                 <StyledTableRow key={a}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -771,7 +784,7 @@ export default function QortalWallet() {
                 size: number;
                 fee: number;
                 timestamp: number;
-              }, b: React.Key) => (
+              }, b: Key) => (
                 <StyledTableRow key={b}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -883,7 +896,7 @@ export default function QortalWallet() {
                 amount: number;
                 fee: number;
                 timestamp: number;
-              }, c: React.Key) => (
+              }, c: Key) => (
                 <StyledTableRow key={c}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1013,7 +1026,7 @@ export default function QortalWallet() {
                 creatorAddress: string;
                 fee: number;
                 timestamp: number;
-              }, d: React.Key) => (
+              }, d: Key) => (
                 <StyledTableRow key={d}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1154,7 +1167,7 @@ export default function QortalWallet() {
                 amount: number;
                 fee: number;
                 timestamp: number;
-              }, e: React.Key) => (
+              }, e: Key) => (
                 <StyledTableRow key={e}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1277,7 +1290,7 @@ export default function QortalWallet() {
                 assetName: string;
                 quantity: number;
                 description: string;
-              }, f: React.Key) => (
+              }, f: Key) => (
                 <StyledTableRow key={f}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1392,7 +1405,7 @@ export default function QortalWallet() {
                 timestamp: number;
                 creatorAddress: string;
                 pollName: string;
-              }, g: React.Key) => (
+              }, g: Key) => (
                 <StyledTableRow key={g}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1501,7 +1514,7 @@ export default function QortalWallet() {
                 recipient: string;
                 rewardSharePublicKey: string;
                 sharePercent: string;
-              }, h: React.Key) => (
+              }, h: Key) => (
                 <StyledTableRow key={h}>
                   <StyledTableCell style={{ width: 'auto' }} align="center">
                     {(() => {
@@ -1714,7 +1727,9 @@ export default function QortalWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again.
+            {t('core:message.error.something_went_wrong', {
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -1749,7 +1764,9 @@ export default function QortalWallet() {
               onClick={sendQortRequest}
               sx={{ backgroundColor: "#05a2e4", color: "white", "&:hover": { backgroundColor: "#02648d", } }}
             >
-              SEND
+              {t('core:action.send', {
+              postProcess: 'capitalizeAll',
+            })}
             </Button>
           </Toolbar>
         </AppBar>
@@ -1789,7 +1806,9 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Max Sendable:&nbsp;&nbsp;
+                        {t('core:max_sendable', {
+              postProcess: 'capitalizeAll',
+            })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1805,7 +1824,9 @@ export default function QortalWallet() {
               onClick={handleSendMaxQort}
               style={{ borderRadius: 50 }}
             >
-              Send Max
+                          {t('core:action.send_max', {
+              postProcess: 'capitalizeAll',
+            })}
             </Button>
           </div>
         </div>
@@ -1831,7 +1852,7 @@ export default function QortalWallet() {
             isAllowed={(values) => {
               const maxQortCoin = (walletBalanceQort - 0.01100000);
               const { formattedValue, floatValue } = values;
-              return formattedValue === "" || floatValue <= maxQortCoin;
+              return formattedValue === "" || (floatValue ?? 0) <= maxQortCoin;
             }}
             onValueChange={(values) => {
               validateCanSendQortAmount(values.floatValue);
@@ -1861,7 +1882,11 @@ export default function QortalWallet() {
             align="center"
             sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
           >
-            Current sending fee is 0.01 QORT.
+            {t('core:message.generic.sending_fee', {
+              quantity: 0.01,
+              coin: 'QORT',
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </div>
       </Dialog>
@@ -1925,8 +1950,10 @@ export default function QortalWallet() {
           >
             {address}
           </Typography>
-          <Tooltip placement="right" title={copyQortAddress ? copyQortAddress : "Copy Address"}>
-            <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(address), changeCopyQortcStatus() }}>
+          <Tooltip placement="right" title={copyQortAddress ? copyQortAddress : t('core:action.copy_address', {
+                  postProcess: 'capitalizeFirstChar',
+                })}>
+            <IconButton aria-label="copy" size="small" onClick={() => { navigator.clipboard.writeText(address ?? ""), changeCopyQortcStatus() }}>
               <CopyAllTwoTone fontSize="small" />
             </IconButton>
           </Tooltip>

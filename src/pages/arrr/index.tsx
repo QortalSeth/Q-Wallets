@@ -1443,7 +1443,9 @@ export default function PirateWallet() {
             variant="filled"
             sx={{ width: '100%' }}
           >
-            Something went wrong, please try again.
+            {t('core:message.error.something_went_wrong', {
+              postProcess: 'capitalizeAll',
+            })}
           </Alert>
         </Snackbar>
         <AppBar sx={{ position: 'static' }}>
@@ -1475,7 +1477,10 @@ export default function PirateWallet() {
                 },
               }}
             >
-              Transfer ARRR
+              {t('core:action.transfer_coin', {
+                coin: 'ARRR',
+                postProcess: 'capitalizeAll',
+              })}
             </Typography>
             <Button
               disabled={validateCanSendArrr()}
@@ -1489,7 +1494,9 @@ export default function PirateWallet() {
                 '&:hover': { backgroundColor: '#02648d' },
               }}
             >
-              SEND
+              {t('core:action.send', {
+                postProcess: 'capitalizeAll',
+              })}
             </Button>
           </Toolbar>
         </AppBar>
@@ -1508,7 +1515,10 @@ export default function PirateWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+              postProcess: 'capitalizeAll',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1539,7 +1549,10 @@ export default function PirateWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Max Sendable:&nbsp;&nbsp;
+            {t('core:max_sendable', {
+              postProcess: 'capitalizeAll',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1555,7 +1568,9 @@ export default function PirateWallet() {
               onClick={handleSendMaxArrr}
               style={{ borderRadius: 50 }}
             >
-              Send Max
+              {t('core:action.send_max', {
+                postProcess: 'capitalizeAll',
+              })}
             </Button>
           </div>
         </div>
@@ -1593,13 +1608,15 @@ export default function PirateWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver', {
+            label="{t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })} Address"
+            })}"
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
-            helperText="ARRR address should be 78 characters long (starts with zs)"
+            helperText="{t('core:message.generic.pirate_chain_address', {
+              postProcess: 'capitalizeFirstChar',
+            })}"
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
             onChange={(e) => setArrrRecipient(e.target.value)}
           />
@@ -1627,7 +1644,11 @@ export default function PirateWallet() {
             align="center"
             sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
           >
-            Current sending fee is 0.0001 ARRR.
+            {t('core:message.generic.sending_fee', {
+              quantity: 0.0001,
+              coin: 'ARRR',
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </div>
       </Dialog>
@@ -1650,7 +1671,9 @@ export default function PirateWallet() {
           variant="outlined"
           style={{ borderRadius: 50 }}
         >
-          Change Server
+          {t('core:action.change_server', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Button>
       </div>
     );
@@ -1672,7 +1695,9 @@ export default function PirateWallet() {
           variant="outlined"
           style={{ borderRadius: 50 }}
         >
-          Retry
+          {t('core:action.retry', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Button>
       </div>
     );
@@ -1717,7 +1742,9 @@ export default function PirateWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            Coming soon...
+            {t('core:message.generic.coming_soon', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </DialogContent>
       </DialogGeneral>
@@ -1736,7 +1763,9 @@ export default function PirateWallet() {
         variant="h5"
         sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
       >
-        Pirate Chain Wallet
+        {t('core:message.generic.pirate_chain_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar src={coinLogoARRR} alt="Coinlogo" />

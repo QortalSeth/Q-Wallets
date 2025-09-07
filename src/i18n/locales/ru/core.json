@@ -97,6 +97,7 @@
     "next": "следующая",
     "previous": "предыдущая"
   },
+  "poll_name": "poll name",
   "receiver": "получатель",
   "receiver_address_name": "адрес или имя получателя",
   "recipient": "получатель",

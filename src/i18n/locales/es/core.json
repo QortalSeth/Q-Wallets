@@ -97,6 +97,7 @@
     "next": "siguiente",
     "previous": "anterior"
   },
+  "poll_name": "poll name",
   "receiver": "destinatario",
   "receiver_address_name": "dirección o nombre del destinatario",
   "recipient": "destinatario",

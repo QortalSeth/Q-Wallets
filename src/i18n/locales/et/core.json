@@ -97,6 +97,7 @@
     "next": "järgmine",
     "previous": "eelmine"
   },
+  "poll_name": "poll name",
   "receiver": "saaja",
   "receiver_address_name": "saaja aadress või nimi",
   "recipient": "saaja",

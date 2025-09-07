@@ -246,6 +246,7 @@ const QortSubmittDialog = styled(Dialog)(({ theme }) => ({
 
 export default function QortalWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const { address, nodeInfo } = useContext(WalletContext);
 
@@ -684,12 +685,12 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:creator', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:recipient', {
                     postProcess: 'capitalizeFirstChar',
                   })}
@@ -888,12 +889,12 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:creator', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:identifier', {
                     postProcess: 'capitalizeFirstChar',
                   })}
@@ -1080,12 +1081,12 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:creator', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="center">
+                <StyledTableCell align="left">
                   {t('core:recipient', {
                     postProcess: 'capitalizeFirstChar',
                   })}
@@ -1753,10 +1754,26 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeAll',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="left">Type</StyledTableCell>
-                <StyledTableCell align="left">Creator</StyledTableCell>
-                <StyledTableCell align="left">Recipent / Desc.</StyledTableCell>
-                <StyledTableCell align="left">Amount / QTY</StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:type', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:creator', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:recipient', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:amount', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
@@ -1941,14 +1958,28 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeAll',
                   })}
                 </StyledTableCell>
-                <StyledTableCell align="left">Type</StyledTableCell>
-                <StyledTableCell align="left">Creator</StyledTableCell>
-                <StyledTableCell align="left">Poll Name</StyledTableCell>
+                <StyledTableCell align="center">
+                  {' '}
+                  {t('core:type', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {' '}
+                  {t('core:creator', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {' '}
+                  {t('core:poll_name', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
-                  })}{' '}
-                  QORT
+                  })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:time', {
@@ -2869,13 +2900,14 @@ export default function QortalWallet() {
             variant="text"
             style={{ borderRadius: 50 }}
           >
-            <span style={{ color: 'white' }}>
+            <span style={{ color: theme.palette.text.primary }}>
               {t('core:transactions', {
-                postProcess: 'capitalizeFirstChar',
+                postProcess: 'capitalizeAll',
               })}
             </span>
           </Button>
         </div>
+
         {loadingRefreshQort ? tableLoader() : qortalTables()}
       </WalleteCard>
     </Box>

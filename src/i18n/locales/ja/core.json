@@ -97,6 +97,7 @@
     "next": "次",
     "previous": "前"
   },
+  "poll_name": "poll name",
   "receiver": "受取人",
   "receiver_address_name": "受取人のアドレスまたは名前",
   "recipient": "受取人",

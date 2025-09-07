@@ -1318,7 +1318,7 @@ export default function DigibyteWallet() {
         >
           <Typography variant="h6" paddingTop={2} paddingBottom={2}>
             {t('core:transactions', {
-              postProcess: 'capitalizeFirstChar',
+              postProcess: 'capitalizeAll',
             })}
           </Typography>
           <Button

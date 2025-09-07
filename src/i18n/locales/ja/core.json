@@ -123,7 +123,7 @@
     }
   },
   "time": "時間",
-  "type": "種別:",
+  "type": "種別",
   "total_amount": "合計金額",
   "transactions": "トランザクション一覧",
   "transaction_hash": "TX ハッシュ",

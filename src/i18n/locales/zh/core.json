@@ -123,7 +123,7 @@
     }
   },
   "time": "时间",
-  "type": "类型：",
+  "type": "类型",
   "total_amount": "总金额",
   "transactions": "交易列表",
   "transaction_hash": "TX 哈希",

@@ -123,7 +123,7 @@
     }
   },
   "time": "время",
-  "type": "тип:",
+  "type": "тип",
   "total_amount": "общая сумма",
   "transactions": "список транзакций",
   "transaction_hash": "TX-хэш",

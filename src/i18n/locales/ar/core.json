@@ -123,7 +123,7 @@
     }
   },
   "time": "الوقت",
-  "type": "النوع:",
+  "type": "النوع",
   "total_amount": "المبلغ الإجمالي",
   "transactions": "قائمة المعاملات",
   "transaction_hash": "تجزئة TX",

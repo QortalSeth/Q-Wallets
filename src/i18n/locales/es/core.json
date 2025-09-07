@@ -123,7 +123,7 @@
     }
   },
   "time": "tiempo",
-  "type": "tipo:",
+  "type": "tipo",
   "total_amount": "monto total",
   "transactions": "lista de transacciones",
   "transaction_hash": "Hash de TX",

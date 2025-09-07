@@ -123,7 +123,7 @@
     }
   },
   "time": "Zeit",
-  "type": "Typ:",
+  "type": "Typ",
   "total_amount": "Gesamtbetrag",
   "transactions": "Liste der Transaktionen",
   "transaction_hash": "TX-Hash",

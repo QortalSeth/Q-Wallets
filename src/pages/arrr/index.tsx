@@ -1,4 +1,3 @@
-import * as React from 'react';
 import WalletContext from '../../contexts/walletContext';
 import {cropString, epochToAgo, timeoutDelay} from '../../common/functions'
 import { styled } from "@mui/system";
@@ -55,13 +54,14 @@ import {
   Send
 } from '@mui/icons-material';
 import coinLogoARRR from '../../assets/arrr.png';
+import { ChangeEvent, forwardRef, Key, MouseEvent, ReactElement, Ref, SyntheticEvent, useContext, useEffect, useState } from 'react';
 
 interface TablePaginationActionsProps {
   count: number;
   page: number;
   rowsPerPage: number;
   onPageChange: (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
     newPage: number,
   ) => void;
 }
@@ -71,20 +71,20 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   const { count, page, rowsPerPage, onPageChange } = props;
 
   const handleFirstPageButtonClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
   ) => {
     onPageChange(event, 0);
   };
 
-  const handleBackButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleBackButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page - 1);
   };
 
-  const handleNextButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleNextButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page + 1);
   };
 
-  const handleLastPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLastPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
   };
 
@@ -122,11 +122,11 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   );
 }
 
-const Transition = React.forwardRef(function Transition(
+const Transition = forwardRef(function Transition(
   props: TransitionProps & {
-    children: React.ReactElement<unknown>;
+    children: ReactElement<unknown>;
   },
-  ref: React.Ref<unknown>,
+  ref: Ref<unknown>,
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -239,7 +239,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 export default function PirateWallet() {
-  const { isAuthenticated, isUsingGateway } = React.useContext(WalletContext);
+  const { isAuthenticated, isUsingGateway } = useContext(WalletContext);
 
   if (!isAuthenticated) {
     return (
@@ -257,33 +257,33 @@ export default function PirateWallet() {
     );
   }
 
-  const [isSynced, setIsSynced] = React.useState(false);
-  const [syncStatus, setSyncStatus] = React.useState('');
-  const [walletInfoArrr, setWalletInfoArrr] = React.useState<any>({});
-  const [walletBalanceArrr, setWalletBalanceArrr] = React.useState<any>(null);
-  const [isLoadingWalletBalanceArrr, setIsLoadingWalletBalanceArrr] = React.useState<boolean>(true);
-  const [allLightwalletServersArrr, setAllLightwalletServersArrr] = React.useState<any>([]);
-  const [currentLightwalletServerArrr, setCurrentLightwalletServerArrr] = React.useState<any>([]);
-  const [changeServer, setChangeServer] = React.useState(false);
-  const [arrrMemo, setArrrMemo] = React.useState('');
-  const [transactionsArrr, setTransactionsArrr] = React.useState<any>([]);
-  const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] = React.useState<boolean>(true);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [copyArrrAddress, setCopyArrrAddress] = React.useState('');
-  const [copyArrrTxHash, setCopyArrrTxHash] = React.useState('');
-  const [openArrrQR, setOpenArrrQR] = React.useState(false);
-  const [openArrrLightwallet, setOpenArrrLightwallet] = React.useState(false);
-  const [openArrrServerChange, setOpenArrrServerChange] = React.useState(false);
-  const [openArrrSend, setOpenArrrSend] = React.useState(false);
-  const [arrrAmount, setArrrAmount] = React.useState<number>(0);
-  const [arrrRecipient, setArrrRecipient] = React.useState('');
-  const [loadingRefreshArrr, setLoadingRefreshArrr] = React.useState(false);
-  const [openTxArrrSubmit, setOpenTxArrrSubmit] = React.useState(false);
-  const [openSendArrrSuccess, setOpenSendArrrSuccess] = React.useState(false);
-  const [openSendArrrError, setOpenSendArrrError] = React.useState(false);
-  const [openArrrAddressBook, setOpenArrrAddressBook] = React.useState(false);
-  const [retry, setRetry] = React.useState(false);
+  const [isSynced, setIsSynced] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+  const [walletInfoArrr, setWalletInfoArrr] = useState<any>({});
+  const [walletBalanceArrr, setWalletBalanceArrr] = useState<any>(null);
+  const [isLoadingWalletBalanceArrr, setIsLoadingWalletBalanceArrr] = useState<boolean>(true);
+  const [allLightwalletServersArrr, setAllLightwalletServersArrr] = useState<any>([]);
+  const [currentLightwalletServerArrr, setCurrentLightwalletServerArrr] = useState<any>([]);
+  const [changeServer, setChangeServer] = useState(false);
+  const [arrrMemo, setArrrMemo] = useState('');
+  const [transactionsArrr, setTransactionsArrr] = useState<any>([]);
+  const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] = useState<boolean>(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [copyArrrAddress, setCopyArrrAddress] = useState('');
+  const [copyArrrTxHash, setCopyArrrTxHash] = useState('');
+  const [openArrrQR, setOpenArrrQR] = useState(false);
+  const [openArrrLightwallet, setOpenArrrLightwallet] = useState(false);
+  const [openArrrServerChange, setOpenArrrServerChange] = useState(false);
+  const [openArrrSend, setOpenArrrSend] = useState(false);
+  const [arrrAmount, setArrrAmount] = useState<number>(0);
+  const [arrrRecipient, setArrrRecipient] = useState('');
+  const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
+  const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
+  const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
+  const [openSendArrrError, setOpenSendArrrError] = useState(false);
+  const [openArrrAddressBook, setOpenArrrAddressBook] = useState(false);
+  const [retry, setRetry] = useState(false);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - transactionsArrr.length) : 0;
 
@@ -345,11 +345,11 @@ export default function PirateWallet() {
     setCopyArrrTxHash('');
   }
 
-  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
+  const handleChangePage = (_event: MouseEvent<HTMLButtonElement> | null, newPage: number,) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -366,7 +366,7 @@ export default function PirateWallet() {
   }
 
   const handleCloseSendArrrSuccess = (
-    _event?: React.SyntheticEvent | Event,
+    _event?: SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
     if (reason === 'clickaway') {
@@ -376,7 +376,7 @@ export default function PirateWallet() {
   };
 
   const handleCloseSendArrrError = (
-    _event?: React.SyntheticEvent | Event,
+    _event?: SyntheticEvent | Event,
     reason?: SnackbarCloseReason,
   ) => {
     if (reason === 'clickaway') {
@@ -583,7 +583,7 @@ export default function PirateWallet() {
     setLoadingRefreshArrr(false);
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) return;
     getArrrSyncStatus();
   }, [isAuthenticated]);
@@ -717,7 +717,7 @@ export default function PirateWallet() {
                 connectionType: string;
                 hostName: string;
                 port: number;
-              }, i: React.Key) => (
+              }, i: Key) => (
                 <ListItemButton key={i} onClick={() => { setNewCurrentArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
@@ -760,7 +760,7 @@ export default function PirateWallet() {
                 connectionType: string;
                 hostName: string;
                 port: number;
-              }, i: React.Key) => (
+              }, i: Key) => (
                 <ListItemButton key={i} onClick={() => { setNewArrrServer(server?.connectionType, server?.hostName, server?.port) }}>
                   <ListItemText primary={server?.connectionType + "://" + server?.hostName + ':' + server?.port} key={i} />
                 </ListItemButton>
@@ -958,7 +958,7 @@ export default function PirateWallet() {
               feeAmount: any;
               memo: string;
               timestamp: number;
-            }, k: React.Key) => (
+            }, k: Key) => (
               <StyledTableRow key={k}>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row.inputs.map((input, index) => (

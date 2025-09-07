@@ -607,7 +607,7 @@ export default function QortalWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address : {address}
+          Address: {address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -2479,7 +2479,9 @@ export default function QortalWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

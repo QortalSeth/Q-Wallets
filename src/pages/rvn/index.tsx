@@ -505,7 +505,7 @@ export default function RavencoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="rvn-qr-code">
-          Address : {walletInfoRvn?.address}
+          Address: {walletInfoRvn?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -612,7 +612,9 @@ export default function RavencoinWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

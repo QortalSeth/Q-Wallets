@@ -493,7 +493,7 @@ export default function BitcoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          Address : {walletInfoBtc?.address}
+          Address: {walletInfoBtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -598,7 +598,9 @@ export default function BitcoinWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

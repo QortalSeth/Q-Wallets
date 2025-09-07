@@ -482,7 +482,7 @@ export default function DogecoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="doge-qr-code">
-          Address : {walletInfoDoge?.address}
+          Address: {walletInfoDoge?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -592,7 +592,9 @@ export default function DogecoinWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

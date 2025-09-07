@@ -484,7 +484,7 @@ export default function LitecoinWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="ltc-qr-code">
-          Address : {walletInfoLtc?.address}
+          Address: {walletInfoLtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -592,7 +592,9 @@ export default function LitecoinWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

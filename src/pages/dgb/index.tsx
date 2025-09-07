@@ -506,7 +506,7 @@ export default function DigibyteWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="dgb-qr-code">
-          Address : {walletInfoDgb?.address}
+          Address: {walletInfoDgb?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -613,7 +613,9 @@ export default function DigibyteWallet() {
                     fontWeight: 700,
                   }}
                 >
-                  Processing Transaction Please Wait...
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Typography>
               </div>
             </Box>

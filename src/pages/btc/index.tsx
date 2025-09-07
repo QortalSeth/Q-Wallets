@@ -706,7 +706,9 @@ export default function BitcoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1088,7 +1090,9 @@ export default function BitcoinWallet() {
         variant="h5"
         sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
       >
-        Bitcoin Wallet
+        {t('core:message.generic.bitcoin_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar src={coinLogoBTC} alt="Coinlogo" />
@@ -1106,7 +1110,9 @@ export default function BitcoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

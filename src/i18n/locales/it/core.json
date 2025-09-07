@@ -1,1 +1,102 @@
-{}
+{
+  "action": {
+    "add": "aggiungi",
+    "add_peer": "aggiungi nuovo peer",
+    "add_minting_account": "aggiungi account di minting",
+    "cancel": "annulla",
+    "change_server": "cambia server",
+    "close": "chiudi",
+    "copy_address": "copia indirizzo",
+    "force_sync": "forza sincronizzazione",
+    "refresh": "aggiorna",
+    "remove": "rimuovi",
+    "retry": "riprova",
+    "send": "invia",
+    "send_max": "invia massimo",
+    "show_qrcode": "mostra codice QR",
+    "transfer_coin": "trasferisci {{ coin }}"
+  },
+  "address": "indirizzo:",
+  "address_book": "rubrica",
+  "balance": "saldo:",
+  "balance_available": "saldo disponibile:",
+  "coins": {
+    "bitcoin": "Bitcoin",
+    "digibyte": "Digibyte",
+    "dogecoin": "Dogecoin",
+    "litecoin": "Litecoin",
+    "piratechain": "Pirate Chain",
+    "qortal": "Qortal",
+    "ravencoin": "Ravencoin"
+  },
+  "fee": "commissione:",
+  "home": "home",
+  "max_sendable": "massimo inviabile:",
+  "memo": "nota",
+  "message": {
+    "generic": {
+      "bitcoin_wallet": "Portafoglio Bitcoin",
+      "coming_soon": "In arrivo...",
+      "digibyte_wallet": "Portafoglio Digibyte",
+      "initializing_wallet": "Inizializzazione portafoglio...",
+      "lightwallet_server": "Server Lightwallet:",
+      "litecoin_wallet": "Portafoglio Litecoin",
+      "loading_transactions": "Caricamento transazioni, attendere...",
+      "node_info": "Informazioni Nodo Qortal",
+      "not_initialized_yet": "Non ancora inizializzato",
+      "pirate_chain_address": "L'indirizzo ARRR deve essere lungo 78 caratteri (inizia con zs)",
+      "pirate_chain_servers": "Server Lightwallet Pirate Chain disponibili.",
+      "pirate_chain_wallet": "Portafoglio Pirate Chain",
+      "processing_transaction": "Elaborazione transazione, attendere...",
+      "qortal_wallet": "Portafoglio Qortal",
+      "revencoin_wallet": "Portafoglio Ravencoin",
+      "sending_fee": "La commissione attuale di invio è {{ quantity }} {{ coin }}.",
+      "sent_transaction": "Transazione {{ coin }} inviata con successo.",
+      "welcome": "Benvenuto in <brand>Qortal Wallets</brand>"
+    },
+    "error": {
+      "pirate_chain_gateway": "Non puoi usare il portafoglio Pirate Chain tramite nodo pubblico. Usa il tuo nodo locale.",
+      "pirate_chain_no_server": "Nessuna connessione al server Lightwallet di Pirate Chain.",
+      "something_went_wrong": "Qualcosa è andato storto. Riprova."
+    }
+  },
+  "page": {
+    "last": "ultimo",
+    "first": "primo",
+    "next": "successivo",
+    "previous": "precedente"
+  },
+  "receiver": "destinatario",
+  "receiver_address": "indirizzo destinatario",
+  "sender": "mittente",
+  "table_headers": {
+    "peers": {
+      "actions": "azioni",
+      "address": "indirizzo",
+      "connected_since": "connesso da",
+      "core_version": "versione core",
+      "handshake_status": "stato handshake",
+      "last_height": "ultima altezza"
+    },
+    "minting_accounts": {
+      "action": "azione",
+      "address": "indirizzo",
+      "avatar": "avatar",
+      "minting_key": "chiave di minting",
+      "name": "nome"
+    }
+  },
+  "time": "tempo",
+  "total_amount": "importo totale",
+  "transactions": "transazioni:",
+  "transaction_hash": "Hash TX",
+  "wallets": "portafogli",
+  "widgets": {
+    "block_height": "altezza blocco",
+    "connected_peers": "peer connessi",
+    "core_version": "versione core",
+    "minting_status": "stato di minting",
+    "node_uptime": "uptime del nodo",
+    "sync_status": "stato di sincronizzazione"
+  }
+}

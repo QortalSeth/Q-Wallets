@@ -700,7 +700,9 @@ export default function DogecoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1083,7 +1085,9 @@ export default function DogecoinWallet() {
         variant="h5"
         sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
       >
-        Dogecoin Wallet
+        {t('core:message.generic.dogecoin_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar src={coinLogoDOGE} alt="Coinlogo" />
@@ -1101,7 +1105,9 @@ export default function DogecoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

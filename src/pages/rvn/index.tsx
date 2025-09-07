@@ -720,7 +720,9 @@ export default function RavencoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
           </Typography>
           <Typography
             variant="h5"
@@ -1138,7 +1140,9 @@ export default function RavencoinWallet() {
         variant="h5"
         sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
       >
-        Ravencoin Wallet
+        {t('core:message.generic.ravencoin_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar src={coinLogoRVN} alt="Coinlogo" />
@@ -1156,7 +1160,9 @@ export default function RavencoinWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

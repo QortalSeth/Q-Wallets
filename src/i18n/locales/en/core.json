@@ -35,9 +35,12 @@
   "memo": "memo",
   "message": {
     "generic": {
+      "bitcoin_wallet": "Bitcoin Wallet",
       "coming_soon": "Coming soon...",
+      "digibyte_wallet": "Digibyte Wallet",
       "initializing_wallet": "Initializing wallet...",
       "lightwallet_server": "Lightwallet Server:",
+      "litecoin_wallet": "Litecoin Wallet",
       "loading_transactions": "Loading Transactions Please Wait...",
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
@@ -45,6 +48,8 @@
       "pirate_chain_servers": "Available Pirate Chain Lightwallet Servers.",
       "pirate_chain_wallet": "Pirate Chain Wallet",
       "processing_transaction": "Processing Transaction, please wait...",
+      "qortal_wallet": "Qortal Wallet",
+      "revencoin_wallet": "Ravencoin Wallet",
       "sending_fee": "Current sending fee is {{ quantity }} {{ coin }}.",
       "sent_transaction": "Sent {{ coin }} transaction was successful.",
       "welcome": "Welcome to <brand>Qortal Wallets</brand>"

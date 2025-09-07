@@ -1783,7 +1783,9 @@ export default function QortalWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1899,7 +1901,9 @@ export default function QortalWallet() {
       {QortQrDialogPage()}
       {QortAddressBookDialogPage()}
       <Typography gutterBottom variant="h5" sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}>
-        Qortal Wallet
+        {t('core:message.generic.qortal_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar
@@ -1917,7 +1921,9 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

@@ -721,7 +721,9 @@ export default function DigibyteWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Available Balance:&nbsp;&nbsp;
+            {t('core:balance_available', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1144,7 +1146,9 @@ export default function DigibyteWallet() {
         variant="h5"
         sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
       >
-        Digibyte Wallet
+        {t('core:message.generic.digibyte_wallet', {
+          postProcess: 'capitalizeFirstChar',
+        })}
       </Typography>
       <WalleteCard>
         <CoinAvatar src={coinLogoDGB} alt="Coinlogo" />
@@ -1162,7 +1166,9 @@ export default function DigibyteWallet() {
             gutterBottom
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Balance:&nbsp;&nbsp;
+            {t('core:balance', {
+                  postProcess: 'capitalizeFirstChar',
+                })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

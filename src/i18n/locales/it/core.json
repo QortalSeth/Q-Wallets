@@ -36,7 +36,7 @@
   "message": {
     "generic": {
       "bitcoin_wallet": "Portafoglio Bitcoin",
-      "coming_soon": "In arrivo...",
+      "coming_soon": "Prossimamente in arrivo...",
       "digibyte_wallet": "Portafoglio Digibyte",
       "initializing_wallet": "Inizializzazione portafoglio...",
       "lightwallet_server": "Server Lightwallet:",
@@ -68,6 +68,7 @@
   },
   "receiver": "destinatario",
   "receiver_address": "indirizzo destinatario",
+  "rows_per_page": "righe per pagina",
   "sender": "mittente",
   "table_headers": {
     "peers": {

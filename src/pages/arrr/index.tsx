@@ -960,7 +960,7 @@ export default function PirateWallet() {
           align="center"
           sx={{ color: 'primary.main', fontWeight: 700 }}
         >
-          {t('core:message.genric.lightwallet_server', {
+          {t('core:message.generic.lightwallet_server', {
             postProcess: 'capitalizeFirstChar',
           })}
           &nbsp;&nbsp;
@@ -1343,7 +1343,9 @@ export default function PirateWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                      }),
                     },
                     native: true,
                   },

@@ -38,10 +38,12 @@
       "bitcoin_wallet": "Bitcoin Wallet",
       "coming_soon": "Coming soon...",
       "digibyte_wallet": "Digibyte Wallet",
+      "dogecoin_wallet": "Dogecoin Wallet",
       "initializing_wallet": "Initializing wallet...",
       "lightwallet_server": "Lightwallet Server:",
       "litecoin_wallet": "Litecoin Wallet",
       "loading_transactions": "Loading Transactions Please Wait...",
+      "no_arbitrary_translactions": "No ARBITRARY transactions yet...",
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
       "pirate_chain_address": "ARRR address should be 78 characters long (starts with zs)",
@@ -68,6 +70,7 @@
   },
   "receiver": "receiver",
   "receiver_address": "receiver address",
+  "rows_per_page": "rows per page",
   "sender": "sender",
   "table_headers": {
     "peers": {

@@ -701,8 +701,9 @@ export default function DogecoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance_available', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1037,7 +1038,9 @@ export default function DogecoinWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                      }),
                     },
                     native: true,
                   },
@@ -1106,8 +1109,9 @@ export default function DogecoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

@@ -725,7 +725,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                        'aria-label': t('core:rows_per_page', {
+                          postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -836,7 +838,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -857,7 +861,9 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Arbitrary Transactions Yet...
+          {t('core:message.generic.no_arbitrary_translactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
         </Typography>
       );
     }
@@ -962,7 +968,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -1107,7 +1115,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -1228,7 +1238,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -1348,7 +1360,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -1454,7 +1468,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },
@@ -1582,7 +1598,9 @@ export default function QortalWallet() {
                   slotProps={{
                     select: {
                       inputProps: {
-                        'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                        }),
                       },
                       native: true,
                     },

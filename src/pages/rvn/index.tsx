@@ -1092,7 +1092,9 @@ export default function RavencoinWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': 'rows per page',
+                      'aria-label': t('core:rows_per_page', {
+                        postProcess: 'capitalizeFirstChar',
+                      }),
                     },
                     native: true,
                   },

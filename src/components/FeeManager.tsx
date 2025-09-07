@@ -73,7 +73,9 @@ export const FeeManager = ({ coin, onChange }) => {
               alignItems: 'center',
             }}
           >
-            <Typography>Fee publisher</Typography>
+            <Typography>{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} publisher</Typography>
             <Select
               size="small"
               value={selectedFeePublisher}

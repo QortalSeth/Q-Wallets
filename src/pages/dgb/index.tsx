@@ -48,7 +48,9 @@ import {
   KeyboardArrowRight,
   LastPage,
   QrCode2,
-  Refresh,
+    {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })},
   Send
 } from '@mui/icons-material';
 import coinLogoDGB from '../../assets/dgb.png';
@@ -728,7 +730,9 @@ export default function DigibyteWallet() {
           />
           <TextField
             required
-            label="Receiver Address"
+            label="{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })} Address"
             id="dgb-address"
             margin="normal"
             value={dgbRecipient}
@@ -808,12 +812,24 @@ export default function DigibyteWallet() {
         <Table stickyHeader sx={{ width: '100%' }} aria-label="transactions table" >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">Sender</StyledTableCell>
-              <StyledTableCell align="left">Receiver</StyledTableCell>
-              <StyledTableCell align="left">TX Hash</StyledTableCell>
-              <StyledTableCell align="left">Total Amount</StyledTableCell>
-              <StyledTableCell align="left">Fee</StyledTableCell>
-              <StyledTableCell align="left">Time</StyledTableCell>
+              <StyledTableCell align="left">{t('core:sender', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:transaction_hash', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:total_amount', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -972,7 +988,9 @@ export default function DigibyteWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Address:&nbsp;&nbsp;
+              {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="subtitle1"
@@ -1015,7 +1033,9 @@ export default function DigibyteWallet() {
             aria-label="QRcode"
             onClick={handleOpenDgbQR}
           >
-            Show QR Code
+                      {t('core:action.show_qrcode', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"
@@ -1023,7 +1043,9 @@ export default function DigibyteWallet() {
             aria-label="book"
             onClick={handleOpenAddressBook}
           >
-            Address Book
+            {t('core:address_book', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
         </div>
         <div style={{
@@ -1033,7 +1055,9 @@ export default function DigibyteWallet() {
           justifyContent: 'space-between'
         }}>
           <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-            Transactions:
+            {t('core:transactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
           <Button
             size="small"
@@ -1044,7 +1068,9 @@ export default function DigibyteWallet() {
             variant="outlined"
             style={{ borderRadius: 50 }}
           >
-            Refresh
+              {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </div>
         {isLoadingDgbTransactions ? tableLoader() : transactionsTable()}

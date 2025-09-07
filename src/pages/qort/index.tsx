@@ -52,7 +52,9 @@ import {
   KeyboardArrowRight,
   LastPage,
   QrCode2,
-  Refresh,
+    {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })},
   Send
 } from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
@@ -629,8 +631,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Recipient</StyledTableCell>
                 <StyledTableCell align="left">Amount QORT</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -745,8 +751,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Identifier</StyledTableCell>
                 <StyledTableCell align="left">Size</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -852,8 +862,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Recipient</StyledTableCell>
                 <StyledTableCell align="left">Amount QORT</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -973,8 +987,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Type</StyledTableCell>
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Info</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1114,8 +1132,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Type</StyledTableCell>
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Info</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1232,8 +1254,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Recipent / Desc.</StyledTableCell>
                 <StyledTableCell align="left">Amount / QTY</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1347,8 +1373,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Type</StyledTableCell>
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Poll Name</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1450,8 +1480,12 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">Creator</StyledTableCell>
                 <StyledTableCell align="left">Recipient</StyledTableCell>
                 <StyledTableCell align="left">Info</StyledTableCell>
-                <StyledTableCell align="left">Fee QORT</StyledTableCell>
-                <StyledTableCell align="left">Time</StyledTableCell>
+                <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })} QORT</StyledTableCell>
+                <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1803,7 +1837,9 @@ export default function QortalWallet() {
           />
           <TextField
             required
-            label="Receiver Address Or Name"
+            label="{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })} Address Or Name"
             id="qort-address"
             margin="normal"
             value={qortRecipient}
@@ -1875,7 +1911,9 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Address:&nbsp;&nbsp;
+              {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="subtitle1"
@@ -1916,7 +1954,9 @@ export default function QortalWallet() {
             aria-label="QRcode"
             onClick={handleOpenQortQR}
           >
-            Show QR Code
+                      {t('core:action.show_qrcode', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"
@@ -1924,7 +1964,9 @@ export default function QortalWallet() {
             aria-label="AddressBook"
             onClick={handleOpenAddressBook}
           >
-            Address Book
+            {t('core:address_book', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
         </div>
         <div style={{

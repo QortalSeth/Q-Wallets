@@ -47,7 +47,9 @@ import {
   KeyboardArrowRight,
   LastPage,
   QrCode2,
-  Refresh,
+    {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })},
   Send
 } from '@mui/icons-material';
 import coinLogoBTC from '../../assets/btc.png';
@@ -734,7 +736,9 @@ export default function BitcoinWallet() {
           />
           <TextField
             required
-            label="Receiver Address"
+            label="{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })} Address"
             id="btc-address"
             margin="normal"
             value={btcRecipient}
@@ -778,12 +782,24 @@ export default function BitcoinWallet() {
         <Table stickyHeader sx={{ width: '100%' }} aria-label="transactions table" >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">Sender</StyledTableCell>
-              <StyledTableCell align="left">Receiver</StyledTableCell>
-              <StyledTableCell align="left">TX Hash</StyledTableCell>
-              <StyledTableCell align="left">Total Amount</StyledTableCell>
-              <StyledTableCell align="left">Fee</StyledTableCell>
-              <StyledTableCell align="left">Time</StyledTableCell>
+              <StyledTableCell align="left">{t('core:sender', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:transaction_hash', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:total_amount', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -942,7 +958,9 @@ export default function BitcoinWallet() {
             align="center"
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
-            Address:&nbsp;&nbsp;
+              {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}&nbsp;&nbsp;
           </Typography>
           <Typography
             variant="subtitle1"
@@ -985,7 +1003,9 @@ export default function BitcoinWallet() {
             aria-label="QRcode"
             onClick={handleOpenBtcQR}
           >
-            Show QR Code
+                      {t('core:action.show_qrcode', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
           <WalletButtons
             variant="contained"
@@ -993,7 +1013,9 @@ export default function BitcoinWallet() {
             aria-label="book"
             onClick={handleOpenAddressBook}
           >
-            Address Book
+            {t('core:address_book', {
+            postProcess: 'capitalizeFirstChar',
+          })}
           </WalletButtons>
         </div>
         <div style={{
@@ -1003,7 +1025,9 @@ export default function BitcoinWallet() {
           justifyContent: 'space-between'
         }}>
           <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-            Transactions:
+            {t('core:transactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
           <Button
             size="small"
@@ -1014,7 +1038,9 @@ export default function BitcoinWallet() {
             variant="outlined"
             style={{ borderRadius: 50 }}
           >
-            Refresh
+              {t('core:action.refresh', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Button>
         </div>
         {isLoadingBtcTransactions ? tableLoader() : transactionsTable()}

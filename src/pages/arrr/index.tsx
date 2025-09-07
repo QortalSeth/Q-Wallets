@@ -50,7 +50,6 @@ import {
   LastPage,
   PublishedWithChangesTwoTone,
   QrCode2,
-  Refresh,
   Send,
 } from '@mui/icons-material';
 import coinLogoARRR from '../../assets/arrr.png';
@@ -67,6 +66,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Refresh } from '@mui/icons-material';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -1030,7 +1030,9 @@ export default function PirateWallet() {
           aria-label="QRcode"
           onClick={handleOpenArrrQR}
         >
-          Show QR Code
+          {t('core:action.show_qrcode', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </WalletButtons>
         <WalletButtons
           variant="contained"
@@ -1038,7 +1040,9 @@ export default function PirateWallet() {
           aria-label="book"
           onClick={handleOpenAddressBook}
         >
-          Address Book
+          {t('core:address_book', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </WalletButtons>
       </div>
     );
@@ -1053,7 +1057,10 @@ export default function PirateWallet() {
         keepMounted={false}
       >
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="arrr-qr-code">
-          Address : {walletInfoArrr?.address}
+          {t('core:address', {
+            postProcess: 'capitalizeFirstChar',
+          })}{' '}
+          {walletInfoArrr?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -1095,7 +1102,9 @@ export default function PirateWallet() {
         }}
       >
         <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-          Transactions:
+          {t('core:transactions', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Typography>
         <Button
           size="small"
@@ -1106,7 +1115,9 @@ export default function PirateWallet() {
           variant="outlined"
           style={{ borderRadius: 50 }}
         >
-          Refresh
+          {t('core:action.refresh', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         </Button>
       </div>
     );
@@ -1136,7 +1147,9 @@ export default function PirateWallet() {
             variant="h5"
             sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
           >
-            Loading Transactions Please Wait...
+            {t('core:message.generic.loading_transactions', {
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
         </div>
       </Box>
@@ -1153,13 +1166,27 @@ export default function PirateWallet() {
         >
           <TableHead>
             <TableRow>
-              <StyledTableCell align="left">Sender</StyledTableCell>
-              <StyledTableCell align="left">Receiver</StyledTableCell>
-              <StyledTableCell align="left">TX Hash</StyledTableCell>
-              <StyledTableCell align="left">Memo</StyledTableCell>
-              <StyledTableCell align="left">Total Amount</StyledTableCell>
-              <StyledTableCell align="left">Fee</StyledTableCell>
-              <StyledTableCell align="left">Time</StyledTableCell>
+              <StyledTableCell align="left">{t('core:sender', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:transaction_hash', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:memo', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:total_amount', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:fee', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
+              <StyledTableCell align="left">{t('core:time', {
+              postProcess: 'capitalizeFirstChar',
+            })}</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1547,7 +1574,9 @@ export default function PirateWallet() {
           />
           <TextField
             required
-            label="Receiver Address"
+            label="{t('core:receiver', {
+              postProcess: 'capitalizeFirstChar',
+            })} Address"
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
@@ -1556,7 +1585,9 @@ export default function PirateWallet() {
             onChange={(e) => setArrrRecipient(e.target.value)}
           />
           <TextField
-            label="Memo"
+            label="{t('core:memo', {
+              postProcess: 'capitalizeFirstChar',
+            })}"
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}

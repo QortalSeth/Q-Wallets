@@ -8,10 +8,13 @@
     "close": "close",
     "copy_address": "copy address",
     "force_sync": "force sync",
+    "refresh": "refresh",
     "remove": "remove",
+    "show_qrcode": "show QR code",
     "transfer_coin": "transfer {{ coin }}"
   },
   "address": "address:",
+  "address_book": "address book",
   "balance": "balance:",
   "coins": {
     "bitcoin": "Bitcoin",
@@ -22,11 +25,14 @@
     "qortal": "Qortal",
     "ravencoin": "Ravencoin"
   },
+  "fee": "fee:",
   "home": "home",
+  "memo": "memo",
   "message": {
     "generic": {
       "initializing_wallet": "Initializing wallet...",
       "lightwallet_server": "Lightwallet Server:",
+      "loading_transactions": "Loading Transactions Please Wait...",
       "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
       "pirate_chain_servers": "Available Pirate Chain Lightwallet Servers.",
@@ -43,6 +49,8 @@
     "next": "next",
     "previous": "previous"
   },
+  "receiver": "receiver",
+  "sender": "sender",
   "table_headers": {
     "peers": {
       "actions": "actions",
@@ -60,7 +68,10 @@
       "name": "name"
     }
   },
- 
+  "time": "time",
+  "total_amount": "total amount",
+  "transactions":"transactions:",
+  "transaction_hash": "TX Hash",
   "wallets": "wallets",
   "widgets": {
     "block_height": "block height",

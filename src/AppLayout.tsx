@@ -32,7 +32,7 @@ export default function AppLayout() {
   const { t } = useTranslation(['core']);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const { setWalletState } = useContext(walletContext);
   const { address, avatarUrl, name } = useAuth();
   const [isUsingGateway, setIsUsingGateway] = useState(true);
@@ -47,28 +47,28 @@ export default function AppLayout() {
   const getIsUsingGateway = async () => {
     try {
       const res = await qortalRequest({
-        action: "IS_USING_PUBLIC_NODE"
+        action: 'IS_USING_PUBLIC_NODE',
       });
       setIsUsingGateway(res);
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   async function getNodeInfo() {
     try {
       const nodeInfo = await qortalRequest({
-        action: "GET_NODE_INFO",
+        action: 'GET_NODE_INFO',
       });
       const nodeStatus = await qortalRequest({
-        action: "GET_NODE_STATUS",
+        action: 'GET_NODE_STATUS',
       });
       return { ...nodeInfo, ...nodeStatus };
     } catch (error) {
       console.error(error);
     }
   }
-  
+
   useEffect(() => {
     getIsUsingGateway();
   }, []);
@@ -146,7 +146,9 @@ export default function AppLayout() {
     },
     {
       segment: 'piratechain',
-      title: t('core:coins.piratechain', { postProcess: 'capitalizeFirstChar' }),
+      title: t('core:coins.piratechain', {
+        postProcess: 'capitalizeFirstChar',
+      }),
       icon: <img src={arrr} style={{ width: 24, height: 'auto' }} />,
     },
   ];
@@ -230,10 +232,7 @@ export default function AppLayout() {
       </Drawer>
 
       {/* Right side content */}
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
         <Container maxWidth="xl" sx={{ my: 8 }}>
           {/* The active route renders here */}
           <Outlet />

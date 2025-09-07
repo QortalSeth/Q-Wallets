@@ -7,6 +7,7 @@
     "change_server": "change server",
     "close": "close",
     "copy_address": "copy address",
+    "copy hash": "copy hash: {{ hash }}",
     "force_sync": "force sync",
     "refresh": "refresh",
     "remove": "remove",
@@ -39,16 +40,16 @@
   "memo": "memo",
   "message": {
     "generic": {
-      "bitcoin_address":"BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix)",
+      "bitcoin_address": "BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix)",
       "bitcoin_wallet": "Bitcoin Wallet",
       "coming_soon": "Coming soon...",
-      "digibyte_address":"DGB addresses should be 34 characters long for BIP44 (D prefix) and BIP49 (S prefix) or 43 characters long for BIP84 (dgb1 prefix)",
+      "digibyte_address": "DGB addresses should be 34 characters long for BIP44 (D prefix) and BIP49 (S prefix) or 43 characters long for BIP84 (dgb1 prefix)",
       "digibyte_wallet": "Digibyte Wallet",
-      "doge_address":"DOGE addresses should be 34 characters long for BIP44 (D prefix)",
+      "doge_address": "DOGE addresses should be 34 characters long for BIP44 (D prefix)",
       "dogecoin_wallet": "Dogecoin Wallet",
       "initializing_wallet": "Initializing wallet...",
       "lightwallet_server": "Lightwallet Server:",
-      "litecoin_address":"LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix)",
+      "litecoin_address": "LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix)",
       "litecoin_wallet": "Litecoin Wallet",
       "loading_transactions": "Loading transactions, please Wait...",
       "no_arbitrary_translactions": "No ARBITRARY transactions yet...",
@@ -61,12 +62,14 @@
       "processing_transaction": "Processing Transaction, please wait...",
       "qortal_address": "Qortal address should be 34 characters long (Name min 3 characters)",
       "qortal_wallet": "Qortal Wallet",
-      "ravencoin_address":"RVN addresses should be 34 characters long for BIP44 (R prefix)",
+      "ravencoin_address": "RVN addresses should be 34 characters long for BIP44 (R prefix)",
       "revencoin_wallet": "Ravencoin Wallet",
       "sending_fee": "Current sending fee is {{ quantity }} {{ coin }}.",
       "sent_transaction": "Sent {{ coin }} transaction was successful.",
+      "unconfirmed_translaction": "Unconfirmed",
+      "waiting_confirmation": "Waiting for confirmation...",
       "welcome": "Welcome to <brand>Qortal Wallets</brand>"
-      },
+    },
     "error": {
       "bitcoin_address_invalid": "Invalid BTC address",
       "digibyte_address_invalid": "Invalid DGB address",
@@ -91,7 +94,7 @@
   "rows_per_page": "rows per page",
   "sender": "sender",
   "size": "size",
-  "status":"status",
+  "status": "status",
   "table_headers": {
     "peers": {
       "actions": "actions",
@@ -112,7 +115,7 @@
   "time": "time",
   "type": "type:",
   "total_amount": "total amount",
-  "transactions":"list of transactions",
+  "transactions": "list of transactions",
   "transaction_hash": "TX Hash",
   "wallets": "wallets",
   "widgets": {

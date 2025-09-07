@@ -808,7 +808,7 @@ export default function LitecoinWallet() {
             error={addressFormatError}
             helperText={
               addressFormatError
-                 ? t('core:message.error.litecoin_address_invalid', {
+                ? t('core:message.error.litecoin_address_invalid', {
                     postProcess: 'capitalizeFirstChar',
                   })
                 : t('core:message.generic.litecoin_address', {
@@ -970,7 +970,10 @@ export default function LitecoinWallet() {
                       title={
                         copyLtcTxHash
                           ? copyLtcTxHash
-                          : 'Copy Hash: ' + row?.txHash
+                          : t('core:action.copy_hash', {
+                              hash: row?.txHash,
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <IconButton
@@ -1013,13 +1016,17 @@ export default function LitecoinWallet() {
                       title={
                         row?.timestamp
                           ? new Date(row?.timestamp).toLocaleString()
-                          : 'Waiting for Confirmation'
+                          : t('core:message.generic.waiting_confirmation', {
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <div>
                         {row?.timestamp
                           ? epochToAgo(row?.timestamp)
-                          : 'UNCONFIRMED'}
+                          : t('core:message.generic.unconfirmed_transaction', {
+                              postProcess: 'capitalizeFirstChar',
+                            })}
                       </div>
                     </CustomWidthTooltip>
                   </StyledTableCell>

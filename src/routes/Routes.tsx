@@ -22,7 +22,7 @@ export function Routes() {
         path: '/',
         element: <AppWrapper />,
         children: [
-          { index: true, element: <Home /> },       
+          { index: true, element: <Home /> },
           { path: 'qortal', element: <QortalWallet /> },
           { path: 'litecoin', element: <LitecoinWallet /> },
           { path: 'bitcoin', element: <BitcoinWallet /> },

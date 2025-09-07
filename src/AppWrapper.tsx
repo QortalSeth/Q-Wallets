@@ -3,7 +3,6 @@ import { publicSalt } from './qapp-config';
 import AppLayout from './AppLayout';
 
 export const AppWrapper = () => {
-
   return (
     <GlobalProvider
       config={{

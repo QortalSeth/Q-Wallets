@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type FeeEstimate = {
   height: number;
@@ -10,21 +10,21 @@ type FeeEstimate = {
 
 export function isValidFeeEstimate(obj: any): obj is FeeEstimate {
   return (
-    typeof obj === "object" &&
+    typeof obj === 'object' &&
     obj !== null &&
-    typeof obj.height === "number" &&
-    typeof obj.time === "number" &&
-    typeof obj.low_fee_per_kb === "number" &&
-    typeof obj.medium_fee_per_kb === "number" &&
-    typeof obj.high_fee_per_kb === "number"
+    typeof obj.height === 'number' &&
+    typeof obj.time === 'number' &&
+    typeof obj.low_fee_per_kb === 'number' &&
+    typeof obj.medium_fee_per_kb === 'number' &&
+    typeof obj.high_fee_per_kb === 'number'
   );
 }
 
 export const useRecommendedFees = ({ selectedCoin }) => {
   const [selectedFeePublisher, setSelectedFeePublisher] =
-    useState("JSON.Bridge");
-  const [selectFeeType, setSelectFeeType] = useState("medium");
-    const [customFee, setCustomFee] = useState(0)
+    useState('JSON.Bridge');
+  const [selectFeeType, setSelectFeeType] = useState('medium');
+  const [customFee, setCustomFee] = useState(0);
   const [feeData, setFeeData] = useState(null);
 
   const coin = useMemo(() => {
@@ -66,25 +66,22 @@ export const useRecommendedFees = ({ selectedCoin }) => {
 
   const selectFee = useMemo(() => {
     if (!recommendedFeeData) return;
-    if (selectFeeType === "high") {
+    if (selectFeeType === 'high') {
       return recommendedFeeData.high_fee_per_kb;
     }
-    if (selectFeeType === "low") {
+    if (selectFeeType === 'low') {
       return recommendedFeeData.low_fee_per_kb;
     }
-    if (selectFeeType === "medium") {
+    if (selectFeeType === 'medium') {
       return recommendedFeeData.medium_fee_per_kb;
     }
     return null;
   }, [recommendedFeeData, selectFeeType]);
 
-
-
-  const handleSelectPublisher = useCallback((val)=> {
-    setFeeData(null)
-    setSelectedFeePublisher(val)
-
-  },[])
+  const handleSelectPublisher = useCallback((val) => {
+    setFeeData(null);
+    setSelectedFeePublisher(val);
+  }, []);
 
   return {
     data: recommendedFeeData,
@@ -94,6 +91,6 @@ export const useRecommendedFees = ({ selectedCoin }) => {
     setSelectFeeType,
     selectFeeType,
     setCustomFee,
-    customFee
+    customFee,
   };
 };

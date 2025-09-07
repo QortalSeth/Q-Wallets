@@ -976,7 +976,10 @@ export default function BitcoinWallet() {
                       title={
                         copyBtcTxHash
                           ? copyBtcTxHash
-                          : 'Copy Hash: ' + row?.txHash
+                          : t('core:action.copy_hash', {
+                              hash: row?.txHash,
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <IconButton
@@ -1019,13 +1022,17 @@ export default function BitcoinWallet() {
                       title={
                         row?.timestamp
                           ? new Date(row?.timestamp).toLocaleString()
-                          : 'Waiting for Confirmation'
+                          : t('core:message.generic.waiting_confirmation', {
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <div>
                         {row?.timestamp
                           ? epochToAgo(row?.timestamp)
-                          : 'UNCONFIRMED'}
+                          : t('core:message.generic.unconfirmed_transaction', {
+                              postProcess: 'capitalizeFirstChar',
+                            })}
                       </div>
                     </CustomWidthTooltip>
                   </StyledTableCell>

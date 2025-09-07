@@ -53,9 +53,7 @@ interface QortalRequestOptions {
   type?: string;
 }
 
-declare function qortalRequest(
-  options: QortalRequestOptions
-): Promise<any>;
+declare function qortalRequest(options: QortalRequestOptions): Promise<any>;
 
 declare function qortalRequestWithTimeout(
   options: QortalRequestOptions,

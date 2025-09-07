@@ -1,5 +1,5 @@
-import { SetStateAction } from "jotai";
-import { createContext, Dispatch } from "react";
+import { SetStateAction } from 'jotai';
+import { createContext, Dispatch } from 'react';
 
 export interface IContextProps {
   address: string | null;
@@ -17,7 +17,7 @@ export const defaultState: IContextProps = {
   name: '',
   isAuthenticated: false,
   isUsingGateway: true,
-  nodeInfo: null
+  nodeInfo: null,
 };
 
 export default createContext(defaultState);

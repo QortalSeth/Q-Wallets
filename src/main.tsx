@@ -18,7 +18,7 @@ function WalletProvider({ children }) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProviderWrapper>
-       <WalletProvider>
+      <WalletProvider>
         <Routes />
       </WalletProvider>
     </ThemeProviderWrapper>

@@ -827,8 +827,8 @@ export default function RavencoinWallet() {
             onChange={handleRecipientChange}
             error={addressFormatError}
             helperText={
-               addressFormatError
-                 ? t('core:message.error.ravencoin_address_invalid', {
+              addressFormatError
+                ? t('core:message.error.ravencoin_address_invalid', {
                     postProcess: 'capitalizeFirstChar',
                   })
                 : t('core:message.generic.ravencoin_address', {
@@ -1025,7 +1025,10 @@ export default function RavencoinWallet() {
                       title={
                         copyRvnTxHash
                           ? copyRvnTxHash
-                          : 'Copy Hash: ' + row?.txHash
+                          : t('core:action.copy_hash', {
+                              hash: row?.txHash,
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <IconButton
@@ -1068,13 +1071,17 @@ export default function RavencoinWallet() {
                       title={
                         row?.timestamp
                           ? new Date(row?.timestamp).toLocaleString()
-                          : 'Waiting for Confirmation'
+                          : t('core:message.generic.waiting_confirmation', {
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <div>
                         {row?.timestamp
                           ? epochToAgo(row?.timestamp)
-                          : 'UNCONFIRMED'}
+                          : t('core:message.generic.unconfirmed_transaction', {
+                              postProcess: 'capitalizeFirstChar',
+                            })}
                       </div>
                     </CustomWidthTooltip>
                   </StyledTableCell>

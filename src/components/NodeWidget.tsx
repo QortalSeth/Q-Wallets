@@ -60,7 +60,9 @@ const NodeWidget = ({ icon, title, subtitle, children }: Props) => (
       </Box>
 
       <Box textAlign="right">
-        <Typography color="textSecondary" variant='h6'>{title}</Typography>
+        <Typography color="textSecondary" variant="h6">
+          {title}
+        </Typography>
         <Typography variant="h4" component="h2">
           {subtitle || ' '}
         </Typography>

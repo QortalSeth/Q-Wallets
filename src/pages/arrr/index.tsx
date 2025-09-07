@@ -1277,7 +1277,10 @@ export default function PirateWallet() {
                       title={
                         copyArrrTxHash
                           ? copyArrrTxHash
-                          : 'Copy Hash: ' + row?.txHash
+                          : t('core:action.copy_hash', {
+                              hash: row?.txHash,
+                              postProcess: 'capitalizeFirstChar',
+                            })
                       }
                     >
                       <IconButton

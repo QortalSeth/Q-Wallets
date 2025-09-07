@@ -3,11 +3,12 @@ import NodeWidget from '../components/NodeWidget';
 import { AltRoute, GridView, HistoryToggleOff, Hub } from '@mui/icons-material';
 import { secondsToDhms } from '../common/functions';
 import { Trans, useTranslation } from 'react-i18next';
-import { useEffect, useState, } from 'react';
+import { useContext } from 'react';
+import walletContext from '../contexts/walletContext';
 
 export default function Home() {
   const { t } = useTranslation(['core']);
-  const [nodeInfo, setNodeInfo] = useState<any>(null);
+  const { nodeInfo } = useContext(walletContext);
 
   const features = [
     {
@@ -39,35 +40,6 @@ export default function Home() {
       }),
     },
   ];
-
-  async function getNodeInfo() {
-    try {
-      const nodeInfo = await qortalRequest({
-        action: "GET_NODE_INFO",
-      });
-      const nodeStatus = await qortalRequest({
-        action: "GET_NODE_STATUS",
-      });
-      return { ...nodeInfo, ...nodeStatus };
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-   useEffect(() => {
-    let nodeInfoTimeoutId: number;;
-    (async () => {
-      nodeInfoTimeoutId = setInterval(async () => {
-        const infos = await getNodeInfo();
-        setNodeInfo(infos);
-      }, 60000);
-      const infos = await getNodeInfo();
-      setNodeInfo(infos);
-    })();
-    return () => {
-      clearInterval(nodeInfoTimeoutId);
-    };
-  }, []);
 
   return (
     <>

@@ -9,7 +9,7 @@ import {
   ListSubheader,
   Tooltip,
 } from '@mui/material';
-import { useEffect, useMemo, useContext } from 'react';
+import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import walletContext, { IContextProps } from './contexts/walletContext';
 import { useAuth } from 'qapp-core';
@@ -32,8 +32,11 @@ export default function AppLayout() {
   const { t } = useTranslation(['core']);
   const navigate = useNavigate();
   const location = useLocation();
+  
   const { setWalletState } = useContext(walletContext);
   const { address, avatarUrl, name } = useAuth();
+  const [isUsingGateway, setIsUsingGateway] = useState(true);
+  const [nodeInfo, setNodeInfo] = useState<any>(null);
 
   // derive selected from the URL
   const selectedSegment = useMemo(() => {
@@ -41,17 +44,61 @@ export default function AppLayout() {
     return seg || '/';
   }, [location.pathname]);
 
+  const getIsUsingGateway = async () => {
+    try {
+      const res = await qortalRequest({
+        action: "IS_USING_PUBLIC_NODE"
+      });
+      setIsUsingGateway(res);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function getNodeInfo() {
+    try {
+      const nodeInfo = await qortalRequest({
+        action: "GET_NODE_INFO",
+      });
+      const nodeStatus = await qortalRequest({
+        action: "GET_NODE_STATUS",
+      });
+      return { ...nodeInfo, ...nodeStatus };
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  
   useEffect(() => {
-    const value: IContextProps = {
+    getIsUsingGateway();
+  }, []);
+
+  useEffect(() => {
+    let nodeInfoTimeoutId: number;
+    (async () => {
+      nodeInfoTimeoutId = setInterval(async () => {
+        const infos = await getNodeInfo();
+        setNodeInfo(infos);
+      }, 60000);
+      const infos = await getNodeInfo();
+      setNodeInfo(infos);
+    })();
+    return () => {
+      clearInterval(nodeInfoTimeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const session: IContextProps = {
       address: address ?? '',
       avatar: avatarUrl ?? '',
       name: name ?? '',
       isAuthenticated: !!address,
-      isUsingGateway: true,
-      nodeInfo: null,
+      isUsingGateway: isUsingGateway,
+      nodeInfo: nodeInfo,
     };
-    setWalletState?.(value);
-  }, [address, avatarUrl, name, setWalletState]);
+    setWalletState?.(session);
+  }, [address, avatarUrl, name, nodeInfo, setWalletState]);
 
   type NavHeader = { kind: 'header'; title: string };
   type NavSegment = { segment: string; title: string; icon: React.ReactNode };
@@ -183,8 +230,11 @@ export default function AppLayout() {
       </Drawer>
 
       {/* Right side content */}
-      <Box component="main" sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
-        <Container maxWidth="lg" sx={{ my: 8 }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}
+      >
+        <Container maxWidth="xl" sx={{ my: 8 }}>
           {/* The active route renders here */}
           <Outlet />
         </Container>

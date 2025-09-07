@@ -1,4 +1,5 @@
-import { createContext } from "react";
+import { SetStateAction } from "jotai";
+import { createContext, Dispatch } from "react";
 
 export interface IContextProps {
   address: string | null;
@@ -7,7 +8,7 @@ export interface IContextProps {
   isAuthenticated: boolean;
   isUsingGateway: boolean;
   nodeInfo: any;
-  setWalletState?: React.Dispatch<React.SetStateAction<IContextProps>>;
+  setWalletState?: Dispatch<SetStateAction<IContextProps>>;
 }
 
 export const defaultState: IContextProps = {

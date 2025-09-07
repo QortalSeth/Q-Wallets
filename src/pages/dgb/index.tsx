@@ -722,8 +722,9 @@ export default function DigibyteWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance_available', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -810,7 +811,10 @@ export default function DigibyteWallet() {
             isAllowed={(values) => {
               const maxDgbCoin = walletBalanceDgb - (dgbFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (typeof floatValue === 'number' && floatValue <= maxDgbCoin);
+              return (
+                formattedValue === '' ||
+                (typeof floatValue === 'number' && floatValue <= maxDgbCoin)
+              );
             }}
             onValueChange={(values) => {
               setDgbAmount(values.floatValue ?? 0);
@@ -1090,6 +1094,9 @@ export default function DigibyteWallet() {
           <TableFooter sx={{ width: '100%' }}>
             <TableRow>
               <TablePagination
+                labelRowsPerPage={t('core:rows_per_page', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
                 rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                 colSpan={5}
                 count={transactionsDgb.length}
@@ -1098,9 +1105,7 @@ export default function DigibyteWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': t('core:rows_per_page', {
-                        postProcess: 'capitalizeFirstChar',
-                      }),
+                      'aria-label': 'rows per page',
                     },
                     native: true,
                   },
@@ -1169,8 +1174,9 @@ export default function DigibyteWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

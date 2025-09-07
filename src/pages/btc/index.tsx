@@ -707,8 +707,9 @@ export default function BitcoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance_available', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"
@@ -1034,6 +1035,9 @@ export default function BitcoinWallet() {
           <TableFooter sx={{ width: '100%' }}>
             <TableRow>
               <TablePagination
+                labelRowsPerPage={t('core:rows_per_page', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
                 rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                 colSpan={5}
                 count={transactionsBtc.length}
@@ -1042,9 +1046,7 @@ export default function BitcoinWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': t('core:rows_per_page', {
-                        postProcess: 'capitalizeFirstChar',
-                      }),
+                      'aria-label': 'rows per page',
                     },
                     native: true,
                   },
@@ -1113,8 +1115,9 @@ export default function BitcoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

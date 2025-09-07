@@ -29,7 +29,7 @@
     "qortal": "Qortal",
     "ravencoin": "Ravencoin"
   },
-  "fee": "commissione:",
+  "fee": "commissione",
   "home": "home",
   "max_sendable": "massimo inviabile:",
   "memo": "nota",

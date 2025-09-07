@@ -1029,6 +1029,9 @@ export default function LitecoinWallet() {
           <TableFooter sx={{ width: '100%' }}>
             <TableRow>
               <TablePagination
+                labelRowsPerPage={t('core:rows_per_page', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
                 rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                 colSpan={5}
                 count={transactionsLtc.length}
@@ -1037,9 +1040,7 @@ export default function LitecoinWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': t('core:rows_per_page', {
-                        postProcess: 'capitalizeFirstChar',
-                      }),
+                      'aria-label': 'rows per page',
                     },
                     native: true,
                   },

@@ -1,4 +1,15 @@
-import { ChangeEvent, forwardRef, Key, MouseEvent, ReactElement, Ref, SyntheticEvent, useContext, useEffect, useState } from 'react';
+import {
+  ChangeEvent,
+  forwardRef,
+  Key,
+  MouseEvent,
+  ReactElement,
+  Ref,
+  SyntheticEvent,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
@@ -58,10 +69,7 @@ interface TablePaginationActionsProps {
   count: number;
   page: number;
   rowsPerPage: number;
-  onPageChange: (
-    event: MouseEvent<HTMLButtonElement>,
-    newPage: number
-  ) => void;
+  onPageChange: (event: MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
@@ -69,27 +77,19 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
   const theme = useTheme();
   const { count, page, rowsPerPage, onPageChange } = props;
 
-  const handleFirstPageButtonClick = (
-    event: MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleFirstPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, 0);
   };
 
-  const handleBackButtonClick = (
-    event: MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleBackButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page - 1);
   };
 
-  const handleNextButtonClick = (
-    event: MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleNextButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, page + 1);
   };
 
-  const handleLastPageButtonClick = (
-    event: MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleLastPageButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
   };
 
@@ -721,8 +721,8 @@ export default function RavencoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance_available', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
+              postProcess: 'capitalizeFirstChar',
+            })}
           </Typography>
           <Typography
             variant="h5"
@@ -1084,6 +1084,9 @@ export default function RavencoinWallet() {
           <TableFooter sx={{ width: '100%' }}>
             <TableRow>
               <TablePagination
+                labelRowsPerPage={t('core:rows_per_page', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
                 rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                 colSpan={5}
                 count={transactionsRvn.length}
@@ -1092,9 +1095,7 @@ export default function RavencoinWallet() {
                 slotProps={{
                   select: {
                     inputProps: {
-                      'aria-label': t('core:rows_per_page', {
-                        postProcess: 'capitalizeFirstChar',
-                      }),
+                      'aria-label': 'rows per page',
                     },
                     native: true,
                   },
@@ -1163,8 +1164,9 @@ export default function RavencoinWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:balance', {
-                  postProcess: 'capitalizeFirstChar',
-                })}&nbsp;&nbsp;
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
           </Typography>
           <Typography
             variant="h5"

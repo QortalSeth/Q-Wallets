@@ -315,7 +315,9 @@ export default function LitecoinWallet() {
     return false;
   };
 
-  const handleRecipientChange = (e) => {
+  const handleRecipientChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
     const pattern =
       /^(L[1-9A-HJ-NP-Za-km-z]{33}|M[1-9A-HJ-NP-Za-km-z]{33}|ltc1[2-9A-HJ-NP-Za-z]{39})$/;

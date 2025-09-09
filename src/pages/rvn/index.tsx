@@ -330,7 +330,9 @@ export default function RavencoinWallet() {
     return false;
   };
 
-  const handleRecipientChange = (e) => {
+  const handleRecipientChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
     const pattern = /^(R[1-9A-HJ-NP-Za-km-z]{33})$/;
 

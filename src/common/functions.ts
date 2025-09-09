@@ -58,7 +58,11 @@ export function cropString(str: string) {
     : str;
 }
 
-export function humanFileSize(bytes, si = false, dp = 1) {
+export function humanFileSize(
+  bytes: number,
+  si: boolean = false,
+  dp: number = 1
+): string {
   const thresh = si ? 1000 : 1024;
 
   if (Math.abs(bytes) < thresh) {

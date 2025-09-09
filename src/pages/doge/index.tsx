@@ -315,7 +315,9 @@ export default function DogecoinWallet() {
     return false;
   };
 
-  const handleRecipientChange = (e) => {
+  const handleRecipientChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
     const pattern = /^(D[1-9A-HJ-NP-Za-km-z]{33})$/;
 

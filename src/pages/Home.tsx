@@ -6,12 +6,20 @@ import { Trans, useTranslation } from 'react-i18next';
 import { useContext } from 'react';
 import walletContext from '../contexts/walletContext';
 
+type Feature = {
+  id: string;
+  icon: React.FC;
+  title?: string;
+  description: string;
+};
+
 export default function Home() {
   const { t } = useTranslation(['core']);
   const { nodeInfo } = useContext(walletContext);
 
-  const features = [
+  const features: Feature[] = [
     {
+      id: 'block-height',
       icon: GridView,
       title: nodeInfo?.height,
       description: t('core:widgets.block_height', {
@@ -19,6 +27,7 @@ export default function Home() {
       }),
     },
     {
+      id: 'connections',
       icon: Hub,
       title: nodeInfo?.numberOfConnections,
       description: t('core:widgets.connected_peers', {
@@ -26,6 +35,7 @@ export default function Home() {
       }),
     },
     {
+      id: 'uptime',
       icon: HistoryToggleOff,
       title: secondsToDhms((nodeInfo?.uptime ?? 0) / 1000),
       description: t('core:widgets.node_uptime', {
@@ -33,6 +43,7 @@ export default function Home() {
       }),
     },
     {
+      id: 'core-version',
       icon: AltRoute,
       title: nodeInfo?.buildVersion?.replace('qortal-', 'v'),
       description: t('core:widgets.core_version', {
@@ -67,8 +78,8 @@ export default function Home() {
         justifyContent="center"
         alignItems="flex-start"
       >
-        {features.map((f, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+        {features.map((f) => (
+          <Grid key={f.id ?? f.title}>
             <NodeWidget
               icon={f.icon}
               subtitle={f.title ?? '-'}

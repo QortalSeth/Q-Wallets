@@ -5,9 +5,10 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  ToggleButtonGroupProps,
   Typography,
 } from '@mui/material';
-import { MouseEvent, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   CoinActionContainer,
   CoinActionRow,
@@ -17,7 +18,12 @@ import {
 import { useRecommendedFees } from '../hooks/useRecommendedFees';
 import { useTranslation } from 'react-i18next';
 
-export const FeeManager = ({ coin, onChange }) => {
+type FeeManagerProps = {
+  coin: string;
+  onChange: (fee: number) => void;
+};
+
+export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
   const { t } = useTranslation('core');
 
   const {
@@ -31,9 +37,9 @@ export const FeeManager = ({ coin, onChange }) => {
     setCustomFee,
   } = useRecommendedFees({ selectedCoin: coin });
 
-  const handleChangeRecommended = (
-    event: MouseEvent<HTMLElement>,
-    newAlignment: string
+  const handleChangeRecommended: ToggleButtonGroupProps['onChange'] = (
+    _event,
+    newAlignment
   ) => {
     if (newAlignment) {
       setSelectFeeType(newAlignment);
@@ -41,8 +47,8 @@ export const FeeManager = ({ coin, onChange }) => {
   };
 
   useEffect(() => {
-    onChange(currentFee);
-  }, [currentFee]);
+    onChange(currentFee ?? 0);
+  }, [currentFee, onChange]);
   return (
     <div
       style={{
@@ -81,6 +87,7 @@ export const FeeManager = ({ coin, onChange }) => {
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
+
             <Select
               size="small"
               value={selectedFeePublisher}

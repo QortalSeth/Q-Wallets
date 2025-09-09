@@ -330,7 +330,9 @@ export default function DigibyteWallet() {
     return false;
   };
 
-  const handleRecipientChange = (e) => {
+  const handleRecipientChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
     const pattern =
       /^(D[1-9A-HJ-NP-Za-km-z]{33}|S[1-9A-HJ-NP-Za-km-z]{33}|dgb1[2-9A-HJ-NP-Za-z]{39})$/;

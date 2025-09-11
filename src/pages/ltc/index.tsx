@@ -1079,7 +1079,7 @@ export default function LitecoinWallet() {
   const LtcAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="ltc-electrum-servers"
         open={openLtcAddressBook}
         keepMounted={false}
       >

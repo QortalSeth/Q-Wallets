@@ -1740,7 +1740,7 @@ export default function PirateWallet() {
   const ArrrAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="arrr-electrum-servers"
         open={openArrrAddressBook}
         keepMounted={false}
       >

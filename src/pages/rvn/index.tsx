@@ -1139,7 +1139,7 @@ export default function RavencoinWallet() {
   const RvnAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="rvn-electrum-servers"
         open={openRvnAddressBook}
         keepMounted={false}
       >

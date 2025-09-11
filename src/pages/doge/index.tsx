@@ -1080,7 +1080,7 @@ export default function DogecoinWallet() {
   const DogeAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="doge-electrum-servers"
         open={openDogeAddressBook}
         keepMounted={false}
       >

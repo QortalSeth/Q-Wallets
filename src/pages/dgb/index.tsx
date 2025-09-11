@@ -324,7 +324,7 @@ export default function DigibyteWallet() {
     if (dgbAmount <= 0 || null || !dgbAmount) {
       return true;
     }
-    if (dgbRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
@@ -1149,7 +1149,7 @@ export default function DigibyteWallet() {
   const DgbAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="dgb-electrum-servers"
         open={openDgbAddressBook}
         keepMounted={false}
       >

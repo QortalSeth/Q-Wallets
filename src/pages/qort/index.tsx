@@ -645,7 +645,7 @@ export default function QortalWallet() {
   const QortAddressBookDialogPage = () => {
     return (
       <DialogGeneral
-        aria-labelledby="btc-electrum-servers"
+        aria-labelledby="qort-electrum-servers"
         open={openQortAddressBook}
         keepMounted={false}
       >

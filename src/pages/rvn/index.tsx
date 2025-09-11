@@ -958,6 +958,11 @@ export default function RavencoinWallet() {
                 })}
               </StyledTableCell>
               <StyledTableCell align="left">
+                {t('core:fee.fee', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              </StyledTableCell>
+              <StyledTableCell align="left">
                 {t('core:time', {
                   postProcess: 'capitalizeFirstChar',
                 })}

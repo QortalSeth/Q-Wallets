@@ -422,40 +422,38 @@ export default function RavencoinWallet() {
     getWalletInfoRvn();
   }, [isAuthenticated]);
 
-  const getWalletBalanceRvn = async () => {
-    try {
-      const response = await qortalRequestWithTimeout(
-        {
-          action: 'GET_WALLET_BALANCE',
-          coin: 'RVN',
-        },
-        300000
-      );
-      if (!response?.error) {
-        setWalletBalanceRvn(response);
-        setIsLoadingWalletBalanceRvn(false);
-      }
-    } catch (error) {
-      setWalletBalanceRvn(null);
-      setIsLoadingWalletBalanceRvn(false);
-      console.error('ERROR GET RVN BALANCE', error);
+  function computeBalanceFromTransactions(txs: any[]): number {
+    if (!Array.isArray(txs)) return 0;
+    let satoshis = 0;
+    for (const tx of txs) {
+      // Only count confirmed txs (those with a timestamp)
+      if (!tx?.timestamp) continue;
+      const inSat = (tx?.inputs || [])
+        .filter((i: any) => i?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      const outSat = (tx?.outputs || [])
+        .filter((o: any) => o?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      satoshis += outSat - inSat; // net effect on wallet
     }
-  };
+    return +(satoshis / 1e8).toFixed(8);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const intervalGetWalletBalanceRvn = setInterval(() => {
-      getWalletBalanceRvn();
+    const intervalgetTransactionsRvn = setInterval(() => {
+      getTransactionsRvn();
     }, 180000);
-    getWalletBalanceRvn();
+    getTransactionsRvn();
     return () => {
-      clearInterval(intervalGetWalletBalanceRvn);
+      clearInterval(intervalgetTransactionsRvn);
     };
   }, [isAuthenticated]);
 
   const getTransactionsRvn = async () => {
     try {
       setIsLoadingRvnTransactions(true);
+      setIsLoadingWalletBalanceRvn(true);
 
       const responseRvnTransactions = await qortalRequestWithTimeout(
         {
@@ -467,18 +465,34 @@ export default function RavencoinWallet() {
 
       if (!responseRvnTransactions?.error) {
         setTransactionsRvn(responseRvnTransactions);
-        setIsLoadingRvnTransactions(false);
+        const computed = computeBalanceFromTransactions(
+          responseRvnTransactions || []
+        );
+        setWalletBalanceRvn(computed);
       }
     } catch (error) {
       setIsLoadingRvnTransactions(false);
       setTransactionsRvn([]);
       console.error('ERROR GET RVN TRANSACTIONS', error);
+    } finally {
+      setIsLoadingRvnTransactions(false);
+      setIsLoadingWalletBalanceRvn(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getTransactionsRvn();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoRvn();
+      await getTransactionsRvn();
+      intervalId = setInterval(() => {
+        getTransactionsRvn();
+      }, 180000);
+    })();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLoadingRefreshRvn = async () => {
@@ -560,7 +574,7 @@ export default function RavencoinWallet() {
         setOpenSendRvnSuccess(true);
         setIsLoadingWalletBalanceRvn(true);
         await timeoutDelay(3000);
-        getWalletBalanceRvn();
+        await getTransactionsRvn();
       }
     } catch (error) {
       setRvnAmount(0);
@@ -570,7 +584,7 @@ export default function RavencoinWallet() {
       setOpenSendRvnError(true);
       setIsLoadingWalletBalanceRvn(true);
       await timeoutDelay(3000);
-      getWalletBalanceRvn();
+      await getTransactionsRvn();
       console.error('ERROR SENDING RVN', error);
     }
   };
@@ -1204,12 +1218,12 @@ export default function RavencoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceRvn ? (
-              walletBalanceRvn + ' RVN'
-            ) : (
+            {isLoadingWalletBalanceRvn ? (
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : (
+              walletBalanceRvn + ' RVN'
             )}
           </Typography>
         </div>

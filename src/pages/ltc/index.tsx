@@ -403,40 +403,38 @@ export default function LitecoinWallet() {
     getWalletInfoLtc();
   }, [isAuthenticated]);
 
-  const getWalletBalanceLtc = async () => {
-    try {
-      const response = await qortalRequestWithTimeout(
-        {
-          action: 'GET_WALLET_BALANCE',
-          coin: 'LTC',
-        },
-        300000
-      );
-      if (!response?.error) {
-        setWalletBalanceLtc(response);
-        setIsLoadingWalletBalanceLtc(false);
-      }
-    } catch (error) {
-      setWalletBalanceLtc(null);
-      setIsLoadingWalletBalanceLtc(false);
-      console.error('ERROR GET LTC BALANCE', error);
+  function computeBalanceFromTransactions(txs: any[]): number {
+    if (!Array.isArray(txs)) return 0;
+    let satoshis = 0;
+    for (const tx of txs) {
+      // Only count confirmed txs (those with a timestamp)
+      if (!tx?.timestamp) continue;
+      const inSat = (tx?.inputs || [])
+        .filter((i: any) => i?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      const outSat = (tx?.outputs || [])
+        .filter((o: any) => o?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      satoshis += outSat - inSat; // net effect on wallet
     }
-  };
+    return +(satoshis / 1e8).toFixed(8);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const intervalGetWalletBalanceLtc = setInterval(() => {
-      getWalletBalanceLtc();
+    const intervalgetTransactionsLtc = setInterval(() => {
+      getTransactionsLtc();
     }, 180000);
-    getWalletBalanceLtc();
+    getTransactionsLtc();
     return () => {
-      clearInterval(intervalGetWalletBalanceLtc);
+      clearInterval(intervalgetTransactionsLtc);
     };
   }, [isAuthenticated]);
 
   const getTransactionsLtc = async () => {
     try {
       setIsLoadingLtcTransactions(true);
+      setIsLoadingWalletBalanceLtc(true);
 
       const responseLtcTransactions = await qortalRequestWithTimeout(
         {
@@ -448,18 +446,33 @@ export default function LitecoinWallet() {
 
       if (!responseLtcTransactions?.error) {
         setTransactionsLtc(responseLtcTransactions);
-        setIsLoadingLtcTransactions(false);
+        const computed = computeBalanceFromTransactions(
+          responseLtcTransactions || []
+        );
+        setWalletBalanceLtc(computed);
       }
     } catch (error) {
-      setIsLoadingLtcTransactions(false);
       setTransactionsLtc([]);
       console.error('ERROR GET LTC TRANSACTIONS', error);
+    } finally {
+      setIsLoadingLtcTransactions(false);
+      setIsLoadingWalletBalanceLtc(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getTransactionsLtc();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoLtc();
+      await getTransactionsLtc();
+      intervalId = setInterval(() => {
+        getTransactionsLtc();
+      }, 180000);
+    })();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLoadingRefreshLtc = async () => {
@@ -540,7 +553,7 @@ export default function LitecoinWallet() {
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
         await timeoutDelay(3000);
-        getWalletBalanceLtc();
+        await getTransactionsLtc();
       }
     } catch (error) {
       setLtcAmount(0);
@@ -550,7 +563,7 @@ export default function LitecoinWallet() {
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
       await timeoutDelay(3000);
-      getWalletBalanceLtc();
+      await getTransactionsLtc();
       console.error('ERROR SENDING LTC', error);
     }
   };
@@ -1139,12 +1152,12 @@ export default function LitecoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceLtc ? (
-              walletBalanceLtc + ' LTC'
-            ) : (
+            {isLoadingWalletBalanceLtc ? (
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : (
+              walletBalanceLtc + ' LTC'
             )}
           </Typography>
         </div>

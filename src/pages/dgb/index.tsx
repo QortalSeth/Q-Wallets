@@ -423,40 +423,38 @@ export default function DigibyteWallet() {
     getWalletInfoDgb();
   }, [isAuthenticated]);
 
-  const getWalletBalanceDgb = async () => {
-    try {
-      const response = await qortalRequestWithTimeout(
-        {
-          action: 'GET_WALLET_BALANCE',
-          coin: 'DGB',
-        },
-        300000
-      );
-      if (!response?.error) {
-        setWalletBalanceDgb(response);
-        setIsLoadingWalletBalanceDgb(false);
-      }
-    } catch (error) {
-      setWalletBalanceDgb(null);
-      setIsLoadingWalletBalanceDgb(false);
-      console.error('ERROR GET DGB BALANCE', error);
+  function computeBalanceFromTransactions(txs: any[]): number {
+    if (!Array.isArray(txs)) return 0;
+    let satoshis = 0;
+    for (const tx of txs) {
+      // Only count confirmed txs (those with a timestamp)
+      if (!tx?.timestamp) continue;
+      const inSat = (tx?.inputs || [])
+        .filter((i: any) => i?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      const outSat = (tx?.outputs || [])
+        .filter((o: any) => o?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      satoshis += outSat - inSat; // net effect on wallet
     }
-  };
+    return +(satoshis / 1e8).toFixed(8);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const intervalGetWalletBalanceDgb = setInterval(() => {
-      getWalletBalanceDgb();
+    const intervalgetTransactionsDgb = setInterval(() => {
+      getTransactionsDgb();
     }, 180000);
-    getWalletBalanceDgb();
+    getTransactionsDgb();
     return () => {
-      clearInterval(intervalGetWalletBalanceDgb);
+      clearInterval(intervalgetTransactionsDgb);
     };
   }, [isAuthenticated]);
 
   const getTransactionsDgb = async () => {
     try {
       setIsLoadingDgbTransactions(true);
+      setIsLoadingWalletBalanceDgb(true);
 
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
@@ -468,18 +466,34 @@ export default function DigibyteWallet() {
 
       if (!responseDgbTransactions?.error) {
         setTransactionsDgb(responseDgbTransactions);
-        setIsLoadingDgbTransactions(false);
+        const computed = computeBalanceFromTransactions(
+          responseDgbTransactions || []
+        );
+        setWalletBalanceDgb(computed);
       }
     } catch (error) {
-      setIsLoadingDgbTransactions(false);
       setTransactionsDgb([]);
       console.error('ERROR GET DGB TRANSACTIONS', error);
+    } finally {
+      setIsLoadingDgbTransactions(false);
+      setIsLoadingWalletBalanceDgb(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getTransactionsDgb();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoDgb();
+      await getTransactionsDgb();
+      await getTransactionsDgb();
+      intervalId = setInterval(() => {
+        getTransactionsDgb();
+      }, 180000);
+    })();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLoadingRefreshDgb = async () => {
@@ -561,7 +575,7 @@ export default function DigibyteWallet() {
         setOpenSendDgbSuccess(true);
         setIsLoadingWalletBalanceDgb(true);
         await timeoutDelay(3000);
-        getWalletBalanceDgb();
+        await getTransactionsDgb();
       }
     } catch (error) {
       setDgbAmount(0);
@@ -571,7 +585,7 @@ export default function DigibyteWallet() {
       setOpenSendDgbError(true);
       setIsLoadingWalletBalanceDgb(true);
       await timeoutDelay(3000);
-      getWalletBalanceDgb();
+      getTransactionsDgb();
       console.error('ERROR SENDING DGB', error);
     }
   };
@@ -1209,12 +1223,12 @@ export default function DigibyteWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceDgb ? (
-              walletBalanceDgb + ' DGB'
-            ) : (
+            {isLoadingWalletBalanceDgb ? (
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : (
+              walletBalanceDgb + ' DGB'
             )}
           </Typography>
         </div>

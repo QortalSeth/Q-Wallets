@@ -301,6 +301,7 @@ export default function PirateWallet() {
   const [openArrrSend, setOpenArrrSend] = useState(false);
   const [arrrAmount, setArrrAmount] = useState<number>(0);
   const [arrrRecipient, setArrrRecipient] = useState('');
+  const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
@@ -346,10 +347,21 @@ export default function PirateWallet() {
     if (arrrAmount <= 0 || null || !arrrAmount) {
       return true;
     }
-    if (arrrRecipient.length < 34 || '') {
+    if (addressFormatError || '') {
       return true;
     }
     return false;
+  };
+
+  const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const pattern = /^(zs1[2-9A-HJ-NP-Za-z]{75})$/;
+    setArrrRecipient(value);
+    if (pattern.test(value) || value === '') {
+      setAddressFormatError(false);
+    } else {
+      setAddressFormatError(true);
+    }
   };
 
   const handleCloseArrrSend = () => {
@@ -1624,7 +1636,7 @@ export default function PirateWallet() {
               postProcess: 'capitalizeFirstChar',
             })}"
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
-            onChange={(e) => setArrrRecipient(e.target.value)}
+            onChange={handleRecipientChange}
           />
           <TextField
             label="{t('core:memo', {

@@ -22,7 +22,7 @@
     "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "types": ["qapp-core/global"]
+    "types": ["qapp-core/global", "node"]
   },
   "include": ["src"]
 }

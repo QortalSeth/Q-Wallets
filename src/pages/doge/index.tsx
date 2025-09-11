@@ -401,32 +401,29 @@ export default function DogecoinWallet() {
     getWalletInfoDoge();
   }, [isAuthenticated]);
 
-  const getWalletBalanceDoge = async () => {
-    try {
-      const response = await qortalRequestWithTimeout(
-        {
-          action: 'GET_WALLET_BALANCE',
-          coin: 'DOGE',
-        },
-        300000
-      );
-      if (!response?.error) {
-        setWalletBalanceDoge(response);
-        setIsLoadingWalletBalanceDoge(false);
-      }
-    } catch (error) {
-      setWalletBalanceDoge(null);
-      setIsLoadingWalletBalanceDoge(false);
-      console.error('ERROR GET DOGE BALANCE', error);
+  function computeBalanceFromTransactions(txs: any[]): number {
+    if (!Array.isArray(txs)) return 0;
+    let satoshis = 0;
+    for (const tx of txs) {
+      // Only count confirmed txs (those with a timestamp)
+      if (!tx?.timestamp) continue;
+      const inSat = (tx?.inputs || [])
+        .filter((i: any) => i?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      const outSat = (tx?.outputs || [])
+        .filter((o: any) => o?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      satoshis += outSat - inSat; // net effect on wallet
     }
-  };
+    return +(satoshis / 1e8).toFixed(8);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
     const intervalGetWalletBalanceDoge = setInterval(() => {
-      getWalletBalanceDoge();
+      getTransactionsDoge();
     }, 180000);
-    getWalletBalanceDoge();
+    getTransactionsDoge();
     return () => {
       clearInterval(intervalGetWalletBalanceDoge);
     };
@@ -435,6 +432,7 @@ export default function DogecoinWallet() {
   const getTransactionsDoge = async () => {
     try {
       setIsLoadingDogeTransactions(true);
+      setIsLoadingWalletBalanceDoge(true);
 
       const responseDogeTransactions = await qortalRequestWithTimeout(
         {
@@ -446,18 +444,33 @@ export default function DogecoinWallet() {
 
       if (!responseDogeTransactions?.error) {
         setTransactionsDoge(responseDogeTransactions);
-        setIsLoadingDogeTransactions(false);
+        const computed = computeBalanceFromTransactions(
+          responseDogeTransactions || []
+        );
+        setWalletBalanceDoge(computed);
       }
     } catch (error) {
-      setIsLoadingDogeTransactions(false);
       setTransactionsDoge([]);
       console.error('ERROR GET DOGE TRANSACTIONS', error);
+    } finally {
+      setIsLoadingDogeTransactions(false);
+      setIsLoadingWalletBalanceDoge(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getTransactionsDoge();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoDoge();
+      await getTransactionsDoge();
+      intervalId = setInterval(() => {
+        getTransactionsDoge();
+      }, 180000);
+    })();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLoadingRefreshDoge = async () => {
@@ -537,7 +550,7 @@ export default function DogecoinWallet() {
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
         await timeoutDelay(3000);
-        getWalletBalanceDoge();
+        await getTransactionsDoge();
       }
     } catch (error) {
       setDogeAmount(0);
@@ -546,7 +559,7 @@ export default function DogecoinWallet() {
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
       await timeoutDelay(3000);
-      getWalletBalanceDoge();
+      await getTransactionsDoge();
       console.error('ERROR SENDING DOGE', error);
     }
   };
@@ -1140,12 +1153,12 @@ export default function DogecoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceDoge ? (
-              walletBalanceDoge + ' DOGE'
-            ) : (
+            {isLoadingWalletBalanceDoge ? (
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : (
+              walletBalanceDoge + ' DOGE'
             )}
           </Typography>
         </div>

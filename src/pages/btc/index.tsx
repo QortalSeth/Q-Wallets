@@ -313,7 +313,9 @@ export default function BitcoinWallet() {
     return false;
   };
 
-  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleRecipientChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value;
     const pattern =
       /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[02-9A-HJ-NP-Za-z]{39})$/;
@@ -398,40 +400,38 @@ export default function BitcoinWallet() {
     getWalletInfoBtc();
   }, [isAuthenticated]);
 
-  const getWalletBalanceBtc = async () => {
-    try {
-      const response = await qortalRequestWithTimeout(
-        {
-          action: 'GET_WALLET_BALANCE',
-          coin: 'BTC',
-        },
-        300000
-      );
-      if (!response?.error) {
-        setWalletBalanceBtc(response);
-        setIsLoadingWalletBalanceBtc(false);
-      }
-    } catch (error) {
-      setWalletBalanceBtc(null);
-      setIsLoadingWalletBalanceBtc(false);
-      console.error('ERROR GET BTC BALANCE', error);
+  function computeBalanceFromTransactions(txs: any[]): number {
+    if (!Array.isArray(txs)) return 0;
+    let satoshis = 0;
+    for (const tx of txs) {
+      // Only count confirmed txs (those with a timestamp)
+      if (!tx?.timestamp) continue;
+      const inSat = (tx?.inputs || [])
+        .filter((i: any) => i?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      const outSat = (tx?.outputs || [])
+        .filter((o: any) => o?.addressInWallet)
+        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
+      satoshis += outSat - inSat; // net effect on wallet
     }
-  };
+    return +(satoshis / 1e8).toFixed(8);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const intervalGetWalletBalanceBtc = setInterval(() => {
-      getWalletBalanceBtc();
+    const intervalgetTransactionsBtc = setInterval(() => {
+      getTransactionsBtc();
     }, 180000);
-    getWalletBalanceBtc();
+    getTransactionsBtc();
     return () => {
-      clearInterval(intervalGetWalletBalanceBtc);
+      clearInterval(intervalgetTransactionsBtc);
     };
   }, [isAuthenticated]);
 
   const getTransactionsBtc = async () => {
     try {
       setIsLoadingBtcTransactions(true);
+      setIsLoadingWalletBalanceBtc(true);
 
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
@@ -444,17 +444,35 @@ export default function BitcoinWallet() {
       if (!responseBtcTransactions?.error) {
         setTransactionsBtc(responseBtcTransactions);
         setIsLoadingBtcTransactions(false);
+        const computed = computeBalanceFromTransactions(
+          responseBtcTransactions || []
+        );
+        setWalletBalanceBtc(computed);
       }
     } catch (error) {
       setIsLoadingBtcTransactions(false);
       setTransactionsBtc([]);
       console.error('ERROR GET BTC TRANSACTIONS', error);
+    } finally {
+      setIsLoadingBtcTransactions(false);
+      setIsLoadingWalletBalanceBtc(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getTransactionsBtc();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoBtc();
+      await getTransactionsBtc();
+      await getTransactionsBtc();
+      intervalId = setInterval(() => {
+        getTransactionsBtc();
+      }, 180000);
+    })();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLoadingRefreshBtc = async () => {
@@ -533,7 +551,7 @@ export default function BitcoinWallet() {
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
         await timeoutDelay(3000);
-        getWalletBalanceBtc();
+        await getTransactionsBtc();
       }
     } catch (error) {
       setBtcAmount(0);
@@ -542,7 +560,7 @@ export default function BitcoinWallet() {
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
       await timeoutDelay(3000);
-      getWalletBalanceBtc();
+      getTransactionsBtc();
       console.error('ERROR SENDING BTC', error);
     }
   };
@@ -1131,12 +1149,12 @@ export default function BitcoinWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceBtc ? (
-              walletBalanceBtc + ' BTC'
-            ) : (
+            {isLoadingWalletBalanceBtc ? (
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : (
+              walletBalanceBtc + ' BTC'
             )}
           </Typography>
         </div>

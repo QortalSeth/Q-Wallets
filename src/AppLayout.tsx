@@ -7,7 +7,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListSubheader,
-  Tooltip,
 } from '@mui/material';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +20,6 @@ import dgb from './assets/dgb.png';
 import rvn from './assets/rvn.png';
 import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
-import { Wallet } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 export default function AppLayout() {
@@ -152,10 +150,10 @@ export default function AppLayout() {
       <Drawer
         variant="permanent"
         sx={{
-          width: 88,
+          width: 100,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: 88,
+            width: 100,
             boxSizing: 'border-box',
             alignItems: 'center',
             pt: 1,
@@ -169,11 +167,11 @@ export default function AppLayout() {
             <ListSubheader
               component="div"
               sx={{
-                textAlign: 'center',
-                lineHeight: 1.2,
-                py: 1.5,
                 fontSize: 11,
                 letterSpacing: 1.2,
+                lineHeight: 1.2,
+                py: 1.5,
+                textAlign: 'center',
               }}
             >
               {t('core:wallets', { postProcess: 'capitalizeAll' })}
@@ -191,32 +189,46 @@ export default function AppLayout() {
                   disablePadding
                   sx={{ justifyContent: 'center' }}
                 >
-                  <Tooltip title={item.title} placement="right">
-                    <ListItemButton
-                      onClick={() =>
-                        navigate(
-                          item.segment === '/' ? '/' : `/${item.segment}`
-                        )
-                      }
-                      selected={isSelected}
+                  <ListItemButton
+                    onClick={() =>
+                      navigate(item.segment === '/' ? '/' : `/${item.segment}`)
+                    }
+                    selected={isSelected}
+                    sx={{
+                      justifyContent: 'center',
+                      py: 2,
+                      minHeight: 56,
+                      '&.Mui-selected': (theme) => ({
+                        borderRight: `3px solid ${theme.palette.primary.main}`,
+                      }),
+                    }}
+                  >
+                    <ListItemIcon
                       sx={{
-                        justifyContent: 'center',
-                        py: 2,
-                        minHeight: 56,
-                        '&.Mui-selected': (theme) => ({
-                          borderRight: `3px solid ${theme.palette.primary.main}`,
-                        }),
+                        minWidth: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: 0 }}>
-                        <Box
-                          sx={{ width: 24, height: 24, display: 'inline-flex' }}
-                        >
-                          {item.icon}
-                        </Box>
-                      </ListItemIcon>
-                    </ListItemButton>
-                  </Tooltip>
+                      <Box
+                        sx={{
+                          fontSize: 9,
+                          maxWidth: 70,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {item.title}
+                      </Box>
+                      <Box
+                        sx={{ width: 24, height: 24, display: 'inline-flex' }}
+                      >
+                        {item.icon}
+                      </Box>
+                    </ListItemIcon>
+                  </ListItemButton>
                 </ListItem>
               );
             }

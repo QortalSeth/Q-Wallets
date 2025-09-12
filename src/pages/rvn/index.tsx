@@ -198,7 +198,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -877,9 +877,9 @@ export default function RavencoinWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="rvn-address"
             margin="normal"
             value={rvnRecipient}
@@ -1229,7 +1229,7 @@ export default function RavencoinWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoRVN} alt="Coinlogo" />
         <div
           style={{
@@ -1411,7 +1411,7 @@ export default function RavencoinWallet() {
           </Button>
         </div>
         {isLoadingRvnTransactions ? tableLoader() : transactionsTable()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

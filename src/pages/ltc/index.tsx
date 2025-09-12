@@ -198,7 +198,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -857,9 +857,9 @@ export default function LitecoinWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="ltc-address"
             margin="normal"
             value={ltcRecipient}
@@ -1164,7 +1164,7 @@ export default function LitecoinWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoLTC} alt="Coinlogo" />
         <div
           style={{
@@ -1348,7 +1348,7 @@ export default function LitecoinWallet() {
           </Button>
         </div>
         {isLoadingLtcTransactions ? tableLoader() : transactionsTable()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

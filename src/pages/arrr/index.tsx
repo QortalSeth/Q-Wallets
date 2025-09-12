@@ -215,7 +215,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -1624,15 +1624,15 @@ export default function PirateWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
-            helperText="{t('core:message.generic.pirate_chain_address', {
+            helperText={t('core:message.generic.pirate_chain_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
             onChange={handleRecipientChange}
           />
@@ -1643,9 +1643,9 @@ export default function PirateWallet() {
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}
-            helperText="{t('core:message.generic.pirate_chain_max_chars', {
+            helperText={t('core:message.generic.pirate_chain_max_chars', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
             onChange={(e) => setArrrMemo(e.target.value)}
           />
@@ -1785,7 +1785,7 @@ export default function PirateWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoARRR} alt="Coinlogo" />
         {syncStatus ? showSyncStatus() : ArrrWalletBalance()}
         {syncStatus ? '' : ArrrWalletAddress()}
@@ -1801,7 +1801,7 @@ export default function PirateWallet() {
             return ArrrTransactionsTable();
           }
         })()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

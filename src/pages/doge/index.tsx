@@ -198,7 +198,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -858,9 +858,9 @@ export default function DogecoinWallet() {
 
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="doge-address"
             margin="normal"
             value={dogeRecipient}
@@ -1165,7 +1165,7 @@ export default function DogecoinWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoDOGE} alt="Coinlogo" />
         <div
           style={{
@@ -1348,7 +1348,7 @@ export default function DogecoinWallet() {
           </Button>
         </div>
         {isLoadingDogeTransactions ? tableLoader() : transactionsTable()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

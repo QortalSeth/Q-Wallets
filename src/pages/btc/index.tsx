@@ -198,7 +198,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -852,9 +852,9 @@ export default function BitcoinWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="btc-address"
             margin="normal"
             value={btcRecipient}
@@ -1159,7 +1159,7 @@ export default function BitcoinWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoBTC} alt="Coinlogo" />
         <div
           style={{
@@ -1372,7 +1372,7 @@ export default function BitcoinWallet() {
           </Button>
         </div>
         {isLoadingBtcTransactions ? tableLoader() : transactionsTable()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

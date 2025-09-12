@@ -198,7 +198,7 @@ const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -883,9 +883,9 @@ export default function DigibyteWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address', {
+            label={t('core:receiver_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="dgb-address"
             margin="normal"
             value={dgbRecipient}
@@ -1235,7 +1235,7 @@ export default function DigibyteWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoDGB} alt="Coinlogo" />
         <div
           style={{
@@ -1425,7 +1425,7 @@ export default function DigibyteWallet() {
           </Button>
         </div>
         {isLoadingDgbTransactions ? tableLoader() : transactionsTable()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

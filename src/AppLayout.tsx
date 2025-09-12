@@ -7,6 +7,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListSubheader,
+  Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -21,6 +22,7 @@ import rvn from './assets/rvn.png';
 import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
+import packageJson from '../package.json';
 
 export default function AppLayout() {
   useIframe();
@@ -153,11 +155,13 @@ export default function AppLayout() {
           width: 115,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: 115,
-            boxSizing: 'border-box',
             alignItems: 'center',
-            pt: 1,
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
             overflowX: 'hidden',
+            pt: 1,
+            width: 115,
           },
         }}
       >
@@ -211,7 +215,7 @@ export default function AppLayout() {
                         gap: 1,
                       }}
                     >
-                        <Box
+                      <Box
                         sx={{ width: 24, height: 24, display: 'inline-flex' }}
                       >
                         {item.icon}
@@ -234,6 +238,12 @@ export default function AppLayout() {
             }
           )}
         </List>
+        <Typography
+          variant="caption"
+          sx={{ mt: 'auto', mb: 1, fontSize: 10, color: 'text.secondary' }}
+        >
+          v{packageJson.version}
+        </Typography>
       </Drawer>
 
       {/* Right side content */}

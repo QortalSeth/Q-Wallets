@@ -7,7 +7,6 @@ import DogecoinWallet from '../pages/doge';
 import DigibyteWallet from '../pages/dgb';
 import RavencoinWallet from '../pages/rvn';
 import PirateWallet from '../pages/arrr';
-import Home from '../pages/Home';
 
 interface CustomWindow extends Window {
   _qdnBase: string;
@@ -22,7 +21,7 @@ export function Routes() {
         path: '/',
         element: <AppWrapper />,
         children: [
-          { index: true, element: <Home /> },
+          { index: true, element: <QortalWallet /> },
           { path: 'qortal', element: <QortalWallet /> },
           { path: 'litecoin', element: <LitecoinWallet /> },
           { path: 'bitcoin', element: <BitcoinWallet /> },

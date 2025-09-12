@@ -64,7 +64,6 @@
       "low_fee_transation": "Las comisiones bajas pueden provocar transacciones lentas o no confirmadas",
       "no_address": "No address available",
       "no_arbitrary_translactions": "Aún no hay transacciones ARBITRARY...",
-      "node_info": "Información del nodo Qortal",
       "not_initialized_yet": "Aún no inicializado",
       "pirate_chain_address": "La dirección ARRR debe tener 78 caracteres (empieza con zs)",
       "pirate_chain_max_chars": "Memo de ARRR de máximo 40 caracteres",
@@ -78,8 +77,7 @@
       "sending_fee": "La comisión de envío actual es {{ quantity }} {{ coin }}.",
       "sent_transaction": "La transacción de {{ coin }} se envió correctamente.",
       "unconfirmed_translaction": "Sin confirmar",
-      "waiting_confirmation": "Esperando confirmación...",
-      "welcome": "Bienvenido a <brand>Qortal Wallets</brand>"
+      "waiting_confirmation": "Esperando confirmación..."
     },
     "error": {
       "bitcoin_address_invalid": "Dirección BTC no válida",
@@ -131,13 +129,5 @@
   "total_amount": "monto total",
   "transactions": "lista de transacciones",
   "transaction_hash": "Hash de TX",
-  "wallets": "monederos",
-  "widgets": {
-    "block_height": "altura de bloque",
-    "connected_peers": "peers conectados",
-    "core_version": "versión del núcleo",
-    "minting_status": "estado de la acuñación",
-    "node_uptime": "tiempo de actividad del nodo",
-    "sync_status": "estado de sincronización"
-  }
+  "wallets": "monederos"
 }

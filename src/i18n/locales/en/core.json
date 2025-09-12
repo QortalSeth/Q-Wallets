@@ -64,7 +64,6 @@
       "low_fee_transation": "Low fees may result in slow or unconfirmed transactions",
       "no_address": "No address available",
       "no_arbitrary_translactions": "No ARBITRARY transactions yet...",
-      "node_info": "Qortal Node Information",
       "not_initialized_yet": "Not initialized yet",
       "pirate_chain_address": "ARRR address should be 78 characters long (starts with zs)",
       "pirate_chain_max_chars": "ARRR memo maximal 40 characters long",
@@ -78,8 +77,7 @@
       "sending_fee": "Current sending fee is {{ quantity }} {{ coin }}.",
       "sent_transaction": "Sent {{ coin }} transaction was successful.",
       "unconfirmed_translaction": "Unconfirmed",
-      "waiting_confirmation": "Waiting for confirmation...",
-      "welcome": "Welcome to <brand>Qortal Wallets</brand>"
+      "waiting_confirmation": "Waiting for confirmation..."
     },
     "error": {
       "bitcoin_address_invalid": "Invalid BTC address",
@@ -131,13 +129,5 @@
   "total_amount": "total amount",
   "transactions": "list of transactions",
   "transaction_hash": "TX Hash",
-  "wallets": "wallets",
-  "widgets": {
-    "block_height": "block height",
-    "connected_peers": "connected peers",
-    "core_version": "core version",
-    "minting_status": "minting status",
-    "node_uptime": "node uptime",
-    "sync_status": "sync status"
-  }
+  "wallets": "wallets"
 }

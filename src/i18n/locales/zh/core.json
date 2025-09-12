@@ -64,7 +64,6 @@
       "low_fee_transation": "低手续费可能导致交易缓慢或未确认",
       "no_address": "No address available",
       "no_arbitrary_translactions": "尚无 ARBITRARY 交易...",
-      "node_info": "Qortal 节点信息",
       "not_initialized_yet": "尚未初始化",
       "pirate_chain_address": "ARRR 地址应为 78 个字符（以 zs 开头）",
       "pirate_chain_max_chars": "ARRR 备注最多 40 个字符",
@@ -131,13 +130,5 @@
   "total_amount": "总金额",
   "transactions": "交易列表",
   "transaction_hash": "TX 哈希",
-  "wallets": "钱包",
-  "widgets": {
-    "block_height": "区块高度",
-    "connected_peers": "已连接节点",
-    "core_version": "核心版本",
-    "minting_status": "铸造状态",
-    "node_uptime": "节点运行时间",
-    "sync_status": "同步状态"
-  }
+  "wallets": "钱包"
 }

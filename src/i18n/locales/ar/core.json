@@ -64,7 +64,6 @@
       "low_fee_transation": "قد تؤدي الرسوم المنخفضة إلى معاملات بطيئة أو غير مؤكدة",
       "no_address": "No address available",
       "no_arbitrary_translactions": "لا توجد معاملات ARBITRARY بعد...",
-      "node_info": "معلومات عقدة Qortal",
       "not_initialized_yet": "لم تتم التهيئة بعد",
       "pirate_chain_address": "يجب أن يكون عنوان ARRR بطول 78 حرفًا (يبدأ بـ zs)",
       "pirate_chain_max_chars": "مذكرة ARRR بحد أقصى 40 حرفًا",
@@ -78,8 +77,7 @@
       "sending_fee": "رسوم الإرسال الحالية هي {{ quantity }} {{ coin }}.",
       "sent_transaction": "تم إرسال معاملة {{ coin }} بنجاح.",
       "unconfirmed_translaction": "غير مؤكدة",
-      "waiting_confirmation": "في انتظار التأكيد...",
-      "welcome": "مرحبًا بك في <brand>Qortal Wallets</brand>"
+      "waiting_confirmation": "في انتظار التأكيد..."
     },
     "error": {
       "bitcoin_address_invalid": "عنوان BTC غير صالح",
@@ -131,13 +129,5 @@
   "total_amount": "المبلغ الإجمالي",
   "transactions": "قائمة المعاملات",
   "transaction_hash": "تجزئة TX",
-  "wallets": "المحافظ",
-  "widgets": {
-    "block_height": "ارتفاع الكتلة",
-    "connected_peers": "الأقران المتصلون",
-    "core_version": "إصدار النواة",
-    "minting_status": "حالة السكّ",
-    "node_uptime": "مدة تشغيل العقدة",
-    "sync_status": "حالة المزامنة"
-  }
+  "wallets": "المحافظ"
 }

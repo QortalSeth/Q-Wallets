@@ -64,7 +64,6 @@
       "low_fee_transation": "Низкие комиссии могут привести к медленным или неподтверждённым транзакциям",
       "no_address": "No address available",
       "no_arbitrary_translactions": "Пока нет транзакций ARBITRARY...",
-      "node_info": "Информация узла Qortal",
       "not_initialized_yet": "Ещё не инициализировано",
       "pirate_chain_address": "Адрес ARRR должен быть длиной 78 символов (начинается с zs)",
       "pirate_chain_max_chars": "Мемо ARRR не более 40 символов",
@@ -131,13 +130,5 @@
   "total_amount": "общая сумма",
   "transactions": "список транзакций",
   "transaction_hash": "TX-хэш",
-  "wallets": "кошельки",
-  "widgets": {
-    "block_height": "высота блока",
-    "connected_peers": "подключённые пиры",
-    "core_version": "версия ядра",
-    "minting_status": "статус минтинга",
-    "node_uptime": "время работы узла",
-    "sync_status": "статус синхронизации"
-  }
+  "wallets": "кошельки"
 }

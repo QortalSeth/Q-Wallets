@@ -64,7 +64,6 @@
       "low_fee_transation": "Des frais faibles peuvent entraîner des transactions lentes ou non confirmées",
       "no_address": "No address available",
       "no_arbitrary_translactions": "Aucune transaction ARBITRARY pour le moment...",
-      "node_info": "Informations du nœud Qortal",
       "not_initialized_yet": "Pas encore initialisé",
       "pirate_chain_address": "L’adresse ARRR doit comporter 78 caractères (commence par zs)",
       "pirate_chain_max_chars": "Mémo ARRR de 40 caractères maximum",
@@ -78,8 +77,7 @@
       "sending_fee": "Les frais d’envoi actuels sont de {{ quantity }} {{ coin }}.",
       "sent_transaction": "La transaction {{ coin }} a été envoyée avec succès.",
       "unconfirmed_translaction": "Non confirmée",
-      "waiting_confirmation": "En attente de confirmation...",
-      "welcome": "Bienvenue sur <brand>Qortal Wallets</brand>"
+      "waiting_confirmation": "En attente de confirmation..."
     },
     "error": {
       "bitcoin_address_invalid": "Adresse BTC invalide",
@@ -131,13 +129,5 @@
   "total_amount": "montant total",
   "transactions": "liste des transactions",
   "transaction_hash": "Hachage TX",
-  "wallets": "portefeuilles",
-  "widgets": {
-    "block_height": "hauteur de bloc",
-    "connected_peers": "pairs connectés",
-    "core_version": "version du noyau",
-    "minting_status": "statut de minting",
-    "node_uptime": "temps de fonctionnement du nœud",
-    "sync_status": "statut de synchronisation"
-  }
+  "wallets": "portefeuilles"
 }

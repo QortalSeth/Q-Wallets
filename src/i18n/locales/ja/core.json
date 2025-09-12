@@ -64,7 +64,6 @@
       "low_fee_transation": "手数料が低いと、取引が遅いまたは未確認になる場合があります",
       "no_address": "No address available",
       "no_arbitrary_translactions": "ARBITRARY トランザクションはまだありません...",
-      "node_info": "Qortal ノード情報",
       "not_initialized_yet": "まだ初期化されていません",
       "pirate_chain_address": "ARRR アドレスは 78 文字（zs で始まる）である必要があります",
       "pirate_chain_max_chars": "ARRR メモは最大 40 文字",
@@ -131,13 +130,5 @@
   "total_amount": "合計金額",
   "transactions": "トランザクション一覧",
   "transaction_hash": "TX ハッシュ",
-  "wallets": "ウォレット",
-  "widgets": {
-    "block_height": "ブロック高",
-    "connected_peers": "接続中のピア",
-    "core_version": "コアバージョン",
-    "minting_status": "ミンティング状況",
-    "node_uptime": "ノード稼働時間",
-    "sync_status": "同期状況"
-  }
+  "wallets": "ウォレット"
 }

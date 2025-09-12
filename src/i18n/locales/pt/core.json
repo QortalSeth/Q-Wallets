@@ -64,7 +64,6 @@
       "low_fee_transation": "Taxas baixas podem resultar em transações lentas ou não confirmadas",
       "no_address": "No address available",
       "no_arbitrary_translactions": "Ainda não há transações ARBITRARY...",
-      "node_info": "Informações do nó Qortal",
       "not_initialized_yet": "Ainda não inicializado",
       "pirate_chain_address": "O endereço ARRR deve ter 78 caracteres (começa com zs)",
       "pirate_chain_max_chars": "Memo ARRR com no máximo 40 caracteres",
@@ -131,13 +130,5 @@
   "total_amount": "valor total",
   "transactions": "lista de transações",
   "transaction_hash": "Hash da TX",
-  "wallets": "carteiras",
-  "widgets": {
-    "block_height": "altura do bloco",
-    "connected_peers": "peers conectados",
-    "core_version": "versão do núcleo",
-    "minting_status": "status da cunhagem",
-    "node_uptime": "tempo de atividade do nó",
-    "sync_status": "status de sincronização"
-  }
+  "wallets": "carteiras"
 }

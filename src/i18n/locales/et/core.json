@@ -64,7 +64,6 @@
       "low_fee_transation": "Madalad tasud võivad põhjustada aeglaseid või kinnitamata tehinguid",
       "no_address": "No address available",
       "no_arbitrary_translactions": "ARBITRARY tehinguid veel pole...",
-      "node_info": "Qortali sõlme teave",
       "not_initialized_yet": "Pole veel initsialiseeritud",
       "pirate_chain_address": "ARRR-aadress peab olema 78 märki pikk (algab zs-iga)",
       "pirate_chain_max_chars": "ARRR memo maksimaalselt 40 märki",
@@ -78,8 +77,7 @@
       "sending_fee": "Praegune saatmistasu on {{ quantity }} {{ coin }}.",
       "sent_transaction": "Saadetud {{ coin }} tehing oli edukas.",
       "unconfirmed_translaction": "Kinnitamata",
-      "waiting_confirmation": "Ootab kinnitust...",
-      "welcome": "Tere tulemast <brand>Qortal Wallets</brand>"
+      "waiting_confirmation": "Ootab kinnitust..."
     },
     "error": {
       "bitcoin_address_invalid": "Kehtetu BTC-aadress",
@@ -131,13 +129,5 @@
   "total_amount": "kogusumma",
   "transactions": "tehingute loend",
   "transaction_hash": "TX-räsi",
-  "wallets": "rahakotid",
-  "widgets": {
-    "block_height": "plokikõrgus",
-    "connected_peers": "ühendatud peerid",
-    "core_version": "tuumversioon",
-    "minting_status": "mündimise olek",
-    "node_uptime": "sõlme tööaeg",
-    "sync_status": "sünkroonimise olek"
-  }
+  "wallets": "rahakotid"
 }

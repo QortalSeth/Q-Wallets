@@ -407,7 +407,9 @@ export default function LitecoinWallet() {
         setWalletInfoError(
           typeof response.error === 'string'
             ? response.error
-            : 'Failed to load address' // TODO translate
+            : t('core:message.error.loading_address', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setWalletInfoLtc(response);

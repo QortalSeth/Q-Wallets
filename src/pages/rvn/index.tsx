@@ -426,7 +426,9 @@ export default function RavencoinWallet() {
         setWalletInfoError(
           typeof response.error === 'string'
             ? response.error
-            : 'Failed to load address'
+            :  {t('core:message.error.loading_address', {
+            postProcess: 'capitalizeFirstChar',
+          })}
         );
       } else {
         setWalletInfoRvn(response);

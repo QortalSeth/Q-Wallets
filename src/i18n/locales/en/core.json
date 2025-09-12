@@ -85,6 +85,7 @@
       "bitcoin_address_invalid": "Invalid BTC address",
       "digibyte_address_invalid": "Invalid DGB address",
       "doge_address_invalid": "Invalid DOGE address",
+      "loading_address": "Failed to load address",
       "litecoin_address_invalid": "Invalid LTC address",
       "pirate_chain_gateway": "You cannot use Pirate Chain wallet through public node. Please use your local node.",
       "pirate_chain_no_server": "No Connection To Pirate Chain Lightwallet Server.",

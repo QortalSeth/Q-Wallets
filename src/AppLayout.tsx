@@ -72,7 +72,7 @@ export default function AppLayout() {
   }, []);
 
   useEffect(() => {
-    let nodeInfoTimeoutId: number;
+    let nodeInfoTimeoutId: number | NodeJS.Timeout;
     (async () => {
       nodeInfoTimeoutId = setInterval(async () => {
         const infos = await getNodeInfo();

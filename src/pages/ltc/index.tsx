@@ -258,7 +258,7 @@ export default function LitecoinWallet() {
   const [isLoadingLtcTransactions, setIsLoadingLtcTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [copyLtcAddress, setCopyLtcAddress] = useState('');
   const [copyLtcTxHash, setCopyLtcTxHash] = useState('');
   const [openLtcQR, setOpenLtcQR] = useState(false);

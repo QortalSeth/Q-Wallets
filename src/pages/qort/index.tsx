@@ -262,7 +262,7 @@ export default function QortalWallet() {
   const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
   const [value, setValue] = useState('One');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [openQortQR, setOpenQortQR] = useState(false);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
   const [loadingRefreshQort, setLoadingRefreshQort] = useState(false);

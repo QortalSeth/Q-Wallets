@@ -150,10 +150,10 @@ export default function AppLayout() {
       <Drawer
         variant="permanent"
         sx={{
-          width: 100,
+          width: 115,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: 100,
+            width: 115,
             boxSizing: 'border-box',
             alignItems: 'center',
             pt: 1,
@@ -211,9 +211,14 @@ export default function AppLayout() {
                         gap: 1,
                       }}
                     >
+                        <Box
+                        sx={{ width: 24, height: 24, display: 'inline-flex' }}
+                      >
+                        {item.icon}
+                      </Box>
                       <Box
                         sx={{
-                          fontSize: 9,
+                          fontSize: 11,
                           maxWidth: 70,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -221,11 +226,6 @@ export default function AppLayout() {
                         }}
                       >
                         {item.title}
-                      </Box>
-                      <Box
-                        sx={{ width: 24, height: 24, display: 'inline-flex' }}
-                      >
-                        {item.icon}
                       </Box>
                     </ListItemIcon>
                   </ListItemButton>

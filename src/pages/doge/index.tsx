@@ -258,7 +258,7 @@ export default function DogecoinWallet() {
   const [isLoadingDogeTransactions, setIsLoadingDogeTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [copyDogeAddress, setCopyDogeAddress] = useState('');
   const [copyDogeTxHash, setCopyDogeTxHash] = useState('');
   const [openDogeQR, setOpenDogeQR] = useState(false);

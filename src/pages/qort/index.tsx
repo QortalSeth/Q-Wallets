@@ -26,9 +26,9 @@ import {
   Button,
   Card,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   IconButton,
   Paper,
   Tab,
@@ -292,14 +292,6 @@ export default function QortalWallet() {
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - rewardshareInfo.length)
       : 0;
-
-  const handleOpenQortQR = () => {
-    setOpenQortQR(true);
-  };
-
-  const handleCloseQortQR = () => {
-    setOpenQortQR(false);
-  };
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
@@ -602,7 +594,6 @@ export default function QortalWallet() {
   const QortQrDialogPage = () => {
     return (
       <DialogGeneral
-        onClose={handleCloseQortQR}
         aria-labelledby="btc-qr-code"
         open={openQortQR}
         keepMounted={false}
@@ -610,7 +601,7 @@ export default function QortalWallet() {
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
-          })}{' '}
+          })}
           {address}
         </DialogTitle>
         <DialogContent dividers>
@@ -631,13 +622,6 @@ export default function QortalWallet() {
             />
           </div>
         </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseQortQR}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
       </DialogGeneral>
     );
   };
@@ -2288,7 +2272,7 @@ export default function QortalWallet() {
                           }}
                         >
                           Removed
-                          <CustomWidthTooltip   //TODO translate
+                          <CustomWidthTooltip //TODO translate
                             placement="top"
                             title={
                               row?.recipient === row?.creatorAddress
@@ -2765,161 +2749,217 @@ export default function QortalWallet() {
   };
 
   return (
-    <Box sx={{ width: '100%', marginTop: '20px' }}>
+    <Box sx={{ width: '100%', mt: 2 }}>
       {QortSendDialogPage()}
       {QortQrDialogPage()}
       {QortAddressBookDialogPage()}
-      <Typography
-        gutterBottom
-        variant="h5"
-        sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-      >
-        {t('core:message.generic.qortal_wallet', {
-          postProcess: 'capitalizeFirstChar',
-        })}
-      </Typography>
-      <WalletCard>
-        <CoinAvatar src={coinLogoQORT} alt="Coinlogo" />
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {walletBalanceQort ? (
-              walletBalanceQort + ' QORT'
-            ) : (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            )}
-          </Typography>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '10px',
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {address}
-          </Typography>
-          <Tooltip
-            placement="right"
-            title={
-              copyQortAddress
-                ? copyQortAddress
-                : t('core:action.copy_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          >
-            <IconButton
-              aria-label="copy"
-              size="small"
-              onClick={() => {
-                (navigator.clipboard.writeText(address ?? ''),
-                  changeCopyQortcStatus());
-              }}
-            >
-              <CopyAllTwoTone fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '15px',
-            marginTop: '15px',
-          }}
-        >
-          <WalletButtons
-            variant="contained"
-            startIcon={<Send style={{ marginBottom: '2px' }} />}
-            aria-label="Transfer"
-            onClick={handleOpenQortSend}
-          >
-            {t('core:action.transfer_coin', {
-              coin: 'QORT',
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-          <WalletButtons
-            variant="contained"
-            startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
-            aria-label="AddressBook"
-            onClick={handleOpenAddressBook}
-          >
-            {t('core:address_book', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'left',
-            marginTop: '15px',
-            marginBottom: '15px',
-          }}
-        >
-          <Button
-            size="large"
-            onClick={handleLoadingRefreshQort}
-            loading={loadingRefreshQort}
-            loadingPosition="start"
-            startIcon={<Refresh style={{ marginBottom: '2px' }} />}
-            variant="text"
-            style={{ borderRadius: 50 }}
-          >
-            <span style={{ color: theme.palette.text.primary }}>
-              {t('core:transactions', {
-                postProcess: 'capitalizeAll',
-              })}
-            </span>
-          </Button>
-        </div>
 
-        {loadingRefreshQort ? tableLoader() : qortalTables()}
+      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
+        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
+          <Grid size={{ xs: 12, xl: 12 }}>
+            <Grid
+              container
+              alignItems="center"
+              columnSpacing={4}
+              rowSpacing={{ xs: 12, md: 0 }}
+            >
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box
+                    component="img"
+                    alt="QORT Logo"
+                    src={coinLogoQORT}
+                    sx={{ width: 120, height: 120, mr: 1 }}
+                  />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {t('core:message.generic.qortal_wallet', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr auto' },
+                    columnGap: 2,
+                    rowGap: 1.5,
+                    alignItems: 'end',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      justifyContent: { xs: 'center', sm: 'flex-start' },
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{ color: 'primary.main', fontWeight: 700 }}
+                    >
+                      {t('core:balance', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {walletBalanceQort ? (
+                        `${walletBalanceQort} QORT`
+                      ) : (
+                        <LinearProgress />
+                      )}
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      alignItems: 'end',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 1,
+                      gridColumn: { xs: '1 / -1', sm: '1 / 2' },
+                      justifyContent: { xs: 'center', sm: 'flex-start' },
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: 'primary.main', fontWeight: 700 }}
+                    >
+                      {t('core:address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </Typography>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        color: 'text.primary',
+                        fontWeight: 700,
+                        maxWidth: { xs: '100%', sm: 260 },
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {address}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        navigator.clipboard.writeText(address ?? '')
+                      }
+                    >
+                      <CopyAllTwoTone fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      alignSelf: 'stretch',
+                      display: 'flex',
+                      gridColumn: { xs: '1 / -1', sm: '2 / 3' },
+                      gridRow: { xs: 'auto', sm: '1 / -1' },
+                      justifyContent: { xs: 'center', sm: 'flex-end' },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: '100%',
+                        aspectRatio: '1 / 1',
+                        maxHeight: 150,
+                        maxWidth: 150,
+                        bgcolor: '#fff',
+                        p: 0.5,
+                        borderRadius: 1,
+                        boxShadow: (t) => t.shadows[2],
+                        border: (t) => `1px solid ${t.palette.divider}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <QRCode
+                        value={address ?? ''}
+                        size={200}
+                        fgColor="#000000"
+                        bgColor="#ffffff"
+                        level="H"
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 3,
+                    mt: { xs: 1, md: 2 },
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <WalletButtons
+                    variant="contained"
+                    startIcon={<Send style={{ marginBottom: 2 }} />}
+                    aria-label="Transfer"
+                    onClick={handleOpenQortSend}
+                  >
+                    {t('core:action.transfer_coin', {
+                      coin: 'QORT',
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </WalletButtons>
+
+                  <WalletButtons
+                    variant="contained"
+                    startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
+                    aria-label="AddressBook"
+                    onClick={handleOpenAddressBook}
+                  >
+                    {t('core:address_book', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </WalletButtons>
+                </Box>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ width: '100%', mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <Button
+                  size="large"
+                  onClick={handleLoadingRefreshQort}
+                  loading={loadingRefreshQort}
+                  loadingPosition="start"
+                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
+                  variant="text"
+                  sx={{ borderRadius: 50 }}
+                >
+                  <span>
+                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
+                  </span>
+                </Button>
+              </Box>
+
+              {loadingRefreshQort ? (
+                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
+              ) : (
+                <Box sx={{ width: '100%' }}>{qortalTables()}</Box>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </WalletCard>
     </Box>
   );

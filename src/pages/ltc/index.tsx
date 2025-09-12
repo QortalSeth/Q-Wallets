@@ -782,7 +782,7 @@ export default function LitecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceLtc + ' LTC'
+              walletBalanceLtc.toFixed(8) + ' LTC'
             )}
           </Typography>
         </div>
@@ -816,7 +816,7 @@ export default function LitecoinWallet() {
               if (newMaxLtcAmount < 0) {
                 return Number(0.0) + ' LTC';
               } else {
-                return newMaxLtcAmount + ' LTC';
+                return newMaxLtcAmount.toFixed(8) + ' LTC';
               }
             })()}
           </Typography>
@@ -1205,7 +1205,7 @@ export default function LitecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceLtc + ' LTC'
+              walletBalanceLtc.toFixed(8) + ' LTC'
             )}
           </Typography>
         </div>

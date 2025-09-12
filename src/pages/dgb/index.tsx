@@ -804,7 +804,7 @@ export default function DigibyteWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceDgb + ' DGB'
+              walletBalanceDgb.toFixed(8) + ' DGB'
             )}
           </Typography>
         </div>
@@ -839,7 +839,7 @@ export default function DigibyteWallet() {
               if (newMaxDgbAmount < 0) {
                 return Number(0.0) + ' DGB';
               } else {
-                return newMaxDgbAmount + ' DGB';
+                return newMaxDgbAmount.toFixed(8) + ' DGB';
               }
             })()}
           </Typography>
@@ -1274,7 +1274,7 @@ export default function DigibyteWallet() {
                 <LinearProgress />
               </Box>
             ) : (
-              walletBalanceDgb + ' DGB'
+              walletBalanceDgb.toFixed(8)  + ' DGB'
             )}
           </Typography>
         </div>

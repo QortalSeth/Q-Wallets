@@ -777,7 +777,7 @@ export default function BitcoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceBtc + ' BTC'
+              walletBalanceBtc.toFixed(8) + ' BTC'
             )}
           </Typography>
         </div>
@@ -811,7 +811,7 @@ export default function BitcoinWallet() {
               if (newMaxBtcAmount < 0) {
                 return Number(0.0) + ' BTC';
               } else {
-                return newMaxBtcAmount + ' BTC';
+                return newMaxBtcAmount.toFixed(8) + ' BTC';
               }
             })()}
           </Typography>
@@ -1200,7 +1200,7 @@ export default function BitcoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceBtc + ' BTC'
+              walletBalanceBtc.toFixed(8) + ' BTC'
             )}
           </Typography>
         </div>

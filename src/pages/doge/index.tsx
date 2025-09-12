@@ -782,7 +782,7 @@ export default function DogecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceDoge + ' DOGE'
+              walletBalanceDoge.toFixed(8)  + ' DOGE'
             )}
           </Typography>
         </div>
@@ -816,7 +816,7 @@ export default function DogecoinWallet() {
               if (newMaxDogeAmount < 0) {
                 return Number(0.0) + ' DOGE';
               } else {
-                return newMaxDogeAmount + ' DOGE';
+                return newMaxDogeAmount.toFixed(8) + ' DOGE';
               }
             })()}
           </Typography>
@@ -1206,7 +1206,7 @@ export default function DogecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceDoge + ' DOGE'
+              walletBalanceDoge.toFixed(8) + ' DOGE'
             )}
           </Typography>
         </div>

@@ -801,7 +801,7 @@ export default function RavencoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceRvn + ' RVN'
+              walletBalanceRvn.toFixed(8) + ' RVN'
             )}
           </Typography>
         </div>
@@ -836,7 +836,7 @@ export default function RavencoinWallet() {
               if (newMaxRvnAmount < 0) {
                 return Number(0.0) + ' RVN';
               } else {
-                return newMaxRvnAmount + ' RVN';
+                return newMaxRvnAmount.toFixed(8) + ' RVN';
               }
             })()}
           </Typography>
@@ -1268,7 +1268,7 @@ export default function RavencoinWallet() {
                 <LinearProgress />
               </Box>
             ) : (
-              walletBalanceRvn + ' RVN'
+              walletBalanceRvn.toFixed(8) + ' RVN'
             )}
           </Typography>
         </div>

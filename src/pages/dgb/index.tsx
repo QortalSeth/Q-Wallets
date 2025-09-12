@@ -275,9 +275,20 @@ export default function DigibyteWallet() {
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(null);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);
+  const [isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
+    useState<boolean>(false);
   const [transactionsDgb, setTransactionsDgb] = useState<any>([]);
   const [isLoadingDgbTransactions, setIsLoadingDgbTransactions] =
     useState<boolean>(true);
+  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
+    null
+  );
+  const isTransferDisabled =
+    isLoadingWalletBalanceDgb ||
+    !!walletBalanceError ||
+    walletBalanceDgb == null ||
+    Number(walletBalanceDgb) <= 0;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [copyDgbAddress, setCopyDgbAddress] = useState('');
@@ -404,17 +415,32 @@ export default function DigibyteWallet() {
   };
 
   const getWalletInfoDgb = async () => {
+    setIsLoadingWalletInfoDgb(true);
     try {
+      setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
         coin: 'DGB',
       });
-      if (!response?.error) {
+      if (response?.error) {
+        setWalletInfoDgb({});
+        setWalletInfoError(
+          typeof response.error === 'string'
+            ? response.error
+            : 'Failed to load address'
+        );
+      } else {
         setWalletInfoDgb(response);
+        setWalletInfoError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletInfoDgb({});
+      setWalletInfoError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET DGB WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoDgb(false);
     }
   };
 
@@ -455,6 +481,7 @@ export default function DigibyteWallet() {
     try {
       setIsLoadingDgbTransactions(true);
       setIsLoadingWalletBalanceDgb(true);
+      setWalletBalanceError(null);
 
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
@@ -464,15 +491,28 @@ export default function DigibyteWallet() {
         300000
       );
 
-      if (!responseDgbTransactions?.error) {
+      if (responseDgbTransactions?.error) {
+        setTransactionsDgb([]);
+        setWalletBalanceDgb(null);
+        setWalletBalanceError(
+          typeof responseDgbTransactions.error === 'string'
+            ? responseDgbTransactions.error
+            : 'Failed to load balance'
+        );
+      } else {
         setTransactionsDgb(responseDgbTransactions);
         const computed = computeBalanceFromTransactions(
           responseDgbTransactions || []
         );
         setWalletBalanceDgb(computed);
+        setWalletBalanceError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setTransactionsDgb([]);
+      setWalletBalanceDgb(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET DGB TRANSACTIONS', error);
     } finally {
       setIsLoadingDgbTransactions(false);
@@ -525,7 +565,7 @@ export default function DigibyteWallet() {
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
           })}{' '}
-          {walletInfoDgb?.address}
+          {walletInfoError ? walletInfoError : walletInfoDgb?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -539,7 +579,7 @@ export default function DigibyteWallet() {
             <QRCode
               size={256}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoDgb?.address}
+              value={walletInfoDgb?.address || ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -757,6 +797,8 @@ export default function DigibyteWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceDgb + ' DGB'
             )}
@@ -865,19 +907,19 @@ export default function DigibyteWallet() {
         </Box>
         <div
           style={{
-            width: '100%',
-            display: 'flex',
             alignItems: 'center',
+            display: 'flex',
             justifyContent: 'center',
+            width: '100%',
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
               alignItems: 'center',
-              marginTop: '20px',
+              display: 'flex',
               flexDirection: 'column',
+              justifyContent: 'center',
+              marginTop: '20px',
               width: '50ch',
             }}
           >
@@ -1255,28 +1297,60 @@ export default function DigibyteWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletInfoDgb?.address}
+            {walletInfoError ? walletInfoError : walletInfoDgb?.address || '—'}
           </Typography>
+          {walletInfoError && (
+            <Tooltip
+              placement="top"
+              title={t('core:action.retry', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            >
+              <span>
+                <IconButton
+                  aria-label="retry"
+                  size="small"
+                  onClick={getWalletInfoDgb}
+                  disabled={isLoadingWalletInfoDgb}
+                >
+                  {isLoadingWalletInfoDgb ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Refresh fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             placement="right"
             title={
-              copyDgbAddress
+              walletInfoDgb?.address
                 ? copyDgbAddress
-                : t('core:action.copy_address', {
+                  ? copyDgbAddress
+                  : t('core:action.copy_address', {
+                      postProcess: 'capitalizeFirstChar',
+                    })
+                : t('core:message.generic.no_address', {
                     postProcess: 'capitalizeFirstChar',
                   })
             }
           >
-            <IconButton
-              aria-label="copy"
-              size="small"
-              onClick={() => {
-                (navigator.clipboard.writeText(walletInfoDgb?.address),
-                  changeCopyDgbStatus());
-              }}
-            >
-              <CopyAllTwoTone fontSize="small" />
-            </IconButton>
+            <span>
+              <IconButton
+                aria-label="copy"
+                size="small"
+                disabled={!walletInfoDgb?.address}
+                onClick={() => {
+                  if (walletInfoDgb?.address) {
+                    navigator.clipboard.writeText(walletInfoDgb?.address);
+                  }
+                  changeCopyDgbStatus();
+                }}
+              >
+                <CopyAllTwoTone fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
         </div>
         <div
@@ -1297,6 +1371,7 @@ export default function DigibyteWallet() {
             startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenDgbSend}
+            disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
               coin: 'DGB',
@@ -1308,6 +1383,7 @@ export default function DigibyteWallet() {
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenDgbQR}
+            disabled={!walletInfoDgb?.address}
           >
             {t('core:action.show_qrcode', {
               postProcess: 'capitalizeFirstChar',

@@ -62,6 +62,7 @@
       "litecoin_wallet": "ライトコインウォレット",
       "loading_transactions": "トランザクションを読み込み中です。お待ちください...",
       "low_fee_transation": "手数料が低いと、取引が遅いまたは未確認になる場合があります",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "ARBITRARY トランザクションはまだありません...",
       "node_info": "Qortal ノード情報",
       "not_initialized_yet": "まだ初期化されていません",

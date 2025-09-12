@@ -62,6 +62,7 @@
       "litecoin_wallet": "محفظة لايتكوين",
       "loading_transactions": "جارٍ تحميل المعاملات، يُرجى الانتظار...",
       "low_fee_transation": "قد تؤدي الرسوم المنخفضة إلى معاملات بطيئة أو غير مؤكدة",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "لا توجد معاملات ARBITRARY بعد...",
       "node_info": "معلومات عقدة Qortal",
       "not_initialized_yet": "لم تتم التهيئة بعد",

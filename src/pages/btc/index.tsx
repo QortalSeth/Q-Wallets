@@ -253,6 +253,8 @@ export default function BitcoinWallet() {
   const { isAuthenticated } = useContext(WalletContext);
 
   const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
+  const [isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =
+    useState<boolean>(false);
   const [walletBalanceBtc, setWalletBalanceBtc] = useState<any>(null);
   const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] =
     useState<boolean>(true);
@@ -275,6 +277,15 @@ export default function BitcoinWallet() {
   const [openSendBtcError, setOpenSendBtcError] = useState(false);
   const [openBtcAddressBook, setOpenBtcAddressBook] = useState(false);
   const [inputFee, setInputFee] = useState(0);
+  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
+    null
+  );
+  const isTransferDisabled =
+    isLoadingWalletBalanceBtc ||
+    !!walletBalanceError ||
+    walletBalanceBtc == null ||
+    Number(walletBalanceBtc) <= 0;
 
   const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +btcFeeCalculated * 500;
@@ -381,17 +392,32 @@ export default function BitcoinWallet() {
   };
 
   const getWalletInfoBtc = async () => {
+    setIsLoadingWalletInfoBtc(true);
     try {
+      setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
         coin: 'BTC',
       });
-      if (!response?.error) {
+      if (response?.error) {
+        setWalletInfoBtc({});
+        setWalletInfoError(
+          typeof response.error === 'string'
+            ? response.error
+            : 'Failed to load address'
+        );
+      } else {
         setWalletInfoBtc(response);
+        setWalletInfoError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletInfoBtc({});
+      setWalletInfoError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET BTC WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoBtc(false);
     }
   };
 
@@ -432,6 +458,7 @@ export default function BitcoinWallet() {
     try {
       setIsLoadingBtcTransactions(true);
       setIsLoadingWalletBalanceBtc(true);
+      setWalletBalanceError(null);
 
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
@@ -441,17 +468,28 @@ export default function BitcoinWallet() {
         300000
       );
 
-      if (!responseBtcTransactions?.error) {
+      if (responseBtcTransactions?.error) {
+        setTransactionsBtc([]);
+        setWalletBalanceBtc(null);
+        setWalletBalanceError(
+          typeof responseBtcTransactions.error === 'string'
+            ? responseBtcTransactions.error
+            : 'Failed to load balance'
+        );
+      } else {
         setTransactionsBtc(responseBtcTransactions);
-        setIsLoadingBtcTransactions(false);
         const computed = computeBalanceFromTransactions(
           responseBtcTransactions || []
         );
         setWalletBalanceBtc(computed);
+        setWalletBalanceError(null);
       }
-    } catch (error) {
-      setIsLoadingBtcTransactions(false);
+    } catch (error: any) {
       setTransactionsBtc([]);
+      setWalletBalanceBtc(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET BTC TRANSACTIONS', error);
     } finally {
       setIsLoadingBtcTransactions(false);
@@ -502,7 +540,7 @@ export default function BitcoinWallet() {
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
           })}{' '}
-          {walletInfoBtc?.address}
+          {walletInfoError ? walletInfoError : walletInfoBtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -516,7 +554,7 @@ export default function BitcoinWallet() {
             <QRCode
               size={256}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoBtc?.address}
+              value={walletInfoBtc?.address || ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -732,6 +770,8 @@ export default function BitcoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceBtc + ' BTC'
             )}
@@ -1153,6 +1193,8 @@ export default function BitcoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceBtc + ' BTC'
             )}
@@ -1181,8 +1223,61 @@ export default function BitcoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletInfoBtc?.address}
+            {walletInfoError ? walletInfoError : walletInfoBtc?.address || '—'}
           </Typography>
+          {walletInfoError && (
+            <Tooltip
+              placement="top"
+              title={t('core:action.retry', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            >
+              <span>
+                <IconButton
+                  aria-label="retry"
+                  size="small"
+                  onClick={getWalletInfoBtc}
+                  disabled={isLoadingWalletInfoBtc}
+                >
+                  {isLoadingWalletInfoBtc ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Refresh fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+          <Tooltip
+            placement="right"
+            title={
+              walletInfoBtc?.address
+                ? copyBtcAddress
+                  ? copyBtcAddress
+                  : t('core:action.copy_address', {
+                      postProcess: 'capitalizeFirstChar',
+                    })
+                : t('core:message.generic.no_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
+          >
+            <span>
+              <IconButton
+                aria-label="copy"
+                size="small"
+                disabled={!walletInfoBtc?.address}
+                onClick={() => {
+                  if (walletInfoBtc?.address) {
+                    navigator.clipboard.writeText(walletInfoBtc?.address);
+                  }
+                  changeCopyBtcStatus();
+                }}
+              >
+                <CopyAllTwoTone fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip
             placement="right"
             title={
@@ -1207,13 +1302,13 @@ export default function BitcoinWallet() {
         </div>
         <div
           style={{
-            width: '100%',
+            alignItems: 'center',
             display: 'flex',
             flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
             gap: '15px',
+            justifyContent: 'center',
             marginTop: '15px',
+            width: '100%',
           }}
         >
           <WalletButtons
@@ -1223,6 +1318,7 @@ export default function BitcoinWallet() {
             startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenBtcSend}
+            disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
               coin: 'BTC',
@@ -1234,6 +1330,7 @@ export default function BitcoinWallet() {
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenBtcQR}
+            disabled={!walletInfoBtc?.address}
           >
             {t('core:action.show_qrcode', {
               postProcess: 'capitalizeFirstChar',

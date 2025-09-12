@@ -62,6 +62,7 @@
       "litecoin_wallet": "Litecoini rahakott",
       "loading_transactions": "Tehingute laadimine, palun oodake...",
       "low_fee_transation": "Madalad tasud võivad põhjustada aeglaseid või kinnitamata tehinguid",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "ARBITRARY tehinguid veel pole...",
       "node_info": "Qortali sõlme teave",
       "not_initialized_yet": "Pole veel initsialiseeritud",

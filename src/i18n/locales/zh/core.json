@@ -62,6 +62,7 @@
       "litecoin_wallet": "Litecoin 钱包",
       "loading_transactions": "正在加载交易，请稍候...",
       "low_fee_transation": "低手续费可能导致交易缓慢或未确认",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "尚无 ARBITRARY 交易...",
       "node_info": "Qortal 节点信息",
       "not_initialized_yet": "尚未初始化",

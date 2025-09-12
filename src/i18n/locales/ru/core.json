@@ -62,6 +62,7 @@
       "litecoin_wallet": "Кошелёк Litecoin",
       "loading_transactions": "Загрузка транзакций, пожалуйста, подождите...",
       "low_fee_transation": "Низкие комиссии могут привести к медленным или неподтверждённым транзакциям",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "Пока нет транзакций ARBITRARY...",
       "node_info": "Информация узла Qortal",
       "not_initialized_yet": "Ещё не инициализировано",

@@ -62,6 +62,7 @@
       "litecoin_wallet": "Litecoin-Wallet",
       "loading_transactions": "Transaktionen werden geladen, bitte warten...",
       "low_fee_transation": "Niedrige Gebühren können zu langsamen oder unbestätigten Transaktionen führen",
+      "no_address": "No address available",
       "no_arbitrary_translactions": "Noch keine ARBITRARY-Transaktionen...",
       "node_info": "Qortal-Knoteninformationen",
       "not_initialized_yet": "Noch nicht initialisiert",

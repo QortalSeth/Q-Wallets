@@ -62,6 +62,7 @@
       "litecoin_wallet": "Portafoglio Litecoin",
       "loading_transactions": "Caricamento transazioni, attendere...",
       "low_fee_transation": "Commissioni basse possono causare transazioni lente o non confermate",
+      "no_address": "Nessun indirizzo disponibile",
       "no_arbitrary_translactions": "Nessuna transazione ARBITRARY per ora...",
       "node_info": "Informazioni Nodo Qortal",
       "not_initialized_yet": "Non ancora inizializzato",

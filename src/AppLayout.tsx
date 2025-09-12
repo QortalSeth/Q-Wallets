@@ -108,11 +108,6 @@ export default function AppLayout() {
       title: t('core:wallets', { postProcess: 'capitalizeAll' }),
     },
     {
-      segment: '/',
-      title: t('core:home', { postProcess: 'capitalizeFirstChar' }),
-      icon: <Wallet />,
-    },
-    {
       segment: 'qortal',
       title: t('core:coins.qortal', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={qort} style={{ width: 24, height: 'auto' }} />,

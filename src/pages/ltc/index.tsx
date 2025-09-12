@@ -253,6 +253,8 @@ export default function LitecoinWallet() {
   const { isAuthenticated } = useContext(WalletContext);
 
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
+  const [isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
+    useState<boolean>(false);
   const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(null);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] =
     useState<boolean>(true);
@@ -275,6 +277,15 @@ export default function LitecoinWallet() {
   const [openSendLtcError, setOpenSendLtcError] = useState(false);
   const [openLtcAddressBook, setOpenLtcAddressBook] = useState(false);
   const [inputFee, setInputFee] = useState(0);
+  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
+    null
+  );
+  const isTransferDisabled =
+    isLoadingWalletBalanceLtc ||
+    !!walletBalanceError ||
+    walletBalanceLtc == null ||
+    Number(walletBalanceLtc) <= 0;
 
   const ltcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +ltcFeeCalculated * 1000;
@@ -384,17 +395,32 @@ export default function LitecoinWallet() {
   };
 
   const getWalletInfoLtc = async () => {
+    setIsLoadingWalletInfoLtc(true);
     try {
+      setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
         coin: 'LTC',
       });
-      if (!response?.error) {
+      if (response?.error) {
+        setWalletInfoLtc({});
+        setWalletInfoError(
+          typeof response.error === 'string'
+            ? response.error
+            : 'Failed to load address' // TODO translate
+        );
+      } else {
         setWalletInfoLtc(response);
+        setWalletInfoError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletInfoLtc({});
+      setWalletInfoError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET LTC WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoLtc(false);
     }
   };
 
@@ -435,6 +461,7 @@ export default function LitecoinWallet() {
     try {
       setIsLoadingLtcTransactions(true);
       setIsLoadingWalletBalanceLtc(true);
+      setWalletBalanceError(null);
 
       const responseLtcTransactions = await qortalRequestWithTimeout(
         {
@@ -444,15 +471,28 @@ export default function LitecoinWallet() {
         300000
       );
 
-      if (!responseLtcTransactions?.error) {
+      if (responseLtcTransactions?.error) {
+        setTransactionsLtc([]);
+        setWalletBalanceLtc(null);
+        setWalletBalanceError(
+          typeof responseLtcTransactions.error === 'string'
+            ? responseLtcTransactions.error
+            : 'Failed to load balance'
+        );
+      } else {
         setTransactionsLtc(responseLtcTransactions);
         const computed = computeBalanceFromTransactions(
           responseLtcTransactions || []
         );
         setWalletBalanceLtc(computed);
+        setWalletBalanceError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setTransactionsLtc([]);
+      setWalletBalanceLtc(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET LTC TRANSACTIONS', error);
     } finally {
       setIsLoadingLtcTransactions(false);
@@ -502,7 +542,7 @@ export default function LitecoinWallet() {
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
           })}{' '}
-          {walletInfoLtc?.address}
+          {walletInfoError ? walletInfoError : walletInfoLtc?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -516,7 +556,7 @@ export default function LitecoinWallet() {
             <QRCode
               size={256}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoLtc?.address}
+              value={walletInfoLtc?.address || ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -735,6 +775,8 @@ export default function LitecoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceLtc + ' LTC'
             )}
@@ -1156,6 +1198,8 @@ export default function LitecoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceLtc + ' LTC'
             )}
@@ -1184,8 +1228,32 @@ export default function LitecoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletInfoLtc?.address}
+            {walletInfoError ? walletInfoError : walletInfoLtc?.address || '—'}
           </Typography>
+
+          {walletInfoError && (
+            <Tooltip
+              placement="top"
+              title={t('core:action.retry', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            >
+              <span>
+                <IconButton
+                  aria-label="retry"
+                  size="small"
+                  onClick={getWalletInfoLtc}
+                  disabled={isLoadingWalletInfoLtc}
+                >
+                  {isLoadingWalletInfoLtc ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Refresh fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             placement="right"
             title={
@@ -1226,6 +1294,7 @@ export default function LitecoinWallet() {
             startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenLtcSend}
+            disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
               coin: 'LTC',
@@ -1237,6 +1306,7 @@ export default function LitecoinWallet() {
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenLtcQR}
+            disabled={!walletInfoLtc?.address}
           >
             {t('core:action.show_qrcode', {
               postProcess: 'capitalizeFirstChar',

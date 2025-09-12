@@ -253,6 +253,8 @@ export default function DogecoinWallet() {
   const { isAuthenticated } = useContext(WalletContext);
 
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
+  const [isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
+    useState<boolean>(false);
   const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(null);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] =
     useState<boolean>(true);
@@ -276,6 +278,15 @@ export default function DogecoinWallet() {
   const [openDogeAddressBook, setOpenDogeAddressBook] = useState(false);
 
   const [inputFee, setInputFee] = useState(0);
+  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
+    null
+  );
+  const isTransferDisabled =
+    isLoadingWalletBalanceDoge ||
+    !!walletBalanceError ||
+    walletBalanceDoge == null ||
+    Number(walletBalanceDoge) <= 0;
 
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +dogeFeeCalculated * 5000;
@@ -382,17 +393,32 @@ export default function DogecoinWallet() {
   };
 
   const getWalletInfoDoge = async () => {
+    setIsLoadingWalletInfoDoge(true);
     try {
+      setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
         coin: 'DOGE',
       });
-      if (!response?.error) {
+      if (response?.error) {
+        setWalletInfoDoge({});
+        setWalletInfoError(
+          typeof response.error === 'string'
+            ? response.error
+            : 'Failed to load address'
+        );
+      } else {
         setWalletInfoDoge(response);
+        setWalletInfoError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletInfoDoge({});
+      setWalletInfoError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET DOGE WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoDoge(false);
     }
   };
 
@@ -433,6 +459,7 @@ export default function DogecoinWallet() {
     try {
       setIsLoadingDogeTransactions(true);
       setIsLoadingWalletBalanceDoge(true);
+      setWalletBalanceError(null);
 
       const responseDogeTransactions = await qortalRequestWithTimeout(
         {
@@ -442,15 +469,28 @@ export default function DogecoinWallet() {
         300000
       );
 
-      if (!responseDogeTransactions?.error) {
+      if (responseDogeTransactions?.error) {
+        setTransactionsDoge([]);
+        setWalletBalanceDoge(null);
+        setWalletBalanceError(
+          typeof responseDogeTransactions.error === 'string'
+            ? responseDogeTransactions.error
+            : 'Failed to load balance'
+        );
+      } else {
         setTransactionsDoge(responseDogeTransactions);
         const computed = computeBalanceFromTransactions(
           responseDogeTransactions || []
         );
         setWalletBalanceDoge(computed);
+        setWalletBalanceError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setTransactionsDoge([]);
+      setWalletBalanceDoge(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET DOGE TRANSACTIONS', error);
     } finally {
       setIsLoadingDogeTransactions(false);
@@ -500,7 +540,7 @@ export default function DogecoinWallet() {
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
           })}{' '}
-          {walletInfoDoge?.address}
+          {walletInfoError ? walletInfoError : walletInfoDoge?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -514,7 +554,7 @@ export default function DogecoinWallet() {
             <QRCode
               size={256}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoDoge?.address}
+              value={walletInfoDoge?.address || ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -735,6 +775,8 @@ export default function DogecoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceDoge + ' DOGE'
             )}
@@ -1157,6 +1199,8 @@ export default function DogecoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceDoge + ' DOGE'
             )}
@@ -1185,8 +1229,31 @@ export default function DogecoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletInfoDoge?.address}
+            {walletInfoError ? walletInfoError : walletInfoDoge?.address || '—'}
           </Typography>
+          {walletInfoError && (
+            <Tooltip
+              placement="top"
+              title={t('core:action.retry', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            >
+              <span>
+                <IconButton
+                  aria-label="retry"
+                  size="small"
+                  onClick={getWalletInfoDoge}
+                  disabled={isLoadingWalletInfoDoge}
+                >
+                  {isLoadingWalletInfoDoge ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Refresh fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             placement="right"
             title={
@@ -1227,6 +1294,7 @@ export default function DogecoinWallet() {
             startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenDogeSend}
+            disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
               coin: 'DOGE',
@@ -1238,6 +1306,7 @@ export default function DogecoinWallet() {
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenDogeQR}
+            disabled={!walletInfoDoge?.address}
           >
             {t('core:action.show_qrcode', {
               postProcess: 'capitalizeFirstChar',

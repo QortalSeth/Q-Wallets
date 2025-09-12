@@ -272,6 +272,8 @@ export default function RavencoinWallet() {
   const { isAuthenticated } = useContext(WalletContext);
 
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
+  const [isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
+    useState<boolean>(false);
   const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(null);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] =
     useState<boolean>(true);
@@ -288,6 +290,15 @@ export default function RavencoinWallet() {
   const [rvnRecipient, setRvnRecipient] = useState('');
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [rvnFee, setRvnFee] = useState<number>(0);
+  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
+    null
+  );
+  const isTransferDisabled =
+    isLoadingWalletBalanceRvn ||
+    !!walletBalanceError ||
+    walletBalanceRvn == null ||
+    Number(walletBalanceRvn) <= 0;
   const [loadingRefreshRvn, setLoadingRefreshRvn] = useState(false);
   const [openTxRvnSubmit, setOpenTxRvnSubmit] = useState(false);
   const [openSendRvnSuccess, setOpenSendRvnSuccess] = useState(false);
@@ -403,17 +414,32 @@ export default function RavencoinWallet() {
   };
 
   const getWalletInfoRvn = async () => {
+    setIsLoadingWalletInfoRvn(true);
     try {
+      setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
         coin: 'RVN',
       });
-      if (!response?.error) {
+      if (response?.error) {
+        setWalletInfoRvn({});
+        setWalletInfoError(
+          typeof response.error === 'string'
+            ? response.error
+            : 'Failed to load address'
+        );
+      } else {
         setWalletInfoRvn(response);
+        setWalletInfoError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletInfoRvn({});
+      setWalletInfoError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET RVN WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoRvn(false);
     }
   };
 
@@ -454,6 +480,7 @@ export default function RavencoinWallet() {
     try {
       setIsLoadingRvnTransactions(true);
       setIsLoadingWalletBalanceRvn(true);
+      setWalletBalanceError(null);
 
       const responseRvnTransactions = await qortalRequestWithTimeout(
         {
@@ -463,16 +490,28 @@ export default function RavencoinWallet() {
         300000
       );
 
-      if (!responseRvnTransactions?.error) {
+      if (responseRvnTransactions?.error) {
+        setTransactionsRvn([]);
+        setWalletBalanceRvn(null);
+        setWalletBalanceError(
+          typeof responseRvnTransactions.error === 'string'
+            ? responseRvnTransactions.error
+            : 'Failed to load balance'
+        );
+      } else {
         setTransactionsRvn(responseRvnTransactions);
         const computed = computeBalanceFromTransactions(
           responseRvnTransactions || []
         );
         setWalletBalanceRvn(computed);
+        setWalletBalanceError(null);
       }
-    } catch (error) {
-      setIsLoadingRvnTransactions(false);
+    } catch (error: any) {
       setTransactionsRvn([]);
+      setWalletBalanceRvn(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error('ERROR GET RVN TRANSACTIONS', error);
     } finally {
       setIsLoadingRvnTransactions(false);
@@ -523,8 +562,8 @@ export default function RavencoinWallet() {
         <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="rvn-qr-code">
           {t('core:address', {
             postProcess: 'capitalizeFirstChar',
-          })}{' '}
-          {walletInfoRvn?.address}
+          })}
+          {walletInfoError ? walletInfoError : walletInfoRvn?.address}
         </DialogTitle>
         <DialogContent dividers>
           <div
@@ -538,7 +577,7 @@ export default function RavencoinWallet() {
             <QRCode
               size={256}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoRvn?.address}
+              value={walletInfoRvn?.address || ''}
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
@@ -755,6 +794,8 @@ export default function RavencoinWallet() {
               <Box sx={{ width: '175px' }}>
                 <LinearProgress />
               </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
             ) : (
               walletBalanceRvn + ' RVN'
             )}
@@ -1250,8 +1291,32 @@ export default function RavencoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletInfoRvn?.address}
+            {walletInfoError ? walletInfoError : walletInfoRvn?.address || '—'}
           </Typography>
+
+          {walletInfoError && (
+            <Tooltip
+              placement="top"
+              title={t('core:action.retry', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            >
+              <span>
+                <IconButton
+                  aria-label="retry"
+                  size="small"
+                  onClick={getWalletInfoRvn}
+                  disabled={isLoadingWalletInfoRvn}
+                >
+                  {isLoadingWalletInfoRvn ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Refresh fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             placement="right"
             title={
@@ -1292,6 +1357,7 @@ export default function RavencoinWallet() {
             startIcon={<Send style={{ marginBottom: '2px' }} />}
             aria-label="transfer"
             onClick={handleOpenRvnSend}
+            disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
               coin: 'DGV',
@@ -1303,6 +1369,7 @@ export default function RavencoinWallet() {
             startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
             aria-label="QRcode"
             onClick={handleOpenRvnQR}
+            disabled={!walletInfoRvn?.address}
           >
             {t('core:action.show_qrcode', {
               postProcess: 'capitalizeFirstChar',

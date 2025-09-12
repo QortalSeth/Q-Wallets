@@ -184,7 +184,7 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const WalleteCard = styled(Card)({
+const WalletCard = styled(Card)({
   maxWidth: '100%',
   margin: '20px, auto',
   padding: '24px',
@@ -419,22 +419,22 @@ export default function QortalWallet() {
   const getQortalTransactions = async () => {
     setLoadingRefreshQort(true);
 
-    const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${address}&limit=0&reverse=true`;
     const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
-    const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
-    const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
-    const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;
     const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
     const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${address}&limit=0&reverse=true`;
-    const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
+    const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
+    const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;
+    const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${address}&limit=0&reverse=true`;
     const pendingPollLink = `/transactions/unconfirmed?txType=CREATE_POLL&txType=VOTE_ON_POLL&creator=${address}&limit=0&reverse=true`;
-    const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
     const pendingRewardshareLink = `/transactions/unconfirmed?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&creator=${address}&limit=0&reverse=true`;
+    const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+    const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
 
     const compareFn = (a: { timestamp: number }, b: { timestamp: number }) => {
       return b.timestamp - a.timestamp;
@@ -722,18 +722,18 @@ export default function QortalWallet() {
               ).map(
                 (
                   row: {
-                    type: string;
-                    timestamp: number;
-                    reference: string;
-                    fee: number;
-                    signature: string;
-                    txGroupId: number;
-                    recipient: string;
-                    blockHeight: number;
-                    approvalStatus: string;
-                    creatorAddress: string;
-                    senderPublicKey: string;
                     amount: number;
+                    approvalStatus: string;
+                    blockHeight: number;
+                    creatorAddress: string;
+                    fee: number;
+                    recipient: string;
+                    reference: string;
+                    senderPublicKey: string;
+                    signature: string;
+                    timestamp: number;
+                    txGroupId: number;
+                    type: string;
                   },
                   a: Key
                 ) => (
@@ -862,7 +862,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Payment Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'PAYMENT',
+          })}
         </Typography>
       );
     }
@@ -1056,8 +1059,9 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          {t('core:message.generic.no_arbitrary_translactions', {
+          {t('core:message.generic.no_transactions', {
             postProcess: 'capitalizeFirstChar',
+            transaction_type: 'ARBITRARY',
           })}
         </Typography>
       );
@@ -1266,7 +1270,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No AT Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'AT',
+          })}
         </Typography>
       );
     }
@@ -1526,7 +1533,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Group Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'GROUP',
+          })}
         </Typography>
       );
     }
@@ -1735,7 +1745,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Name Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'NAME',
+          })}
         </Typography>
       );
     }
@@ -1938,7 +1951,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Asset Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'ASSET',
+          })}
         </Typography>
       );
     }
@@ -2120,7 +2136,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Poll Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'POLL',
+          })}
         </Typography>
       );
     }
@@ -2186,13 +2205,13 @@ export default function QortalWallet() {
                 (
                   row: {
                     blockHeight: number;
-                    type: string;
-                    fee: number;
-                    timestamp: number;
                     creatorAddress: string;
+                    fee: number;
                     recipient: string;
                     rewardSharePublicKey: string;
                     sharePercent: string;
+                    timestamp: number;
+                    type: string;
                   },
                   h: Key
                 ) => (
@@ -2369,7 +2388,10 @@ export default function QortalWallet() {
           align="center"
           sx={{ color: 'white', fontWeight: 700 }}
         >
-          No Rewardshare Transactions Yet...
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'REWARDSHARE',
+          })}
         </Typography>
       );
     }
@@ -2706,15 +2728,15 @@ export default function QortalWallet() {
           />
           <TextField
             required
-            label="{t('core:receiver_address_name', {
+            label={t('core:receiver_address_name', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             id="qort-address"
             margin="normal"
             value={qortRecipient}
-            helperText="{t('core:message.generic.qortal_address', {
+            helperText={t('core:message.generic.qortal_address', {
               postProcess: 'capitalizeFirstChar',
-            })}"
+            })}
             slotProps={{ htmlInput: { maxLength: 34, minLength: 3 } }}
             onChange={(e) => validateCanSendQortAddress(e.target.value)}
           />
@@ -2756,7 +2778,7 @@ export default function QortalWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
       </Typography>
-      <WalleteCard>
+      <WalletCard>
         <CoinAvatar src={coinLogoQORT} alt="Coinlogo" />
         <div
           style={{
@@ -2862,16 +2884,6 @@ export default function QortalWallet() {
           </WalletButtons>
           <WalletButtons
             variant="contained"
-            startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
-            aria-label="QRcode"
-            onClick={handleOpenQortQR}
-          >
-            {t('core:action.show_qrcode', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-          <WalletButtons
-            variant="contained"
             startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
             aria-label="AddressBook"
             onClick={handleOpenAddressBook}
@@ -2908,7 +2920,7 @@ export default function QortalWallet() {
         </div>
 
         {loadingRefreshQort ? tableLoader() : qortalTables()}
-      </WalleteCard>
+      </WalletCard>
     </Box>
   );
 }

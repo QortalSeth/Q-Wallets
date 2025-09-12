@@ -1809,16 +1809,16 @@ export default function QortalWallet() {
               ).map(
                 (
                   row: {
-                    blockHeight: number;
-                    type: string;
-                    fee: number;
-                    timestamp: number;
-                    creatorAddress: string;
-                    recipient: string;
                     amount: number;
                     assetName: string;
-                    quantity: number;
+                    blockHeight: number;
+                    creatorAddress: string;
                     description: string;
+                    fee: number;
+                    quantity: number;
+                    recipient: string;
+                    timestamp: number;
+                    type: string;
                   },
                   f: Key
                 ) => (
@@ -2014,11 +2014,11 @@ export default function QortalWallet() {
                 (
                   row: {
                     blockHeight: number;
-                    type: string;
-                    fee: number;
-                    timestamp: number;
                     creatorAddress: string;
+                    fee: number;
                     pollName: string;
+                    timestamp: number;
+                    type: string;
                   },
                   g: Key
                 ) => (
@@ -2288,7 +2288,7 @@ export default function QortalWallet() {
                           }}
                         >
                           Removed
-                          <CustomWidthTooltip
+                          <CustomWidthTooltip   //TODO translate
                             placement="top"
                             title={
                               row?.recipient === row?.creatorAddress
@@ -2589,7 +2589,7 @@ export default function QortalWallet() {
             </IconButton>
             <Avatar
               sx={{ width: 28, height: 28 }}
-              alt="ARRR Logo"
+              alt="QORT Logo"
               src={coinLogoQORT}
             />
             <Typography

@@ -740,7 +740,7 @@ export default function RavencoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'DGV',
+                coin: 'RVN',
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1357,7 +1357,7 @@ export default function RavencoinWallet() {
             disabled={isTransferDisabled}
           >
             {t('core:action.transfer_coin', {
-              coin: 'DGV',
+              coin: 'RVN',
               postProcess: 'capitalizeFirstChar',
             })}
           </WalletButtons>

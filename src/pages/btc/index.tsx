@@ -6,11 +6,9 @@ import {
   ReactElement,
   Ref,
   SyntheticEvent,
-  useContext,
   useEffect,
   useState,
 } from 'react';
-import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
@@ -250,8 +248,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export default function BitcoinWallet() {
   const { t } = useTranslation(['core']);
 
-  const { isAuthenticated } = useContext(WalletContext);
-
   const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
   const [isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =
     useState<boolean>(false);
@@ -424,9 +420,8 @@ export default function BitcoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getWalletInfoBtc();
-  }, [isAuthenticated]);
+  }, []);
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -446,7 +441,6 @@ export default function BitcoinWallet() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const intervalgetTransactionsBtc = setInterval(() => {
       getTransactionsBtc();
     }, 180000);
@@ -454,7 +448,7 @@ export default function BitcoinWallet() {
     return () => {
       clearInterval(intervalgetTransactionsBtc);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const getTransactionsBtc = async () => {
     try {
@@ -502,7 +496,6 @@ export default function BitcoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     let intervalId: any;
     (async () => {
       await getWalletInfoBtc();
@@ -515,7 +508,7 @@ export default function BitcoinWallet() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const handleLoadingRefreshBtc = async () => {
     setLoadingRefreshBtc(true);

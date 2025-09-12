@@ -6,11 +6,9 @@ import {
   ReactElement,
   Ref,
   SyntheticEvent,
-  useContext,
   useEffect,
   useState,
 } from 'react';
-import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
@@ -269,8 +267,6 @@ function valueTextDgb(value: number) {
 export default function DigibyteWallet() {
   const { t } = useTranslation(['core']);
 
-  const { isAuthenticated } = useContext(WalletContext);
-
   const [walletInfoDgb, setWalletInfoDgb] = useState<any>({});
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(null);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
@@ -447,9 +443,8 @@ export default function DigibyteWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getWalletInfoDgb();
-  }, [isAuthenticated]);
+  }, []);
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -469,7 +464,6 @@ export default function DigibyteWallet() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const intervalgetTransactionsDgb = setInterval(() => {
       getTransactionsDgb();
     }, 180000);
@@ -477,7 +471,7 @@ export default function DigibyteWallet() {
     return () => {
       clearInterval(intervalgetTransactionsDgb);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const getTransactionsDgb = async () => {
     try {
@@ -525,7 +519,6 @@ export default function DigibyteWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     let intervalId: any;
     (async () => {
       await getWalletInfoDgb();
@@ -538,7 +531,7 @@ export default function DigibyteWallet() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const handleLoadingRefreshDgb = async () => {
     setLoadingRefreshDgb(true);

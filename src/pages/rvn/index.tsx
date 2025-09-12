@@ -6,11 +6,9 @@ import {
   ReactElement,
   Ref,
   SyntheticEvent,
-  useContext,
   useEffect,
   useState,
 } from 'react';
-import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
@@ -269,8 +267,6 @@ function valueTextRvn(value: number) {
 export default function RavencoinWallet() {
   const { t } = useTranslation(['core']);
 
-  const { isAuthenticated } = useContext(WalletContext);
-
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
   const [isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
     useState<boolean>(false);
@@ -446,9 +442,8 @@ export default function RavencoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getWalletInfoRvn();
-  }, [isAuthenticated]);
+  }, []);
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -468,7 +463,6 @@ export default function RavencoinWallet() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const intervalgetTransactionsRvn = setInterval(() => {
       getTransactionsRvn();
     }, 180000);
@@ -476,7 +470,7 @@ export default function RavencoinWallet() {
     return () => {
       clearInterval(intervalgetTransactionsRvn);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const getTransactionsRvn = async () => {
     try {
@@ -524,7 +518,6 @@ export default function RavencoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     let intervalId: any;
     (async () => {
       await getWalletInfoRvn();
@@ -536,7 +529,7 @@ export default function RavencoinWallet() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const handleLoadingRefreshRvn = async () => {
     setLoadingRefreshRvn(true);

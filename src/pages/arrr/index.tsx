@@ -264,7 +264,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 export default function PirateWallet() {
   const { t } = useTranslation(['core']);
-  const { isAuthenticated, isUsingGateway } = useContext(WalletContext);
+  const { isUsingGateway } = useContext(WalletContext);
 
   if (isUsingGateway) {
     return (
@@ -497,7 +497,6 @@ export default function PirateWallet() {
   };
 
   const getUpdatedWalletBalance = () => {
-    if (!isAuthenticated) return;
     const intervalGetWalletBalanceArrr = setInterval(() => {
       getWalletBalanceArrr();
     }, 180000);
@@ -658,9 +657,8 @@ export default function PirateWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getArrrSyncStatus();
-  }, [isAuthenticated]);
+  }, []);
 
   const ArrrWalletBalance = () => {
     return (

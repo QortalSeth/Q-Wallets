@@ -6,11 +6,9 @@ import {
   ReactElement,
   Ref,
   SyntheticEvent,
-  useContext,
   useEffect,
   useState,
 } from 'react';
-import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
@@ -250,8 +248,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export default function LitecoinWallet() {
   const { t } = useTranslation(['core']);
 
-  const { isAuthenticated } = useContext(WalletContext);
-
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
   const [isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
     useState<boolean>(false);
@@ -427,9 +423,8 @@ export default function LitecoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getWalletInfoLtc();
-  }, [isAuthenticated]);
+  }, []);
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -449,7 +444,6 @@ export default function LitecoinWallet() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const intervalgetTransactionsLtc = setInterval(() => {
       getTransactionsLtc();
     }, 180000);
@@ -457,7 +451,7 @@ export default function LitecoinWallet() {
     return () => {
       clearInterval(intervalgetTransactionsLtc);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const getTransactionsLtc = async () => {
     try {
@@ -505,7 +499,6 @@ export default function LitecoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     let intervalId: any;
     (async () => {
       await getWalletInfoLtc();
@@ -517,7 +510,7 @@ export default function LitecoinWallet() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const handleLoadingRefreshLtc = async () => {
     setLoadingRefreshLtc(true);

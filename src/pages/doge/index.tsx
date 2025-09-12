@@ -6,11 +6,9 @@ import {
   ReactElement,
   Ref,
   SyntheticEvent,
-  useContext,
   useEffect,
   useState,
 } from 'react';
-import WalletContext from '../../contexts/walletContext';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
 import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
@@ -250,8 +248,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export default function DogecoinWallet() {
   const { t } = useTranslation(['core']);
 
-  const { isAuthenticated } = useContext(WalletContext);
-
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
   const [isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
     useState<boolean>(false);
@@ -425,9 +421,8 @@ export default function DogecoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     getWalletInfoDoge();
-  }, [isAuthenticated]);
+  }, []);
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -447,7 +442,6 @@ export default function DogecoinWallet() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const intervalGetWalletBalanceDoge = setInterval(() => {
       getTransactionsDoge();
     }, 180000);
@@ -455,7 +449,7 @@ export default function DogecoinWallet() {
     return () => {
       clearInterval(intervalGetWalletBalanceDoge);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const getTransactionsDoge = async () => {
     try {
@@ -503,7 +497,6 @@ export default function DogecoinWallet() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     let intervalId: any;
     (async () => {
       await getWalletInfoDoge();
@@ -515,7 +508,7 @@ export default function DogecoinWallet() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const handleLoadingRefreshDoge = async () => {
     setLoadingRefreshDoge(true);

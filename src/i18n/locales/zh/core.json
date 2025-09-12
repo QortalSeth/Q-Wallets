@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "无效的 DGB 地址",
       "doge_address_invalid": "无效的 DOGE 地址",
       "litecoin_address_invalid": "无效的 LTC 地址",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "无法通过公共节点使用 Pirate Chain 钱包。请使用本地节点。",
       "pirate_chain_no_server": "无法连接到 Pirate Chain 的 Lightwallet 服务器。",
       "ravencoin_address_invalid": "无效的 RVN 地址",

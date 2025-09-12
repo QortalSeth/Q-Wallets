@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "Недействительный адрес DGB",
       "doge_address_invalid": "Недействительный адрес DOGE",
       "litecoin_address_invalid": "Недействительный адрес LTC",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "Нельзя использовать кошелёк Pirate Chain через публичный узел. Пожалуйста, используйте локальный узел.",
       "pirate_chain_no_server": "Нет подключения к серверу Lightwallet Pirate Chain.",
       "ravencoin_address_invalid": "Недействительный адрес RVN",

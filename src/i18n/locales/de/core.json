@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "Ungültige DGB-Adresse",
       "doge_address_invalid": "Ungültige DOGE-Adresse",
       "litecoin_address_invalid": "Ungültige LTC-Adresse",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "Sie können die Pirate-Chain-Wallet nicht über einen öffentlichen Knoten verwenden. Bitte nutzen Sie Ihren lokalen Knoten.",
       "pirate_chain_no_server": "Keine Verbindung zum Pirate-Chain-Lightwallet-Server.",
       "ravencoin_address_invalid": "Ungültige RVN-Adresse",

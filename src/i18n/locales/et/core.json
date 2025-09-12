@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "Kehtetu DGB-aadress",
       "doge_address_invalid": "Kehtetu DOGE-aadress",
       "litecoin_address_invalid": "Kehtetu LTC-aadress",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "Pirate Chaini rahakotti ei saa kasutada avaliku sõlme kaudu. Palun kasuta oma kohalikku sõlme.",
       "pirate_chain_no_server": "Ühendust Pirate Chaini Lightwalleti serveriga ei ole.",
       "ravencoin_address_invalid": "Kehtetu RVN-aadress",

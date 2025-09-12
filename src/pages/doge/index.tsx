@@ -477,7 +477,9 @@ export default function DogecoinWallet() {
         setWalletBalanceError(
           typeof responseDogeTransactions.error === 'string'
             ? responseDogeTransactions.error
-            : 'Failed to load balance'
+            : t('core:message.error.loading_balance', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setTransactionsDoge(responseDogeTransactions);

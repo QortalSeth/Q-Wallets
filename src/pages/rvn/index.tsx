@@ -426,9 +426,9 @@ export default function RavencoinWallet() {
         setWalletInfoError(
           typeof response.error === 'string'
             ? response.error
-            :  {t('core:message.error.loading_address', {
+            : t('core:message.error.loading_address', {
             postProcess: 'capitalizeFirstChar',
-          })}
+          })
         );
       } else {
         setWalletInfoRvn(response);
@@ -498,7 +498,9 @@ export default function RavencoinWallet() {
         setWalletBalanceError(
           typeof responseRvnTransactions.error === 'string'
             ? responseRvnTransactions.error
-            : 'Failed to load balance'
+            : t('core:message.error.loading_balance', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setTransactionsRvn(responseRvnTransactions);

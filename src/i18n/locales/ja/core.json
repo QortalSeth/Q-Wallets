@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "無効な DGB アドレス",
       "doge_address_invalid": "無効な DOGE アドレス",
       "litecoin_address_invalid": "無効な LTC アドレス",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "公開ノード経由で Pirate Chain ウォレットは使用できません。ローカルノードを使用してください。",
       "pirate_chain_no_server": "Pirate Chain の Lightwallet サーバーに接続できません。",
       "ravencoin_address_invalid": "無効な RVN アドレス",

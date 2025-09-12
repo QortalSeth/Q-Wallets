@@ -479,7 +479,9 @@ export default function LitecoinWallet() {
         setWalletBalanceError(
           typeof responseLtcTransactions.error === 'string'
             ? responseLtcTransactions.error
-            : 'Failed to load balance'
+            : t('core:message.error.loading_balance', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setTransactionsLtc(responseLtcTransactions);

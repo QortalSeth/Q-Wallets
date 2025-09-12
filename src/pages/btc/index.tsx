@@ -476,7 +476,9 @@ export default function BitcoinWallet() {
         setWalletBalanceError(
           typeof responseBtcTransactions.error === 'string'
             ? responseBtcTransactions.error
-            : 'Failed to load balance'
+            : t('core:message.error.loading_balance', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setTransactionsBtc(responseBtcTransactions);

@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "عنوان DGB غير صالح",
       "doge_address_invalid": "عنوان DOGE غير صالح",
       "litecoin_address_invalid": "عنوان LTC غير صالح",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "لا يمكنك استخدام محفظة Pirate Chain عبر عقدة عامة. يُرجى استخدام عقدتك المحلية.",
       "pirate_chain_no_server": "لا يوجد اتصال بخادم Lightwallet الخاص بـ Pirate Chain.",
       "ravencoin_address_invalid": "عنوان RVN غير صالح",

@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "Endereço DGB inválido",
       "doge_address_invalid": "Endereço DOGE inválido",
       "litecoin_address_invalid": "Endereço LTC inválido",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "Você não pode usar a carteira Pirate Chain através de um nó público. Use seu nó local.",
       "pirate_chain_no_server": "Sem conexão com o servidor Lightwallet do Pirate Chain.",
       "ravencoin_address_invalid": "Endereço RVN inválido",

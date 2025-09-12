@@ -86,6 +86,8 @@
       "digibyte_address_invalid": "Adresse DGB invalide",
       "doge_address_invalid": "Adresse DOGE invalide",
       "litecoin_address_invalid": "Adresse LTC invalide",
+      "loading_address": "Failed to load address",
+      "loading_balance": "Failed to load balance",
       "pirate_chain_gateway": "Vous ne pouvez pas utiliser le portefeuille Pirate Chain via un nœud public. Veuillez utiliser votre nœud local.",
       "pirate_chain_no_server": "Aucune connexion au serveur Lightwallet de Pirate Chain.",
       "ravencoin_address_invalid": "Adresse RVN invalide",

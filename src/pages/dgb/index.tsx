@@ -499,7 +499,9 @@ export default function DigibyteWallet() {
         setWalletBalanceError(
           typeof responseDgbTransactions.error === 'string'
             ? responseDgbTransactions.error
-            : 'Failed to load balance'
+            : t('core:message.error.loading_balance', {
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setTransactionsDgb(responseDgbTransactions);

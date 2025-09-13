@@ -2782,105 +2782,104 @@ export default function QortalWallet() {
                 </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 8 }}>
-                <Box
+              <Grid container size={12} justifyContent="center">
+                <Grid
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: '1fr auto' },
-                    columnGap: 2,
-                    rowGap: 1.5,
-                    alignItems: 'end',
+                    gridTemplateColumns: '1fr 0.5fr',
+                    gridTemplateRows: '1fr 1fr',
                   }}
                 >
-                  <Box
+                  <Grid
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      justifyContent: { xs: 'center', sm: 'flex-start' },
+                      gridColumn: '1',
+                      gridRow: '1',
+                      p: 2,
                     }}
+                    display={'flex'}
+                    alignItems={'center'}
+                    gap={1}
                   >
                     <Typography
-                      variant="h6"
+                      variant="h5"
                       sx={{ color: 'primary.main', fontWeight: 700 }}
                     >
                       {t('core:balance', {
                         postProcess: 'capitalizeFirstChar',
                       })}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       {walletBalanceQort ? (
                         `${walletBalanceQort} QORT`
                       ) : (
                         <LinearProgress />
                       )}
                     </Typography>
-                  </Box>
+                  </Grid>
 
-                  <Box
+                  <Grid
                     sx={{
-                      alignItems: 'end',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 1,
-                      gridColumn: { xs: '1 / -1', sm: '1 / 2' },
-                      justifyContent: { xs: 'center', sm: 'flex-start' },
+                      gridColumn: '1',
+                      gridRow: '2',
+                      p: 2,
                     }}
                   >
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        maxWidth: { xs: '100%', sm: 260 },
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {address}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        navigator.clipboard.writeText(address ?? '')
-                      }
-                    >
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
-                  </Box>
+                    <Box display={'flex'} alignItems={'center'} gap={1}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ color: 'primary.main', fontWeight: 700 }}
+                      >
+                        {t('core:address', {
+                          postProcess: 'capitalizeFirstChar',
+                        })}
+                      </Typography>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          color: 'text.primary',
+                          fontWeight: 700,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {address}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          navigator.clipboard.writeText(address ?? '')
+                        }
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Grid>
 
-                  <Box
+                  <Grid
+                    alignContent={'center'}
+                    display={'flex'}
+                    justifyContent={'center'}
                     sx={{
-                      alignSelf: 'stretch',
-                      display: 'flex',
-                      gridColumn: { xs: '1 / -1', sm: '2 / 3' },
-                      gridRow: { xs: 'auto', sm: '1 / -1' },
-                      justifyContent: { xs: 'center', sm: 'flex-end' },
+                      gridColumn: '2',
+                      gridRow: '1 / span 2',
+                      p: 2,
                     }}
                   >
                     <Box
                       sx={{
-                        height: '100%',
+                        alignItems: 'center',
                         aspectRatio: '1 / 1',
-                        maxHeight: 150,
-                        maxWidth: 150,
                         bgcolor: '#fff',
-                        p: 0.5,
+                        border: (t) => `1px solid ${t.palette.divider}`,
                         borderRadius: 1,
                         boxShadow: (t) => t.shadows[2],
-                        border: (t) => `1px solid ${t.palette.divider}`,
                         display: 'flex',
-                        alignItems: 'center',
+                        height: '100%',
                         justifyContent: 'center',
+                        maxHeight: 150,
+                        maxWidth: 150,
+                        p: 0.5,
                       }}
                     >
                       <QRCode
@@ -2892,11 +2891,11 @@ export default function QortalWallet() {
                         style={{ width: '100%', height: '100%' }}
                       />
                     </Box>
-                  </Box>
-                </Box>
+                  </Grid>
+                </Grid>
               </Grid>
 
-              <Grid size={{ xs: 12 }}>
+              <Grid size={12}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -2934,7 +2933,7 @@ export default function QortalWallet() {
             </Grid>
           </Grid>
 
-          <Grid size={{ xs: 12 }}>
+          <Grid size={12}>
             <Box sx={{ width: '100%', mt: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                 <Button

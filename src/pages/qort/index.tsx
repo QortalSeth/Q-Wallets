@@ -66,7 +66,6 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  QrCode2,
   Refresh,
   Send,
 } from '@mui/icons-material';
@@ -192,16 +191,6 @@ const WalletCard = styled(Card)({
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
 });
 
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
-});
-
 const WalletButtons = styled(Button)({
   width: 'auto',
   backgroundColor: '#05a2e4',
@@ -246,10 +235,8 @@ const QortSubmittDialog = styled(Dialog)(({ theme }) => ({
 
 export default function QortalWallet() {
   const { t } = useTranslation(['core']);
-  const theme = useTheme();
 
   const { address, nodeInfo } = useContext(WalletContext);
-
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(null);
   const [copyQortAddress, setCopyQortAddress] = useState('');
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
@@ -315,12 +302,6 @@ export default function QortalWallet() {
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
-
-  const changeCopyQortcStatus = async () => {
-    setCopyQortAddress('Copied');
-    await timeoutDelay(2000);
-    setCopyQortAddress('');
   };
 
   const handleOpenQortSend = () => {
@@ -1746,7 +1727,6 @@ export default function QortalWallet() {
             <TableHead>
               <TableRow>
                 <StyledTableCell align="center">
-                  {' '}
                   {t('core:status', {
                     postProcess: 'capitalizeAll',
                   })}
@@ -1952,25 +1932,21 @@ export default function QortalWallet() {
             <TableHead>
               <TableRow>
                 <StyledTableCell align="center">
-                  {' '}
                   {t('core:status', {
                     postProcess: 'capitalizeAll',
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="center">
-                  {' '}
                   {t('core:type', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {' '}
                   {t('core:creator', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
-                  {' '}
                   {t('core:poll_name', {
                     postProcess: 'capitalizeFirstChar',
                   })}
@@ -2277,7 +2253,7 @@ export default function QortalWallet() {
                             title={
                               row?.recipient === row?.creatorAddress
                                 ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : 'Sponsor Key: ' + row?.rewardSharePublicKey
+                                : ''
                             }
                           >
                             <InfoOutlined
@@ -2303,7 +2279,7 @@ export default function QortalWallet() {
                             title={
                               row?.recipient === row?.creatorAddress
                                 ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : 'Sponsor Key: ' + row?.rewardSharePublicKey
+                                : ''
                             }
                           >
                             <InfoOutlined

@@ -50,6 +50,8 @@
     "generic": {
       "bitcoin_address": "Les adresses BTC doivent comporter 34 caractères pour BIP44 (préfixe 1) et BIP49 (préfixe 3) ou 42 caractères pour BIP84 (préfixe bc1)",
       "bitcoin_wallet": "Portefeuille Bitcoin",
+      "confirmations": "{{ count }} confirmations",
+      "confirmations_third": "{{ count }} /3 confirmations",
       "coming_soon": "Bientôt disponible...",
       "current_fee": "Frais actuels par octet : {{ fee }} SAT",
       "digibyte_address": "Les adresses DGB doivent comporter 34 caractères pour BIP44 (préfixe D) et BIP49 (préfixe S) ou 43 caractères pour BIP84 (préfixe dgb1)",

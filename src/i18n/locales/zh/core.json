@@ -50,6 +50,8 @@
     "generic": {
       "bitcoin_address": "BTC 地址在 BIP44（前缀 1）和 BIP49（前缀 3）下应为 34 个字符，或在 BIP84（前缀 bc1）下应为 42 个字符",
       "bitcoin_wallet": "Bitcoin 钱包",
+      "confirmations": "{{ count }} confirmations",
+      "confirmations_third": "{{ count }}/3 confirmations",
       "coming_soon": "即将推出...",
       "current_fee": "当前每字节手续费：{{ fee }} SAT",
       "digibyte_address": "DGB 地址在 BIP44（前缀 D）和 BIP49（前缀 S）下应为 34 个字符，或在 BIP84（前缀 dgb1）下应为 43 个字符",

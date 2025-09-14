@@ -238,7 +238,6 @@ export default function QortalWallet() {
 
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(null);
-  const [copyQortAddress, setCopyQortAddress] = useState('');
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
   const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);
   const [atInfo, setAtInfo] = useState<any>([]);
@@ -250,7 +249,6 @@ export default function QortalWallet() {
   const [value, setValue] = useState('One');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [openQortQR, setOpenQortQR] = useState(false);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
   const [loadingRefreshQort, setLoadingRefreshQort] = useState(false);
   const [openQortSend, setOpenQortSend] = useState(false);
@@ -572,41 +570,6 @@ export default function QortalWallet() {
     }
   };
 
-  const QortQrDialogPage = () => {
-    return (
-      <DialogGeneral
-        aria-labelledby="btc-qr-code"
-        open={openQortQR}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          {t('core:address', {
-            postProcess: 'capitalizeFirstChar',
-          })}
-          {address}
-        </DialogTitle>
-        <DialogContent dividers>
-          <div
-            style={{
-              height: 'auto',
-              margin: '0 auto',
-              maxWidth: 256,
-              width: '100%',
-            }}
-          >
-            <QRCode
-              size={256}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={address ?? ''}
-              viewBox={`0 0 256 256`}
-              fgColor={'#393939'}
-            />
-          </div>
-        </DialogContent>
-      </DialogGeneral>
-    );
-  };
-
   const QortAddressBookDialogPage = () => {
     return (
       <DialogGeneral
@@ -705,15 +668,19 @@ export default function QortalWallet() {
                   <StyledTableRow key={a}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -725,14 +692,15 @@ export default function QortalWallet() {
                             </Tooltip>
                           );
                         } else {
+                          let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -908,15 +876,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={b}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -931,11 +902,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -1101,15 +1071,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={c}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -1124,11 +1097,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -1294,34 +1266,37 @@ export default function QortalWallet() {
               ).map(
                 (
                   row: {
-                    blockHeight: number;
-                    groupId: number;
-                    invitee: string;
-                    newDescription: string;
-                    groupName: string;
-                    member: string;
-                    offender: string;
                     admin: string;
-                    reference: string;
-                    type: string;
+                    blockHeight: number;
                     creatorAddress: string;
                     fee: number;
+                    groupId: number;
+                    groupName: string;
+                    invitee: string;
+                    member: string;
+                    newDescription: string;
+                    offender: string;
+                    reference: string;
                     timestamp: number;
+                    type: string;
                   },
                   d: Key
                 ) => (
                   <StyledTableRow key={d}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -1336,11 +1311,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -1572,15 +1546,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={e}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -1595,11 +1572,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -1728,7 +1704,7 @@ export default function QortalWallet() {
               <TableRow>
                 <StyledTableCell align="center">
                   {t('core:status', {
-                    postProcess: 'capitalizeAll',
+                    postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
@@ -1789,15 +1765,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={f}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -1812,11 +1791,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -1933,7 +1911,7 @@ export default function QortalWallet() {
               <TableRow>
                 <StyledTableCell align="center">
                   {t('core:status', {
-                    postProcess: 'capitalizeAll',
+                    postProcess: 'capitalizeFirstChar',
                   })}
                 </StyledTableCell>
                 <StyledTableCell align="center">
@@ -1985,15 +1963,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={g}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -2008,11 +1989,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -2178,15 +2158,18 @@ export default function QortalWallet() {
                   <StyledTableRow key={h}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        if (nodeInfo?.height - row?.blockHeight < 3) {
+                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' / 3 confirmations'
-                              }
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
                             >
                               <HistoryToggleOff
                                 style={{
@@ -2201,11 +2184,10 @@ export default function QortalWallet() {
                           return (
                             <Tooltip
                               placement="top"
-                              title={
-                                nodeInfo?.height -
-                                row?.blockHeight +
-                                ' confirmations'
-                              }
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
                             >
                               <CheckCircleOutline
                                 style={{
@@ -2727,7 +2709,6 @@ export default function QortalWallet() {
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       {QortSendDialogPage()}
-      {QortQrDialogPage()}
       {QortAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>

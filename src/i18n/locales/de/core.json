@@ -50,6 +50,8 @@
     "generic": {
       "bitcoin_address": "BTC-Adressen sollten 34 Zeichen lang sein für BIP44 (Präfix 1) und BIP49 (Präfix 3) oder 42 Zeichen lang für BIP84 (Präfix bc1)",
       "bitcoin_wallet": "Bitcoin-Wallet",
+      "confirmations": "{{ count }} confirmations",
+      "confirmations_third": "{{ count }} /3 confirmations",
       "coming_soon": "Demnächst...",
       "current_fee": "Aktuelle Gebühr pro Byte: {{ fee }} SAT",
       "digibyte_address": "DGB-Adressen sollten 34 Zeichen lang sein für BIP44 (Präfix D) und BIP49 (Präfix S) oder 43 Zeichen lang für BIP84 (Präfix dgb1)",

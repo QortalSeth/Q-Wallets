@@ -50,6 +50,8 @@
     "generic": {
       "bitcoin_address": "Gli indirizzi BTC devono essere lunghi 34 caratteri per BIP44 (prefisso 1) e BIP49 (prefisso 3) oppure 42 caratteri per BIP84 (prefisso bc1)",
       "bitcoin_wallet": "Portafoglio Bitcoin",
+      "confirmations": "{{ count }} conferme",
+      "confirmations_third": "{{ count }}/3 conferme",
       "coming_soon": "In arrivo...",
       "current_fee": "Commissione attuale per byte: {{ fee }} SAT",
       "digibyte_address": "Gli indirizzi DGB devono essere lunghi 34 caratteri per BIP44 (prefisso D) e BIP49 (prefisso S) oppure 43 caratteri per BIP84 (prefisso dgb1)",

@@ -50,6 +50,8 @@
     "generic": {
       "bitcoin_address": "يجب أن تكون عناوين BTC بطول 34 حرفًا لـ BIP44 (بادئة 1) وBIP49 (بادئة 3) أو بطول 42 حرفًا لـ BIP84 (بادئة bc1)",
       "bitcoin_wallet": "محفظة بيتكوين",
+      "confirmations": "{{ count }} confirmations",
+      "confirmations_third": "{{ count }} /3 confirmations",
       "coming_soon": "قريبًا...",
       "current_fee": "الرسوم الحالية لكل بايت: {{ fee }} سات",
       "digibyte_address": "يجب أن تكون عناوين DGB بطول 34 حرفًا لـ BIP44 (بادئة D) وBIP49 (بادئة S) أو بطول 43 حرفًا لـ BIP84 (بادئة dgb1)",

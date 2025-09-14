@@ -75,7 +75,7 @@
       "qortal_address": "Qortal-Adresse sollte 34 Zeichen lang sein (Name mindestens 3 Zeichen)",
       "qortal_wallet": "Qortal-Wallet",
       "ravencoin_address": "RVN-Adressen sollten 34 Zeichen lang sein für BIP44 (Präfix R)",
-      "revencoin_wallet": "Ravencoin-Wallet",
+      "ravencoin_wallet": "Ravencoin-Wallet",
       "sending_fee": "Aktuelle Sendegebühr ist {{ quantity }} {{ coin }}.",
       "sent_transaction": "Gesendete {{ coin }}-Transaktion war erfolgreich.",
       "unconfirmed_translaction": "Unbestätigt",

@@ -75,7 +75,7 @@
       "qortal_address": "Qortal アドレスは 34 文字（名前は最小 3 文字）である必要があります",
       "qortal_wallet": "Qortal ウォレット",
       "ravencoin_address": "RVNアドレスは BIP44（プレフィックスR）で34文字である必要があります",
-      "revencoin_wallet": "レイヴンコインウォレット",
+      "ravencoin_wallet": "レイヴンコインウォレット",
       "sending_fee": "現在の送金手数料は {{ quantity }} {{ coin }} です。",
       "sent_transaction": "{{ coin }} のトランザクションが正常に送信されました。",
       "unconfirmed_translaction": "未確認",

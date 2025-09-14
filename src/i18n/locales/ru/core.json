@@ -75,7 +75,7 @@
       "qortal_address": "Адрес Qortal должен быть длиной 34 символа (Имя минимум 3 символа)",
       "qortal_wallet": "Кошелёк Qortal",
       "ravencoin_address": "Адреса RVN должны иметь длину 34 символа для BIP44 (префикс R)",
-      "revencoin_wallet": "Кошелёк Ravencoin",
+      "ravencoin_wallet": "Кошелёк Ravencoin",
       "sending_fee": "Текущая комиссия за отправку — {{ quantity }} {{ coin }}.",
       "sent_transaction": "Транзакция {{ coin }} успешно отправлена.",
       "unconfirmed_translaction": "не подтверждена",

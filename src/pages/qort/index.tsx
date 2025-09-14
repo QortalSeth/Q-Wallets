@@ -27,7 +27,6 @@ import {
   Card,
   Dialog,
   DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -2615,7 +2614,7 @@ export default function QortalWallet() {
             sx={{ color: 'primary.main', fontWeight: 700 }}
           >
             {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
+              postProcess: 'capitalizeFirstChar',
             })}
             &nbsp;&nbsp;
           </Typography>

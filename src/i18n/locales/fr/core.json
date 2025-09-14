@@ -75,7 +75,7 @@
       "qortal_address": "L’adresse Qortal doit comporter 34 caractères (Nom min. 3 caractères)",
       "qortal_wallet": "Portefeuille Qortal",
       "ravencoin_address": "Les adresses RVN doivent comporter 34 caractères pour BIP44 (préfixe R)",
-      "revencoin_wallet": "Portefeuille Ravencoin",
+      "ravencoin_wallet": "Portefeuille Ravencoin",
       "sending_fee": "Les frais d’envoi actuels sont de {{ quantity }} {{ coin }}.",
       "sent_transaction": "La transaction {{ coin }} a été envoyée avec succès.",
       "unconfirmed_translaction": "Non confirmée",

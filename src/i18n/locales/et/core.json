@@ -75,7 +75,7 @@
       "qortal_address": "Qortali aadress peab olema 34 märki pikk (nimi vähemalt 3 märki)",
       "qortal_wallet": "Qortali rahakott",
       "ravencoin_address": "RVN-aadressid peaksid olema 34 märki pikad BIP44 (eesliide R) puhul",
-      "revencoin_wallet": "Ravencoini rahakott",
+      "ravencoin_wallet": "Ravencoini rahakott",
       "sending_fee": "Praegune saatmistasu on {{ quantity }} {{ coin }}.",
       "sent_transaction": "Saadetud {{ coin }} tehing oli edukas.",
       "unconfirmed_translaction": "Kinnitamata",

@@ -75,7 +75,7 @@
       "qortal_address": "La dirección de Qortal debe tener 34 caracteres (Nombre mínimo 3 caracteres)",
       "qortal_wallet": "Monedero Qortal",
       "ravencoin_address": "Las direcciones RVN deben tener 34 caracteres para BIP44 (prefijo R)",
-      "revencoin_wallet": "Monedero Ravencoin",
+      "ravencoin_wallet": "Monedero Ravencoin",
       "sending_fee": "La comisión de envío actual es {{ quantity }} {{ coin }}.",
       "sent_transaction": "La transacción de {{ coin }} se envió correctamente.",
       "unconfirmed_translaction": "Sin confirmar",

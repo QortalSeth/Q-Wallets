@@ -75,7 +75,7 @@
       "qortal_address": "يجب أن يكون عنوان Qortal بطول 34 حرفًا (الاسم بحد أدنى 3 أحرف)",
       "qortal_wallet": "محفظة Qortal",
       "ravencoin_address": "يجب أن تكون عناوين RVN بطول 34 حرفًا لـ BIP44 (بادئة R)",
-      "revencoin_wallet": "محفظة رافينكوين",
+      "ravencoin_wallet": "محفظة رافينكوين",
       "sending_fee": "رسوم الإرسال الحالية هي {{ quantity }} {{ coin }}.",
       "sent_transaction": "تم إرسال معاملة {{ coin }} بنجاح.",
       "unconfirmed_translaction": "غير مؤكدة",

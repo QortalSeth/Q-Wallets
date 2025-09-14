@@ -75,7 +75,7 @@
       "qortal_address": "Qortal 地址应为 34 个字符（名称至少 3 个字符）",
       "qortal_wallet": "Qortal 钱包",
       "ravencoin_address": "RVN 地址在 BIP44（前缀 R）下应为 34 个字符",
-      "revencoin_wallet": "Ravencoin 钱包",
+      "ravencoin_wallet": "Ravencoin 钱包",
       "sending_fee": "当前发送手续费为 {{ quantity }} {{ coin }}。",
       "sent_transaction": "已成功发送 {{ coin }} 交易。",
       "unconfirmed_translaction": "未确认",

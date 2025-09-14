@@ -287,14 +287,14 @@ export default function PirateWallet() {
     useState<any>([]);
   const [currentLightwalletServerArrr, setCurrentLightwalletServerArrr] =
     useState<any>([]);
-  const [setChangeServer] = useState(false);
+  const [changeServer, setChangeServer] = useState(false);
   const [arrrMemo, setArrrMemo] = useState('');
   const [transactionsArrr, setTransactionsArrr] = useState<any>([]);
   const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [setCopyArrrAddress] = useState('');
+  const [copyArrrAddress, setCopyArrrAddress] = useState('');
   const [copyArrrTxHash, setCopyArrrTxHash] = useState('');
   const [openArrrLightwallet, setOpenArrrLightwallet] = useState(false);
   const [openArrrServerChange, setOpenArrrServerChange] = useState(false);

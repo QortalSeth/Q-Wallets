@@ -49,8 +49,6 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  PublishedWithChangesTwoTone,
-  QrCode2,
   Send,
 } from '@mui/icons-material';
 import coinLogoARRR from '../../assets/arrr.png';

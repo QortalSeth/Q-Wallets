@@ -23,6 +23,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   IconButton,
   Paper,
   Slider,
@@ -56,7 +57,6 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  QrCode2,
   Refresh,
   Send,
 } from '@mui/icons-material';
@@ -204,16 +204,6 @@ const WalletCard = styled(Card)({
   padding: '24px',
   borderRadius: 16,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
 });
 
 const WalletButtons = styled(Button)({
@@ -1222,209 +1212,219 @@ export default function DigibyteWallet() {
   };
 
   return (
-    <Box sx={{ width: '100%', marginTop: '20px' }}>
+    <Box sx={{ width: '100%', mt: 2 }}>
       {DgbSendDialogPage()}
       {DgbQrDialogPage()}
       {DgbAddressBookDialogPage()}
-      <Typography
-        gutterBottom
-        variant="h5"
-        sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-      >
-        {t('core:message.generic.digibyte_wallet', {
-          postProcess: 'capitalizeFirstChar',
-        })}
-      </Typography>
-      <WalletCard>
-        <CoinAvatar src={coinLogoDGB} alt="Coinlogo" />
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceDgb ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : (
-              walletBalanceDgb.toFixed(8)  + ' DGB'
-            )}
-          </Typography>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {walletInfoError ? walletInfoError : walletInfoDgb?.address || '—'}
-          </Typography>
-          {walletInfoError && (
-            <Tooltip
-              placement="top"
-              title={t('core:action.retry', {
-                postProcess: 'capitalizeFirstChar',
-              })}
+
+      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
+        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
+          <Grid size={{ xs: 12, xl: 12 }}>
+            <Grid
+              container
+              alignItems="center"
+              columnSpacing={4}
+              rowSpacing={{ xs: 12, md: 0 }}
             >
-              <span>
-                <IconButton
-                  aria-label="retry"
-                  size="small"
-                  onClick={getWalletInfoDgb}
-                  disabled={isLoadingWalletInfoDgb}
-                >
-                  {isLoadingWalletInfoDgb ? (
-                    <CircularProgress size={16} />
-                  ) : (
-                    <Refresh fontSize="small" />
-                  )}
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-          <Tooltip
-            placement="right"
-            title={
-              walletInfoDgb?.address
-                ? copyDgbAddress
-                  ? copyDgbAddress
-                  : t('core:action.copy_address', {
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box
+                    component="img"
+                    alt="DGB Logo"
+                    src={coinLogoDGB}
+                    sx={{ width: 120, height: 120, mr: 1 }}
+                  />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {t('core:message.generic.ravencoin_wallet', {
                       postProcess: 'capitalizeFirstChar',
-                    })
-                : t('core:message.generic.no_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          >
-            <span>
-              <IconButton
-                aria-label="copy"
-                size="small"
-                disabled={!walletInfoDgb?.address}
-                onClick={() => {
-                  if (walletInfoDgb?.address) {
-                    navigator.clipboard.writeText(walletInfoDgb?.address);
-                  }
-                  changeCopyDgbStatus();
-                }}
-              >
-                <CopyAllTwoTone fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '15px',
-            marginTop: '15px',
-          }}
-        >
-          <WalletButtons
-            loading={isLoadingWalletBalanceDgb}
-            loadingPosition="start"
-            variant="contained"
-            startIcon={<Send style={{ marginBottom: '2px' }} />}
-            aria-label="transfer"
-            onClick={handleOpenDgbSend}
-            disabled={isTransferDisabled}
-          >
-            {t('core:action.transfer_coin', {
-              coin: 'DGB',
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-          <WalletButtons
-            variant="contained"
-            startIcon={<QrCode2 style={{ marginBottom: '2px' }} />}
-            aria-label="QRcode"
-            onClick={handleOpenDgbQR}
-            disabled={!walletInfoDgb?.address}
-          >
-            {t('core:action.show_qrcode', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-          <WalletButtons
-            variant="contained"
-            startIcon={<ImportContacts style={{ marginBottom: '2px' }} />}
-            aria-label="book"
-            onClick={handleOpenAddressBook}
-          >
-            {t('core:address_book', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </WalletButtons>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Typography variant="h6" paddingTop={2} paddingBottom={2}>
-            {t('core:transactions', {
-              postProcess: 'capitalizeAll',
-            })}
-          </Typography>
-          <Button
-            size="small"
-            onClick={handleLoadingRefreshDgb}
-            loading={loadingRefreshDgb}
-            loadingPosition="start"
-            startIcon={<Refresh />}
-            variant="outlined"
-            style={{ borderRadius: 50 }}
-          >
-            {t('core:action.refresh', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </div>
-        {isLoadingDgbTransactions ? tableLoader() : transactionsTable()}
+                    })}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid container size={12} justifyContent="center">
+                <Grid
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 0.5fr',
+                    gridTemplateRows: '1fr 1fr 1fr',
+                  }}
+                >
+                  <Grid
+                    sx={{
+                      gridColumn: '1',
+                      gridRow: '1',
+                      p: 2,
+                    }}
+                    display={'flex'}
+                    alignItems={'center'}
+                    gap={1}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{ color: 'primary.main', fontWeight: 700 }}
+                    >
+                      {t('core:balance', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      {walletBalanceDgb ? (
+                        `${walletBalanceDgb} DGB`
+                      ) : (
+                        <LinearProgress />
+                      )}
+                    </Typography>
+                  </Grid>
+
+                  <Grid
+                    sx={{
+                      gridColumn: '1',
+                      gridRow: '2',
+                      p: 2,
+                    }}
+                  >
+                    <Box display={'flex'} alignItems={'center'} gap={1}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ color: 'primary.main', fontWeight: 700 }}
+                      >
+                        {t('core:address', {
+                          postProcess: 'capitalizeFirstChar',
+                        })}
+                      </Typography>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          color: 'text.primary',
+                          fontWeight: 700,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {walletInfoDgb?.address}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            walletInfoDgb?.address ?? ''
+                          )
+                        }
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Grid>
+
+                  <Grid
+                    alignContent={'center'}
+                    display={'flex'}
+                    justifyContent={'center'}
+                    sx={{
+                      gridColumn: '2',
+                      gridRow: '1 / span 2',
+                      p: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        alignItems: 'center',
+                        aspectRatio: '1 / 1',
+                        bgcolor: '#fff',
+                        border: (t) => `1px solid ${t.palette.divider}`,
+                        borderRadius: 1,
+                        boxShadow: (t) => t.shadows[2],
+                        display: 'flex',
+                        height: '100%',
+                        justifyContent: 'center',
+                        maxHeight: 150,
+                        maxWidth: 150,
+                        p: 0.5,
+                      }}
+                    >
+                      <QRCode
+                        value={walletInfoDgb?.address ?? ''}
+                        size={200}
+                        fgColor="#000000"
+                        bgColor="#ffffff"
+                        level="H"
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              <Grid size={12}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 3,
+                    mt: { xs: 1, md: 2 },
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <WalletButtons
+                    variant="contained"
+                    startIcon={<Send style={{ marginBottom: 2 }} />}
+                    aria-label="Transfer"
+                    onClick={handleOpenDgbSend}
+                    disabled={isTransferDisabled}
+                  >
+                    {t('core:action.transfer_coin', {
+                      coin: 'DGB',
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </WalletButtons>
+
+                  <WalletButtons
+                    variant="contained"
+                    startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
+                    aria-label="AddressBook"
+                    onClick={handleOpenAddressBook}
+                  >
+                    {t('core:address_book', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </WalletButtons>
+                </Box>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          <Grid size={12}>
+            <Box sx={{ width: '100%', mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <Button
+                  size="large"
+                  onClick={handleLoadingRefreshDgb}
+                  loading={loadingRefreshDgb}
+                  loadingPosition="start"
+                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
+                  variant="text"
+                  sx={{ borderRadius: 50 }}
+                >
+                  <span>
+                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
+                  </span>
+                </Button>
+              </Box>
+
+              {isLoadingDgbTransactions ? (
+                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
+              ) : (
+                <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </WalletCard>
     </Box>
   );

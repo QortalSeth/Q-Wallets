@@ -56,7 +56,6 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  QrCode2,
   Refresh,
   Send,
 } from '@mui/icons-material';

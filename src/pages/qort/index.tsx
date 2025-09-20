@@ -692,7 +692,7 @@ export default function QortalWallet() {
                           );
                         } else {
                           let confirmations: number =
-                          nodeInfo?.height - row?.blockHeight;
+                            nodeInfo?.height - row?.blockHeight;
                           return (
                             <Tooltip
                               placement="top"
@@ -874,7 +874,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={b}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -1069,7 +1070,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={c}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -1282,7 +1284,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={d}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -1542,7 +1545,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={e}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -1600,30 +1604,33 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.type === 'REGISTER_NAME') {
-                          return 'Registered name: ' + row?.name;
+                          return t('core:qortal.registered_name', {
+                            name: row?.name,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'UPDATE_NAME') {
-                          return (
-                            'Old name: ' +
-                            row?.name +
-                            ' New name: ' +
-                            row?.newName
-                          );
+                          return t('core:qortal.old_new_name', {
+                            oldName: row?.name,
+                            newName: row?.newName,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'SELL_NAME') {
-                          return (
-                            'Name to sell: ' +
-                            row?.name +
-                            ' Amount QORT: ' +
-                            row?.amount
-                          );
+                          return t('core:qortal.name_to_sell', {
+                            name: row?.name,
+                            amount: row?.amount,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'CANCEL_SELL_NAME') {
-                          return 'Cancelled name to sell: ' + row?.name;
+                          return t('core:qortal.cancelled_name_sale', {
+                            name: row?.name,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'BUY_NAME') {
-                          return (
-                            'Seller: ' +
-                            row?.seller +
-                            ' Amount QORT: ' +
-                            row?.amount
-                          );
+                          return t('core:qortal.seller', {
+                            selle: row?.seller,
+                            amount: row?.amount,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         }
                       })()}
                     </StyledTableCell>
@@ -1761,7 +1768,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={f}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -1827,7 +1835,10 @@ export default function QortalWallet() {
                             row?.recipient
                           );
                         } else if (row?.type === 'ISSUE_ASSET') {
-                          return 'Asset name: ' + row?.assetName;
+                          return t('core:qortal.asset_name', {
+                            name: row?.assetName,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         }
                       })()}
                     </StyledTableCell>
@@ -1959,7 +1970,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={g}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -2153,7 +2165,8 @@ export default function QortalWallet() {
                   <StyledTableRow key={h}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number = nodeInfo?.height - row?.blockHeight;
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
                             <Tooltip
@@ -2224,8 +2237,10 @@ export default function QortalWallet() {
                             alignItems: 'center',
                           }}
                         >
-                          Removed
-                          <CustomWidthTooltip //TODO translate
+                          {t('core:qortal.removed', {
+                            postProcess: 'capitalizeFirstChar',
+                          })}
+                          <CustomWidthTooltip
                             placement="top"
                             title={
                               row?.recipient === row?.creatorAddress
@@ -2250,7 +2265,9 @@ export default function QortalWallet() {
                             alignItems: 'center',
                           }}
                         >
-                          Created
+                          {t('core:qortal.created', {
+                            postProcess: 'capitalizeFirstChar',
+                          })}
                           <CustomWidthTooltip
                             placement="top"
                             title={

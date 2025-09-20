@@ -102,6 +102,16 @@
     "previous": "предыдущая"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "Название актива: {{ name }}",
+    "registered_name": "Зарегистрированное имя: {{ name }}",
+    "old_new_name": "Старое имя: {{ oldName }} Новое имя: {{ newName }}",
+    "name_to_sell": "Имя для продажи: {{ name }} Сумма: {{ amount }} QORT",
+    "cancelled_name_sale": "Продажа имени отменена: {{ name }}",
+    "seller": "Продавец: {{ seller }} Сумма: {{ amount }} QORT",
+    "removed": "Удалено",
+    "created": "Создано"
+  },
   "receiver": "получатель",
   "receiver_address_name": "адрес или имя получателя",
   "recipient": "получатель",

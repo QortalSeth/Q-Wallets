@@ -102,6 +102,16 @@
     "previous": "前"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "資産名: {{ name }}",
+    "registered_name": "登録名: {{ name }}",
+    "old_new_name": "旧名: {{ oldName }} 新名: {{ newName }}",
+    "name_to_sell": "販売名: {{ name }} 金額: {{ amount }} QORT",
+    "cancelled_name_sale": "名前の販売がキャンセルされました: {{ name }}",
+    "seller": "販売者: {{ seller }} 金額: {{ amount }} QORT",
+    "removed": "削除済み",
+    "created": "作成済み"
+  },
   "receiver": "受取人",
   "receiver_address_name": "受取人のアドレスまたは名前",
   "recipient": "受取人",

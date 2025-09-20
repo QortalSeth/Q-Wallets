@@ -101,6 +101,16 @@
     "previous": "anterior"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "Nombre del activo: {{ name }}",
+    "registered_name": "Nombre registrado: {{ name }}",
+    "old_new_name": "Nombre antiguo: {{ oldName }} Nombre nuevo: {{ newName }}",
+    "name_to_sell": "Nombre en venta: {{ name }} Cantidad: {{ amount }} QORT",
+    "cancelled_name_sale": "Venta de nombre cancelada: {{ name }}",
+    "seller": "Vendedor: {{ seller }} Cantidad: {{ amount }} QORT",
+    "removed": "Eliminado",
+    "created": "Creado"
+  },
   "receiver": "destinatario",
   "receiver_address_name": "dirección o nombre del destinatario",
   "recipient": "destinatario",

@@ -102,6 +102,16 @@
     "previous": "上一页"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "资产名称: {{ name }}",
+    "registered_name": "注册名称: {{ name }}",
+    "old_new_name": "旧名称: {{ oldName }} 新名称: {{ newName }}",
+    "name_to_sell": "待售名称: {{ name }} 数量: {{ amount }} QORT",
+    "cancelled_name_sale": "已取消的名称出售: {{ name }}",
+    "seller": "卖方: {{ seller }} 数量: {{ amount }} QORT",
+    "removed": "已移除",
+    "created": "已创建"
+  },
   "receiver": "收款人",
   "receiver_address_name": "收款人地址或名称",
   "recipient": "收款人",

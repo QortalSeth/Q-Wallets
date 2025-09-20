@@ -101,6 +101,16 @@
     "previous": "eelmine"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "Varanimi: {{ name }}",
+    "registered_name": "Registreeritud nimi: {{ name }}",
+    "old_new_name": "Vana nimi: {{ oldName }} Uus nimi: {{ newName }}",
+    "name_to_sell": "Müüdav nimi: {{ name }} Summa: {{ amount }} QORT",
+    "cancelled_name_sale": "Nime müük tühistatud: {{ name }}",
+    "seller": "Müüja: {{ seller }} Summa: {{ amount }} QORT",
+    "removed": "Eemaldatud",
+    "created": "Loodud"
+  },
   "receiver": "saaja",
   "receiver_address_name": "saaja aadress või nimi",
   "recipient": "saaja",

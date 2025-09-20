@@ -101,6 +101,16 @@
     "previous": "السابق"
   },
   "poll_name": "poll name",
+  "qortal": {
+    "asset_name": "اسم الأصل: {{ name }}",
+    "registered_name": "الاسم المسجل: {{ name }}",
+    "old_new_name": "الاسم القديم: {{ oldName }} الاسم الجديد: {{ newName }}",
+    "name_to_sell": "الاسم للبيع: {{ name }} المبلغ: {{ amount }} QORT",
+    "cancelled_name_sale": "تم إلغاء بيع الاسم: {{ name }}",
+    "seller": "البائع: {{ seller }} المبلغ: {{ amount }} QORT",
+    "removed": "تمت الإزالة",
+    "created": "تم الإنشاء"
+  },
   "receiver": "المستلم",
   "receiver_address_name": "عنوان أو اسم المستلم",
   "recipient": "المستفيد",

@@ -68,7 +68,7 @@ const NodeWidget = ({ icon, title, subtitle, children }: Props) => (
         </Typography>
       </Box>
     </Box>
-    {children && <Divider />}
+    {children && <Boxider />}
     {children}
   </Card>
 );

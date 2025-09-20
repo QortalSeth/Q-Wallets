@@ -50,7 +50,7 @@ export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
     onChange(currentFee ?? 0);
   }, [currentFee, onChange]);
   return (
-    <div
+    <Box
       style={{
         width: '100%',
         display: 'flex',
@@ -182,6 +182,6 @@ export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
           })}
         </Typography>
       </Box>
-    </div>
+    </Box>
   );
 };

@@ -62,6 +62,7 @@ import {
 import coinLogoLTC from '../../assets/ltc.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
+import { TIME_MINUTES_3_IN_MILLISECONDS, TIME_MINUTES_5_IN_MILLISECONDS } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -446,7 +447,7 @@ export default function LitecoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsLtc = setInterval(() => {
       getTransactionsLtc();
-    }, 180000);
+    }, TIME_MINUTES_3_IN_MILLISECONDS);
     getTransactionsLtc();
     return () => {
       clearInterval(intervalgetTransactionsLtc);
@@ -464,7 +465,7 @@ export default function LitecoinWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'LTC',
         },
-        300000
+        TIME_MINUTES_5_IN_MILLISECONDS
       );
 
       if (responseLtcTransactions?.error) {
@@ -505,7 +506,7 @@ export default function LitecoinWallet() {
       await getTransactionsLtc();
       intervalId = setInterval(() => {
         getTransactionsLtc();
-      }, 180000);
+      }, TIME_MINUTES_3_IN_MILLISECONDS);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -542,7 +543,7 @@ export default function LitecoinWallet() {
           {walletInfoError ? walletInfoError : walletInfoLtc?.address}
         </DialogTitle>
         <DialogContent dividers>
-          <div
+          <Box
             style={{
               height: 'auto',
               margin: '0 auto',
@@ -557,7 +558,7 @@ export default function LitecoinWallet() {
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
-          </div>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseLtcQR}>
@@ -622,7 +623,7 @@ export default function LitecoinWallet() {
                 flexWrap: 'wrap',
               }}
             >
-              <div
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -630,8 +631,8 @@ export default function LitecoinWallet() {
                 }}
               >
                 <CircularProgress color="success" size={64} />
-              </div>
-              <div
+              </Box>
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -651,7 +652,7 @@ export default function LitecoinWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>
-              </div>
+              </Box>
             </Box>
           </DialogContent>
         </LtcSubmittDialog>
@@ -742,7 +743,7 @@ export default function LitecoinWallet() {
             </Button>
           </Toolbar>
         </AppBar>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -778,8 +779,8 @@ export default function LitecoinWallet() {
               walletBalanceLtc.toFixed(8) + ' LTC'
             )}
           </Typography>
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -813,7 +814,7 @@ export default function LitecoinWallet() {
               }
             })()}
           </Typography>
-          <div style={{ marginInlineStart: '15px' }}>
+          <Box style={{ marginInlineStart: '15px' }}>
             <Button
               variant="outlined"
               size="small"
@@ -824,8 +825,8 @@ export default function LitecoinWallet() {
                 postProcess: 'capitalizeAll',
               })}
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
         <Box
           sx={{
             display: 'flex',
@@ -884,7 +885,7 @@ export default function LitecoinWallet() {
   const tableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -892,8 +893,8 @@ export default function LitecoinWallet() {
           }}
         >
           <CircularProgress />
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -909,7 +910,7 @@ export default function LitecoinWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Box>
     );
   };
@@ -986,7 +987,7 @@ export default function LitecoinWallet() {
                 <StyledTableRow key={k}>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.inputs.map((input, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -1000,12 +1001,12 @@ export default function LitecoinWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(input.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.outputs.map((output, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -1019,7 +1020,7 @@ export default function LitecoinWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(output.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1049,24 +1050,24 @@ export default function LitecoinWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <div style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: '#66bb6a' }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div style={{ color: 'grey' }}>
+                      <Box style={{ color: 'grey' }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1080,13 +1081,13 @@ export default function LitecoinWallet() {
                             })
                       }
                     >
-                      <div>
+                      <Box>
                         {row?.timestamp
                           ? epochToAgo(row?.timestamp)
                           : t('core:message.generic.unconfirmed_transaction', {
                               postProcess: 'capitalizeFirstChar',
                             })}
-                      </div>
+                      </Box>
                     </CustomWidthTooltip>
                   </StyledTableCell>
                 </StyledTableRow>

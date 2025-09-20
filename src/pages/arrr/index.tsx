@@ -66,6 +66,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
+import { TIME_MINUTES_3_IN_MILLISECONDS, TIME_MINUTES_5_IN_MILLISECONDS } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -489,7 +490,7 @@ export default function PirateWallet() {
   const getUpdatedWalletBalance = () => {
     const intervalGetWalletBalanceArrr = setInterval(() => {
       getWalletBalanceArrr();
-    }, 180000);
+    }, TIME_MINUTES_3_IN_MILLISECONDS);
     getWalletBalanceArrr();
     return () => {
       clearInterval(intervalGetWalletBalanceArrr);
@@ -525,7 +526,7 @@ export default function PirateWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'ARRR',
         },
-        300000
+        TIME_MINUTES_5_IN_MILLISECONDS
       );
       if (!response?.error) {
         const compareFn = (
@@ -846,7 +847,7 @@ export default function PirateWallet() {
   const ArrrTableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -854,8 +855,8 @@ export default function PirateWallet() {
           }}
         >
           <CircularProgress />
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -871,7 +872,7 @@ export default function PirateWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Box>
     );
   };
@@ -954,7 +955,7 @@ export default function PirateWallet() {
                 <StyledTableRow key={k}>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.inputs.map((input, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -968,12 +969,12 @@ export default function PirateWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(input.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.outputs.map((output, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -987,7 +988,7 @@ export default function PirateWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(output.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1020,22 +1021,22 @@ export default function PirateWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <div style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: '#66bb6a' }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div></div>
+                      <Box></Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1043,7 +1044,7 @@ export default function PirateWallet() {
                       placement="top"
                       title={new Date(row?.timestamp).toLocaleString()}
                     >
-                      <div>{epochToAgo(row?.timestamp)}</div>
+                      <Box>{epochToAgo(row?.timestamp)}</Box>
                     </CustomWidthTooltip>
                   </StyledTableCell>
                 </StyledTableRow>
@@ -1106,7 +1107,7 @@ export default function PirateWallet() {
                 flexWrap: 'wrap',
               }}
             >
-              <div
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -1114,8 +1115,8 @@ export default function PirateWallet() {
                 }}
               >
                 <CircularProgress color="success" size={64} />
-              </div>
-              <div
+              </Box>
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -1135,7 +1136,7 @@ export default function PirateWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>
-              </div>
+              </Box>
             </Box>
           </DialogContent>
         </ArrrSubmittDialog>
@@ -1226,7 +1227,7 @@ export default function PirateWallet() {
             </Button>
           </Toolbar>
         </AppBar>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -1260,7 +1261,7 @@ export default function PirateWallet() {
               walletBalanceArrr + ' ARRR'
             )}
           </Typography>
-        </div>
+        </Box>
         <Box
           style={{
             width: '100%',
@@ -1360,7 +1361,7 @@ export default function PirateWallet() {
             onChange={(e) => setArrrMemo(e.target.value)}
           />
         </Box>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -1378,7 +1379,7 @@ export default function PirateWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Dialog>
     );
   };
@@ -1551,7 +1552,7 @@ export default function PirateWallet() {
                     </Box>
                     <Box>
                       <Typography variant="subtitle1">{syncStatus}</Typography>
-                      {!isSynced && (
+                      {!isSynced && !isLoadingWalletBalanceArrr && (
                         <Button
                           variant="contained"
                           startIcon={<Send style={{ marginBottom: 2 }} />}

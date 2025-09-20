@@ -62,6 +62,7 @@ import {
 import coinLogoDOGE from '../../assets/doge.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
+import { TIME_MINUTES_3_IN_MILLISECONDS, TIME_MINUTES_5_IN_MILLISECONDS } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -444,7 +445,7 @@ export default function DogecoinWallet() {
   useEffect(() => {
     const intervalGetWalletBalanceDoge = setInterval(() => {
       getTransactionsDoge();
-    }, 180000);
+    }, TIME_MINUTES_3_IN_MILLISECONDS);
     getTransactionsDoge();
     return () => {
       clearInterval(intervalGetWalletBalanceDoge);
@@ -462,7 +463,7 @@ export default function DogecoinWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'DOGE',
         },
-        300000
+        TIME_MINUTES_5_IN_MILLISECONDS
       );
 
       if (responseDogeTransactions?.error) {
@@ -503,7 +504,7 @@ export default function DogecoinWallet() {
       await getTransactionsDoge();
       intervalId = setInterval(() => {
         getTransactionsDoge();
-      }, 180000);
+      }, TIME_MINUTES_3_IN_MILLISECONDS);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -540,7 +541,7 @@ export default function DogecoinWallet() {
           {walletInfoError ? walletInfoError : walletInfoDoge?.address}
         </DialogTitle>
         <DialogContent dividers>
-          <div
+          <Box
             style={{
               height: 'auto',
               margin: '0 auto',
@@ -555,7 +556,7 @@ export default function DogecoinWallet() {
               viewBox={`0 0 256 256`}
               fgColor={'#393939'}
             />
-          </div>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleCloseDogeQR}>
@@ -622,7 +623,7 @@ export default function DogecoinWallet() {
                 flexWrap: 'wrap',
               }}
             >
-              <div
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -630,8 +631,8 @@ export default function DogecoinWallet() {
                 }}
               >
                 <CircularProgress color="success" size={64} />
-              </div>
-              <div
+              </Box>
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -651,7 +652,7 @@ export default function DogecoinWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>
-              </div>
+              </Box>
             </Box>
           </DialogContent>
         </DogeSubmittDialog>
@@ -742,7 +743,7 @@ export default function DogecoinWallet() {
             </Button>
           </Toolbar>
         </AppBar>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -778,8 +779,8 @@ export default function DogecoinWallet() {
               walletBalanceDoge.toFixed(8)  + ' DOGE'
             )}
           </Typography>
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -813,7 +814,7 @@ export default function DogecoinWallet() {
               }
             })()}
           </Typography>
-          <div style={{ marginInlineStart: '15px' }}>
+          <Box style={{ marginInlineStart: '15px' }}>
             <Button
               variant="outlined"
               size="small"
@@ -824,8 +825,8 @@ export default function DogecoinWallet() {
                 postProcess: 'capitalizeAll',
               })}
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
         <Box
           sx={{
             display: 'flex',
@@ -885,7 +886,7 @@ export default function DogecoinWallet() {
   const tableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -893,8 +894,8 @@ export default function DogecoinWallet() {
           }}
         >
           <CircularProgress />
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -910,7 +911,7 @@ export default function DogecoinWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Box>
     );
   };
@@ -987,7 +988,7 @@ export default function DogecoinWallet() {
                 <StyledTableRow key={k}>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.inputs.map((input, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -1001,12 +1002,12 @@ export default function DogecoinWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(input.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row.outputs.map((output, index) => (
-                      <div
+                      <Box
                         key={index}
                         style={{
                           display: 'flex',
@@ -1020,7 +1021,7 @@ export default function DogecoinWallet() {
                         <span style={{ flex: 1, textAlign: 'right' }}>
                           {(Number(output.amount) / 1e8).toFixed(8)}
                         </span>
-                      </div>
+                      </Box>
                     ))}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1050,24 +1051,24 @@ export default function DogecoinWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <div style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: '#66bb6a' }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <div style={{ color: '#f44336' }}>
+                      <Box style={{ color: '#f44336' }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     ) : (
-                      <div style={{ color: 'grey' }}>
+                      <Box style={{ color: 'grey' }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
-                      </div>
+                      </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1081,13 +1082,13 @@ export default function DogecoinWallet() {
                             })
                       }
                     >
-                      <div>
+                      <Box>
                         {row?.timestamp
                           ? epochToAgo(row?.timestamp)
                           : t('core:message.generic.unconfirmed_transaction', {
                               postProcess: 'capitalizeFirstChar',
                             })}
-                      </div>
+                      </Box>
                     </CustomWidthTooltip>
                   </StyledTableCell>
                 </StyledTableRow>

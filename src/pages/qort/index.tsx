@@ -718,25 +718,25 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <div style={{ color: '#05a2e4' }}>{row?.recipient}</div>
+                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
                       ) : (
                         row?.recipient
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <div style={{ color: '#66bb6a' }}>+ {row?.amount}</div>
+                        <Box style={{ color: '#66bb6a' }}>+ {row?.amount}</Box>
                       ) : (
-                        <div style={{ color: '#f44336' }}>- {row?.amount}</div>
+                        <Box style={{ color: '#f44336' }}>- {row?.amount}</Box>
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -747,7 +747,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -923,9 +923,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -934,9 +934,9 @@ export default function QortalWallet() {
                       {row?.identifier}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <div style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: '#66bb6a' }}>
                         {humanFileSize(row?.size, true, 2)}
-                      </div>
+                      </Box>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.fee}
@@ -946,7 +946,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -1118,9 +1118,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -1130,9 +1130,9 @@ export default function QortalWallet() {
                         if (row?.recipient) {
                           if (row?.recipient === address) {
                             return (
-                              <div style={{ color: '#05a2e4' }}>
+                              <Box style={{ color: '#05a2e4' }}>
                                 {row?.recipient}
-                              </div>
+                              </Box>
                             );
                           } else {
                             return row?.recipient;
@@ -1146,9 +1146,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <div style={{ color: '#66bb6a' }}>+ {row?.amount}</div>
+                        <Box style={{ color: '#66bb6a' }}>+ {row?.amount}</Box>
                       ) : (
-                        <div style={{ color: '#f44336' }}>- {row?.amount}</div>
+                        <Box style={{ color: '#f44336' }}>- {row?.amount}</Box>
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1159,7 +1159,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -1332,9 +1332,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -1381,7 +1381,7 @@ export default function QortalWallet() {
                         } else if (row?.type === 'GROUP_INVITE') {
                           if (row?.invitee === address) {
                             return (
-                              <div>
+                              <Box>
                                 Invitee:
                                 <span
                                   style={{
@@ -1393,7 +1393,7 @@ export default function QortalWallet() {
                                   {row?.invitee}
                                 </span>
                                 ID: {row?.groupId}
-                              </div>
+                              </Box>
                             );
                           } else {
                             return (
@@ -1424,7 +1424,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -1593,9 +1593,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -1638,7 +1638,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -1812,9 +1812,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -1823,9 +1823,9 @@ export default function QortalWallet() {
                       {(() => {
                         if (row?.type === 'TRANSFER_ASSET') {
                           return row?.recipient === address ? (
-                            <div style={{ color: '#05a2e4' }}>
+                            <Box style={{ color: '#05a2e4' }}>
                               {row?.recipient}
-                            </div>
+                            </Box>
                           ) : (
                             row?.recipient
                           );
@@ -1845,7 +1845,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -2010,9 +2010,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
@@ -2028,7 +2028,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -2205,23 +2205,23 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <div style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: '#05a2e4' }}>
                           {row?.creatorAddress}
-                        </div>
+                        </Box>
                       ) : (
                         row?.creatorAddress
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <div style={{ color: '#05a2e4' }}>{row?.recipient}</div>
+                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
                       ) : (
                         row?.recipient
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.sharePercent.startsWith('-') ? (
-                        <div
+                        <Box
                           style={{
                             color: '#f44336',
                             display: 'flex',
@@ -2245,9 +2245,9 @@ export default function QortalWallet() {
                               }}
                             />
                           </CustomWidthTooltip>
-                        </div>
+                        </Box>
                       ) : (
-                        <div
+                        <Box
                           style={{
                             color: '#66bb6a',
                             display: 'flex',
@@ -2271,7 +2271,7 @@ export default function QortalWallet() {
                               }}
                             />
                           </CustomWidthTooltip>
-                        </div>
+                        </Box>
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -2282,7 +2282,7 @@ export default function QortalWallet() {
                         placement="top"
                         title={new Date(row?.timestamp).toLocaleString()}
                       >
-                        <div>{epochToAgo(row?.timestamp)}</div>
+                        <Box>{epochToAgo(row?.timestamp)}</Box>
                       </CustomWidthTooltip>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -2399,7 +2399,7 @@ export default function QortalWallet() {
   const tableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -2407,8 +2407,8 @@ export default function QortalWallet() {
           }}
         >
           <CircularProgress />
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -2424,7 +2424,7 @@ export default function QortalWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Box>
     );
   };
@@ -2450,7 +2450,7 @@ export default function QortalWallet() {
                 flexWrap: 'wrap',
               }}
             >
-              <div
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -2458,8 +2458,8 @@ export default function QortalWallet() {
                 }}
               >
                 <CircularProgress color="success" size={64} />
-              </div>
-              <div
+              </Box>
+              <Box
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -2479,7 +2479,7 @@ export default function QortalWallet() {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>
-              </div>
+              </Box>
             </Box>
           </DialogContent>
         </QortSubmittDialog>
@@ -2570,7 +2570,7 @@ export default function QortalWallet() {
             </Button>
           </Toolbar>
         </AppBar>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -2598,8 +2598,8 @@ export default function QortalWallet() {
           >
             {walletBalanceQort + ' QORT'}
           </Typography>
-        </div>
-        <div
+        </Box>
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -2625,7 +2625,7 @@ export default function QortalWallet() {
           >
             {(walletBalanceQort - 0.011).toFixed(8) + ' QORT'}
           </Typography>
-          <div style={{ marginInlineStart: '15px' }}>
+          <Box style={{ marginInlineStart: '15px' }}>
             <Button
               variant="outlined"
               size="small"
@@ -2636,8 +2636,8 @@ export default function QortalWallet() {
                 postProcess: 'capitalizeAll',
               })}
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
         <Box
           sx={{
             display: 'flex',
@@ -2682,7 +2682,7 @@ export default function QortalWallet() {
             onChange={(e) => validateCanSendQortAddress(e.target.value)}
           />
         </Box>
-        <div
+        <Box
           style={{
             width: '100%',
             display: 'flex',
@@ -2700,7 +2700,7 @@ export default function QortalWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
-        </div>
+        </Box>
       </Dialog>
     );
   };

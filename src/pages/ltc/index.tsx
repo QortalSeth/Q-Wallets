@@ -1244,6 +1244,7 @@ export default function LitecoinWallet() {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          width: { xs: '120px', md: '200px', lg: '370px' },
                         }}
                       >
                         {walletInfoLtc?.address}

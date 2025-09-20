@@ -62,7 +62,10 @@ import {
 } from '@mui/icons-material';
 import coinLogoRVN from '../../assets/rvn.png';
 import { useTranslation } from 'react-i18next';
-import { TIME_MINUTES_3_IN_MILLISECONDS, TIME_MINUTES_5_IN_MILLISECONDS } from '../../common/constants';
+import {
+  TIME_MINUTES_3_IN_MILLISECONDS,
+  TIME_MINUTES_5_IN_MILLISECONDS,
+} from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -417,8 +420,8 @@ export default function RavencoinWallet() {
           typeof response.error === 'string'
             ? response.error
             : t('core:message.error.loading_address', {
-            postProcess: 'capitalizeFirstChar',
-          })
+                postProcess: 'capitalizeFirstChar',
+              })
         );
       } else {
         setWalletInfoRvn(response);
@@ -1210,7 +1213,7 @@ export default function RavencoinWallet() {
   };
 
   return (
-     <Box sx={{ width: '100%', mt: 2 }}>
+    <Box sx={{ width: '100%', mt: 2 }}>
       {RvnSendDialogPage()}
       {RvnQrDialogPage()}
       {RvnAddressBookDialogPage()}
@@ -1302,6 +1305,7 @@ export default function RavencoinWallet() {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          width: { xs: '120px', md: '200px', lg: '370px' },
                         }}
                       >
                         {walletInfoRvn?.address}

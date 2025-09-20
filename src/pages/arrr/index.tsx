@@ -1500,6 +1500,7 @@ export default function PirateWallet() {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          width: { xs: '120px', md: '200px', lg: '370px' },
                         }}
                       >
                         {walletInfoArrr?.address}

@@ -510,49 +510,6 @@ export default function BitcoinWallet() {
     }
   };
 
-  const BtcQrDialogPage = () => {
-    return (
-      <BtcQrDialog
-        onClose={handleCloseBtcQR}
-        aria-labelledby="btc-qr-code"
-        open={openBtcQR}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="btc-qr-code">
-          {t('core:address', {
-            postProcess: 'capitalizeFirstChar',
-          })}{' '}
-          {walletInfoError ? walletInfoError : walletInfoBtc?.address}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            style={{
-              height: 'auto',
-              margin: '0 auto',
-              maxWidth: 256,
-              width: '100%',
-            }}
-          >
-            <QRCode
-              size={256}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoBtc?.address || ''}
-              viewBox={`0 0 256 256`}
-              fgColor={'#393939'}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseBtcQR}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </BtcQrDialog>
-    );
-  };
-
   const sendBtcRequest = async () => {
     if (!btcFeeCalculated) return;
     setOpenTxBtcSubmit(true);
@@ -1220,6 +1177,7 @@ export default function BitcoinWallet() {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          width: { xs: '120px', md: '200px', lg: '370px' },
                         }}
                       >
                         {walletInfoBtc?.address}

@@ -842,8 +842,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
-                  })}{' '}
-                  QORT
+                  })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:time', {
@@ -1245,8 +1244,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
-                  })}{' '}
-                  QORT
+                  })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:time', {
@@ -1510,8 +1508,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
-                  })}{' '}
-                  QORT
+                  })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:time', {
@@ -2123,8 +2120,7 @@ export default function QortalWallet() {
                 <StyledTableCell align="left">
                   {t('core:fee.fee', {
                     postProcess: 'capitalizeFirstChar',
-                  })}{' '}
-                  QORT
+                  })}
                 </StyledTableCell>
                 <StyledTableCell align="left">
                   {t('core:time', {

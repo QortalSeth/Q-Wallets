@@ -50,8 +50,8 @@
     "generic": {
       "bitcoin_address": "BTCアドレスは BIP44（プレフィックス1）および BIP49（プレフィックス3）の場合は34文字、BIP84（プレフィックス bc1）の場合は42文字である必要があります",
       "bitcoin_wallet": "ビットコインウォレット",
-      "confirmations": "{{ count }} confirmations",
-      "confirmations_third": "{{ count }}/3 confirmations",
+      "confirmations": "{{ count }} 回の承認",
+      "confirmations_third": "{{ count }} /3 回の承認",
       "coming_soon": "近日公開...",
       "current_fee": "1バイトあたりの現在の手数料: {{ fee }} SAT",
       "digibyte_address": "DGBアドレスは BIP44（プレフィックスD）および BIP49（プレフィックスS）の場合は34文字、BIP84（プレフィックス dgb1）の場合は43文字である必要があります",

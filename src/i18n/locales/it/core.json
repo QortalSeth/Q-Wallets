@@ -66,7 +66,7 @@
       "low_fee_transation": "Commissioni basse possono causare transazioni lente o non confermate",
       "no_address": "Nessun indirizzo disponibile",
       "not_initialized_yet": "Non ancora inizializzato",
-      "no_transactions": "No {{ transaction_type }} transactions yet...",
+      "no_transactions": "Ancora nessuna transazione {{ transaction_type }}...",
       "pirate_chain_address": "L’indirizzo ARRR deve essere lungo 78 caratteri (inizia con zs)",
       "pirate_chain_max_chars": "Memo ARRR massimo 40 caratteri",
       "pirate_chain_servers": "Server Lightwallet disponibili per Pirate Chain.",
@@ -86,8 +86,8 @@
       "digibyte_address_invalid": "Indirizzo DGB non valido",
       "doge_address_invalid": "Indirizzo DOGE non valido",
       "litecoin_address_invalid": "Indirizzo LTC non valido",
-      "loading_address": "Errore nel caricamento dell'indirizzo",
-      "loading_balance": "Errore nel caricamento del saldo",
+      "loading_address": "Impossibile caricare l'indirizzo",
+      "loading_balance": "Impossibile caricare il saldo",
       "pirate_chain_gateway": "Non puoi usare il portafoglio Pirate Chain tramite nodo pubblico. Usa il tuo nodo locale.",
       "pirate_chain_no_server": "Nessuna connessione al server Lightwallet di Pirate Chain.",
       "ravencoin_address_invalid": "Indirizzo RVN non valido",
@@ -100,7 +100,7 @@
     "next": "successivo",
     "previous": "precedente"
   },
-  "poll_name": "poll name",
+  "poll_name": "nome del poll",
   "qortal": {
     "asset_name": "Nome dell'asset: {{ name }}",
     "registered_name": "Nome registrato: {{ name }}",

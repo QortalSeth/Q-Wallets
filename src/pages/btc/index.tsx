@@ -20,9 +20,7 @@ import {
   Button,
   Card,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -167,18 +165,6 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const BtcQrDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
 const BtcSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -205,16 +191,6 @@ const WalletCard = styled(Card)({
   padding: '24px',
   borderRadius: 16,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
 });
 
 const WalletButtons = styled(Button)({
@@ -250,13 +226,13 @@ export default function BitcoinWallet() {
   const { t } = useTranslation(['core']);
 
   const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
-  const [isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =
+  const [_isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =
     useState<boolean>(false);
   const [walletBalanceBtc, setWalletBalanceBtc] = useState<any>(null);
   const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] =
     useState<boolean>(true);
   const [transactionsBtc, setTransactionsBtc] = useState<any>([]);
-  const [isLoadingBtcTransactions, setIsLoadingBtcTransactions] =
+  const [_isLoadingBtcTransactions, setIsLoadingBtcTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -272,7 +248,7 @@ export default function BitcoinWallet() {
   const [openSendBtcError, setOpenSendBtcError] = useState(false);
   const [openBtcAddressBook, setOpenBtcAddressBook] = useState(false);
   const [inputFee, setInputFee] = useState(0);
-  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );

@@ -20,9 +20,7 @@ import {
   Button,
   Card,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -167,18 +165,6 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const LtcQrDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
 const LtcSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -205,16 +191,6 @@ const WalletCard = styled(Card)({
   padding: '24px',
   borderRadius: 16,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
 });
 
 const WalletButtons = styled(Button)({
@@ -250,7 +226,7 @@ export default function LitecoinWallet() {
   const { t } = useTranslation(['core']);
 
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
-  const [isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
+  const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
     useState<boolean>(false);
   const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(null);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] =
@@ -260,9 +236,7 @@ export default function LitecoinWallet() {
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyLtcAddress, setCopyLtcAddress] = useState('');
   const [copyLtcTxHash, setCopyLtcTxHash] = useState('');
-  const [openLtcQR, setOpenLtcQR] = useState(false);
   const [openLtcSend, setOpenLtcSend] = useState(false);
   const [ltcAmount, setLtcAmount] = useState<number>(0);
   const [ltcRecipient, setLtcRecipient] = useState('');
@@ -274,7 +248,7 @@ export default function LitecoinWallet() {
   const [openSendLtcError, setOpenSendLtcError] = useState(false);
   const [openLtcAddressBook, setOpenLtcAddressBook] = useState(false);
   const [inputFee, setInputFee] = useState(0);
-  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
@@ -291,14 +265,6 @@ export default function LitecoinWallet() {
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - transactionsLtc.length)
       : 0;
-
-  const handleOpenLtcQR = () => {
-    setOpenLtcQR(true);
-  };
-
-  const handleCloseLtcQR = () => {
-    setOpenLtcQR(false);
-  };
 
   const handleOpenAddressBook = async () => {
     setOpenLtcAddressBook(true);
@@ -341,14 +307,7 @@ export default function LitecoinWallet() {
 
   const handleCloseLtcSend = () => {
     setLtcAmount(0);
-
     setOpenLtcSend(false);
-  };
-
-  const changeCopyLtcStatus = async () => {
-    setCopyLtcAddress('Copied');
-    await timeoutDelay(2000);
-    setCopyLtcAddress('');
   };
 
   const changeCopyLtcTxHash = async () => {
@@ -526,49 +485,6 @@ export default function LitecoinWallet() {
     } else {
       setLtcAmount(maxLtcAmount);
     }
-  };
-
-  const LtcQrDialogPage = () => {
-    return (
-      <LtcQrDialog
-        onClose={handleCloseLtcQR}
-        aria-labelledby="ltc-qr-code"
-        open={openLtcQR}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="ltc-qr-code">
-          {t('core:address', {
-            postProcess: 'capitalizeFirstChar',
-          })}{' '}
-          {walletInfoError ? walletInfoError : walletInfoLtc?.address}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            style={{
-              height: 'auto',
-              margin: '0 auto',
-              maxWidth: 256,
-              width: '100%',
-            }}
-          >
-            <QRCode
-              size={256}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoLtc?.address || ''}
-              viewBox={`0 0 256 256`}
-              fgColor={'#393939'}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseLtcQR}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </LtcQrDialog>
-    );
   };
 
   const sendLtcRequest = async () => {
@@ -1154,7 +1070,6 @@ export default function LitecoinWallet() {
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       {LtcSendDialogPage()}
-      {LtcQrDialogPage()}
       {LtcAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>

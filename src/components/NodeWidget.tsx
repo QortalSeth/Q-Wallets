@@ -1,5 +1,5 @@
 import { FC, createElement } from 'react';
-import { Card, Box, Typography, Divider } from '@mui/material';
+import { Card, Box, Typography } from '@mui/material';
 
 interface Props {
   icon: FC<any>;
@@ -68,7 +68,6 @@ const NodeWidget = ({ icon, title, subtitle, children }: Props) => (
         </Typography>
       </Box>
     </Box>
-    {children && <Boxider />}
     {children}
   </Card>
 );

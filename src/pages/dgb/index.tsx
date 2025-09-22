@@ -20,9 +20,7 @@ import {
   Button,
   Card,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -167,18 +165,6 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const DgbQrDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
 const DgbSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -262,12 +248,12 @@ export default function DigibyteWallet() {
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(null);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);
-  const [isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
+  const [_isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
     useState<boolean>(false);
   const [transactionsDgb, setTransactionsDgb] = useState<any>([]);
   const [isLoadingDgbTransactions, setIsLoadingDgbTransactions] =
     useState<boolean>(true);
-  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
@@ -278,9 +264,7 @@ export default function DigibyteWallet() {
     Number(walletBalanceDgb) <= 0;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyDgbAddress, setCopyDgbAddress] = useState('');
   const [copyDgbTxHash, setCopyDgbTxHash] = useState('');
-  const [openDgbQR, setOpenDgbQR] = useState(false);
   const [openDgbSend, setOpenDgbSend] = useState(false);
   const [dgbAmount, setDgbAmount] = useState<number>(0);
   const [dgbRecipient, setDgbRecipient] = useState('');
@@ -296,14 +280,6 @@ export default function DigibyteWallet() {
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - transactionsDgb.length)
       : 0;
-
-  const handleOpenDgbQR = () => {
-    setOpenDgbQR(true);
-  };
-
-  const handleCloseDgbQR = () => {
-    setOpenDgbQR(false);
-  };
 
   const handleOpenAddressBook = async () => {
     setOpenDgbAddressBook(true);
@@ -348,12 +324,6 @@ export default function DigibyteWallet() {
     setDgbAmount(0);
     setDgbFee(0);
     setOpenDgbSend(false);
-  };
-
-  const changeCopyDgbStatus = async () => {
-    setCopyDgbAddress('Copied');
-    await timeoutDelay(2000);
-    setCopyDgbAddress('');
   };
 
   const changeCopyDgbTxHash = async () => {
@@ -539,49 +509,6 @@ export default function DigibyteWallet() {
     } else {
       setDgbAmount(maxDgbAmount);
     }
-  };
-
-  const DgbQrDialogPage = () => {
-    return (
-      <DgbQrDialog
-        onClose={handleCloseDgbQR}
-        aria-labelledby="dgb-qr-code"
-        open={openDgbQR}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="dgb-qr-code">
-          {t('core:address', {
-            postProcess: 'capitalizeFirstChar',
-          })}{' '}
-          {walletInfoError ? walletInfoError : walletInfoDgb?.address}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            style={{
-              height: 'auto',
-              margin: '0 auto',
-              maxWidth: 256,
-              width: '100%',
-            }}
-          >
-            <QRCode
-              size={256}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoDgb?.address || ''}
-              viewBox={`0 0 256 256`}
-              fgColor={'#393939'}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseDgbQR}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </DgbQrDialog>
-    );
   };
 
   const sendDgbRequest = async () => {
@@ -1215,7 +1142,6 @@ export default function DigibyteWallet() {
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       {DgbSendDialogPage()}
-      {DgbQrDialogPage()}
       {DgbAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>

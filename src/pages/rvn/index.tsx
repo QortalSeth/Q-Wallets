@@ -20,9 +20,7 @@ import {
   Button,
   Card,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -170,18 +168,6 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const RvnQrDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
 const RvnSubmittDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -208,16 +194,6 @@ const WalletCard = styled(Card)({
   padding: '24px',
   borderRadius: 16,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
 });
 
 const WalletButtons = styled(Button)({
@@ -272,7 +248,7 @@ export default function RavencoinWallet() {
   const { t } = useTranslation(['core']);
 
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
-  const [isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
+  const [_isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
     useState<boolean>(false);
   const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(null);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] =
@@ -283,13 +259,12 @@ export default function RavencoinWallet() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [copyRvnTxHash, setCopyRvnTxHash] = useState('');
-  const [openRvnQR, setOpenRvnQR] = useState(false);
   const [openRvnSend, setOpenRvnSend] = useState(false);
   const [rvnAmount, setRvnAmount] = useState<number>(0);
   const [rvnRecipient, setRvnRecipient] = useState('');
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [rvnFee, setRvnFee] = useState<number>(0);
-  const [walletInfoError, setWalletInfoError] = useState<string | null>(null);
+  const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
@@ -308,14 +283,6 @@ export default function RavencoinWallet() {
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - transactionsRvn.length)
       : 0;
-
-  const handleOpenRvnQR = () => {
-    setOpenRvnQR(true);
-  };
-
-  const handleCloseRvnQR = () => {
-    setOpenRvnQR(false);
-  };
 
   const handleOpenAddressBook = async () => {
     setOpenRvnAddressBook(true);
@@ -543,49 +510,6 @@ export default function RavencoinWallet() {
     } else {
       setRvnAmount(maxRvnAmount);
     }
-  };
-
-  const RvnQrDialogPage = () => {
-    return (
-      <RvnQrDialog
-        onClose={handleCloseRvnQR}
-        aria-labelledby="rvn-qr-code"
-        open={openRvnQR}
-        keepMounted={false}
-      >
-        <DialogTitle sx={{ m: 0, p: 2, fontSize: '12px' }} id="rvn-qr-code">
-          {t('core:address', {
-            postProcess: 'capitalizeFirstChar',
-          })}
-          {walletInfoError ? walletInfoError : walletInfoRvn?.address}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            style={{
-              height: 'auto',
-              margin: '0 auto',
-              maxWidth: 256,
-              width: '100%',
-            }}
-          >
-            <QRCode
-              size={256}
-              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-              value={walletInfoRvn?.address || ''}
-              viewBox={`0 0 256 256`}
-              fgColor={'#393939'}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseRvnQR}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </RvnQrDialog>
-    );
   };
 
   const sendRvnRequest = async () => {
@@ -1215,7 +1139,6 @@ export default function RavencoinWallet() {
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       {RvnSendDialogPage()}
-      {RvnQrDialogPage()}
       {RvnAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>

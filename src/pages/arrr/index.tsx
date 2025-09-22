@@ -171,18 +171,6 @@ const DialogGeneral = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const ArrrQrDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
 const ArrrLightwalletDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -221,16 +209,6 @@ const WalletCard = styled(Card)({
   padding: '24px',
   borderRadius: 16,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const CoinAvatar = styled(Avatar)({
-  width: 120,
-  height: 120,
-  margin: '0 auto 16px',
-  transition: 'transform 0.3s',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
 });
 
 const WalletButtons = styled(Button)({
@@ -286,14 +264,13 @@ export default function PirateWallet() {
     useState<any>([]);
   const [currentLightwalletServerArrr, setCurrentLightwalletServerArrr] =
     useState<any>([]);
-  const [changeServer, setChangeServer] = useState(false);
+  const [_changeServer, setChangeServer] = useState(false);
   const [arrrMemo, setArrrMemo] = useState('');
   const [transactionsArrr, setTransactionsArrr] = useState<any>([]);
   const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyArrrAddress, setCopyArrrAddress] = useState('');
   const [copyArrrTxHash, setCopyArrrTxHash] = useState('');
   const [openArrrLightwallet, setOpenArrrLightwallet] = useState(false);
   const [openArrrServerChange, setOpenArrrServerChange] = useState(false);
@@ -306,7 +283,7 @@ export default function PirateWallet() {
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
   const [openSendArrrError, setOpenSendArrrError] = useState(false);
   const [openArrrAddressBook, setOpenArrrAddressBook] = useState(false);
-  const [retry, setRetry] = useState(false);
+  const [_retry, setRetry] = useState(false);
 
   const emptyRows =
     page > 0
@@ -360,12 +337,6 @@ export default function PirateWallet() {
     setArrrRecipient('');
     setArrrMemo('');
     setOpenArrrSend(false);
-  };
-
-  const changeCopyArrrStatus = async () => {
-    setCopyArrrAddress('Copied');
-    await timeoutDelay(2000);
-    setCopyArrrAddress('');
   };
 
   const changeCopyArrrTxHash = async () => {

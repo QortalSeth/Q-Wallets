@@ -1091,7 +1091,7 @@ export default function BitcoinWallet() {
                   variant="subtitle2"
                   sx={{ color: 'text.secondary' }}
                 >
-                  {t('core:message.generic.qortal_wallet', {
+                  {t('core:message.generic.bitcoin_wallet', {
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </Typography>

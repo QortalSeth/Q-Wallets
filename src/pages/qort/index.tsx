@@ -2473,7 +2473,12 @@ export default function QortalWallet() {
                       })()}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.type}
+                       <CustomWidthTooltip
+                        placement="top"
+                        title={row?.type}
+                      >
+                        <Box>{row?.type ? cropString(row?.type): ''}</Box>
+                      </CustomWidthTooltip>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       <CustomWidthTooltip
@@ -2494,7 +2499,12 @@ export default function QortalWallet() {
                       </CustomWidthTooltip>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.identifier}
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={row?.identifier}
+                      >
+                        <Box>{row?.identifier ? cropString(row?.identifier): ''}</Box>
+                      </CustomWidthTooltip>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="right">
                       {row?.size > 0 ? humanFileSize(row?.size, true, 2) : ''}
@@ -2550,7 +2560,7 @@ export default function QortalWallet() {
                             />
                           </CustomWidthTooltip>
                         </Box>
-                      ) : (
+                      ) : row?.sharePercent && (
                         <Box
                           style={{
                             color: '#66bb6a',

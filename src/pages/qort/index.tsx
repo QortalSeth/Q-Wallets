@@ -207,6 +207,7 @@ export default function QortalWallet() {
 
   const handleChange = (_event: SyntheticEvent, newValue: string) => {
     setValue(newValue);
+    setPage(0);
   };
 
   const handleChangePage = (

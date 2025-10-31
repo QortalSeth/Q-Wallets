@@ -100,9 +100,15 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: '#02648d',
     color: theme.palette.common.white,
     fontSize: 14,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 13,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
 }));
 
@@ -114,4 +120,3 @@ export const StyledTableRow = styled(TableRow)(({ theme }) => ({
     border: 0,
   },
 }));
-

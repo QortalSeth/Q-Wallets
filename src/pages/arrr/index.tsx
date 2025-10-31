@@ -1388,8 +1388,6 @@ export default function PirateWallet() {
                     display={'flex'}
                     alignItems={'center'}
                     gap={1}
-                    justifyContent={{ xs: 'center', md: 'flex-start' }}
-                    flexWrap="wrap"
                   >
                     <Typography
                       variant="subtitle1"
@@ -1437,7 +1435,11 @@ export default function PirateWallet() {
                     p: { xs: 1.5, md: 2 },
                   }}
                 >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
+                  <Box
+                    display={'flex'}
+                    alignItems={'center'}
+                    gap={1}
+                  >
                     <Typography
                       variant="subtitle1"
                       align="center"

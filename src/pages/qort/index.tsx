@@ -2325,7 +2325,7 @@ export default function QortalWallet() {
           <Table
             stickyHeader
             sx={{ width: '100%' }}
-            aria-label="payments-table"
+            aria-label="all-table"
           >
             <TableHead>
               <TableRow>
@@ -3061,7 +3061,6 @@ export default function QortalWallet() {
                   }}
                   display={'flex'}
                   alignItems={'center'}
-                  justifyContent={{ xs: 'center', md: 'flex-start' }}
                   gap={1}
                 >
                   <Typography
@@ -3089,11 +3088,9 @@ export default function QortalWallet() {
                   }}
                 >
                   <Box
-                    display={'flex'}
                     alignItems={'center'}
+                    display={'flex'}
                     gap={1}
-                    justifyContent={{ xs: 'center', md: 'flex-start' }}
-                    flexWrap="wrap"
                   >
                     <Typography
                       variant="subtitle1"

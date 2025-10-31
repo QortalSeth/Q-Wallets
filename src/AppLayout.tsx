@@ -147,7 +147,7 @@ export default function AppLayout() {
   ];
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', width: '100%' }}>
       {/* Left vertical navigation */}
       <Drawer
         variant="permanent"
@@ -247,7 +247,7 @@ export default function AppLayout() {
       </Drawer>
 
       {/* Right side content */}
-      <Box component="main" sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, width: '100%', overflowX: 'auto'}}>
         <Container maxWidth="xl" sx={{ my: 8 }}>
           {/* The active route renders here */}
           <Outlet />

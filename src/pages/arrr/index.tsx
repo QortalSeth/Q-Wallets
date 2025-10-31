@@ -1,6 +1,5 @@
 import WalletContext from '../../contexts/walletContext';
 import { cropString, epochToAgo, timeoutDelay } from '../../common/functions';
-import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -8,7 +7,6 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,6 +19,7 @@ import {
   Paper,
   Table,
   TableBody,
+  TableCell,
   TableContainer,
   TableFooter,
   TableHead,
@@ -28,16 +27,10 @@ import {
   TableRow,
   TextField,
   Toolbar,
-  Tooltip,
-  tooltipClasses,
-  TooltipProps,
   Typography,
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
-import Slide, { SlideProps } from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import QRCode from 'react-qr-code';
@@ -54,11 +47,8 @@ import {
 import coinLogoARRR from '../../assets/arrr.png';
 import {
   ChangeEvent,
-  forwardRef,
   Key,
   MouseEvent,
-  ReactElement,
-  Ref,
   SyntheticEvent,
   useContext,
   useEffect,
@@ -70,6 +60,18 @@ import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
 } from '../../common/constants';
+import {
+  CustomWidthTooltip,
+  DialogGeneral,
+  LightwalletDialog,
+  SlideTransition,
+  StyledTableCell,
+  StyledTableRow,
+  SubmitDialog,
+  Transition,
+  WalletButtons,
+  WalletCard,
+} from '../../styles/page-styles';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -148,100 +150,6 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
     </Box>
   );
 }
-
-const Transition = forwardRef(function Transition(
-  props: TransitionProps & {
-    children: ReactElement<unknown>;
-  },
-  ref: Ref<unknown>
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
-function SlideTransition(props: SlideProps) {
-  return <Slide {...props} direction="up" />;
-}
-
-const DialogGeneral = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
-const ArrrLightwalletDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
-const ArrrSubmittDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
-const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
-  <Tooltip {...props} classes={{ popper: className }} />
-))({
-  [`& .${tooltipClasses.tooltip}`]: {
-    maxWidth: 500,
-  },
-});
-
-const WalletCard = styled(Card)({
-  maxWidth: '100%',
-  margin: '20px, auto',
-  padding: '24px',
-  borderRadius: 16,
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const WalletButtons = styled(Button)({
-  width: 'auto',
-  backgroundColor: '#05a2e4',
-  color: 'white',
-  padding: 'auto',
-  '&:hover': {
-    backgroundColor: '#02648d',
-  },
-});
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#02648d',
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
-  },
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
 
 export default function PirateWallet() {
   const { t } = useTranslation(['core']);
@@ -674,7 +582,7 @@ export default function PirateWallet() {
 
   const ArrrLightwalletDialogPage = () => {
     return (
-      <ArrrLightwalletDialog
+      <LightwalletDialog
         onClose={handleCloseArrrLightwallet}
         aria-labelledby="arrr-electrum-servers"
         open={openArrrLightwallet}
@@ -741,13 +649,13 @@ export default function PirateWallet() {
             })}
           </Button>
         </DialogActions>
-      </ArrrLightwalletDialog>
+      </LightwalletDialog>
     );
   };
 
   const ArrrServerChangeDialogPage = () => {
     return (
-      <ArrrLightwalletDialog
+      <LightwalletDialog
         onClose={handleCloseArrrServerChange}
         aria-labelledby="arrr-electrum-servers"
         open={openArrrServerChange}
@@ -814,7 +722,7 @@ export default function PirateWallet() {
             })}
           </Button>
         </DialogActions>
-      </ArrrLightwalletDialog>
+      </LightwalletDialog>
     );
   };
 
@@ -1068,11 +976,7 @@ export default function PirateWallet() {
         onClose={handleCloseArrrSend}
         slots={{ transition: Transition }}
       >
-        <ArrrSubmittDialog
-          fullWidth={true}
-          maxWidth="xs"
-          open={openTxArrrSubmit}
-        >
+        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxArrrSubmit}>
           <DialogContent>
             <Box
               sx={{
@@ -1113,7 +1017,7 @@ export default function PirateWallet() {
               </Box>
             </Box>
           </DialogContent>
-        </ArrrSubmittDialog>
+        </SubmitDialog>
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendArrrSuccess}
@@ -1395,13 +1299,34 @@ export default function PirateWallet() {
             columnSpacing={4}
             rowSpacing={{ xs: 12, md: 0 }}
           >
-            <Grid container size={12} justifyContent="space-around">
-              <Box sx={{ display: 'grid', alignItems: 'center' }}>
+            <Grid
+              container
+              size={12}
+              justifyContent="space-around"
+              alignItems="center"
+              sx={{
+                flexDirection: { xs: 'column', md: 'row' },
+                textAlign: { xs: 'center', md: 'left' },
+                gap: { xs: 3, md: 0 },
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'grid',
+                  alignItems: 'center',
+                  justifyItems: { xs: 'center', md: 'start' },
+                  gap: 1,
+                }}
+              >
                 <Box
                   component="img"
                   alt="ARRR Logo"
                   src={coinLogoARRR}
-                  sx={{ width: 120, height: 120, mr: 1 }}
+                  sx={{
+                    width: { xs: 96, sm: 110, md: 120 },
+                    height: { xs: 96, sm: 110, md: 120 },
+                    mr: { md: 1 },
+                  }}
                 />
                 <Typography
                   variant="subtitle2"
@@ -1416,18 +1341,23 @@ export default function PirateWallet() {
               <Grid
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 0.7fr',
-                  gridTemplateRows: '0.5fr 0.5fr',
+                  gap: { xs: 2, md: 1 },
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
+                  },
+                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
                 }}
               >
                 <Grid
                   sx={{
-                    gridColumn: '1',
-                    gridRow: '1',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '1' },
+                    gridRow: { xs: '1', md: '1' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                   display={'flex'}
                   alignItems={'center'}
+                  justifyContent={{ xs: 'center', md: 'flex-start' }}
                   gap={1}
                 >
                   <Typography
@@ -1449,12 +1379,18 @@ export default function PirateWallet() {
 
                 <Grid
                   sx={{
-                    gridColumn: '1',
-                    gridRow: '2',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '1' },
+                    gridRow: { xs: '2', md: '2' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                 >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
+                  <Box
+                    display={'flex'}
+                    alignItems={'center'}
+                    gap={1}
+                    justifyContent={{ xs: 'center', md: 'flex-start' }}
+                    flexWrap="wrap"
+                  >
                     <Typography
                       variant="subtitle1"
                       sx={{ color: 'primary.main', fontWeight: 700 }}
@@ -1471,7 +1407,12 @@ export default function PirateWallet() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        width: { xs: '120px', md: '200px', lg: '370px' },
+                        width: {
+                          xs: '100%',
+                          sm: '220px',
+                          md: '200px',
+                          lg: '370px',
+                        },
                       }}
                     >
                       {walletInfoArrr?.address}
@@ -1491,9 +1432,9 @@ export default function PirateWallet() {
 
                 <Grid
                   sx={{
-                    gridColumn: '1 / span 2',
-                    gridRow: '3',
-                    p: 2,
+                    gridColumn: { xs: '1 / span 2', md: '1 / span 2' },
+                    gridRow: { xs: '3', md: '3' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                 >
                   <Box display={'flex'} alignItems={'center'} gap={1}>
@@ -1544,9 +1485,9 @@ export default function PirateWallet() {
                   display={'flex'}
                   justifyContent={'center'}
                   sx={{
-                    gridColumn: '2',
-                    gridRow: '1 / span 2',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '2' },
+                    gridRow: { xs: '3', md: '1 / span 2' },
+                    p: { xs: 7, md: 2 },
                   }}
                 >
                   <Box
@@ -1560,8 +1501,8 @@ export default function PirateWallet() {
                       display: 'flex',
                       height: '100%',
                       justifyContent: 'center',
-                      maxHeight: 150,
-                      maxWidth: 150,
+                      maxHeight: { xs: 200, md: 150 },
+                      maxWidth: { xs: 200, md: 150 },
                       p: 0.5,
                     }}
                   >

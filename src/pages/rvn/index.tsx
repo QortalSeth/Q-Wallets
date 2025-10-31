@@ -1,16 +1,12 @@
 import {
   ChangeEvent,
-  forwardRef,
   Key,
   MouseEvent,
-  ReactElement,
-  Ref,
   SyntheticEvent,
   useEffect,
   useState,
 } from 'react';
 import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
-import { styled } from '@mui/system';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -18,7 +14,6 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
   Dialog,
   DialogContent,
   Grid,
@@ -34,16 +29,11 @@ import {
   TableRow,
   TextField,
   Toolbar,
-  Tooltip,
-  tooltipClasses,
-  TooltipProps,
   Typography,
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import TableCell from '@mui/material/TableCell';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
-import Slide, { SlideProps } from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import QRCode from 'react-qr-code';
@@ -64,6 +54,17 @@ import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
 } from '../../common/constants';
+import {
+  CustomWidthTooltip,
+  DialogGeneral,
+  SlideTransition,
+  StyledTableCell,
+  StyledTableRow,
+  SubmitDialog,
+  Transition,
+  WalletButtons,
+  WalletCard,
+} from '../../styles/page-styles';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -142,88 +143,6 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
     </Box>
   );
 }
-
-const Transition = forwardRef(function Transition(
-  props: TransitionProps & {
-    children: ReactElement<unknown>;
-  },
-  ref: Ref<unknown>
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
-function SlideTransition(props: SlideProps) {
-  return <Slide {...props} direction="up" />;
-}
-
-const DialogGeneral = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
-const RvnSubmittDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-  '& .MuiDialog-paper': {
-    borderRadius: '15px',
-  },
-}));
-
-const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
-  <Tooltip {...props} classes={{ popper: className }} />
-))({
-  [`& .${tooltipClasses.tooltip}`]: {
-    maxWidth: 500,
-  },
-});
-
-const WalletCard = styled(Card)({
-  maxWidth: '100%',
-  margin: '20px, auto',
-  padding: '24px',
-  borderRadius: 16,
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-});
-
-const WalletButtons = styled(Button)({
-  width: 'auto',
-  backgroundColor: '#05a2e4',
-  color: 'white',
-  padding: 'auto',
-  '&:hover': {
-    backgroundColor: '#02648d',
-  },
-});
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#02648d',
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
-  },
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
 
 const rvnMarks = [
   {
@@ -554,7 +473,7 @@ export default function RavencoinWallet() {
         onClose={handleCloseRvnSend}
         slots={{ transition: Transition }}
       >
-        <RvnSubmittDialog fullWidth={true} maxWidth="xs" open={openTxRvnSubmit}>
+        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxRvnSubmit}>
           <DialogContent>
             <Box
               sx={{
@@ -595,7 +514,7 @@ export default function RavencoinWallet() {
               </Box>
             </Box>
           </DialogContent>
-        </RvnSubmittDialog>
+        </SubmitDialog>
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendRvnSuccess}
@@ -1149,13 +1068,27 @@ export default function RavencoinWallet() {
             columnSpacing={4}
             rowSpacing={{ xs: 12, md: 0 }}
           >
-            <Grid container size={12} justifyContent="space-around">
+            <Grid
+              container
+              size={12}
+              justifyContent="space-around"
+              alignItems="center"
+              sx={{
+                flexDirection: { xs: 'column', md: 'row' },
+                textAlign: { xs: 'center', md: 'left' },
+                gap: { xs: 3, md: 0 },
+              }}
+            >
               <Box sx={{ display: 'grid', alignItems: 'center' }}>
                 <Box
                   component="img"
                   alt="RVN Logo"
                   src={coinLogoRVN}
-                  sx={{ width: 120, height: 120, mr: 1 }}
+                  sx={{
+                    width: { xs: 96, sm: 110, md: 120 },
+                    height: { xs: 96, sm: 110, md: 120 },
+                    mr: { md: 1 },
+                  }}
                 />
                 <Typography
                   variant="subtitle2"
@@ -1170,15 +1103,19 @@ export default function RavencoinWallet() {
               <Grid
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 0.5fr',
-                  gridTemplateRows: '1fr 1fr',
+                  gap: { xs: 2, md: 1 },
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
+                  },
+                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
                 }}
               >
                 <Grid
                   sx={{
-                    gridColumn: '1',
-                    gridRow: '1',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '1' },
+                    gridRow: { xs: '1', md: '1' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                   display={'flex'}
                   alignItems={'center'}
@@ -1203,9 +1140,9 @@ export default function RavencoinWallet() {
 
                 <Grid
                   sx={{
-                    gridColumn: '1',
-                    gridRow: '2',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '1' },
+                    gridRow: { xs: '2', md: '2' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                 >
                   <Box display={'flex'} alignItems={'center'} gap={1}>
@@ -1225,7 +1162,12 @@ export default function RavencoinWallet() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        width: { xs: '120px', md: '200px', lg: '370px' },
+                        width: {
+                          xs: '100%',
+                          sm: '220px',
+                          md: '200px',
+                          lg: '370px',
+                        },
                       }}
                     >
                       {walletInfoRvn?.address}
@@ -1248,9 +1190,9 @@ export default function RavencoinWallet() {
                   display={'flex'}
                   justifyContent={'center'}
                   sx={{
-                    gridColumn: '2',
-                    gridRow: '1 / span 2',
-                    p: 2,
+                    gridColumn: { xs: '1', md: '2' },
+                    gridRow: { xs: '3', md: '1 / span 2' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                 >
                   <Box
@@ -1264,8 +1206,8 @@ export default function RavencoinWallet() {
                       display: 'flex',
                       height: '100%',
                       justifyContent: 'center',
-                      maxHeight: 150,
-                      maxWidth: 150,
+                      maxHeight: { xs: 200, md: 150 },
+                      maxWidth: { xs: 200, md: 150 },
                       p: 0.5,
                     }}
                   >

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import WalletContext from '../../contexts/walletContext';
 import {
+  cropString,
   epochToAgo,
   humanFileSize,
   timeoutDelay,
@@ -2475,26 +2476,46 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
-                          {row?.creatorAddress}
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={row?.creatorAddress}
+                      >
+                        <Box>
+                          {row?.recipient === address ? (
+                            <Box style={{ color: '#05a2e4' }}>
+                              {cropString(row?.creatorAddress)}
+                            </Box>
+                          ) : row?.recipient ? (
+                            cropString(row?.creatorAddress)
+                          ) : (
+                            ''
+                          )}
                         </Box>
-                      ) : (
-                        row?.creatorAddress
-                      )}
+                      </CustomWidthTooltip>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.identifier}
                     </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.size}
+                    <StyledTableCell style={{ width: 'auto' }} align="right">
+                      {row?.size > 0 ? humanFileSize(row?.size, true, 2) : ''}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.recipient === address ? (
-                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
-                      ) : (
-                        row?.recipient
-                      )}
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={row?.recipient}
+                      >
+                        <Box>
+                          {row?.recipient === address ? (
+                            <Box style={{ color: '#05a2e4' }}>
+                              {cropString(row?.recipient)}
+                            </Box>
+                          ) : row?.recipient ? (
+                            cropString(row?.recipient)
+                          ) : (
+                            ''
+                          )}
+                        </Box>
+                      </CustomWidthTooltip>
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.amount}

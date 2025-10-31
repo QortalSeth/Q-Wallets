@@ -164,6 +164,7 @@ export default function QortalWallet() {
   const [assetInfo, setAssetInfo] = useState<any>([]);
   const [pollInfo, setPollInfo] = useState<any>([]);
   const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
+  const [allInfo, setAllInfo] = useState<any>([]);
   const [value, setValue] = useState('One');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -195,6 +196,8 @@ export default function QortalWallet() {
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - rewardshareInfo.length)
       : 0;
+  const emptyRowsAll =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - allInfo.length) : 0;
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
@@ -329,14 +332,18 @@ export default function QortalWallet() {
       return b.timestamp - a.timestamp;
     };
 
+    const toArray = (value: unknown) =>
+      Array.isArray(value) ? value : ([] as any[]);
+
     const fetchPayment = async () => {
       const paymentResponse = await fetch(paymentLink);
       const pendingPaymentResponse = await fetch(pendingPaymentLink);
       const paymentResult = await paymentResponse.json();
       const pendingPaymentResult = await pendingPaymentResponse.json();
-      const allPayment = paymentResult.concat(pendingPaymentResult);
+      const allPayment = [...toArray(paymentResult), ...toArray(pendingPaymentResult)];
       const allPaymentSorted = allPayment.sort(compareFn);
-      return setPaymentInfo(allPaymentSorted);
+      setPaymentInfo(allPaymentSorted);
+      return allPaymentSorted;
     };
 
     const fetchArbitrary = async () => {
@@ -344,9 +351,13 @@ export default function QortalWallet() {
       const pendingArbitraryResponse = await fetch(pendingArbitraryLink);
       const arbitraryResult = await arbitraryResponse.json();
       const pendingArbitraryResult = await pendingArbitraryResponse.json();
-      const allArbitrary = arbitraryResult.concat(pendingArbitraryResult);
+      const allArbitrary = [
+        ...toArray(arbitraryResult),
+        ...toArray(pendingArbitraryResult),
+      ];
       const allArbitrarySorted = allArbitrary.sort(compareFn);
-      return setArbitraryInfo(allArbitrarySorted);
+      setArbitraryInfo(allArbitrarySorted);
+      return allArbitrarySorted;
     };
 
     const fetchAt = async () => {
@@ -354,9 +365,10 @@ export default function QortalWallet() {
       const pendingAtResponse = await fetch(pendingAtLink);
       const atResult = await atResponse.json();
       const pendingAtResult = await pendingAtResponse.json();
-      const allAt = atResult.concat(pendingAtResult);
+      const allAt = [...toArray(atResult), ...toArray(pendingAtResult)];
       const allAtSorted = allAt.sort(compareFn);
-      return setAtInfo(allAtSorted);
+      setAtInfo(allAtSorted);
+      return allAtSorted;
     };
 
     const fetchGroup = async () => {
@@ -364,9 +376,10 @@ export default function QortalWallet() {
       const pendingGroupResponse = await fetch(pendingGroupLink);
       const groupResult = await groupResponse.json();
       const pendingGroupResult = await pendingGroupResponse.json();
-      const allGroup = groupResult.concat(pendingGroupResult);
+      const allGroup = [...toArray(groupResult), ...toArray(pendingGroupResult)];
       const allGroupSorted = allGroup.sort(compareFn);
-      return setGroupInfo(allGroupSorted);
+      setGroupInfo(allGroupSorted);
+      return allGroupSorted;
     };
 
     const fetchName = async () => {
@@ -374,9 +387,10 @@ export default function QortalWallet() {
       const pendingNameResponse = await fetch(pendingNameLink);
       const nameResult = await nameResponse.json();
       const pendingNameResult = await pendingNameResponse.json();
-      const allName = nameResult.concat(pendingNameResult);
+      const allName = [...toArray(nameResult), ...toArray(pendingNameResult)];
       const allNameSorted = allName.sort(compareFn);
-      return setNameInfo(allNameSorted);
+      setNameInfo(allNameSorted);
+      return allNameSorted;
     };
 
     const fetchAsset = async () => {
@@ -384,9 +398,10 @@ export default function QortalWallet() {
       const pendingAssetResponse = await fetch(pendingAssetLink);
       const assetResult = await assetResponse.json();
       const pendingAssetResult = await pendingAssetResponse.json();
-      const allAsset = assetResult.concat(pendingAssetResult);
+      const allAsset = [...toArray(assetResult), ...toArray(pendingAssetResult)];
       const allAssetSorted = allAsset.sort(compareFn);
-      return setAssetInfo(allAssetSorted);
+      setAssetInfo(allAssetSorted);
+      return allAssetSorted;
     };
 
     const fetchPoll = async () => {
@@ -394,9 +409,10 @@ export default function QortalWallet() {
       const pendingPollResponse = await fetch(pendingPollLink);
       const pollResult = await pollResponse.json();
       const pendingPollResult = await pendingPollResponse.json();
-      const allPoll = pollResult.concat(pendingPollResult);
+      const allPoll = [...toArray(pollResult), ...toArray(pendingPollResult)];
       const allPollSorted = allPoll.sort(compareFn);
-      return setPollInfo(allPollSorted);
+      setPollInfo(allPollSorted);
+      return allPollSorted;
     };
 
     const fetchRewardshare = async () => {
@@ -404,27 +420,59 @@ export default function QortalWallet() {
       const pendingRewardshareResponse = await fetch(pendingRewardshareLink);
       const rewardshareResult = await rewardshareResponse.json();
       const pendingRewardshareResult = await pendingRewardshareResponse.json();
-      const allRewardshare = rewardshareResult.concat(pendingRewardshareResult);
+      const allRewardshare = [
+        ...toArray(rewardshareResult),
+        ...toArray(pendingRewardshareResult),
+      ];
       const allRewardshareSorted = allRewardshare.sort(compareFn);
-      return setRewardshareInfo(allRewardshareSorted);
+      setRewardshareInfo(allRewardshareSorted);
+      return allRewardshareSorted;
     };
 
-    const fetchPromises = [
-      fetchPayment(),
-      fetchArbitrary(),
-      fetchAt(),
-      fetchGroup(),
-      fetchName(),
-      fetchAsset(),
-      fetchPoll(),
-      fetchRewardshare(),
-    ];
+    try {
+      const [
+        arbitraries,
+        assets,
+        ats,
+        groups,
+        names,
+        payments,
+        polls,
+        rewardshares,
+      ] = await Promise.all([
+        fetchPayment(),
+        fetchArbitrary(),
+        fetchAt(),
+        fetchGroup(),
+        fetchName(),
+        fetchAsset(),
+        fetchPoll(),
+        fetchRewardshare(),
+      ]);
 
-    const resolveAll = await Promise.all(fetchPromises);
+      const combinedTransactions = [
+        arbitraries,
+        assets,
+        ats,
+        groups,
+        names,
+        payments,
+        polls,
+        rewardshares,
+      ].reduce<any[]>((acc, list) => {
+        if (Array.isArray(list)) {
+          acc.push(...list);
+        }
+        return acc;
+      }, []);
 
-    resolveAll;
-
-    setLoadingRefreshQort(false);
+      setAllInfo(combinedTransactions.sort(compareFn));
+    } catch (error) {
+      console.error('Failed to fetch QORT transactions', error);
+      setAllInfo([]);
+    } finally {
+      setLoadingRefreshQort(false);
+    }
   };
 
   const handleLoadingRefreshQort = async () => {
@@ -2270,6 +2318,304 @@ export default function QortalWallet() {
     }
   };
 
+  const tableAll = () => {
+    if (allInfo && allInfo.length > 0) {
+      return (
+        <TableContainer component={Paper}>
+          <Table
+            stickyHeader
+            sx={{ width: '100%' }}
+            aria-label="payments-table"
+          >
+            <TableHead>
+              <TableRow>
+                <StyledTableCell align="center">
+                  {t('core:status', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:type', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:creator', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {t('core:identifier', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="center">
+                  {t('core:size', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:recipient', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:amount', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:info', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:poll_name', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:fee.fee', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+                <StyledTableCell align="left">
+                  {t('core:time', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </StyledTableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(rowsPerPage > 0
+                ? allInfo.slice(
+                    page * rowsPerPage,
+                    page * rowsPerPage + rowsPerPage
+                  )
+                : allInfo
+              ).map(
+                (
+                  row: {
+                    amount: number;
+                    blockHeight: number;
+                    creatorAddress: string;
+                    size: number;
+                    fee: number;
+                    identifier: string;
+                    poll_name: string;
+                    recipient: string;
+                    rewardSharePublicKey: string;
+                    sharePercent: string | '';
+                    timestamp: number;
+                    type: string;
+                  },
+                  h: Key
+                ) => (
+                  <StyledTableRow key={h}>
+                    <StyledTableCell style={{ width: 'auto' }} align="center">
+                      {(() => {
+                        let confirmations: number =
+                          nodeInfo?.height - row?.blockHeight;
+                        if (confirmations < 3) {
+                          return (
+                            <Tooltip
+                              placement="top"
+                              title={t(
+                                'core:message.generic.confirmations_third',
+                                {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                }
+                              )}
+                            >
+                              <HistoryToggleOff
+                                style={{
+                                  fontSize: '15px',
+                                  color: '#f44336',
+                                  marginTop: '2px',
+                                }}
+                              />
+                            </Tooltip>
+                          );
+                        } else {
+                          return (
+                            <Tooltip
+                              placement="top"
+                              title={t('core:message.generic.confirmations', {
+                                postProcess: 'capitalizeFirstChar',
+                                count: confirmations,
+                              })}
+                            >
+                              <CheckCircleOutline
+                                style={{
+                                  fontSize: '15px',
+                                  color: '#66bb6a',
+                                  marginTop: '2px',
+                                }}
+                              />
+                            </Tooltip>
+                          );
+                        }
+                      })()}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.type}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.creatorAddress === address ? (
+                        <Box style={{ color: '#05a2e4' }}>
+                          {row?.creatorAddress}
+                        </Box>
+                      ) : (
+                        row?.creatorAddress
+                      )}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.identifier}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.size}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.recipient === address ? (
+                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
+                      ) : (
+                        row?.recipient
+                      )}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.amount}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.sharePercent && row?.sharePercent.startsWith('-') ? (
+                        <Box
+                          style={{
+                            color: '#f44336',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {t('core:qortal.removed', {
+                            postProcess: 'capitalizeFirstChar',
+                          })}
+                          <CustomWidthTooltip
+                            placement="top"
+                            title={
+                              row?.recipient === row?.creatorAddress
+                                ? 'Minting Key: ' + row?.rewardSharePublicKey
+                                : ''
+                            }
+                          >
+                            <InfoOutlined
+                              style={{
+                                fontSize: '14px',
+                                color: '#05a2e4',
+                                marginLeft: '8px',
+                              }}
+                            />
+                          </CustomWidthTooltip>
+                        </Box>
+                      ) : (
+                        <Box
+                          style={{
+                            color: '#66bb6a',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {t('core:qortal.created', {
+                            postProcess: 'capitalizeFirstChar',
+                          })}
+                          <CustomWidthTooltip
+                            placement="top"
+                            title={
+                              row?.recipient === row?.creatorAddress
+                                ? 'Minting Key: ' + row?.rewardSharePublicKey
+                                : ''
+                            }
+                          >
+                            <InfoOutlined
+                              style={{
+                                fontSize: '14px',
+                                color: '#05a2e4',
+                                marginLeft: '8px',
+                              }}
+                            />
+                          </CustomWidthTooltip>
+                        </Box>
+                      )}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.poll_name}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.fee}
+                    </StyledTableCell>
+                    <StyledTableCell style={{ width: 'auto' }} align="left">
+                      {row?.timestamp > 0 ? (
+                        <CustomWidthTooltip
+                          placement="top"
+                          title={new Date(row?.timestamp).toLocaleString()}
+                        >
+                          <Box>{epochToAgo(row?.timestamp)}</Box>
+                        </CustomWidthTooltip>
+                      ) : (
+                        ''
+                      )}
+                    </StyledTableCell>
+                  </StyledTableRow>
+                )
+              )}
+              {emptyRowsAll > 0 && (
+                <TableRow style={{ height: 53 * emptyRowsAll }}>
+                  <TableCell colSpan={11} />
+                </TableRow>
+              )}
+            </TableBody>
+            <TableFooter sx={{ width: '100%' }}>
+              <TableRow>
+                <TablePagination
+                  labelRowsPerPage={t('core:rows_per_page', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  colSpan={11}
+                  count={allInfo.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  slotProps={{
+                    select: {
+                      inputProps: {
+                        'aria-label': 'row per page',
+                      },
+                      native: true,
+                    },
+                  }}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  ActionsComponent={TablePaginationActions}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+      );
+    } else {
+      return (
+        <Typography
+          variant="h5"
+          align="center"
+          sx={{ color: 'white', fontWeight: 700 }}
+        >
+          {t('core:message.generic.no_transactions', {
+            postProcess: 'capitalizeFirstChar',
+            transaction_type: 'ALL',
+          })}
+        </Typography>
+      );
+    }
+  };
+
   const qortalTables = () => {
     return (
       <Box sx={{ width: '100%' }}>
@@ -2313,6 +2659,10 @@ export default function QortalWallet() {
                 label={<span style={{ fontSize: '14px' }}>REWARDSHARE</span>}
                 value="Eight"
               />
+              <Tab
+                label={<span style={{ fontSize: '14px' }}>ALL</span>}
+                value="Nine"
+              />
             </TabList>
           </Box>
           <TabPanel value="One">{tablePayment()}</TabPanel>
@@ -2323,6 +2673,7 @@ export default function QortalWallet() {
           <TabPanel value="Six">{tableAsset()}</TabPanel>
           <TabPanel value="Seven">{tablePoll()}</TabPanel>
           <TabPanel value="Eight">{tableRewardshare()}</TabPanel>
+          <TabPanel value="Nine">{tableAll()}</TabPanel>
         </TabContext>
       </Box>
     );
@@ -2333,19 +2684,19 @@ export default function QortalWallet() {
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
         <Box
           style={{
-            width: '100%',
             display: 'flex',
             justifyContent: 'center',
+            width: '100%',
           }}
         >
           <CircularProgress />
         </Box>
         <Box
           style={{
-            width: '100%',
             display: 'flex',
             justifyContent: 'center',
             marginTop: '20px',
+            width: '100%',
           }}
         >
           <Typography

@@ -341,7 +341,10 @@ export default function QortalWallet() {
       const pendingPaymentResponse = await fetch(pendingPaymentLink);
       const paymentResult = await paymentResponse.json();
       const pendingPaymentResult = await pendingPaymentResponse.json();
-      const allPayment = [...toArray(paymentResult), ...toArray(pendingPaymentResult)];
+      const allPayment = [
+        ...toArray(paymentResult),
+        ...toArray(pendingPaymentResult),
+      ];
       const allPaymentSorted = allPayment.sort(compareFn);
       setPaymentInfo(allPaymentSorted);
       return allPaymentSorted;
@@ -377,7 +380,10 @@ export default function QortalWallet() {
       const pendingGroupResponse = await fetch(pendingGroupLink);
       const groupResult = await groupResponse.json();
       const pendingGroupResult = await pendingGroupResponse.json();
-      const allGroup = [...toArray(groupResult), ...toArray(pendingGroupResult)];
+      const allGroup = [
+        ...toArray(groupResult),
+        ...toArray(pendingGroupResult),
+      ];
       const allGroupSorted = allGroup.sort(compareFn);
       setGroupInfo(allGroupSorted);
       return allGroupSorted;
@@ -399,7 +405,10 @@ export default function QortalWallet() {
       const pendingAssetResponse = await fetch(pendingAssetLink);
       const assetResult = await assetResponse.json();
       const pendingAssetResult = await pendingAssetResponse.json();
-      const allAsset = [...toArray(assetResult), ...toArray(pendingAssetResult)];
+      const allAsset = [
+        ...toArray(assetResult),
+        ...toArray(pendingAssetResult),
+      ];
       const allAssetSorted = allAsset.sort(compareFn);
       setAssetInfo(allAssetSorted);
       return allAssetSorted;
@@ -2322,10 +2331,13 @@ export default function QortalWallet() {
   const tableAll = () => {
     if (allInfo && allInfo.length > 0) {
       return (
-        <TableContainer component={Paper}>
+        <TableContainer
+          component={Paper}
+          sx={{ width: '100%', overflowX: 'auto' }}
+        >
           <Table
             stickyHeader
-            sx={{ width: '100%' }}
+            sx={{ width: '100%', tableLayout: 'fixed' }}
             aria-label="all-table"
           >
             <TableHead>
@@ -2488,7 +2500,8 @@ export default function QortalWallet() {
                       {row?.amount}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.sharePercent && row?.sharePercent.startsWith('-') ? (
+                      {row?.sharePercent &&
+                      row?.sharePercent.startsWith('-') ? (
                         <Box
                           style={{
                             color: '#f44336',
@@ -3088,11 +3101,7 @@ export default function QortalWallet() {
                     p: { xs: 1.5, md: 2 },
                   }}
                 >
-                  <Box
-                    alignItems={'center'}
-                    display={'flex'}
-                    gap={1}
-                  >
+                  <Box alignItems={'center'} display={'flex'} gap={1}>
                     <Typography
                       variant="subtitle1"
                       sx={{ color: 'primary.main', fontWeight: 700 }}

@@ -82,6 +82,19 @@
       "waiting_confirmation": "承認待ち...",
       "welcome": "<brand>Qortal Wallets</brand> へようこそ"
     },
+    "group_actions": {
+      "add_group_admin": "新しい管理者: {{ member }} ID: {{ id }}",
+      "cancel_group_ban": "禁止を解除: {{ member }} ID: {{ id }}",
+      "reference": "参照: {{ reference }}",
+      "create_group": "グループ名: {{ groupName }} ID: {{ id }}",
+      "group_ban": "禁止されたユーザー: {{ offender }} ID: {{ id }}",
+      "group_invite": "招待者: <blue>{{invitee}}</blue> ID: {{id}}",
+      "group_kick": "追放されたユーザー: {{ member }} ID: {{ id }}",
+      "join_group": "グループに参加 ID: {{ id }}",
+      "leave_group": "グループを退出 ID: {{ id }}",
+      "remove_group_admin": "管理者を削除: {{ admin }} ID: {{ id }}",
+      "update_group": "新しい説明: {{ newDescription }} ID: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "無効な BTC アドレス",
       "digibyte_address_invalid": "無効な DGB アドレス",

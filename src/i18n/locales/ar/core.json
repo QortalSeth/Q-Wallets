@@ -81,6 +81,19 @@
       "unconfirmed_translaction": "غير مؤكدة",
       "waiting_confirmation": "في انتظار التأكيد..."
     },
+    "group_actions": {
+      "add_group_admin": "مشرف جديد: {{ member }} المعرف: {{ id }}",
+      "cancel_group_ban": "تم إلغاء الحظر عن: {{ member }} المعرف: {{ id }}",
+      "reference": "مرجع: {{ reference }}",
+      "create_group": "اسم المجموعة: {{ groupName }} المعرف: {{ id }}",
+      "group_ban": "تم حظر: {{ offender }} المعرف: {{ id }}",
+      "group_invite": "المدعو: <blue>{{invitee}}</blue> المعرف: {{id}}",
+      "group_kick": "تم طرد: {{ member }} المعرف: {{ id }}",
+      "join_group": "انضم إلى المجموعة بالمعرف: {{ id }}",
+      "leave_group": "غادر المجموعة بالمعرف: {{ id }}",
+      "remove_group_admin": "تمت إزالة المشرف: {{ admin }} المعرف: {{ id }}",
+      "update_group": "الوصف الجديد: {{ newDescription }} المعرف: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "عنوان BTC غير صالح",
       "digibyte_address_invalid": "عنوان DGB غير صالح",

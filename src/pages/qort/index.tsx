@@ -10,6 +10,7 @@ import {
 import WalletContext from '../../contexts/walletContext';
 import {
   cropString,
+  strToNumberWithFixedDecimals,
   epochToAgo,
   humanFileSize,
   timeoutDelay,
@@ -61,7 +62,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   CustomWidthTooltip,
   DialogGeneral,
@@ -572,198 +573,194 @@ export default function QortalWallet() {
   const tablePayment = () => {
     if (paymentInfo && paymentInfo.length > 0) {
       return (
-        <TableContainer component={Paper}>
-          <Table
-            stickyHeader
-            sx={{ width: '100%' }}
-            aria-label="payments-table"
-          >
-            <TableHead>
-              <TableRow>
-                <StyledTableCell align="center">
-                  {t('core:status', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {t('core:type', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:creator', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:recipient', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:amount', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:fee.fee', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:time', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {(rowsPerPage > 0
-                ? paymentInfo.slice(
-                    page * rowsPerPage,
-                    page * rowsPerPage + rowsPerPage
-                  )
-                : paymentInfo
-              ).map(
-                (
-                  row: {
-                    amount: number;
-                    approvalStatus: string;
-                    blockHeight: number;
-                    creatorAddress: string;
-                    fee: number;
-                    recipient: string;
-                    reference: string;
-                    senderPublicKey: string;
-                    signature: string;
-                    timestamp: number;
-                    txGroupId: number;
-                    type: string;
-                  },
-                  a: Key
-                ) => (
-                  <StyledTableRow key={a}>
-                    <StyledTableCell style={{ width: 'auto' }} align="center">
-                      {(() => {
-                        let confirmations: number =
-                          nodeInfo?.height - row?.blockHeight;
-                        if (confirmations < 3) {
-                          return (
-                            <Tooltip
-                              placement="top"
-                              title={t(
-                                'core:message.generic.confirmations_third',
-                                {
-                                  postProcess: 'capitalizeFirstChar',
-                                  count: confirmations,
-                                }
-                              )}
-                            >
-                              <HistoryToggleOff
-                                style={{
-                                  fontSize: '15px',
-                                  color: '#f44336',
-                                  marginTop: '2px',
-                                }}
-                              />
-                            </Tooltip>
-                          );
-                        } else {
+        <>
+          <TableContainer component={Paper}>
+            <Table
+              stickyHeader
+              sx={{ width: '100%' }}
+              aria-label="payments-table"
+            >
+              <TableHead>
+                <TableRow>
+                  <StyledTableCell align="center">
+                    {t('core:status', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {t('core:type', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:creator', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:recipient', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:amount', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:fee.fee', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:time', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(rowsPerPage > 0
+                  ? paymentInfo.slice(
+                      page * rowsPerPage,
+                      page * rowsPerPage + rowsPerPage
+                    )
+                  : paymentInfo
+                ).map(
+                  (
+                    row: {
+                      amount: number;
+                      approvalStatus: string;
+                      blockHeight: number;
+                      creatorAddress: string;
+                      fee: number;
+                      recipient: string;
+                      reference: string;
+                      senderPublicKey: string;
+                      signature: string;
+                      timestamp: number;
+                      txGroupId: number;
+                      type: string;
+                    },
+                    a: Key
+                  ) => (
+                    <StyledTableRow key={a}>
+                      <StyledTableCell style={{ width: 'auto' }} align="center">
+                        {(() => {
                           let confirmations: number =
                             nodeInfo?.height - row?.blockHeight;
-                          return (
-                            <Tooltip
-                              placement="top"
-                              title={t('core:message.generic.confirmations', {
-                                postProcess: 'capitalizeFirstChar',
-                                count: confirmations,
-                              })}
-                            >
-                              <CheckCircleOutline
-                                style={{
-                                  fontSize: '15px',
-                                  color: '#66bb6a',
-                                  marginTop: '2px',
-                                }}
-                              />
-                            </Tooltip>
-                          );
-                        }
-                      })()}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.type}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
-                          {row?.creatorAddress}
-                        </Box>
-                      ) : (
-                        row?.creatorAddress
-                      )}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.recipient === address ? (
-                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
-                      ) : (
-                        row?.recipient
-                      )}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.recipient === address ? (
-                        <Box style={{ color: '#66bb6a' }}>+ {row?.amount}</Box>
-                      ) : (
-                        <Box style={{ color: '#f44336' }}>- {row?.amount}</Box>
-                      )}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.fee}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <CustomWidthTooltip
-                        placement="top"
-                        title={new Date(row?.timestamp).toLocaleString()}
-                      >
-                        <Box>{epochToAgo(row?.timestamp)}</Box>
-                      </CustomWidthTooltip>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                )
-              )}
-              {emptyRowsPayment > 0 && (
-                <TableRow style={{ height: 53 * emptyRowsPayment }}>
-                  <TableCell colSpan={7} />
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter sx={{ width: '100%' }}>
-              <TableRow>
-                <TablePagination
-                  labelRowsPerPage={t('core:rows_per_page', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                  colSpan={7}
-                  count={paymentInfo.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        'aria-label': 'rows per page',
-                      },
-                      native: true,
-                    },
-                  }}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  ActionsComponent={TablePaginationActions}
-                />
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
+                          if (confirmations < 3) {
+                            return (
+                              <Tooltip
+                                placement="top"
+                                title={t(
+                                  'core:message.generic.confirmations_third',
+                                  {
+                                    postProcess: 'capitalizeFirstChar',
+                                    count: confirmations,
+                                  }
+                                )}
+                              >
+                                <HistoryToggleOff
+                                  style={{
+                                    fontSize: '15px',
+                                    color: '#f44336',
+                                    marginTop: '2px',
+                                  }}
+                                />
+                              </Tooltip>
+                            );
+                          } else {
+                            let confirmations: number =
+                              nodeInfo?.height - row?.blockHeight;
+                            return (
+                              <Tooltip
+                                placement="top"
+                                title={t('core:message.generic.confirmations', {
+                                  postProcess: 'capitalizeFirstChar',
+                                  count: confirmations,
+                                })}
+                              >
+                                <CheckCircleOutline
+                                  style={{
+                                    fontSize: '15px',
+                                    color: '#66bb6a',
+                                    marginTop: '2px',
+                                  }}
+                                />
+                              </Tooltip>
+                            );
+                          }
+                        })()}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.type}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.creatorAddress === address ? (
+                          <Box style={{ color: '#05a2e4' }}>
+                            {row?.creatorAddress}
+                          </Box>
+                        ) : (
+                          row?.creatorAddress
+                        )}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.recipient === address ? (
+                          <Box style={{ color: '#05a2e4' }}>
+                            {row?.recipient}
+                          </Box>
+                        ) : (
+                          row?.recipient
+                        )}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.recipient === address ? (
+                          <Box style={{ color: '#66bb6a' }}>
+                            + {row?.amount}
+                          </Box>
+                        ) : (
+                          <Box style={{ color: '#f44336' }}>
+                            - {row?.amount}
+                          </Box>
+                        )}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.fee}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        <CustomWidthTooltip
+                          placement="top"
+                          title={new Date(row?.timestamp).toLocaleString()}
+                        >
+                          <Box>{epochToAgo(row?.timestamp)}</Box>
+                        </CustomWidthTooltip>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  )
+                )}
+                {emptyRowsPayment > 0 && (
+                  <TableRow style={{ height: 53 * emptyRowsPayment }}>
+                    <TableCell colSpan={7} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component="div" // important when used outside <Table>
+            labelRowsPerPage={t('core:rows_per_page', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            count={paymentInfo.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={TablePaginationActions}
+          />
+        </>
       );
     } else {
       return (
@@ -1321,57 +1318,90 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.type === 'CREATE_GROUP') {
-                          return (
-                            'Group name: ' +
-                            row?.groupName +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.create_group',
+                            {
+                              groupName: row?.groupName,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'UPDATE_GROUP') {
-                          return (
-                            'New description: ' +
-                            row?.newDescription +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.update_group',
+                            {
+                              newDescription: row?.newDescription,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'ADD_GROUP_ADMIN') {
-                          return (
-                            'New admin: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.add_group_admin',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'REMOVE_GROUP_ADMIN') {
-                          return (
-                            'Removed admin: ' +
-                            row?.admin +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.remove_group_admin',
+                            {
+                              admn: row?.admin,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_BAN') {
-                          return (
-                            'Banned: ' + row?.offender + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.group_ban',
+                            {
+                              offender: row?.offender,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'CANCEL_GROUP_BAN') {
-                          return (
-                            'Unbanned: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.cancel_group_ban',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_KICK') {
-                          return (
-                            'Kicked: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.group_kick',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_INVITE') {
                           if (row?.invitee === address) {
                             return (
                               <Box>
-                                Invitee:
-                                <span
-                                  style={{
-                                    color: '#05a2e4',
-                                    marginLeft: '5px',
-                                    marginRight: '5px',
+                                <Trans
+                                  i18nKey="group_invite"
+                                  values={{
+                                    invitee: row?.invitee,
+                                    groupId: row?.groupId,
                                   }}
-                                >
-                                  {row?.invitee}
-                                </span>
-                                ID: {row?.groupId}
+                                  components={{
+                                    blue: (
+                                      <span
+                                        style={{
+                                          color: '#05a2e4',
+                                          marginLeft: '5px',
+                                          marginRight: '5px',
+                                        }}
+                                      />
+                                    ),
+                                  }}
+                                />
                               </Box>
                             );
                           } else {
@@ -1383,13 +1413,37 @@ export default function QortalWallet() {
                             );
                           }
                         } else if (row?.type === 'CANCEL_GROUP_INVITE') {
-                          return 'REF: ' + row?.reference;
+                          return t(
+                            'core:message.group_actions.reference',
+                            {
+                              reference: row?.reference,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'JOIN_GROUP') {
-                          return 'Joined Group ID: ' + row?.groupId;
+                          return t(
+                            'core:message.group_actions.join_group',
+                            {
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'LEAVE_GROUP') {
-                          return 'Leaved Group ID: ' + row?.groupId;
+                          return t(
+                            'core:message.group_actions.leave_group',
+                            {
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'GROUP_APPROVAL') {
-                          return 'REF: ' + row?.reference;
+                          return t(
+                            'core:message.group_actions.reference',
+                            {
+                              reference: row?.reference,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'SET_GROUP') {
                           return '';
                         }
@@ -1605,7 +1659,7 @@ export default function QortalWallet() {
                           });
                         } else if (row?.type === 'BUY_NAME') {
                           return t('core:qortal.seller', {
-                            selle: row?.seller,
+                            seller: row?.seller,
                             amount: row?.amount,
                             postProcess: 'capitalizeFirstChar',
                           });
@@ -2332,318 +2386,339 @@ export default function QortalWallet() {
   const tableAll = () => {
     if (allInfo && allInfo.length > 0) {
       return (
-        <TableContainer
-          component={Paper}
-          sx={{ width: '100%', overflowX: 'auto' }}
-        >
-          <Table
-            stickyHeader
-            sx={{ width: '100%', tableLayout: 'fixed' }}
-            aria-label="all-table"
-          >
-            <TableHead>
-              <TableRow>
-                <StyledTableCell align="center">
-                  {t('core:status', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:type', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:creator', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {t('core:identifier', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="center">
-                  {t('core:size', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:recipient', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:amount', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:info', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:poll_name', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:fee.fee', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-                <StyledTableCell align="left">
-                  {t('core:time', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {(rowsPerPage > 0
-                ? allInfo.slice(
-                    page * rowsPerPage,
-                    page * rowsPerPage + rowsPerPage
-                  )
-                : allInfo
-              ).map(
-                (
-                  row: {
-                    amount: number;
-                    blockHeight: number;
-                    creatorAddress: string;
-                    size: number;
-                    fee: number;
-                    identifier: string;
-                    poll_name: string;
-                    recipient: string;
-                    rewardSharePublicKey: string;
-                    sharePercent: string | '';
-                    timestamp: number;
-                    type: string;
-                  },
-                  h: Key
-                ) => (
-                  <StyledTableRow key={h}>
-                    <StyledTableCell style={{ width: 'auto' }} align="center">
-                      {(() => {
-                        let confirmations: number =
-                          nodeInfo?.height - row?.blockHeight;
-                        if (confirmations < 3) {
-                          return (
-                            <Tooltip
-                              placement="top"
-                              title={t(
-                                'core:message.generic.confirmations_third',
-                                {
+        <>
+          <TableContainer component={Paper}>
+            <Table stickyHeader sx={{ width: '100%' }} aria-label="all-table">
+              <TableHead>
+                <TableRow>
+                  <StyledTableCell align="center">
+                    {t('core:status', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:type', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:creator', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {t('core:identifier', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="center">
+                    {t('core:size', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:recipient', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:amount', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:info', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:poll_name', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:fee.fee', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                  <StyledTableCell align="left">
+                    {t('core:time', {
+                      postProcess: 'capitalizeFirstChar',
+                    })}
+                  </StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(rowsPerPage > 0
+                  ? allInfo.slice(
+                      page * rowsPerPage,
+                      page * rowsPerPage + rowsPerPage
+                    )
+                  : allInfo
+                ).map(
+                  (
+                    row: {
+                      amount: number;
+                      blockHeight: number;
+                      creatorAddress: string;
+                      fee: number;
+                      identifier: string;
+                      name: string;
+                      newName: string;
+                      pollName: string;
+                      recipient: string;
+                      rewardSharePublicKey: string;
+                      seller: string;
+                      sharePercent: string;
+                      size: number;
+                      timestamp: number;
+                      type: string;
+                    },
+                    h: Key
+                  ) => (
+                    <StyledTableRow key={h}>
+                      <StyledTableCell style={{ width: 'auto' }} align="center">
+                        {(() => {
+                          let confirmations: number =
+                            nodeInfo?.height - row?.blockHeight;
+                          if (confirmations < 3) {
+                            return (
+                              <Tooltip
+                                placement="top"
+                                title={t(
+                                  'core:message.generic.confirmations_third',
+                                  {
+                                    postProcess: 'capitalizeFirstChar',
+                                    count: confirmations,
+                                  }
+                                )}
+                              >
+                                <HistoryToggleOff
+                                  style={{
+                                    fontSize: '15px',
+                                    color: '#f44336',
+                                    marginTop: '2px',
+                                  }}
+                                />
+                              </Tooltip>
+                            );
+                          } else {
+                            return (
+                              <Tooltip
+                                placement="top"
+                                title={t('core:message.generic.confirmations', {
                                   postProcess: 'capitalizeFirstChar',
                                   count: confirmations,
-                                }
-                              )}
-                            >
-                              <HistoryToggleOff
-                                style={{
-                                  fontSize: '15px',
-                                  color: '#f44336',
-                                  marginTop: '2px',
-                                }}
-                              />
-                            </Tooltip>
-                          );
-                        } else {
-                          return (
-                            <Tooltip
-                              placement="top"
-                              title={t('core:message.generic.confirmations', {
-                                postProcess: 'capitalizeFirstChar',
-                                count: confirmations,
-                              })}
-                            >
-                              <CheckCircleOutline
-                                style={{
-                                  fontSize: '15px',
-                                  color: '#66bb6a',
-                                  marginTop: '2px',
-                                }}
-                              />
-                            </Tooltip>
-                          );
-                        }
-                      })()}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                       <CustomWidthTooltip
-                        placement="top"
-                        title={row?.type}
-                      >
-                        <Box>{row?.type ? cropString(row?.type): ''}</Box>
-                      </CustomWidthTooltip>
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <CustomWidthTooltip
-                        placement="top"
-                        title={row?.creatorAddress}
-                      >
-                        <Box>
-                          {row?.recipient === address ? (
-                            <Box style={{ color: '#05a2e4' }}>
-                              {cropString(row?.creatorAddress)}
-                            </Box>
-                          ) : row?.recipient ? (
-                            cropString(row?.creatorAddress)
-                          ) : (
-                            ''
-                          )}
-                        </Box>
-                      </CustomWidthTooltip>
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <CustomWidthTooltip
-                        placement="top"
-                        title={row?.identifier}
-                      >
-                        <Box>{row?.identifier ? cropString(row?.identifier): ''}</Box>
-                      </CustomWidthTooltip>
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="right">
-                      {row?.size > 0 ? humanFileSize(row?.size, true, 2) : ''}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <CustomWidthTooltip
-                        placement="top"
-                        title={row?.recipient}
-                      >
-                        <Box>
-                          {row?.recipient === address ? (
-                            <Box style={{ color: '#05a2e4' }}>
-                              {cropString(row?.recipient)}
-                            </Box>
-                          ) : row?.recipient ? (
-                            cropString(row?.recipient)
-                          ) : (
-                            ''
-                          )}
-                        </Box>
-                      </CustomWidthTooltip>
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.amount}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.sharePercent &&
-                      row?.sharePercent.startsWith('-') ? (
-                        <Box
-                          style={{
-                            color: '#f44336',
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {t('core:qortal.removed', {
-                            postProcess: 'capitalizeFirstChar',
-                          })}
-                          <CustomWidthTooltip
-                            placement="top"
-                            title={
-                              row?.recipient === row?.creatorAddress
-                                ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : ''
-                            }
-                          >
-                            <InfoOutlined
-                              style={{
-                                fontSize: '14px',
-                                color: '#05a2e4',
-                                marginLeft: '8px',
-                              }}
-                            />
-                          </CustomWidthTooltip>
-                        </Box>
-                      ) : row?.sharePercent && (
-                        <Box
-                          style={{
-                            color: '#66bb6a',
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {t('core:qortal.created', {
-                            postProcess: 'capitalizeFirstChar',
-                          })}
-                          <CustomWidthTooltip
-                            placement="top"
-                            title={
-                              row?.recipient === row?.creatorAddress
-                                ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : ''
-                            }
-                          >
-                            <InfoOutlined
-                              style={{
-                                fontSize: '14px',
-                                color: '#05a2e4',
-                                marginLeft: '8px',
-                              }}
-                            />
-                          </CustomWidthTooltip>
-                        </Box>
-                      )}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.poll_name}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.fee}
-                    </StyledTableCell>
-                    <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.timestamp > 0 ? (
+                                })}
+                              >
+                                <CheckCircleOutline
+                                  style={{
+                                    fontSize: '15px',
+                                    color: '#66bb6a',
+                                    marginTop: '2px',
+                                  }}
+                                />
+                              </Tooltip>
+                            );
+                          }
+                        })()}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.type}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
                         <CustomWidthTooltip
                           placement="top"
-                          title={new Date(row?.timestamp).toLocaleString()}
+                          title={row?.creatorAddress}
                         >
-                          <Box>{epochToAgo(row?.timestamp)}</Box>
+                          <Box>
+                            {row?.recipient === address ? (
+                              <Box style={{ color: '#05a2e4' }}>
+                                {cropString(row?.creatorAddress)}
+                              </Box>
+                            ) : row?.recipient ? (
+                              cropString(row?.creatorAddress)
+                            ) : (
+                              ''
+                            )}
+                          </Box>
                         </CustomWidthTooltip>
-                      ) : (
-                        ''
-                      )}
-                    </StyledTableCell>
-                  </StyledTableRow>
-                )
-              )}
-              {emptyRowsAll > 0 && (
-                <TableRow style={{ height: 53 * emptyRowsAll }}>
-                  <TableCell colSpan={11} />
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter sx={{ width: '100%' }}>
-              <TableRow>
-                <TablePagination
-                  labelRowsPerPage={t('core:rows_per_page', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                  colSpan={11}
-                  count={allInfo.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        'aria-label': 'row per page',
-                      },
-                      native: true,
-                    },
-                  }}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  ActionsComponent={TablePaginationActions}
-                />
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        <CustomWidthTooltip
+                          placement="top"
+                          title={row?.identifier}
+                        >
+                          <Box>
+                            {row?.identifier ? cropString(row?.identifier) : ''}
+                          </Box>
+                        </CustomWidthTooltip>
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="right">
+                        {row?.size > 0 ? humanFileSize(row?.size, true, 2) : ''}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        <CustomWidthTooltip
+                          placement="top"
+                          title={row?.recipient}
+                        >
+                          <Box>
+                            {row?.recipient === address ? (
+                              <Box style={{ color: '#05a2e4' }}>
+                                {cropString(row?.recipient)}
+                              </Box>
+                            ) : row?.recipient ? (
+                              cropString(row?.recipient)
+                            ) : (
+                              ''
+                            )}
+                          </Box>
+                        </CustomWidthTooltip>
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.amount}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {(() => {
+                          if (row?.type === 'REGISTER_NAME') {
+                            return t('core:qortal.registered_name', {
+                              name: row?.name,
+                              postProcess: 'capitalizeFirstChar',
+                            });
+                          } else if (row?.type === 'UPDATE_NAME') {
+                            return t('core:qortal.old_new_name', {
+                              oldName: row?.name,
+                              newName: row?.newName,
+                              postProcess: 'capitalizeFirstChar',
+                            });
+                          } else if (row?.type === 'SELL_NAME') {
+                            return t('core:qortal.name_to_sell', {
+                              name: row?.name,
+                              amount: row?.amount,
+                              postProcess: 'capitalizeFirstChar',
+                            });
+                          } else if (row?.type === 'CANCEL_SELL_NAME') {
+                            return t('core:qortal.cancelled_name_sale', {
+                              name: row?.name,
+                              postProcess: 'capitalizeFirstChar',
+                            });
+                          } else if (row?.type === 'BUY_NAME') {
+                            return t('core:qortal.seller', {
+                              seller: row?.seller,
+                              amount: row?.amount,
+                              postProcess: 'capitalizeFirstChar',
+                            });
+                          } else if (row?.type === 'REWARD_SHARE') {
+                            {
+                              row?.sharePercent &&
+                              row?.sharePercent.startsWith('-') ? (
+                                <Box
+                                  style={{
+                                    color: '#f44336',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  {t('core:qortal.removed', {
+                                    postProcess: 'capitalizeFirstChar',
+                                  })}
+                                  <CustomWidthTooltip
+                                    placement="top"
+                                    title={
+                                      row?.recipient === row?.creatorAddress
+                                        ? 'Minting Key: ' +
+                                          row?.rewardSharePublicKey
+                                        : ''
+                                    }
+                                  >
+                                    <InfoOutlined
+                                      style={{
+                                        fontSize: '14px',
+                                        color: '#05a2e4',
+                                        marginLeft: '8px',
+                                      }}
+                                    />
+                                  </CustomWidthTooltip>
+                                </Box>
+                              ) : (
+                                row?.sharePercent && (
+                                  <Box
+                                    style={{
+                                      color: '#66bb6a',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                    }}
+                                  >
+                                    {t('core:qortal.created', {
+                                      postProcess: 'capitalizeFirstChar',
+                                    })}
+                                    <CustomWidthTooltip
+                                      placement="top"
+                                      title={
+                                        row?.recipient === row?.creatorAddress
+                                          ? 'Minting Key: ' +
+                                            row?.rewardSharePublicKey
+                                          : ''
+                                      }
+                                    >
+                                      <InfoOutlined
+                                        style={{
+                                          fontSize: '14px',
+                                          color: '#05a2e4',
+                                          marginLeft: '8px',
+                                        }}
+                                      />
+                                    </CustomWidthTooltip>
+                                  </Box>
+                                )
+                              );
+                            }
+                          }
+                        })()}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.pollName}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.fee}
+                      </StyledTableCell>
+                      <StyledTableCell style={{ width: 'auto' }} align="left">
+                        {row?.timestamp > 0 ? (
+                          <CustomWidthTooltip
+                            placement="top"
+                            title={new Date(row?.timestamp).toLocaleString()}
+                          >
+                            <Box>{epochToAgo(row?.timestamp)}</Box>
+                          </CustomWidthTooltip>
+                        ) : (
+                          ''
+                        )}
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  )
+                )}
+                {emptyRowsAll > 0 && (
+                  <TableRow style={{ height: 53 * emptyRowsAll }}>
+                    <TableCell colSpan={11} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component="div"
+            labelRowsPerPage={t('core:rows_per_page', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            count={allInfo.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={TablePaginationActions}
+          />
+        </>
       );
     } else {
       return (

@@ -81,6 +81,19 @@
       "unconfirmed_translaction": "Kinnitamata",
       "waiting_confirmation": "Ootab kinnitust..."
     },
+    "group_actions": {
+      "add_group_admin": "uus administraator: {{ member }} ID: {{ id }}",
+      "cancel_group_ban": "keeld tühistatud: {{ member }} ID: {{ id }}",
+      "reference": "VIIDE: {{ reference }}",
+      "create_group": "grupi nimi: {{ groupName }} ID: {{ id }}",
+      "group_ban": "keelatud: {{ offender }} ID: {{ id }}",
+      "group_invite": "kutsutu: <blue>{{invitee}}</blue> ID: {{id}}",
+      "group_kick": "välja visatud: {{ member }} ID: {{ id }}",
+      "join_group": "liitus grupiga ID: {{ id }}",
+      "leave_group": "lahkus grupist ID: {{ id }}",
+      "remove_group_admin": "administraator eemaldatud: {{ admin }} ID: {{ id }}",
+      "update_group": "uus kirjeldus: {{ newDescription }} ID: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "Kehtetu BTC-aadress",
       "digibyte_address_invalid": "Kehtetu DGB-aadress",

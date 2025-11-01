@@ -81,6 +81,19 @@
       "unconfirmed_translaction": "Unconfirmed",
       "waiting_confirmation": "Waiting for confirmation..."
     },
+    "group_actions": {
+      "add_group_admin": "new admin: {{ member }} ID: {{ id }}",
+      "cancel_group_ban": "unbanned: {{ member }} ID: {{ id }}",
+      "reference": "REF: {{ reference }}",
+      "create_group": "group name: {{ groupName }} ID: {{ id }}",
+      "group_ban": "banned: {{ offender }} ID: {{ id }}",
+      "group_invite": "invitee: <blue>{{invitee}}</blue> ID: {{id}}",
+      "group_kick": "kicked: {{ member }} ID: {{ id }}",
+      "join_group": "joined Group ID: {{ id }}",
+      "leave_group": "leaved Group ID: {{ id }}",
+      "remove_group_admin": "removed admin: {{ admin }} ID: {{ id }}",
+      "update_group": "new description: {{ newDescription }} ID: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "Invalid BTC address",
       "digibyte_address_invalid": "Invalid DGB address",

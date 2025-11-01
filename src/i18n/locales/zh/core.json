@@ -82,6 +82,19 @@
       "waiting_confirmation": "等待确认...",
       "welcome": "欢迎使用 <brand>Qortal Wallets</brand>"
     },
+    "group_actions": {
+      "add_group_admin": "新管理员：{{ member }} ID：{{ id }}",
+      "cancel_group_ban": "已解除封禁：{{ member }} ID：{{ id }}",
+      "reference": "参考：{{ reference }}",
+      "create_group": "群组名称：{{ groupName }} ID：{{ id }}",
+      "group_ban": "已封禁：{{ offender }} ID：{{ id }}",
+      "group_invite": "受邀者：<blue>{{invitee}}</blue> ID：{{id}}",
+      "group_kick": "已踢出：{{ member }} ID：{{ id }}",
+      "join_group": "加入群组 ID：{{ id }}",
+      "leave_group": "离开群组 ID：{{ id }}",
+      "remove_group_admin": "管理员已移除：{{ admin }} ID：{{ id }}",
+      "update_group": "新描述：{{ newDescription }} ID：{{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "无效的 BTC 地址",
       "digibyte_address_invalid": "无效的 DGB 地址",

@@ -82,6 +82,19 @@
       "waiting_confirmation": "Ожидание подтверждения...",
       "welcome": "Добро пожаловать в <brand>Qortal Wallets</brand>"
     },
+    "group_actions": {
+      "add_group_admin": "новый администратор: {{ member }} ID: {{ id }}",
+      "cancel_group_ban": "разблокирован: {{ member }} ID: {{ id }}",
+      "reference": "ССЫЛКА: {{ reference }}",
+      "create_group": "название группы: {{ groupName }} ID: {{ id }}",
+      "group_ban": "заблокирован: {{ offender }} ID: {{ id }}",
+      "group_invite": "приглашённый: <blue>{{invitee}}</blue> ID: {{id}}",
+      "group_kick": "исключён: {{ member }} ID: {{ id }}",
+      "join_group": "вступил в группу ID: {{ id }}",
+      "leave_group": "вышел из группы ID: {{ id }}",
+      "remove_group_admin": "администратор удалён: {{ admin }} ID: {{ id }}",
+      "update_group": "новое описание: {{ newDescription }} ID: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "Недействительный адрес BTC",
       "digibyte_address_invalid": "Недействительный адрес DGB",

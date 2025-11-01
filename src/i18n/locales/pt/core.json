@@ -82,6 +82,19 @@
       "waiting_confirmation": "Aguardando confirmação...",
       "welcome": "Bem-vindo ao <brand>Qortal Wallets</brand>"
     },
+    "group_actions": {
+      "add_group_admin": "novo administrador: {{ member }} ID: {{ id }}",
+      "cancel_group_ban": "banimento cancelado: {{ member }} ID: {{ id }}",
+      "reference": "REF: {{ reference }}",
+      "create_group": "nome do grupo: {{ groupName }} ID: {{ id }}",
+      "group_ban": "banido: {{ offender }} ID: {{ id }}",
+      "group_invite": "convidado: <blue>{{invitee}}</blue> ID: {{id}}",
+      "group_kick": "expulso: {{ member }} ID: {{ id }}",
+      "join_group": "entrou no grupo ID: {{ id }}",
+      "leave_group": "saiu do grupo ID: {{ id }}",
+      "remove_group_admin": "administrador removido: {{ admin }} ID: {{ id }}",
+      "update_group": "nova descrição: {{ newDescription }} ID: {{ id }}"
+    },
     "error": {
       "bitcoin_address_invalid": "Endereço BTC inválido",
       "digibyte_address_invalid": "Endereço DGB inválido",

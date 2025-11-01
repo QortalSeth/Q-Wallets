@@ -62,7 +62,7 @@ import {
   Send,
 } from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   CustomWidthTooltip,
   DialogGeneral,
@@ -1318,57 +1318,90 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.type === 'CREATE_GROUP') {
-                          return (
-                            'Group name: ' +
-                            row?.groupName +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.create_group',
+                            {
+                              groupName: row?.groupName,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'UPDATE_GROUP') {
-                          return (
-                            'New description: ' +
-                            row?.newDescription +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.update_group',
+                            {
+                              newDescription: row?.newDescription,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'ADD_GROUP_ADMIN') {
-                          return (
-                            'New admin: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.add_group_admin',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'REMOVE_GROUP_ADMIN') {
-                          return (
-                            'Removed admin: ' +
-                            row?.admin +
-                            ' ID: ' +
-                            row?.groupId
+                          return t(
+                            'core:message.group_actions.remove_group_admin',
+                            {
+                              admn: row?.admin,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_BAN') {
-                          return (
-                            'Banned: ' + row?.offender + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.group_ban',
+                            {
+                              offender: row?.offender,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'CANCEL_GROUP_BAN') {
-                          return (
-                            'Unbanned: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.cancel_group_ban',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_KICK') {
-                          return (
-                            'Kicked: ' + row?.member + ' ID: ' + row?.groupId
+                          return t(
+                            'core:message.group_actions.group_kick',
+                            {
+                              member: row?.member,
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
                           );
                         } else if (row?.type === 'GROUP_INVITE') {
                           if (row?.invitee === address) {
                             return (
                               <Box>
-                                Invitee:
-                                <span
-                                  style={{
-                                    color: '#05a2e4',
-                                    marginLeft: '5px',
-                                    marginRight: '5px',
+                                <Trans
+                                  i18nKey="group_invite"
+                                  values={{
+                                    invitee: row?.invitee,
+                                    groupId: row?.groupId,
                                   }}
-                                >
-                                  {row?.invitee}
-                                </span>
-                                ID: {row?.groupId}
+                                  components={{
+                                    blue: (
+                                      <span
+                                        style={{
+                                          color: '#05a2e4',
+                                          marginLeft: '5px',
+                                          marginRight: '5px',
+                                        }}
+                                      />
+                                    ),
+                                  }}
+                                />
                               </Box>
                             );
                           } else {
@@ -1380,13 +1413,37 @@ export default function QortalWallet() {
                             );
                           }
                         } else if (row?.type === 'CANCEL_GROUP_INVITE') {
-                          return 'REF: ' + row?.reference;
+                          return t(
+                            'core:message.group_actions.reference',
+                            {
+                              reference: row?.reference,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'JOIN_GROUP') {
-                          return 'Joined Group ID: ' + row?.groupId;
+                          return t(
+                            'core:message.group_actions.join_group',
+                            {
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'LEAVE_GROUP') {
-                          return 'Leaved Group ID: ' + row?.groupId;
+                          return t(
+                            'core:message.group_actions.leave_group',
+                            {
+                              id: row?.groupId,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'GROUP_APPROVAL') {
-                          return 'REF: ' + row?.reference;
+                          return t(
+                            'core:message.group_actions.reference',
+                            {
+                              reference: row?.reference,
+                              postProcess: 'capitalizeFirstChar',
+                            }
+                          );
                         } else if (row?.type === 'SET_GROUP') {
                           return '';
                         }

@@ -2,60 +2,58 @@
 
 interface QortalRequestOptions {
   action: string;
-  name?: string;
-  service?: string;
-  data64?: string;
-  title?: string;
-  description?: string;
-  category?: string;
-  tags?: string[] | string;
-  identifier?: string;
   address?: string;
-  metaData?: string;
+  amount?: number | Number;
+  assetId?: number;
+  blob?: Blob;
+  blockLimit?: number;
+  category?: string;
+  coin?: string;
+  confirmationStatus?: string;
+  creationBytes?: string;
+  data64?: string;
+  description?: string;
+  destinationAddress?: string;
   encoding?: string;
-  includeMetadata?: boolean;
-  limit?: number;
-  offset?: number;
-  reverse?: boolean;
-  resources?: any[];
+  encryptedData?: string;
+  exactMatchNames?: boolean;
+  excludeBlocked?: boolean;
+  fee?: number | any;
+  file?: File;
   filename?: string;
-  list_name?: string;
+  host?: string;
+  identifier?: string;
+  includeMetadata?: boolean;
   item?: string;
   items?: string[];
+  limit?: number;
+  list_name?: string;
+  memo?: string;
+  metaData?: string;
+  mimeType?: string;
+  mode?: string;
+  name?: string;
+  offset?: number;
+  port?: number;
+  query?: string;
+  recipient?: string;
+  resources?: any[];
+  reverse?: boolean;
+  service?: string;
+  startBlock?: number;
   tag1?: string;
   tag2?: string;
   tag3?: string;
   tag4?: string;
   tag5?: string;
-  coin?: string;
-  destinationAddress?: string;
-  amount?: number | Number;
-  recipient?: string;
-  fee?: number | any;
-  blob?: Blob;
-  mimeType?: string;
-  file?: File;
-  encryptedData?: string;
-  mode?: string;
-  query?: string;
-  excludeBlocked?: boolean;
-  exactMatchNames?: boolean;
-  creationBytes?: string;
-  type?: string;
-  host?: string;
-  port?: number;
-  assetId?: number;
-  txType?: TransactionType[];
-  confirmationStatus?: string;
-  startBlock?: number;
-  blockLimit?: number;
+  tags?: string[] | string;
+  title?: string;
   txGroupId?: number;
-  memo?: string;
+  txType?: TransactionType[];
+  type?: string;
 }
 
-declare function qortalRequest(
-  options: QortalRequestOptions
-): Promise<any>;
+declare function qortalRequest(options: QortalRequestOptions): Promise<any>;
 
 declare function qortalRequestWithTimeout(
   options: QortalRequestOptions,

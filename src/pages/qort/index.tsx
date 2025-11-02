@@ -10,7 +10,6 @@ import {
 import WalletContext from '../../contexts/walletContext';
 import {
   cropString,
-  strToNumberWithFixedDecimals,
   epochToAgo,
   humanFileSize,
   timeoutDelay,

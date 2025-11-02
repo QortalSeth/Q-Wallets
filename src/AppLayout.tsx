@@ -1,13 +1,18 @@
 import {
+  AppBar,
   Box,
   Container,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListSubheader,
+  Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -23,6 +28,8 @@ import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../package.json';
+import { TIME_MINUTES_1_IN_MILLISECONDS } from './common/constants';
+import MenuIcon from '@mui/icons-material/Menu';
 
 export default function AppLayout() {
   useIframe();
@@ -30,11 +37,14 @@ export default function AppLayout() {
   const { t } = useTranslation(['core']);
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const { setWalletState } = useContext(walletContext);
   const { address, avatarUrl, name } = useAuth();
   const [isUsingGateway, setIsUsingGateway] = useState(true);
   const [nodeInfo, setNodeInfo] = useState<any>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // derive selected from the URL
   const selectedSegment = useMemo(() => {
@@ -77,7 +87,7 @@ export default function AppLayout() {
       nodeInfoTimeoutId = setInterval(async () => {
         const infos = await getNodeInfo();
         setNodeInfo(infos);
-      }, 60000);
+      }, TIME_MINUTES_1_IN_MILLISECONDS);
       const infos = await getNodeInfo();
       setNodeInfo(infos);
     })();
@@ -96,7 +106,7 @@ export default function AppLayout() {
       nodeInfo: nodeInfo,
     };
     setWalletState?.(session);
-  }, [address, avatarUrl, name, nodeInfo, setWalletState]);
+  }, [address, avatarUrl, isUsingGateway, name, nodeInfo, setWalletState]);
 
   type NavHeader = { kind: 'header'; title: string };
   type NavSegment = { segment: string; title: string; icon: React.ReactNode };
@@ -146,110 +156,145 @@ export default function AppLayout() {
     },
   ];
 
-  return (
-    <Box sx={{ display: 'flex', width: '100%' }}>
-      {/* Left vertical navigation */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: 115,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            alignItems: 'center',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            overflowX: 'hidden',
-            pt: 1,
-            width: 115,
-          },
-        }}
+  const drawerWidth = 115;
+
+  const drawerSx = {
+    width: drawerWidth,
+    flexShrink: 0,
+    '& .MuiDrawer-paper': {
+      alignItems: 'center',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowX: 'hidden',
+      pt: 1,
+      width: drawerWidth,
+    },
+  } as const;
+
+  const handleDrawerToggle = () => {
+    setMobileOpen((prev) => !prev);
+  };
+
+  const handleNavigate = (segment: string) => {
+    navigate(segment === '/' ? '/' : `/${segment}`);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
+
+  const drawerContent = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: drawerWidth }}>
+      <List
+        disablePadding
+        subheader={
+          <ListSubheader
+            component="div"
+            sx={{
+              fontSize: 11,
+              letterSpacing: 1.2,
+              lineHeight: 1.2,
+              py: 1.5,
+              textAlign: 'center',
+            }}
+          >
+            {t('core:wallets', { postProcess: 'capitalizeAll' })}
+          </ListSubheader>
+        }
+        sx={{ flexGrow: 1 }}
       >
-        <List
-          disablePadding
-          subheader={
-            <ListSubheader
-              component="div"
-              sx={{
-                fontSize: 11,
-                letterSpacing: 1.2,
-                lineHeight: 1.2,
-                py: 1.5,
-                textAlign: 'center',
-              }}
-            >
-              {t('core:wallets', { postProcess: 'capitalizeAll' })}
-            </ListSubheader>
-          }
-        >
-          {NAVIGATION.filter((i): i is NavSegment => (i as any).segment).map(
-            (item) => {
-              const isSelected =
-                selectedSegment === item.segment ||
-                (selectedSegment === '/' && item.segment === '/');
-              return (
-                <ListItem
-                  key={item.segment}
-                  disablePadding
-                  sx={{ justifyContent: 'center' }}
+        {NAVIGATION.filter((i): i is NavSegment => (i as any).segment).map((item) => {
+          const isSelected =
+            selectedSegment === item.segment ||
+            (selectedSegment === '/' && item.segment === '/');
+          return (
+            <ListItem key={item.segment} disablePadding sx={{ justifyContent: 'center' }}>
+              <ListItemButton
+                onClick={() => handleNavigate(item.segment)}
+                selected={isSelected}
+                sx={{
+                  justifyContent: 'center',
+                  py: 2,
+                  minHeight: 56,
+                  '&.Mui-selected': (theme) => ({
+                    borderRight: `3px solid ${theme.palette.primary.main}`,
+                  }),
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
                 >
-                  <ListItemButton
-                    onClick={() =>
-                      navigate(item.segment === '/' ? '/' : `/${item.segment}`)
-                    }
-                    selected={isSelected}
+                  <Box sx={{ width: 24, height: 24, display: 'inline-flex' }}>{item.icon}</Box>
+                  <Box
                     sx={{
-                      justifyContent: 'center',
-                      py: 2,
-                      minHeight: 56,
-                      '&.Mui-selected': (theme) => ({
-                        borderRight: `3px solid ${theme.palette.primary.main}`,
-                      }),
+                      fontSize: 11,
+                      maxWidth: 70,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        sx={{ width: 24, height: 24, display: 'inline-flex' }}
-                      >
-                        {item.icon}
-                      </Box>
-                      <Box
-                        sx={{
-                          fontSize: 11,
-                          maxWidth: 70,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {item.title}
-                      </Box>
-                    </ListItemIcon>
-                  </ListItemButton>
-                </ListItem>
-              );
-            }
-          )}
-        </List>
-        <Typography
-          variant="caption"
-          sx={{ mt: 'auto', mb: 1, fontSize: 10, color: 'text.secondary' }}
-        >
-          v{packageJson.version}
-        </Typography>
-      </Drawer>
+                    {item.title}
+                  </Box>
+                </ListItemIcon>
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+      <Typography
+        variant="caption"
+        sx={{ mt: 'auto', mb: 1, fontSize: 10, color: 'text.secondary', textAlign: 'center' }}
+      >
+        v{packageJson.version}
+      </Typography>
+    </Box>
+  );
 
-      {/* Right side content */}
-      <Box sx={{ flexGrow: 1, width: '100%', overflowX: 'auto'}}>
-        <Container maxWidth="xl" sx={{ my: 8 }}>
-          {/* The active route renders here */}
+  return (
+    <Box sx={{ display: 'flex', width: '100%' }}>
+      {isMobile && (
+        <AppBar position="fixed" color="primary" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
+          <Toolbar sx={{ minHeight: 56 }}>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" component="div" noWrap>
+              {t('core:wallets', { postProcess: 'capitalizeAll' })}
+            </Typography>
+          </Toolbar>
+        </AppBar>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={drawerSx}
+        >
+          {drawerContent}
+        </Drawer>
+      ) : (
+        <Drawer variant="permanent" sx={drawerSx}>
+          {drawerContent}
+        </Drawer>
+      )}
+
+      <Box component="main" sx={{ flexGrow: 1, width: '100%', overflowX: 'auto' }}>
+        {isMobile && <Toolbar />}
+        <Container maxWidth="xl" sx={{ my: isMobile ? 6 : 8 }}>
           <Outlet />
         </Container>
       </Box>

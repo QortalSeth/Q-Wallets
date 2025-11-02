@@ -53,6 +53,7 @@ import { useTranslation } from 'react-i18next';
 import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
+  TIME_SECONDS_4_IN_MILLISECONDS,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -302,10 +303,6 @@ export default function BitcoinWallet() {
     }
   };
 
-  useEffect(() => {
-    getWalletInfoBtc();
-  }, []);
-
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
     let satoshis = 0;
@@ -322,6 +319,10 @@ export default function BitcoinWallet() {
     }
     return +(satoshis / 1e8).toFixed(8);
   }
+
+  useEffect(() => {
+    getWalletInfoBtc();
+  }, []);
 
   useEffect(() => {
     const intervalgetTransactionsBtc = setInterval(() => {
@@ -493,7 +494,7 @@ export default function BitcoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendBtcSuccess}
-          autoHideDuration={4000}
+          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendBtcSuccess}
         >
@@ -511,7 +512,7 @@ export default function BitcoinWallet() {
         </Snackbar>
         <Snackbar
           open={openSendBtcError}
-          autoHideDuration={4000}
+          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
           onClose={handleCloseSendBtcError}
         >
           <Alert

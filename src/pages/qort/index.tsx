@@ -73,6 +73,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { TIME_MINUTES_1_IN_MILLISECONDS, TIME_SECONDS_4_IN_MILLISECONDS } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -505,7 +506,7 @@ export default function QortalWallet() {
     if (!address) return;
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
-    }, 60000);
+    }, TIME_MINUTES_1_IN_MILLISECONDS);
     getWalletBalanceQort();
     return () => {
       clearInterval(intervalGetWalletBalance);
@@ -2884,7 +2885,7 @@ export default function QortalWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendQortSuccess}
-          autoHideDuration={4000}
+          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendQortSuccess}
         >
@@ -2902,7 +2903,7 @@ export default function QortalWallet() {
         </Snackbar>
         <Snackbar
           open={openSendQortError}
-          autoHideDuration={4000}
+          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
           onClose={handleCloseSendQortError}
         >
           <Alert

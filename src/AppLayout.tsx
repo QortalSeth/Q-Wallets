@@ -23,6 +23,7 @@ import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../package.json';
+import { TIME_MINUTES_1_IN_MILLISECONDS } from './common/constants';
 
 export default function AppLayout() {
   useIframe();
@@ -77,7 +78,7 @@ export default function AppLayout() {
       nodeInfoTimeoutId = setInterval(async () => {
         const infos = await getNodeInfo();
         setNodeInfo(infos);
-      }, 60000);
+      }, TIME_MINUTES_1_IN_MILLISECONDS);
       const infos = await getNodeInfo();
       setNodeInfo(infos);
     })();

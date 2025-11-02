@@ -164,7 +164,6 @@ export default function BitcoinWallet() {
   const [btcAmount, setBtcAmount] = useState<number>(0);
   const [btcRecipient, setBtcRecipient] = useState('');
   const [addressFormatError, setAddressFormatError] = useState(false);
-
   const [loadingRefreshBtc, setLoadingRefreshBtc] = useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = useState(false);
   const [openSendBtcSuccess, setOpenSendBtcSuccess] = useState(false);
@@ -336,6 +335,7 @@ export default function BitcoinWallet() {
 
   const getTransactionsBtc = async () => {
     try {
+      setLoadingRefreshBtc(true);
       setIsLoadingBtcTransactions(true);
       setIsLoadingWalletBalanceBtc(true);
       setWalletBalanceError(null);
@@ -376,6 +376,7 @@ export default function BitcoinWallet() {
     } finally {
       setIsLoadingBtcTransactions(false);
       setIsLoadingWalletBalanceBtc(false);
+      setLoadingRefreshBtc(false);
     }
   };
 

@@ -59,7 +59,6 @@ import { Refresh } from '@mui/icons-material';
 import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_20_IN_MILLISECONDS,
   TIME_SECONDS_4_IN_MILLISECONDS,
 } from '../../common/constants';
 import {

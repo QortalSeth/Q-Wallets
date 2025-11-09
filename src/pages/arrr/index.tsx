@@ -59,7 +59,10 @@ import { Refresh } from '@mui/icons-material';
 import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
+  TIME_SECONDS_2_IN_MILLISECONDS,
+  TIME_SECONDS_3_IN_MILLISECONDS,
   TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_SECONDS_5_IN_MILLISECONDS,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -212,7 +215,7 @@ export default function PirateWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenArrrAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
     setOpenArrrAddressBook(false);
   };
 
@@ -461,7 +464,7 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter += 1;
-              await new Promise((resolve) => setTimeout(resolve, 5000));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
             } else if (response === 'Initializing wallet...') {
               setChangeServer(false);
               setSyncStatus(
@@ -471,23 +474,23 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter2 += 1;
-              await new Promise((resolve) => setTimeout(resolve, 5000));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
             } else {
               setChangeServer(false);
               setSyncStatus(response);
               setIsSynced(false);
-              await new Promise((resolve) => setTimeout(resolve, 5000));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
             }
           } else {
             setIsSynced(true);
             setSyncStatus('');
             setChangeServer(false);
             getWalletInfoArrr();
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
             getUpdatedWalletBalance();
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
             getLightwalletServersArrr();
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
             getTransactionsArrr();
             return;
           }

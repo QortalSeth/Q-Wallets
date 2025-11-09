@@ -53,6 +53,7 @@ import { useTranslation } from 'react-i18next';
 import {
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
+  TIME_SECONDS_2_IN_MILLISECONDS,
   TIME_SECONDS_4_IN_MILLISECONDS,
 } from '../../common/constants';
 import {
@@ -189,7 +190,7 @@ export default function BitcoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenBtcAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
     setOpenBtcAddressBook(false);
   };
 

@@ -62,7 +62,7 @@
       "lightwallet_server": "Lightwallet Server:",
       "litecoin_address": "LTC addresses should be 34 characters long for BIP44 (L prefix) and BIP49 (M prefix) or 43 characters long for BIP84 (ltc1 prefix)",
       "litecoin_wallet": "Litecoin Wallet",
-      "loading_transactions": "Loading transactions, please Wait...",
+      "loading_transactions": "Loading transactions, please wait...",
       "low_fee_transation": "Low fees may result in slow or unconfirmed transactions",
       "no_address": "No address available",
       "not_initialized_yet": "Not initialized yet",

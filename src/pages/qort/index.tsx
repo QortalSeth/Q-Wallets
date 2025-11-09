@@ -73,7 +73,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { TIME_MINUTES_1_IN_MILLISECONDS, TIME_SECONDS_4_IN_MILLISECONDS } from '../../common/constants';
+import { TIME_MINUTES_1_IN_MILLISECONDS, TIME_SECONDS_2_IN_MILLISECONDS, TIME_SECONDS_4_IN_MILLISECONDS } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -203,7 +203,7 @@ export default function QortalWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
     setOpenQortAddressBook(false);
   };
 

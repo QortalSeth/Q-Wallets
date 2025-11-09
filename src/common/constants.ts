@@ -1,3 +1,6 @@
+// QORT section
+export const QORT_1_UNIT: number = 100000000;
+
 // Time section
 export const TIME_SECONDS_1_IN_MILLISECONDS: number = 1000;
 export const TIME_SECONDS_2_IN_MILLISECONDS: number = 2 * TIME_SECONDS_1_IN_MILLISECONDS;

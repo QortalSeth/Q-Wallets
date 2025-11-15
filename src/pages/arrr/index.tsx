@@ -57,13 +57,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
 import {
-  TIME_MINUTES_2_IN_MILLISECONDS,
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_3_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
-  TIME_SECONDS_5_IN_MILLISECONDS,
+  TIME_MINUTES_2,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
+  TIME_SECONDS_5,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -216,7 +216,7 @@ export default function PirateWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenArrrAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenArrrAddressBook(false);
   };
 
@@ -361,7 +361,7 @@ export default function PirateWallet() {
           action: 'GET_WALLET_BALANCE',
           coin: 'ARRR',
         },
-        TIME_MINUTES_2_IN_MILLISECONDS
+        TIME_MINUTES_2
       );
       if (!response?.error) {
         setWalletBalanceArrr(response);
@@ -377,7 +377,7 @@ export default function PirateWallet() {
   const getUpdatedWalletBalance = () => {
     const intervalGetWalletBalanceArrr = setInterval(() => {
       getWalletBalanceArrr();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getWalletBalanceArrr();
     return () => {
       clearInterval(intervalGetWalletBalanceArrr);
@@ -413,7 +413,7 @@ export default function PirateWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'ARRR',
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
       if (!response?.error) {
         const compareFn = (
@@ -465,7 +465,7 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             } else if (response === 'Initializing wallet...') {
               setChangeServer(false);
               setSyncStatus(
@@ -475,23 +475,23 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter2 += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             } else {
               setChangeServer(false);
               setSyncStatus(response);
               setIsSynced(false);
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             }
           } else {
             setIsSynced(true);
             setSyncStatus('');
             setChangeServer(false);
             getWalletInfoArrr();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getUpdatedWalletBalance();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getLightwalletServersArrr();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getTransactionsArrr();
             return;
           }
@@ -1026,7 +1026,7 @@ export default function PirateWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendArrrSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendArrrSuccess}
         >
@@ -1044,7 +1044,7 @@ export default function PirateWallet() {
         </Snackbar>
         <Snackbar
           open={openSendArrrError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendArrrError}
         >
           <Alert

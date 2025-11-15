@@ -73,7 +73,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { TIME_MINUTES_1_IN_MILLISECONDS, TIME_SECONDS_2_IN_MILLISECONDS, TIME_SECONDS_4_IN_MILLISECONDS } from '../../common/constants';
+import { TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_4 } from '../../common/constants';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -203,7 +203,7 @@ export default function QortalWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenQortAddressBook(false);
   };
 
@@ -506,7 +506,7 @@ export default function QortalWallet() {
     if (!address) return;
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
-    }, TIME_MINUTES_1_IN_MILLISECONDS);
+    }, TIME_MINUTES_1);
     getWalletBalanceQort();
     return () => {
       clearInterval(intervalGetWalletBalance);
@@ -2885,7 +2885,7 @@ export default function QortalWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendQortSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendQortSuccess}
         >
@@ -2903,7 +2903,7 @@ export default function QortalWallet() {
         </Snackbar>
         <Snackbar
           open={openSendQortError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendQortError}
         >
           <Alert

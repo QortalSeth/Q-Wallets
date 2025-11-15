@@ -50,10 +50,10 @@ import {
 import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -192,7 +192,7 @@ export default function LitecoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenLtcAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenLtcAddressBook(false);
   };
 
@@ -330,7 +330,7 @@ export default function LitecoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsLtc = setInterval(() => {
       getTransactionsLtc();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsLtc();
     return () => {
       clearInterval(intervalgetTransactionsLtc);
@@ -348,7 +348,7 @@ export default function LitecoinWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'LTC',
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseLtcTransactions?.error) {
@@ -389,7 +389,7 @@ export default function LitecoinWallet() {
       await getTransactionsLtc();
       intervalId = setInterval(() => {
         getTransactionsLtc();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -499,7 +499,7 @@ export default function LitecoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendLtcSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendLtcSuccess}
         >
@@ -517,7 +517,7 @@ export default function LitecoinWallet() {
         </Snackbar>
         <Snackbar
           open={openSendLtcError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendLtcError}
         >
           <Alert

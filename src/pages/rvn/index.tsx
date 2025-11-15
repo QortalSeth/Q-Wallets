@@ -51,10 +51,10 @@ import {
 import coinLogoRVN from '../../assets/rvn.png';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -207,7 +207,7 @@ export default function RavencoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenRvnAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenRvnAddressBook(false);
   };
 
@@ -350,7 +350,7 @@ export default function RavencoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsRvn = setInterval(() => {
       getTransactionsRvn();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsRvn();
     return () => {
       clearInterval(intervalgetTransactionsRvn);
@@ -368,7 +368,7 @@ export default function RavencoinWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'RVN',
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseRvnTransactions?.error) {
@@ -409,7 +409,7 @@ export default function RavencoinWallet() {
       await getTransactionsRvn();
       intervalId = setInterval(() => {
         getTransactionsRvn();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -520,7 +520,7 @@ export default function RavencoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendRvnSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendRvnSuccess}
         >
@@ -538,7 +538,7 @@ export default function RavencoinWallet() {
         </Snackbar>
         <Snackbar
           open={openSendRvnError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendRvnError}
         >
           <Alert

@@ -51,10 +51,10 @@ import coinLogoBTC from '../../assets/btc.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -190,7 +190,7 @@ export default function BitcoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenBtcAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenBtcAddressBook(false);
   };
 
@@ -327,7 +327,7 @@ export default function BitcoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsBtc = setInterval(() => {
       getTransactionsBtc();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsBtc();
     return () => {
       clearInterval(intervalgetTransactionsBtc);
@@ -346,7 +346,7 @@ export default function BitcoinWallet() {
           action: 'GET_USER_WALLET_TRANSACTIONS',
           coin: 'BTC',
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseBtcTransactions?.error) {
@@ -389,7 +389,7 @@ export default function BitcoinWallet() {
       await getTransactionsBtc();
       intervalId = setInterval(() => {
         getTransactionsBtc();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -496,7 +496,7 @@ export default function BitcoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendBtcSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendBtcSuccess}
         >
@@ -514,7 +514,7 @@ export default function BitcoinWallet() {
         </Snackbar>
         <Snackbar
           open={openSendBtcError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendBtcError}
         >
           <Alert

@@ -160,6 +160,7 @@ export default function QortalWallet() {
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(null);
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
+  const [qortTxFee, setQortTxFee] = useState<number>(0);
   const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);
   const [atInfo, setAtInfo] = useState<any>([]);
   const [groupInfo, setGroupInfo] = useState<any>([]);
@@ -262,7 +263,7 @@ export default function QortalWallet() {
   const handleSendMaxQort = () => {
     let maxQortAmount = 0;
     let WalletBalanceQort = parseFloat(walletBalanceQort);
-    maxQortAmount = WalletBalanceQort - 0.011;
+    maxQortAmount = WalletBalanceQort - qortTxFee;
     if (maxQortAmount <= 0) {
       setQortAmount(0);
     } else {
@@ -513,6 +514,28 @@ export default function QortalWallet() {
       clearInterval(intervalGetWalletBalance);
     };
   }, [address]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchQortTxFee = async () => {
+      try {
+        const res = await fetch('/transactions/unitfee?txType=PAYMENT');
+        const rawFee = await res.json();
+
+        if (!cancelled && typeof rawFee === 'number' && rawFee > 0) {
+          setQortTxFee(rawFee / QORT_1_UNIT);
+        }
+      } catch (err) {
+        console.error('Failed to fetch QORT tx fee', err);
+      }
+    };
+
+    fetchQortTxFee();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!address) return;
@@ -1319,23 +1342,17 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.type === 'CREATE_GROUP') {
-                          return t(
-                            'core:message.group_actions.create_group',
-                            {
-                              groupName: row?.groupName,
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.create_group', {
+                            groupName: row?.groupName,
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'UPDATE_GROUP') {
-                          return t(
-                            'core:message.group_actions.update_group',
-                            {
-                              newDescription: row?.newDescription,
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.update_group', {
+                            newDescription: row?.newDescription,
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'ADD_GROUP_ADMIN') {
                           return t(
                             'core:message.group_actions.add_group_admin',
@@ -1355,14 +1372,11 @@ export default function QortalWallet() {
                             }
                           );
                         } else if (row?.type === 'GROUP_BAN') {
-                          return t(
-                            'core:message.group_actions.group_ban',
-                            {
-                              offender: row?.offender,
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.group_ban', {
+                            offender: row?.offender,
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'CANCEL_GROUP_BAN') {
                           return t(
                             'core:message.group_actions.cancel_group_ban',
@@ -1373,14 +1387,11 @@ export default function QortalWallet() {
                             }
                           );
                         } else if (row?.type === 'GROUP_KICK') {
-                          return t(
-                            'core:message.group_actions.group_kick',
-                            {
-                              member: row?.member,
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.group_kick', {
+                            member: row?.member,
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'GROUP_INVITE') {
                           if (row?.invitee === address) {
                             return (
@@ -1414,37 +1425,25 @@ export default function QortalWallet() {
                             );
                           }
                         } else if (row?.type === 'CANCEL_GROUP_INVITE') {
-                          return t(
-                            'core:message.group_actions.reference',
-                            {
-                              reference: row?.reference,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.reference', {
+                            reference: row?.reference,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'JOIN_GROUP') {
-                          return t(
-                            'core:message.group_actions.join_group',
-                            {
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.join_group', {
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'LEAVE_GROUP') {
-                          return t(
-                            'core:message.group_actions.leave_group',
-                            {
-                              id: row?.groupId,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.leave_group', {
+                            id: row?.groupId,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'GROUP_APPROVAL') {
-                          return t(
-                            'core:message.group_actions.reference',
-                            {
-                              reference: row?.reference,
-                              postProcess: 'capitalizeFirstChar',
-                            }
-                          );
+                          return t('core:message.group_actions.reference', {
+                            reference: row?.reference,
+                            postProcess: 'capitalizeFirstChar',
+                          });
                         } else if (row?.type === 'SET_GROUP') {
                           return '';
                         }
@@ -3023,7 +3022,7 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceQort - 0.011).toFixed(8) + ' QORT'}
+            {(walletBalanceQort - qortTxFee).toFixed(8) + ' QORT'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -3060,10 +3059,14 @@ export default function QortalWallet() {
             customInput={TextField}
             valueIsNumericString
             variant="outlined"
-            label="Amount (QORT)"
+            label={
+              t('core:amount', {
+                postProcess: 'capitalizeAll',
+              }) + '(QORT)'
+            }
             fullWidth
             isAllowed={(values) => {
-              const maxQortCoin = walletBalanceQort - 0.011;
+              const maxQortCoin = walletBalanceQort - qortTxFee;
               const { formattedValue, floatValue } = values;
               return formattedValue === '' || (floatValue ?? 0) <= maxQortCoin;
             }}

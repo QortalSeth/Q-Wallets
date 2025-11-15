@@ -57,6 +57,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
 import {
+  TIME_MINUTES_2_IN_MILLISECONDS,
   TIME_MINUTES_3_IN_MILLISECONDS,
   TIME_MINUTES_5_IN_MILLISECONDS,
   TIME_SECONDS_2_IN_MILLISECONDS,
@@ -360,7 +361,7 @@ export default function PirateWallet() {
           action: 'GET_WALLET_BALANCE',
           coin: 'ARRR',
         },
-        120000
+        TIME_MINUTES_2_IN_MILLISECONDS
       );
       if (!response?.error) {
         setWalletBalanceArrr(response);

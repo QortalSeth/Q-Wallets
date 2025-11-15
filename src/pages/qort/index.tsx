@@ -73,7 +73,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
+import { QORT_1_UNIT, TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
 import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {

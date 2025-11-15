@@ -1,7 +1,7 @@
 import { GlobalProvider } from 'qapp-core';
 import { publicSalt } from './qapp-config';
 import AppLayout from './AppLayout';
-import { TIME_MINUTES_3_IN_MILLISECONDS } from './common/constants';
+import { TIME_MINUTES_3 } from './common/constants';
 
 export const AppWrapper = () => {
   return (
@@ -10,7 +10,7 @@ export const AppWrapper = () => {
         appName: 'Q-Wallets',
         auth: {
           balanceSetting: {
-            interval: TIME_MINUTES_3_IN_MILLISECONDS,
+            interval: TIME_MINUTES_3,
             onlyOnMount: false,
           },
           authenticateOnMount: true,

@@ -57,12 +57,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_3_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
-  TIME_SECONDS_5_IN_MILLISECONDS,
+  TIME_MINUTES_2,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
+  TIME_SECONDS_5,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -76,6 +77,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -215,7 +217,7 @@ export default function PirateWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenArrrAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenArrrAddressBook(false);
   };
 
@@ -256,7 +258,7 @@ export default function PirateWallet() {
 
   const changeCopyArrrTxHash = async () => {
     setCopyArrrTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyArrrTxHash('');
   };
 
@@ -310,7 +312,7 @@ export default function PirateWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         recipient: arrrRecipient,
         amount: arrrAmount,
         memo: arrrMemo,
@@ -322,7 +324,7 @@ export default function PirateWallet() {
         setOpenTxArrrSubmit(false);
         setOpenSendArrrSuccess(true);
         setIsLoadingWalletBalanceArrr(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         getWalletBalanceArrr();
       }
     } catch (error) {
@@ -332,7 +334,7 @@ export default function PirateWallet() {
       setOpenTxArrrSubmit(false);
       setOpenSendArrrError(true);
       setIsLoadingWalletBalanceArrr(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getWalletBalanceArrr();
       console.error('ERROR SENDING ARRR', error);
     }
@@ -342,7 +344,7 @@ export default function PirateWallet() {
     try {
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
       });
       if (!response?.error) {
         setWalletInfoArrr(response);
@@ -358,9 +360,9 @@ export default function PirateWallet() {
       const response = await qortalRequestWithTimeout(
         {
           action: 'GET_WALLET_BALANCE',
-          coin: 'ARRR',
+          coin: Coin.ARRR,
         },
-        120000
+        TIME_MINUTES_2
       );
       if (!response?.error) {
         setWalletBalanceArrr(response);
@@ -376,7 +378,7 @@ export default function PirateWallet() {
   const getUpdatedWalletBalance = () => {
     const intervalGetWalletBalanceArrr = setInterval(() => {
       getWalletBalanceArrr();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getWalletBalanceArrr();
     return () => {
       clearInterval(intervalGetWalletBalanceArrr);
@@ -387,7 +389,7 @@ export default function PirateWallet() {
     try {
       const response = await qortalRequest({
         action: 'GET_CROSSCHAIN_SERVER_INFO',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
       });
       if (!response?.error) {
         setAllLightwalletServersArrr(response);
@@ -410,9 +412,9 @@ export default function PirateWallet() {
       const response = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'ARRR',
+          coin: Coin.ARRR,
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
       if (!response?.error) {
         const compareFn = (
@@ -464,7 +466,7 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             } else if (response === 'Initializing wallet...') {
               setChangeServer(false);
               setSyncStatus(
@@ -474,23 +476,23 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter2 += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             } else {
               setChangeServer(false);
               setSyncStatus(response);
               setIsSynced(false);
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5_IN_MILLISECONDS));
+              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
             }
           } else {
             setIsSynced(true);
             setSyncStatus('');
             setChangeServer(false);
             getWalletInfoArrr();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getUpdatedWalletBalance();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getLightwalletServersArrr();
-            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3_IN_MILLISECONDS));
+            await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
             getTransactionsArrr();
             return;
           }
@@ -540,7 +542,7 @@ export default function PirateWallet() {
     try {
       const setServer = await qortalRequest({
         action: 'SET_CURRENT_FOREIGN_SERVER',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         type: typeServer,
         host: hostServer,
         port: portServer,
@@ -566,7 +568,7 @@ export default function PirateWallet() {
     try {
       const setServer = await qortalRequest({
         action: 'SET_CURRENT_FOREIGN_SERVER',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         type: typeServer,
         host: hostServer,
         port: portServer,
@@ -1025,7 +1027,7 @@ export default function PirateWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendArrrSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendArrrSuccess}
         >
@@ -1036,14 +1038,14 @@ export default function PirateWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'ARRR',
+              coin: Coin.ARRR,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendArrrError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendArrrError}
         >
           <Alert
@@ -1087,7 +1089,7 @@ export default function PirateWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'ARRR',
+                coin: Coin.ARRR,
                 postProcess: 'capitalizeAll',
               })}
             </Typography>
@@ -1257,7 +1259,7 @@ export default function PirateWallet() {
           >
             {t('core:message.generic.sending_fee', {
               quantity: 0.0001,
-              coin: 'ARRR',
+              coin: Coin.ARRR,
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
@@ -1543,7 +1545,7 @@ export default function PirateWallet() {
                   onClick={handleOpenArrrSend}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'ARRR',
+                    coin: Coin.ARRR,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

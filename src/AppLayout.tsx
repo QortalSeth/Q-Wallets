@@ -28,7 +28,7 @@ import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../package.json';
-import { TIME_MINUTES_1_IN_MILLISECONDS } from './common/constants';
+import { TIME_MINUTES_1 } from './common/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 
 export default function AppLayout() {
@@ -87,7 +87,7 @@ export default function AppLayout() {
       nodeInfoTimeoutId = setInterval(async () => {
         const infos = await getNodeInfo();
         setNodeInfo(infos);
-      }, TIME_MINUTES_1_IN_MILLISECONDS);
+      }, TIME_MINUTES_1);
       const infos = await getNodeInfo();
       setNodeInfo(infos);
     })();

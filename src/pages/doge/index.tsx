@@ -50,10 +50,11 @@ import {
 import coinLogoDOGE from '../../assets/doge.png';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -67,6 +68,7 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -193,7 +195,7 @@ export default function DogecoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenDogeAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenDogeAddressBook(false);
   };
 
@@ -235,7 +237,7 @@ export default function DogecoinWallet() {
 
   const changeCopyDogeTxHash = async () => {
     setCopyDogeTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyDogeTxHash('');
   };
 
@@ -279,7 +281,7 @@ export default function DogecoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'DOGE',
+        coin: Coin.DOGE,
       });
       if (response?.error) {
         setWalletInfoDoge({});
@@ -329,7 +331,7 @@ export default function DogecoinWallet() {
   useEffect(() => {
     const intervalGetWalletBalanceDoge = setInterval(() => {
       getTransactionsDoge();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsDoge();
     return () => {
       clearInterval(intervalGetWalletBalanceDoge);
@@ -345,9 +347,9 @@ export default function DogecoinWallet() {
       const responseDogeTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'DOGE',
+          coin: Coin.DOGE,
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseDogeTransactions?.error) {
@@ -388,7 +390,7 @@ export default function DogecoinWallet() {
       await getTransactionsDoge();
       intervalId = setInterval(() => {
         getTransactionsDoge();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -417,7 +419,7 @@ export default function DogecoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'DOGE',
+        coin: Coin.DOGE,
         recipient: dogeRecipient,
         amount: dogeAmount,
         fee: dogeFeeCalculated,
@@ -428,7 +430,7 @@ export default function DogecoinWallet() {
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsDoge();
       }
     } catch (error) {
@@ -437,7 +439,7 @@ export default function DogecoinWallet() {
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       await getTransactionsDoge();
       console.error('ERROR SENDING DOGE', error);
     }
@@ -496,7 +498,7 @@ export default function DogecoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendDogeSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendDogeSuccess}
         >
@@ -507,14 +509,14 @@ export default function DogecoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'DOGE',
+              coin: Coin.DOGE,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendDogeError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendDogeError}
         >
           <Alert
@@ -558,7 +560,7 @@ export default function DogecoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'DOGE',
+                coin: Coin.DOGE,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1177,7 +1179,7 @@ export default function DogecoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'DOGE',
+                    coin: Coin.DOGE,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

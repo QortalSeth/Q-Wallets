@@ -51,10 +51,11 @@ import coinLogoBTC from '../../assets/btc.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -67,6 +68,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -190,7 +192,7 @@ export default function BitcoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenBtcAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenBtcAddressBook(false);
   };
 
@@ -233,7 +235,7 @@ export default function BitcoinWallet() {
 
   const changeCopyBtcTxHash = async () => {
     setCopyBtcTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyBtcTxHash('');
   };
 
@@ -277,7 +279,7 @@ export default function BitcoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'BTC',
+        coin: Coin.BTC,
       });
       if (response?.error) {
         setWalletInfoBtc({});
@@ -327,7 +329,7 @@ export default function BitcoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsBtc = setInterval(() => {
       getTransactionsBtc();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsBtc();
     return () => {
       clearInterval(intervalgetTransactionsBtc);
@@ -344,9 +346,9 @@ export default function BitcoinWallet() {
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'BTC',
+          coin: Coin.BTC,
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseBtcTransactions?.error) {
@@ -389,7 +391,7 @@ export default function BitcoinWallet() {
       await getTransactionsBtc();
       intervalId = setInterval(() => {
         getTransactionsBtc();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -417,7 +419,7 @@ export default function BitcoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'BTC',
+        coin: Coin.BTC,
         recipient: btcRecipient,
         amount: btcAmount,
         fee: btcFeeCalculated,
@@ -428,7 +430,7 @@ export default function BitcoinWallet() {
         setOpenTxBtcSubmit(false);
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsBtc();
       }
     } catch (error) {
@@ -437,7 +439,7 @@ export default function BitcoinWallet() {
       setOpenTxBtcSubmit(false);
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getTransactionsBtc();
       console.error('ERROR SENDING BTC', error);
     }
@@ -496,7 +498,7 @@ export default function BitcoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendBtcSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendBtcSuccess}
         >
@@ -507,14 +509,14 @@ export default function BitcoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'BTC',
+              coin: Coin.BTC,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendBtcError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendBtcError}
         >
           <Alert
@@ -558,7 +560,7 @@ export default function BitcoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'BTC',
+                coin: Coin.BTC,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1174,7 +1176,7 @@ export default function BitcoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'BTC',
+                    coin: Coin.BTC,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

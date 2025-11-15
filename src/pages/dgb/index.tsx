@@ -51,10 +51,11 @@ import {
 import coinLogoDGB from '../../assets/dgb.png';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -67,6 +68,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -207,7 +209,7 @@ export default function DigibyteWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenDgbAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenDgbAddressBook(false);
   };
 
@@ -252,7 +254,7 @@ export default function DigibyteWallet() {
 
   const changeCopyDgbTxHash = async () => {
     setCopyDgbTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyDgbTxHash('');
   };
 
@@ -301,7 +303,7 @@ export default function DigibyteWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'DGB',
+        coin: Coin.DGB,
       });
       if (response?.error) {
         setWalletInfoDgb({});
@@ -351,7 +353,7 @@ export default function DigibyteWallet() {
   useEffect(() => {
     const intervalgetTransactionsDgb = setInterval(() => {
       getTransactionsDgb();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsDgb();
     return () => {
       clearInterval(intervalgetTransactionsDgb);
@@ -367,9 +369,9 @@ export default function DigibyteWallet() {
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'DGB',
+          coin: Coin.DGB,
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseDgbTransactions?.error) {
@@ -411,7 +413,7 @@ export default function DigibyteWallet() {
       await getTransactionsDgb();
       intervalId = setInterval(() => {
         getTransactionsDgb();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -441,7 +443,7 @@ export default function DigibyteWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'DGB',
+        coin: Coin.DGB,
         recipient: dgbRecipient,
         amount: dgbAmount,
         fee: dgbFeeCalculated,
@@ -453,7 +455,7 @@ export default function DigibyteWallet() {
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
         setIsLoadingWalletBalanceDgb(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsDgb();
       }
     } catch (error) {
@@ -463,7 +465,7 @@ export default function DigibyteWallet() {
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
       setIsLoadingWalletBalanceDgb(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getTransactionsDgb();
       console.error('ERROR SENDING DGB', error);
     }
@@ -522,7 +524,7 @@ export default function DigibyteWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendDgbSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendDgbSuccess}
         >
@@ -533,14 +535,14 @@ export default function DigibyteWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'DGB',
+              coin: Coin.DGB,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendDgbError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendDgbError}
         >
           <Alert
@@ -584,7 +586,7 @@ export default function DigibyteWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'DGB',
+                coin: Coin.DGB,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1251,7 +1253,7 @@ export default function DigibyteWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'DGB',
+                    coin: Coin.DGB,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

@@ -73,12 +73,8 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import {
-  QORT_1_UNIT,
-  TIME_MINUTES_1_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
-} from '../../common/constants';
+import { TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -209,9 +205,7 @@ export default function QortalWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
-    await new Promise((resolve) =>
-      setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS)
-    );
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenQortAddressBook(false);
   };
 
@@ -514,7 +508,7 @@ export default function QortalWallet() {
     if (!address) return;
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
-    }, TIME_MINUTES_1_IN_MILLISECONDS);
+    }, TIME_MINUTES_1);
     getWalletBalanceQort();
     return () => {
       clearInterval(intervalGetWalletBalance);
@@ -553,7 +547,7 @@ export default function QortalWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'QORT',
+        coin: Coin.QORT,
         recipient: qortRecipient,
         amount: qortAmount,
       });
@@ -562,7 +556,7 @@ export default function QortalWallet() {
         setQortRecipient('');
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         getWalletBalanceQort();
         getQortalTransactions();
       }
@@ -571,7 +565,7 @@ export default function QortalWallet() {
       setQortRecipient('');
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getWalletBalanceQort();
       getQortalTransactions();
       console.error('ERROR SENDING QORT', error);
@@ -2891,7 +2885,7 @@ export default function QortalWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendQortSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendQortSuccess}
         >
@@ -2902,14 +2896,14 @@ export default function QortalWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'QORT',
+              coin: Coin.QORT,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendQortError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendQortError}
         >
           <Alert
@@ -2953,7 +2947,7 @@ export default function QortalWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'QORT',
+                coin: Coin.QORT,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -3110,8 +3104,8 @@ export default function QortalWallet() {
             sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
           >
             {t('core:message.generic.sending_fee', {
-              quantity: qortTxFee,
-              coin: 'QORT',
+              quantity: 0.01,
+              coin: Coin.QORT,
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
@@ -3312,7 +3306,7 @@ export default function QortalWallet() {
                   onClick={handleOpenQortSend}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'QORT',
+                    coin: Coin.QORT,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

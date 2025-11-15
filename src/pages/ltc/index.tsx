@@ -50,10 +50,11 @@ import {
 import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
 import {
-  TIME_MINUTES_3_IN_MILLISECONDS,
-  TIME_MINUTES_5_IN_MILLISECONDS,
-  TIME_SECONDS_2_IN_MILLISECONDS,
-  TIME_SECONDS_4_IN_MILLISECONDS,
+  TIME_MINUTES_3,
+  TIME_MINUTES_5,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
 } from '../../common/constants';
 import {
   CustomWidthTooltip,
@@ -67,6 +68,7 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -192,7 +194,7 @@ export default function LitecoinWallet() {
 
   const handleOpenAddressBook = async () => {
     setOpenLtcAddressBook(true);
-    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2_IN_MILLISECONDS));
+    await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_2));
     setOpenLtcAddressBook(false);
   };
 
@@ -236,7 +238,7 @@ export default function LitecoinWallet() {
 
   const changeCopyLtcTxHash = async () => {
     setCopyLtcTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyLtcTxHash('');
   };
 
@@ -280,7 +282,7 @@ export default function LitecoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'LTC',
+        coin: Coin.LTC,
       });
       if (response?.error) {
         setWalletInfoLtc({});
@@ -330,7 +332,7 @@ export default function LitecoinWallet() {
   useEffect(() => {
     const intervalgetTransactionsLtc = setInterval(() => {
       getTransactionsLtc();
-    }, TIME_MINUTES_3_IN_MILLISECONDS);
+    }, TIME_MINUTES_3);
     getTransactionsLtc();
     return () => {
       clearInterval(intervalgetTransactionsLtc);
@@ -346,9 +348,9 @@ export default function LitecoinWallet() {
       const responseLtcTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'LTC',
+          coin: Coin.LTC,
         },
-        TIME_MINUTES_5_IN_MILLISECONDS
+        TIME_MINUTES_5
       );
 
       if (responseLtcTransactions?.error) {
@@ -389,7 +391,7 @@ export default function LitecoinWallet() {
       await getTransactionsLtc();
       intervalId = setInterval(() => {
         getTransactionsLtc();
-      }, TIME_MINUTES_3_IN_MILLISECONDS);
+      }, TIME_MINUTES_3);
     })();
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -418,7 +420,7 @@ export default function LitecoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'LTC',
+        coin: Coin.LTC,
         recipient: ltcRecipient,
         amount: ltcAmount,
         fee: ltcFeeCalculated,
@@ -430,7 +432,7 @@ export default function LitecoinWallet() {
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsLtc();
       }
     } catch (error) {
@@ -440,7 +442,7 @@ export default function LitecoinWallet() {
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       await getTransactionsLtc();
       console.error('ERROR SENDING LTC', error);
     }
@@ -499,7 +501,7 @@ export default function LitecoinWallet() {
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           open={openSendLtcSuccess}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           slots={{ transition: SlideTransition }}
           onClose={handleCloseSendLtcSuccess}
         >
@@ -510,14 +512,14 @@ export default function LitecoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'LTC',
+              coin: Coin.LTC,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
         </Snackbar>
         <Snackbar
           open={openSendLtcError}
-          autoHideDuration={TIME_SECONDS_4_IN_MILLISECONDS}
+          autoHideDuration={TIME_SECONDS_4}
           onClose={handleCloseSendLtcError}
         >
           <Alert
@@ -561,7 +563,7 @@ export default function LitecoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'LTC',
+                coin: Coin.LTC,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1179,7 +1181,7 @@ export default function LitecoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'LTC',
+                    coin: Coin.LTC,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

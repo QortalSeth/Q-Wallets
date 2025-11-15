@@ -73,7 +73,8 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_4 } from '../../common/constants';
+import { TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -523,7 +524,7 @@ export default function QortalWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'QORT',
+        coin: Coin.QORT,
         recipient: qortRecipient,
         amount: qortAmount,
       });
@@ -2896,7 +2897,7 @@ export default function QortalWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'QORT',
+              coin: Coin.QORT,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -2947,7 +2948,7 @@ export default function QortalWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'QORT',
+                coin: Coin.QORT,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -3101,7 +3102,7 @@ export default function QortalWallet() {
           >
             {t('core:message.generic.sending_fee', {
               quantity: 0.01,
-              coin: 'QORT',
+              coin: Coin.QORT,
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
@@ -3302,7 +3303,7 @@ export default function QortalWallet() {
                   onClick={handleOpenQortSend}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'QORT',
+                    coin: Coin.QORT,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

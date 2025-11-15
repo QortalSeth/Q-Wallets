@@ -68,6 +68,7 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -280,7 +281,7 @@ export default function DogecoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'DOGE',
+        coin: Coin.DOGE,
       });
       if (response?.error) {
         setWalletInfoDoge({});
@@ -346,7 +347,7 @@ export default function DogecoinWallet() {
       const responseDogeTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'DOGE',
+          coin: Coin.DOGE,
         },
         TIME_MINUTES_5
       );
@@ -418,7 +419,7 @@ export default function DogecoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'DOGE',
+        coin: Coin.DOGE,
         recipient: dogeRecipient,
         amount: dogeAmount,
         fee: dogeFeeCalculated,
@@ -508,7 +509,7 @@ export default function DogecoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'DOGE',
+              coin: Coin.DOGE,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -559,7 +560,7 @@ export default function DogecoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'DOGE',
+                coin: Coin.DOGE,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1178,7 +1179,7 @@ export default function DogecoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'DOGE',
+                    coin: Coin.DOGE,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

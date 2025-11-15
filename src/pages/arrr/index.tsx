@@ -77,6 +77,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -311,7 +312,7 @@ export default function PirateWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         recipient: arrrRecipient,
         amount: arrrAmount,
         memo: arrrMemo,
@@ -343,7 +344,7 @@ export default function PirateWallet() {
     try {
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
       });
       if (!response?.error) {
         setWalletInfoArrr(response);
@@ -359,7 +360,7 @@ export default function PirateWallet() {
       const response = await qortalRequestWithTimeout(
         {
           action: 'GET_WALLET_BALANCE',
-          coin: 'ARRR',
+          coin: Coin.ARRR,
         },
         TIME_MINUTES_2
       );
@@ -388,7 +389,7 @@ export default function PirateWallet() {
     try {
       const response = await qortalRequest({
         action: 'GET_CROSSCHAIN_SERVER_INFO',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
       });
       if (!response?.error) {
         setAllLightwalletServersArrr(response);
@@ -411,7 +412,7 @@ export default function PirateWallet() {
       const response = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'ARRR',
+          coin: Coin.ARRR,
         },
         TIME_MINUTES_5
       );
@@ -541,7 +542,7 @@ export default function PirateWallet() {
     try {
       const setServer = await qortalRequest({
         action: 'SET_CURRENT_FOREIGN_SERVER',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         type: typeServer,
         host: hostServer,
         port: portServer,
@@ -567,7 +568,7 @@ export default function PirateWallet() {
     try {
       const setServer = await qortalRequest({
         action: 'SET_CURRENT_FOREIGN_SERVER',
-        coin: 'ARRR',
+        coin: Coin.ARRR,
         type: typeServer,
         host: hostServer,
         port: portServer,
@@ -1037,7 +1038,7 @@ export default function PirateWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'ARRR',
+              coin: Coin.ARRR,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -1088,7 +1089,7 @@ export default function PirateWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'ARRR',
+                coin: Coin.ARRR,
                 postProcess: 'capitalizeAll',
               })}
             </Typography>
@@ -1258,7 +1259,7 @@ export default function PirateWallet() {
           >
             {t('core:message.generic.sending_fee', {
               quantity: 0.0001,
-              coin: 'ARRR',
+              coin: Coin.ARRR,
               postProcess: 'capitalizeFirstChar',
             })}
           </Typography>
@@ -1544,7 +1545,7 @@ export default function PirateWallet() {
                   onClick={handleOpenArrrSend}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'ARRR',
+                    coin: Coin.ARRR,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

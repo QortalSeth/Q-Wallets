@@ -68,6 +68,7 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -281,7 +282,7 @@ export default function LitecoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'LTC',
+        coin: Coin.LTC,
       });
       if (response?.error) {
         setWalletInfoLtc({});
@@ -347,7 +348,7 @@ export default function LitecoinWallet() {
       const responseLtcTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'LTC',
+          coin: Coin.LTC,
         },
         TIME_MINUTES_5
       );
@@ -419,7 +420,7 @@ export default function LitecoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'LTC',
+        coin: Coin.LTC,
         recipient: ltcRecipient,
         amount: ltcAmount,
         fee: ltcFeeCalculated,
@@ -511,7 +512,7 @@ export default function LitecoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'LTC',
+              coin: Coin.LTC,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -562,7 +563,7 @@ export default function LitecoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'LTC',
+                coin: Coin.LTC,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1180,7 +1181,7 @@ export default function LitecoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'LTC',
+                    coin: Coin.LTC,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

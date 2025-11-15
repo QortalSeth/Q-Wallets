@@ -68,6 +68,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -302,7 +303,7 @@ export default function DigibyteWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'DGB',
+        coin: Coin.DGB,
       });
       if (response?.error) {
         setWalletInfoDgb({});
@@ -368,7 +369,7 @@ export default function DigibyteWallet() {
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'DGB',
+          coin: Coin.DGB,
         },
         TIME_MINUTES_5
       );
@@ -442,7 +443,7 @@ export default function DigibyteWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'DGB',
+        coin: Coin.DGB,
         recipient: dgbRecipient,
         amount: dgbAmount,
         fee: dgbFeeCalculated,
@@ -534,7 +535,7 @@ export default function DigibyteWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'DGB',
+              coin: Coin.DGB,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -585,7 +586,7 @@ export default function DigibyteWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'DGB',
+                coin: Coin.DGB,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1252,7 +1253,7 @@ export default function DigibyteWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'DGB',
+                    coin: Coin.DGB,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

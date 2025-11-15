@@ -68,6 +68,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -301,7 +302,7 @@ export default function RavencoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'RVN',
+        coin: Coin.RVN,
       });
       if (response?.error) {
         setWalletInfoRvn({});
@@ -367,7 +368,7 @@ export default function RavencoinWallet() {
       const responseRvnTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'RVN',
+          coin: Coin.RVN,
         },
         TIME_MINUTES_5
       );
@@ -440,7 +441,7 @@ export default function RavencoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'RVN',
+        coin: Coin.RVN,
         recipient: rvnRecipient,
         amount: rvnAmount,
         fee: rvnFeeCalculated,
@@ -532,7 +533,7 @@ export default function RavencoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'RVN',
+              coin: Coin.RVN,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -583,7 +584,7 @@ export default function RavencoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'RVN',
+                coin: Coin.RVN,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1246,7 +1247,7 @@ export default function RavencoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'RVN',
+                    coin: Coin.RVN,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

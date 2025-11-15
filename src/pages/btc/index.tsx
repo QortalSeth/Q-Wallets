@@ -68,6 +68,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
+import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -278,7 +279,7 @@ export default function BitcoinWallet() {
       setWalletInfoError(null);
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
-        coin: 'BTC',
+        coin: Coin.BTC,
       });
       if (response?.error) {
         setWalletInfoBtc({});
@@ -345,7 +346,7 @@ export default function BitcoinWallet() {
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
-          coin: 'BTC',
+          coin: Coin.BTC,
         },
         TIME_MINUTES_5
       );
@@ -418,7 +419,7 @@ export default function BitcoinWallet() {
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
-        coin: 'BTC',
+        coin: Coin.BTC,
         recipient: btcRecipient,
         amount: btcAmount,
         fee: btcFeeCalculated,
@@ -508,7 +509,7 @@ export default function BitcoinWallet() {
             sx={{ width: '100%' }}
           >
             {t('core:message.generic.sent_transaction', {
-              coin: 'BTC',
+              coin: Coin.BTC,
               postProcess: 'capitalizeAll',
             })}
           </Alert>
@@ -559,7 +560,7 @@ export default function BitcoinWallet() {
               }}
             >
               {t('core:action.transfer_coin', {
-                coin: 'BTC',
+                coin: Coin.BTC,
                 postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
@@ -1175,7 +1176,7 @@ export default function BitcoinWallet() {
                   disabled={isTransferDisabled}
                 >
                   {t('core:action.transfer_coin', {
-                    coin: 'BTC',
+                    coin: Coin.BTC,
                     postProcess: 'capitalizeFirstChar',
                   })}
                 </WalletButtons>

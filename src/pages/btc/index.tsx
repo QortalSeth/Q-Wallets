@@ -54,6 +54,7 @@ import {
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
+  TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
@@ -233,7 +234,7 @@ export default function BitcoinWallet() {
 
   const changeCopyBtcTxHash = async () => {
     setCopyBtcTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyBtcTxHash('');
   };
 
@@ -428,7 +429,7 @@ export default function BitcoinWallet() {
         setOpenTxBtcSubmit(false);
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsBtc();
       }
     } catch (error) {
@@ -437,7 +438,7 @@ export default function BitcoinWallet() {
       setOpenTxBtcSubmit(false);
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getTransactionsBtc();
       console.error('ERROR SENDING BTC', error);
     }

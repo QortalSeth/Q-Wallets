@@ -53,6 +53,7 @@ import {
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
+  TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
@@ -236,7 +237,7 @@ export default function LitecoinWallet() {
 
   const changeCopyLtcTxHash = async () => {
     setCopyLtcTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyLtcTxHash('');
   };
 
@@ -430,7 +431,7 @@ export default function LitecoinWallet() {
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsLtc();
       }
     } catch (error) {
@@ -440,7 +441,7 @@ export default function LitecoinWallet() {
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       await getTransactionsLtc();
       console.error('ERROR SENDING LTC', error);
     }

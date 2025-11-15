@@ -532,7 +532,7 @@ export default function QortalWallet() {
         setQortRecipient('');
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         getWalletBalanceQort();
         getQortalTransactions();
       }
@@ -541,7 +541,7 @@ export default function QortalWallet() {
       setQortRecipient('');
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getWalletBalanceQort();
       getQortalTransactions();
       console.error('ERROR SENDING QORT', error);

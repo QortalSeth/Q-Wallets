@@ -54,6 +54,7 @@ import {
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
+  TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
@@ -252,7 +253,7 @@ export default function DigibyteWallet() {
 
   const changeCopyDgbTxHash = async () => {
     setCopyDgbTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyDgbTxHash('');
   };
 
@@ -453,7 +454,7 @@ export default function DigibyteWallet() {
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
         setIsLoadingWalletBalanceDgb(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsDgb();
       }
     } catch (error) {
@@ -463,7 +464,7 @@ export default function DigibyteWallet() {
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
       setIsLoadingWalletBalanceDgb(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getTransactionsDgb();
       console.error('ERROR SENDING DGB', error);
     }

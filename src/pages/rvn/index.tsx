@@ -54,6 +54,7 @@ import {
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
+  TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
@@ -251,7 +252,7 @@ export default function RavencoinWallet() {
 
   const changeCopyRvnTxHash = async () => {
     setCopyRvnTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyRvnTxHash('');
   };
 
@@ -451,7 +452,7 @@ export default function RavencoinWallet() {
         setOpenTxRvnSubmit(false);
         setOpenSendRvnSuccess(true);
         setIsLoadingWalletBalanceRvn(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsRvn();
       }
     } catch (error) {
@@ -461,7 +462,7 @@ export default function RavencoinWallet() {
       setOpenTxRvnSubmit(false);
       setOpenSendRvnError(true);
       setIsLoadingWalletBalanceRvn(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       await getTransactionsRvn();
       console.error('ERROR SENDING RVN', error);
     }

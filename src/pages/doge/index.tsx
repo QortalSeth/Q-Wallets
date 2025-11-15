@@ -53,6 +53,7 @@ import {
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
+  TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
@@ -235,7 +236,7 @@ export default function DogecoinWallet() {
 
   const changeCopyDogeTxHash = async () => {
     setCopyDogeTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyDogeTxHash('');
   };
 
@@ -428,7 +429,7 @@ export default function DogecoinWallet() {
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         await getTransactionsDoge();
       }
     } catch (error) {
@@ -437,7 +438,7 @@ export default function DogecoinWallet() {
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       await getTransactionsDoge();
       console.error('ERROR SENDING DOGE', error);
     }

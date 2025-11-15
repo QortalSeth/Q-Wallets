@@ -257,7 +257,7 @@ export default function PirateWallet() {
 
   const changeCopyArrrTxHash = async () => {
     setCopyArrrTxHash('Copied');
-    await timeoutDelay(2000);
+    await timeoutDelay(TIME_SECONDS_2);
     setCopyArrrTxHash('');
   };
 
@@ -323,7 +323,7 @@ export default function PirateWallet() {
         setOpenTxArrrSubmit(false);
         setOpenSendArrrSuccess(true);
         setIsLoadingWalletBalanceArrr(true);
-        await timeoutDelay(3000);
+        await timeoutDelay(TIME_SECONDS_3);
         getWalletBalanceArrr();
       }
     } catch (error) {
@@ -333,7 +333,7 @@ export default function PirateWallet() {
       setOpenTxArrrSubmit(false);
       setOpenSendArrrError(true);
       setIsLoadingWalletBalanceArrr(true);
-      await timeoutDelay(3000);
+      await timeoutDelay(TIME_SECONDS_3);
       getWalletBalanceArrr();
       console.error('ERROR SENDING ARRR', error);
     }

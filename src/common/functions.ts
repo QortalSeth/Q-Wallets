@@ -1,3 +1,5 @@
+import { EMPTY_STRING } from "./constants";
+
 let timeSegments = [
   3.154e10,
   2.628e9,
@@ -40,10 +42,10 @@ export function secondsToDhms(seconds: number) {
   var m = Math.floor((seconds % 3600) / 60);
   var s = Math.floor(seconds % 60);
 
-  var dDisplay = d > 0 ? d + (d == 1 ? 'd ' : 'd ') : '';
-  var hDisplay = h > 0 ? h + (h == 1 ? 'h ' : 'h ') : '';
-  var mDisplay = m > 0 ? m + (m == 1 ? 'm ' : 'm ') : '';
-  var sDisplay = s > 0 ? s + (s == 1 ? 's' : 's') : '';
+  var dDisplay = d > 0 ? d + (d == 1 ? 'd ' : 'd ') : EMPTY_STRING;
+  var hDisplay = h > 0 ? h + (h == 1 ? 'h ' : 'h ') : EMPTY_STRING;
+  var mDisplay = m > 0 ? m + (m == 1 ? 'm ' : 'm ') : EMPTY_STRING;
+  var sDisplay = s > 0 ? s + (s == 1 ? 's' : 's') : EMPTY_STRING;
 
   return dDisplay + hDisplay + mDisplay + sDisplay;
 }

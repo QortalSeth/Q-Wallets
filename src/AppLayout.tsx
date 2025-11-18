@@ -28,7 +28,7 @@ import arrr from './assets/arrr.png';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../package.json';
-import { TIME_MINUTES_1 } from './common/constants';
+import { EMPTY_STRING, TIME_MINUTES_1 } from './common/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 
 export default function AppLayout() {
@@ -48,7 +48,7 @@ export default function AppLayout() {
 
   // derive selected from the URL
   const selectedSegment = useMemo(() => {
-    const seg = location.pathname.replace(/^\//, '');
+    const seg = location.pathname.replace(/^\//, EMPTY_STRING);
     return seg || '/';
   }, [location.pathname]);
 
@@ -98,9 +98,9 @@ export default function AppLayout() {
 
   useEffect(() => {
     const session: IContextProps = {
-      address: address ?? '',
-      avatar: avatarUrl ?? '',
-      name: name ?? '',
+      address: address ?? EMPTY_STRING,
+      avatar: avatarUrl ?? EMPTY_STRING,
+      name: name ?? EMPTY_STRING,
       isAuthenticated: !!address,
       isUsingGateway: isUsingGateway,
       nodeInfo: nodeInfo,

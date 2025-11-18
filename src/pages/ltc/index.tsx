@@ -50,6 +50,7 @@ import {
 import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -162,10 +163,10 @@ export default function LitecoinWallet() {
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyLtcTxHash, setCopyLtcTxHash] = useState('');
+  const [copyLtcTxHash, setCopyLtcTxHash] = useState(EMPTY_STRING);
   const [openLtcSend, setOpenLtcSend] = useState(false);
   const [ltcAmount, setLtcAmount] = useState<number>(0);
-  const [ltcRecipient, setLtcRecipient] = useState('');
+  const [ltcRecipient, setLtcRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
 
   const [loadingRefreshLtc, setLoadingRefreshLtc] = useState(false);
@@ -200,7 +201,7 @@ export default function LitecoinWallet() {
 
   const handleOpenLtcSend = () => {
     setLtcAmount(0);
-    setLtcRecipient('');
+    setLtcRecipient(EMPTY_STRING);
 
     setOpenLtcSend(true);
   };
@@ -209,7 +210,7 @@ export default function LitecoinWallet() {
     if (ltcAmount <= 0 || null || !ltcAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -224,7 +225,7 @@ export default function LitecoinWallet() {
 
     setLtcRecipient(value);
 
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -239,7 +240,7 @@ export default function LitecoinWallet() {
   const changeCopyLtcTxHash = async () => {
     setCopyLtcTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyLtcTxHash('');
+    setCopyLtcTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -427,7 +428,7 @@ export default function LitecoinWallet() {
       });
       if (!sendRequest?.error) {
         setLtcAmount(0);
-        setLtcRecipient('');
+        setLtcRecipient(EMPTY_STRING);
 
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
@@ -437,7 +438,7 @@ export default function LitecoinWallet() {
       }
     } catch (error) {
       setLtcAmount(0);
-      setLtcRecipient('');
+      setLtcRecipient(EMPTY_STRING);
 
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
@@ -691,7 +692,7 @@ export default function LitecoinWallet() {
             isAllowed={(values) => {
               const maxLtcCoin = +walletBalanceLtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= maxLtcCoin;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxLtcCoin;
             }}
             onValueChange={(values) => {
               setLtcAmount(values.floatValue ?? 0);
@@ -1114,7 +1115,7 @@ export default function LitecoinWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoLtc?.address ?? ''
+                          walletInfoLtc?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1150,7 +1151,7 @@ export default function LitecoinWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoLtc?.address ?? ''}
+                      value={walletInfoLtc?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"

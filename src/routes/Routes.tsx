@@ -7,12 +7,13 @@ import DogecoinWallet from '../pages/doge';
 import DigibyteWallet from '../pages/dgb';
 import RavencoinWallet from '../pages/rvn';
 import PirateWallet from '../pages/arrr';
+import { EMPTY_STRING } from '../common/constants';
 
 interface CustomWindow extends Window {
   _qdnBase: string;
 }
 const customWindow = window as unknown as CustomWindow;
-const baseUrl = customWindow?._qdnBase || '';
+const baseUrl = customWindow?._qdnBase || EMPTY_STRING;
 
 export function Routes() {
   const router = createBrowserRouter(

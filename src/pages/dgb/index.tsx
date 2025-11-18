@@ -51,6 +51,7 @@ import {
 import coinLogoDGB from '../../assets/dgb.png';
 import { useTranslation } from 'react-i18next';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -190,10 +191,10 @@ export default function DigibyteWallet() {
     Number(walletBalanceDgb) <= 0;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyDgbTxHash, setCopyDgbTxHash] = useState('');
+  const [copyDgbTxHash, setCopyDgbTxHash] = useState(EMPTY_STRING);
   const [openDgbSend, setOpenDgbSend] = useState(false);
   const [dgbAmount, setDgbAmount] = useState<number>(0);
-  const [dgbRecipient, setDgbRecipient] = useState('');
+  const [dgbRecipient, setDgbRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [dgbFee, setDgbFee] = useState<number>(0);
   const [loadingRefreshDgb, setLoadingRefreshDgb] = useState(false);
@@ -215,7 +216,7 @@ export default function DigibyteWallet() {
 
   const handleOpenDgbSend = () => {
     setDgbAmount(0);
-    setDgbRecipient('');
+    setDgbRecipient(EMPTY_STRING);
     setDgbFee(10);
     setOpenDgbSend(true);
   };
@@ -224,7 +225,7 @@ export default function DigibyteWallet() {
     if (dgbAmount <= 0 || null || !dgbAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -239,7 +240,7 @@ export default function DigibyteWallet() {
 
     setDgbRecipient(value);
 
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -255,7 +256,7 @@ export default function DigibyteWallet() {
   const changeCopyDgbTxHash = async () => {
     setCopyDgbTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyDgbTxHash('');
+    setCopyDgbTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -450,7 +451,7 @@ export default function DigibyteWallet() {
       });
       if (!sendRequest?.error) {
         setDgbAmount(0);
-        setDgbRecipient('');
+        setDgbRecipient(EMPTY_STRING);
         setDgbFee(10);
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
@@ -460,7 +461,7 @@ export default function DigibyteWallet() {
       }
     } catch (error) {
       setDgbAmount(0);
-      setDgbRecipient('');
+      setDgbRecipient(EMPTY_STRING);
       setDgbFee(10);
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
@@ -716,7 +717,7 @@ export default function DigibyteWallet() {
               const maxDgbCoin = walletBalanceDgb - (dgbFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
               return (
-                formattedValue === '' ||
+                formattedValue === EMPTY_STRING ||
                 (typeof floatValue === 'number' && floatValue <= maxDgbCoin)
               );
             }}
@@ -1186,7 +1187,7 @@ export default function DigibyteWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoDgb?.address ?? ''
+                          walletInfoDgb?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1222,7 +1223,7 @@ export default function DigibyteWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoDgb?.address ?? ''}
+                      value={walletInfoDgb?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"

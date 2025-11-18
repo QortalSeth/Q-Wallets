@@ -73,7 +73,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { QORT_1_UNIT, TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
+import { EMPTY_STRING, QORT_1_UNIT, TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
 import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
@@ -180,7 +180,7 @@ export default function QortalWallet() {
   const [openSendQortError, setOpenSendQortError] = useState(false);
   const [sendDisabled, setSendDisabled] = useState(true);
   const [qortAmount, setQortAmount] = useState<number>(0);
-  const [qortRecipient, setQortRecipient] = useState('');
+  const [qortRecipient, setQortRecipient] = useState(EMPTY_STRING);
 
   const emptyRowsPayment =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo.length) : 0;
@@ -230,13 +230,13 @@ export default function QortalWallet() {
 
   const handleOpenQortSend = () => {
     setQortAmount(0);
-    setQortRecipient('');
+    setQortRecipient(EMPTY_STRING);
     setOpenQortSend(true);
   };
 
   const handleCloseQortSend = () => {
     setQortAmount(0);
-    setQortRecipient('');
+    setQortRecipient(EMPTY_STRING);
     setOpenQortSend(false);
   };
 
@@ -279,7 +279,7 @@ export default function QortalWallet() {
     setQortAmount(checkAmount);
     if (checkAmount <= 0 || !checkAmount) {
       setSendDisabled(true);
-    } else if (qortRecipient.length < 3 || qortRecipient === '') {
+    } else if (qortRecipient.length < 3 || qortRecipient === EMPTY_STRING) {
       setSendDisabled(true);
     } else {
       setSendDisabled(false);
@@ -287,12 +287,12 @@ export default function QortalWallet() {
   };
 
   const validateCanSendQortAddress = async (qRecipient: string) => {
-    let checkRecipient = '';
+    let checkRecipient = EMPTY_STRING;
     checkRecipient = qRecipient;
     setQortRecipient(checkRecipient);
     if (qortAmount <= 0 || null || !qortAmount) {
       setSendDisabled(true);
-    } else if (qRecipient.length < 3 || qRecipient === '') {
+    } else if (qRecipient.length < 3 || qRecipient === EMPTY_STRING) {
       setSendDisabled(true);
     } else if (qRecipient.length >= 3) {
       const addressUrl = `/addresses/${checkRecipient}`;
@@ -553,7 +553,7 @@ export default function QortalWallet() {
       });
       if (!sendRequest?.error) {
         setQortAmount(0);
-        setQortRecipient('');
+        setQortRecipient(EMPTY_STRING);
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
         await timeoutDelay(TIME_SECONDS_3);
@@ -562,7 +562,7 @@ export default function QortalWallet() {
       }
     } catch (error) {
       setQortAmount(0);
-      setQortRecipient('');
+      setQortRecipient(EMPTY_STRING);
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
       await timeoutDelay(TIME_SECONDS_3);
@@ -1059,7 +1059,7 @@ export default function QortalWallet() {
                     type: string;
                     creatorAddress: string;
                     recipient: string;
-                    description: string | '';
+                    description: string | EMPTY_STRING;
                     amount: number;
                     fee: number;
                     timestamp: number;
@@ -1140,7 +1140,7 @@ export default function QortalWallet() {
                         } else if (row?.description) {
                           return row?.description;
                         } else {
-                          return '';
+                          return EMPTY_STRING;
                         }
                       })()}
                     </StyledTableCell>
@@ -1445,7 +1445,7 @@ export default function QortalWallet() {
                             postProcess: 'capitalizeFirstChar',
                           });
                         } else if (row?.type === 'SET_GROUP') {
-                          return '';
+                          return EMPTY_STRING;
                         }
                       })()}
                     </StyledTableCell>
@@ -2277,7 +2277,7 @@ export default function QortalWallet() {
                             title={
                               row?.recipient === row?.creatorAddress
                                 ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : ''
+                                : EMPTY_STRING
                             }
                           >
                             <InfoOutlined
@@ -2305,7 +2305,7 @@ export default function QortalWallet() {
                             title={
                               row?.recipient === row?.creatorAddress
                                 ? 'Minting Key: ' + row?.rewardSharePublicKey
-                                : ''
+                                : EMPTY_STRING
                             }
                           >
                             <InfoOutlined
@@ -2539,7 +2539,7 @@ export default function QortalWallet() {
                             ) : row?.recipient ? (
                               cropString(row?.creatorAddress)
                             ) : (
-                              ''
+                              EMPTY_STRING
                             )}
                           </Box>
                         </CustomWidthTooltip>
@@ -2550,12 +2550,12 @@ export default function QortalWallet() {
                           title={row?.identifier}
                         >
                           <Box>
-                            {row?.identifier ? cropString(row?.identifier) : ''}
+                            {row?.identifier ? cropString(row?.identifier) : EMPTY_STRING}
                           </Box>
                         </CustomWidthTooltip>
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="right">
-                        {row?.size > 0 ? humanFileSize(row?.size, true, 2) : ''}
+                        {row?.size > 0 ? humanFileSize(row?.size, true, 2) : EMPTY_STRING}
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
                         <CustomWidthTooltip
@@ -2570,7 +2570,7 @@ export default function QortalWallet() {
                             ) : row?.recipient ? (
                               cropString(row?.recipient)
                             ) : (
-                              ''
+                              EMPTY_STRING
                             )}
                           </Box>
                         </CustomWidthTooltip>
@@ -2628,7 +2628,7 @@ export default function QortalWallet() {
                                       row?.recipient === row?.creatorAddress
                                         ? 'Minting Key: ' +
                                           row?.rewardSharePublicKey
-                                        : ''
+                                        : EMPTY_STRING
                                     }
                                   >
                                     <InfoOutlined
@@ -2658,7 +2658,7 @@ export default function QortalWallet() {
                                         row?.recipient === row?.creatorAddress
                                           ? 'Minting Key: ' +
                                             row?.rewardSharePublicKey
-                                          : ''
+                                          : EMPTY_STRING
                                       }
                                     >
                                       <InfoOutlined
@@ -2691,7 +2691,7 @@ export default function QortalWallet() {
                             <Box>{epochToAgo(row?.timestamp)}</Box>
                           </CustomWidthTooltip>
                         ) : (
-                          ''
+                          EMPTY_STRING
                         )}
                       </StyledTableCell>
                     </StyledTableRow>
@@ -3068,7 +3068,7 @@ export default function QortalWallet() {
             isAllowed={(values) => {
               const maxQortCoin = walletBalanceQort - qortTxFee;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= maxQortCoin;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxQortCoin;
             }}
             onValueChange={(values) => {
               validateCanSendQortAmount(values.floatValue);
@@ -3241,7 +3241,7 @@ export default function QortalWallet() {
                     <IconButton
                       size="small"
                       onClick={() =>
-                        navigator.clipboard.writeText(address ?? '')
+                        navigator.clipboard.writeText(address ?? EMPTY_STRING)
                       }
                     >
                       <CopyAllTwoTone fontSize="small" />
@@ -3276,7 +3276,7 @@ export default function QortalWallet() {
                     }}
                   >
                     <QRCode
-                      value={address ?? ''}
+                      value={address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"

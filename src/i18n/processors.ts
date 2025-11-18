@@ -1,3 +1,5 @@
+import { EMPTY_STRING } from "../common/constants";
+
 export const capitalizeAll = {
   type: 'postProcessor',
   name: 'capitalizeAll',
@@ -10,8 +12,8 @@ export const capitalizeEachFirstChar = {
   process: (value: string) => {
     if (!value?.trim()) return value;
 
-    const leadingSpaces = value.match(/^\s*/)?.[0] || '';
-    const trailingSpaces = value.match(/\s*$/)?.[0] || '';
+    const leadingSpaces = value.match(/^\s*/)?.[0] || EMPTY_STRING;
+    const trailingSpaces = value.match(/\s*$/)?.[0] || EMPTY_STRING;
 
     const core = value
       .trim()

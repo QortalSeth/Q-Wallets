@@ -57,6 +57,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_2,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
@@ -172,7 +173,7 @@ export default function PirateWallet() {
   }
 
   const [isSynced, setIsSynced] = useState(false);
-  const [syncStatus, setSyncStatus] = useState('');
+  const [syncStatus, setSyncStatus] = useState(EMPTY_STRING);
   const [walletInfoArrr, setWalletInfoArrr] = useState<any>({});
   const [walletBalanceArrr, setWalletBalanceArrr] = useState<any>(null);
   const [isLoadingWalletBalanceArrr, setIsLoadingWalletBalanceArrr] =
@@ -182,18 +183,18 @@ export default function PirateWallet() {
   const [currentLightwalletServerArrr, setCurrentLightwalletServerArrr] =
     useState<any>([]);
   const [_changeServer, setChangeServer] = useState(false);
-  const [arrrMemo, setArrrMemo] = useState('');
+  const [arrrMemo, setArrrMemo] = useState(EMPTY_STRING);
   const [transactionsArrr, setTransactionsArrr] = useState<any>([]);
   const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyArrrTxHash, setCopyArrrTxHash] = useState('');
+  const [copyArrrTxHash, setCopyArrrTxHash] = useState(EMPTY_STRING);
   const [openArrrLightwallet, setOpenArrrLightwallet] = useState(false);
   const [openArrrServerChange, setOpenArrrServerChange] = useState(false);
   const [openArrrSend, setOpenArrrSend] = useState(false);
   const [arrrAmount, setArrrAmount] = useState<number>(0);
-  const [arrrRecipient, setArrrRecipient] = useState('');
+  const [arrrRecipient, setArrrRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
@@ -223,8 +224,8 @@ export default function PirateWallet() {
 
   const handleOpenArrrSend = () => {
     setArrrAmount(0);
-    setArrrRecipient('');
-    setArrrMemo('');
+    setArrrRecipient(EMPTY_STRING);
+    setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(true);
   };
 
@@ -232,7 +233,7 @@ export default function PirateWallet() {
     if (arrrAmount <= 0 || null || !arrrAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -242,7 +243,7 @@ export default function PirateWallet() {
     const value = e.target.value;
     const pattern = /^(zs1[2-9A-HJ-NP-Za-z]{75})$/;
     setArrrRecipient(value);
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -251,15 +252,15 @@ export default function PirateWallet() {
 
   const handleCloseArrrSend = () => {
     setArrrAmount(0);
-    setArrrRecipient('');
-    setArrrMemo('');
+    setArrrRecipient(EMPTY_STRING);
+    setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(false);
   };
 
   const changeCopyArrrTxHash = async () => {
     setCopyArrrTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyArrrTxHash('');
+    setCopyArrrTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -319,8 +320,8 @@ export default function PirateWallet() {
       });
       if (!sendRequest?.error) {
         setArrrAmount(0);
-        setArrrRecipient('');
-        setArrrMemo('');
+        setArrrRecipient(EMPTY_STRING);
+        setArrrMemo(EMPTY_STRING);
         setOpenTxArrrSubmit(false);
         setOpenSendArrrSuccess(true);
         setIsLoadingWalletBalanceArrr(true);
@@ -329,8 +330,8 @@ export default function PirateWallet() {
       }
     } catch (error) {
       setArrrAmount(0);
-      setArrrRecipient('');
-      setArrrMemo('');
+      setArrrRecipient(EMPTY_STRING);
+      setArrrMemo(EMPTY_STRING);
       setOpenTxArrrSubmit(false);
       setOpenSendArrrError(true);
       setIsLoadingWalletBalanceArrr(true);
@@ -485,7 +486,7 @@ export default function PirateWallet() {
             }
           } else {
             setIsSynced(true);
-            setSyncStatus('');
+            setSyncStatus(EMPTY_STRING);
             setChangeServer(false);
             getWalletInfoArrr();
             await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_3));
@@ -905,7 +906,7 @@ export default function PirateWallet() {
                     </CustomWidthTooltip>
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.memo ? row?.memo : ''}
+                    {row?.memo ? row?.memo : EMPTY_STRING}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
@@ -1208,7 +1209,7 @@ export default function PirateWallet() {
               const maxArrrCoin = walletBalanceArrr - 0.0001;
               const { formattedValue, floatValue } = values;
               return (
-                formattedValue === '' ||
+                formattedValue === EMPTY_STRING ||
                 (floatValue !== undefined && floatValue <= maxArrrCoin)
               );
             }}
@@ -1425,7 +1426,7 @@ export default function PirateWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoArrr?.address ?? ''
+                          walletInfoArrr?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1515,7 +1516,7 @@ export default function PirateWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoArrr?.address ?? ''}
+                      value={walletInfoArrr?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"

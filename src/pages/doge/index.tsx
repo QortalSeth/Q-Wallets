@@ -50,6 +50,7 @@ import {
 import coinLogoDOGE from '../../assets/doge.png';
 import { useTranslation } from 'react-i18next';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -162,10 +163,10 @@ export default function DogecoinWallet() {
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyDogeTxHash, setCopyDogeTxHash] = useState('');
+  const [copyDogeTxHash, setCopyDogeTxHash] = useState(EMPTY_STRING);
   const [openDogeSend, setOpenDogeSend] = useState(false);
   const [dogeAmount, setDogeAmount] = useState<number>(0);
-  const [dogeRecipient, setDogeRecipient] = useState('');
+  const [dogeRecipient, setDogeRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
 
   const [loadingRefreshDoge, setLoadingRefreshDoge] = useState(false);
@@ -201,7 +202,7 @@ export default function DogecoinWallet() {
 
   const handleOpenDogeSend = () => {
     setDogeAmount(0);
-    setDogeRecipient('');
+    setDogeRecipient(EMPTY_STRING);
     setOpenDogeSend(true);
   };
 
@@ -209,7 +210,7 @@ export default function DogecoinWallet() {
     if (dogeAmount <= 0 || null || !dogeAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -223,7 +224,7 @@ export default function DogecoinWallet() {
 
     setDogeRecipient(value);
 
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -238,7 +239,7 @@ export default function DogecoinWallet() {
   const changeCopyDogeTxHash = async () => {
     setCopyDogeTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyDogeTxHash('');
+    setCopyDogeTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -426,7 +427,7 @@ export default function DogecoinWallet() {
       });
       if (!sendRequest?.error) {
         setDogeAmount(0);
-        setDogeRecipient('');
+        setDogeRecipient(EMPTY_STRING);
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
@@ -435,7 +436,7 @@ export default function DogecoinWallet() {
       }
     } catch (error) {
       setDogeAmount(0);
-      setDogeRecipient('');
+      setDogeRecipient(EMPTY_STRING);
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
@@ -688,7 +689,7 @@ export default function DogecoinWallet() {
             isAllowed={(values) => {
               const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= maxDogeCoin;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxDogeCoin;
             }}
             onValueChange={(values) => {
               setDogeAmount(values.floatValue ?? 0);
@@ -1112,7 +1113,7 @@ export default function DogecoinWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoDoge?.address ?? ''
+                          walletInfoDoge?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1148,7 +1149,7 @@ export default function DogecoinWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoDoge?.address ?? ''}
+                      value={walletInfoDoge?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"

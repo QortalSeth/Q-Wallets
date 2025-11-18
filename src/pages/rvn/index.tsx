@@ -51,6 +51,7 @@ import {
 import coinLogoRVN from '../../assets/rvn.png';
 import { useTranslation } from 'react-i18next';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -181,21 +182,16 @@ export default function RavencoinWallet() {
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyRvnTxHash, setCopyRvnTxHash] = useState('');
+  const [copyRvnTxHash, setCopyRvnTxHash] = useState(EMPTY_STRING);
   const [openRvnSend, setOpenRvnSend] = useState(false);
   const [rvnAmount, setRvnAmount] = useState<number>(0);
-  const [rvnRecipient, setRvnRecipient] = useState('');
+  const [rvnRecipient, setRvnRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [rvnFee, setRvnFee] = useState<number>(0);
   const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceRvn ||
-    !!walletBalanceError ||
-    walletBalanceRvn == null ||
-    Number(walletBalanceRvn) <= 0;
   const [loadingRefreshRvn, setLoadingRefreshRvn] = useState(false);
   const [openTxRvnSubmit, setOpenTxRvnSubmit] = useState(false);
   const [openSendRvnSuccess, setOpenSendRvnSuccess] = useState(false);
@@ -215,16 +211,16 @@ export default function RavencoinWallet() {
 
   const handleOpenRvnSend = () => {
     setRvnAmount(0);
-    setRvnRecipient('');
+    setRvnRecipient(EMPTY_STRING);
     setRvnFee(1500);
     setOpenRvnSend(true);
   };
 
-  const validateCanSendRvn = () => {
+  const disableCanSendRvn = () => {
     if (rvnAmount <= 0 || null || !rvnAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -238,7 +234,7 @@ export default function RavencoinWallet() {
 
     setRvnRecipient(value);
 
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -254,7 +250,7 @@ export default function RavencoinWallet() {
   const changeCopyRvnTxHash = async () => {
     setCopyRvnTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyRvnTxHash('');
+    setCopyRvnTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -448,7 +444,7 @@ export default function RavencoinWallet() {
       });
       if (!sendRequest?.error) {
         setRvnAmount(0);
-        setRvnRecipient('');
+        setRvnRecipient(EMPTY_STRING);
         setRvnFee(1500);
         setOpenTxRvnSubmit(false);
         setOpenSendRvnSuccess(true);
@@ -458,7 +454,7 @@ export default function RavencoinWallet() {
       }
     } catch (error) {
       setRvnAmount(0);
-      setRvnRecipient('');
+      setRvnRecipient(EMPTY_STRING);
       setRvnFee(1500);
       setOpenTxRvnSubmit(false);
       setOpenSendRvnError(true);
@@ -589,7 +585,7 @@ export default function RavencoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendRvn()}
+              disabled={disableCanSendRvn()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-rvn"
@@ -712,7 +708,7 @@ export default function RavencoinWallet() {
             isAllowed={(values) => {
               const maxRvnCoin = walletBalanceRvn - (rvnFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= maxRvnCoin;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxRvnCoin;
             }}
             onValueChange={(values) => {
               setRvnAmount(values.floatValue ?? 0);
@@ -1180,7 +1176,7 @@ export default function RavencoinWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoRvn?.address ?? ''
+                          walletInfoRvn?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1216,7 +1212,7 @@ export default function RavencoinWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoRvn?.address ?? ''}
+                      value={walletInfoRvn?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"
@@ -1244,7 +1240,7 @@ export default function RavencoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenRvnSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendRvn()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.RVN,

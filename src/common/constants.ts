@@ -1,3 +1,6 @@
+// String
+export const EMPTY_STRING: string = '';
+
 // QORT section
 export const QORT_1_UNIT: number = 100000000;
 

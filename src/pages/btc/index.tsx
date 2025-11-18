@@ -51,6 +51,7 @@ import coinLogoBTC from '../../assets/btc.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
 import {
+  EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -162,10 +163,10 @@ export default function BitcoinWallet() {
     useState<boolean>(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [copyBtcTxHash, setCopyBtcTxHash] = useState('');
+  const [copyBtcTxHash, setCopyBtcTxHash] = useState(EMPTY_STRING);
   const [openBtcSend, setOpenBtcSend] = useState(false);
   const [btcAmount, setBtcAmount] = useState<number>(0);
-  const [btcRecipient, setBtcRecipient] = useState('');
+  const [btcRecipient, setBtcRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshBtc, setLoadingRefreshBtc] = useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = useState(false);
@@ -177,11 +178,6 @@ export default function BitcoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceBtc ||
-    !!walletBalanceError ||
-    walletBalanceBtc == null ||
-    Number(walletBalanceBtc) <= 0;
 
   const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +btcFeeCalculated * 500;
@@ -198,15 +194,15 @@ export default function BitcoinWallet() {
 
   const handleOpenBtcSend = () => {
     setBtcAmount(0);
-    setBtcRecipient('');
+    setBtcRecipient(EMPTY_STRING);
     setOpenBtcSend(true);
   };
 
-  const validateCanSendBtc = () => {
+  const disableCanSendBtc = () => {
     if (btcAmount <= 0 || null || !btcAmount) {
       return true;
     }
-    if (addressFormatError || '') {
+    if (addressFormatError || EMPTY_STRING) {
       return true;
     }
     return false;
@@ -221,7 +217,7 @@ export default function BitcoinWallet() {
 
     setBtcRecipient(value);
 
-    if (pattern.test(value) || value === '') {
+    if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
@@ -236,7 +232,7 @@ export default function BitcoinWallet() {
   const changeCopyBtcTxHash = async () => {
     setCopyBtcTxHash('Copied');
     await timeoutDelay(TIME_SECONDS_2);
-    setCopyBtcTxHash('');
+    setCopyBtcTxHash(EMPTY_STRING);
   };
 
   const handleChangePage = (
@@ -426,7 +422,7 @@ export default function BitcoinWallet() {
       });
       if (!sendRequest?.error) {
         setBtcAmount(0);
-        setBtcRecipient('');
+        setBtcRecipient(EMPTY_STRING);
         setOpenTxBtcSubmit(false);
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
@@ -435,7 +431,7 @@ export default function BitcoinWallet() {
       }
     } catch (error) {
       setBtcAmount(0);
-      setBtcRecipient('');
+      setBtcRecipient(EMPTY_STRING);
       setOpenTxBtcSubmit(false);
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
@@ -565,7 +561,7 @@ export default function BitcoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendBtc()}
+              disabled={disableCanSendBtc()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-btc"
@@ -688,7 +684,7 @@ export default function BitcoinWallet() {
             isAllowed={(values) => {
               const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= maxBtcCoin;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxBtcCoin;
             }}
             onValueChange={(values) => {
               setBtcAmount(values.floatValue ?? 0);
@@ -1109,7 +1105,7 @@ export default function BitcoinWallet() {
                       size="small"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          walletInfoBtc?.address ?? ''
+                          walletInfoBtc?.address ?? EMPTY_STRING
                         )
                       }
                     >
@@ -1145,7 +1141,7 @@ export default function BitcoinWallet() {
                     }}
                   >
                     <QRCode
-                      value={walletInfoBtc?.address ?? ''}
+                      value={walletInfoBtc?.address ?? EMPTY_STRING}
                       size={200}
                       fgColor="#000000"
                       bgColor="#ffffff"
@@ -1173,7 +1169,7 @@ export default function BitcoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenBtcSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendBtc()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.BTC,

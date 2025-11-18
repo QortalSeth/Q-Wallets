@@ -1,5 +1,6 @@
 import { SetStateAction } from 'jotai';
 import { createContext, Dispatch } from 'react';
+import { EMPTY_STRING } from '../common/constants';
 
 export interface IContextProps {
   address: string | null;
@@ -12,9 +13,9 @@ export interface IContextProps {
 }
 
 export const defaultState: IContextProps = {
-  address: '',
-  avatar: '',
-  name: '',
+  address: EMPTY_STRING,
+  avatar: EMPTY_STRING,
+  name: EMPTY_STRING,
   isAuthenticated: false,
   isUsingGateway: true,
   nodeInfo: null,

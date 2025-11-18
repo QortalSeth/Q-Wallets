@@ -221,7 +221,7 @@ export default function DigibyteWallet() {
     setOpenDgbSend(true);
   };
 
-  const validateCanSendDgb = () => {
+  const disableCanSendDgb = () => {
     if (dgbAmount <= 0 || null || !dgbAmount) {
       return true;
     }
@@ -592,7 +592,7 @@ export default function DigibyteWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendDgb()}
+              disabled={disableCanSendDgb()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-dgb"

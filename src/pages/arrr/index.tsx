@@ -229,7 +229,7 @@ export default function PirateWallet() {
     setOpenArrrSend(true);
   };
 
-  const validateCanSendArrr = () => {
+  const disableCanSendArrr = () => {
     if (arrrAmount <= 0 || null || !arrrAmount) {
       return true;
     }
@@ -1095,7 +1095,7 @@ export default function PirateWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendArrr()}
+              disabled={disableCanSendArrr()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-arrr"

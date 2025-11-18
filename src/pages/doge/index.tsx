@@ -206,7 +206,7 @@ export default function DogecoinWallet() {
     setOpenDogeSend(true);
   };
 
-  const validateCanSendDoge = () => {
+  const disableCanSendDoge = () => {
     if (dogeAmount <= 0 || null || !dogeAmount) {
       return true;
     }
@@ -566,7 +566,7 @@ export default function DogecoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendDoge()}
+              disabled={disableCanSendDoge()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-doge"

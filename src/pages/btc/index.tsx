@@ -203,7 +203,7 @@ export default function BitcoinWallet() {
     setOpenBtcSend(true);
   };
 
-  const validateCanSendBtc = () => {
+  const disableCanSendBtc = () => {
     if (btcAmount <= 0 || null || !btcAmount) {
       return true;
     }
@@ -566,7 +566,7 @@ export default function BitcoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendBtc()}
+              disabled={disableCanSendBtc()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-btc"

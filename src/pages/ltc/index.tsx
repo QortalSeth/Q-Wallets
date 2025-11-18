@@ -206,7 +206,7 @@ export default function LitecoinWallet() {
     setOpenLtcSend(true);
   };
 
-  const validateCanSendLtc = () => {
+  const disableCanSendLtc = () => {
     if (ltcAmount <= 0 || null || !ltcAmount) {
       return true;
     }
@@ -569,7 +569,7 @@ export default function LitecoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendLtc()}
+              disabled={disableCanSendLtc()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-ltc"

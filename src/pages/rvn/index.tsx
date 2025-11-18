@@ -221,7 +221,7 @@ export default function RavencoinWallet() {
     setOpenRvnSend(true);
   };
 
-  const validateCanSendRvn = () => {
+  const disableCanSendRvn = () => {
     if (rvnAmount <= 0 || null || !rvnAmount) {
       return true;
     }
@@ -590,7 +590,7 @@ export default function RavencoinWallet() {
               })}
             </Typography>
             <Button
-              disabled={validateCanSendRvn()}
+              disabled={disableCanSendRvn()}
               variant="contained"
               startIcon={<Send />}
               aria-label="send-rvn"

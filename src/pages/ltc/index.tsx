@@ -168,7 +168,6 @@ export default function LitecoinWallet() {
   const [ltcAmount, setLtcAmount] = useState<number>(0);
   const [ltcRecipient, setLtcRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
-
   const [loadingRefreshLtc, setLoadingRefreshLtc] = useState(false);
   const [openTxLtcSubmit, setOpenTxLtcSubmit] = useState(false);
   const [openSendLtcSuccess, setOpenSendLtcSuccess] = useState(false);
@@ -179,11 +178,6 @@ export default function LitecoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceLtc ||
-    !!walletBalanceError ||
-    walletBalanceLtc == null ||
-    Number(walletBalanceLtc) <= 0;
 
   const ltcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +ltcFeeCalculated * 1000;
@@ -1179,7 +1173,7 @@ export default function LitecoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenLtcSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendLtc()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.LTC,

@@ -192,11 +192,6 @@ export default function RavencoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceRvn ||
-    !!walletBalanceError ||
-    walletBalanceRvn == null ||
-    Number(walletBalanceRvn) <= 0;
   const [loadingRefreshRvn, setLoadingRefreshRvn] = useState(false);
   const [openTxRvnSubmit, setOpenTxRvnSubmit] = useState(false);
   const [openSendRvnSuccess, setOpenSendRvnSuccess] = useState(false);
@@ -1245,7 +1240,7 @@ export default function RavencoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenRvnSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendRvn()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.RVN,

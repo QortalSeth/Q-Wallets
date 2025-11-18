@@ -184,11 +184,6 @@ export default function DigibyteWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceDgb ||
-    !!walletBalanceError ||
-    walletBalanceDgb == null ||
-    Number(walletBalanceDgb) <= 0;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [copyDgbTxHash, setCopyDgbTxHash] = useState(EMPTY_STRING);
@@ -1251,7 +1246,7 @@ export default function DigibyteWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenDgbSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendDgb()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.DGB,

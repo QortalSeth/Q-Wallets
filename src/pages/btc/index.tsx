@@ -178,11 +178,6 @@ export default function BitcoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceBtc ||
-    !!walletBalanceError ||
-    walletBalanceBtc == null ||
-    Number(walletBalanceBtc) <= 0;
 
   const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +btcFeeCalculated * 500;
@@ -1174,7 +1169,7 @@ export default function BitcoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenBtcSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendBtc()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.BTC,

@@ -180,11 +180,7 @@ export default function DogecoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-  const isTransferDisabled =
-    isLoadingWalletBalanceDoge ||
-    !!walletBalanceError ||
-    walletBalanceDoge == null ||
-    Number(walletBalanceDoge) <= 0;
+
 
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +dogeFeeCalculated * 5000;
@@ -1177,7 +1173,7 @@ export default function DogecoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenDogeSend}
-                  disabled={isTransferDisabled}
+                  disabled={disableCanSendDoge()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.DOGE,

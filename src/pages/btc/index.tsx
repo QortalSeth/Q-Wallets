@@ -1169,7 +1169,6 @@ export default function BitcoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenBtcSend}
-                  disabled={disableCanSendBtc()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.BTC,

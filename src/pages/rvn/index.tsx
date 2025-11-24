@@ -1240,7 +1240,6 @@ export default function RavencoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenRvnSend}
-                  disabled={disableCanSendRvn()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.RVN,

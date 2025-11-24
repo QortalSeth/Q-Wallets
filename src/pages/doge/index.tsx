@@ -1173,7 +1173,6 @@ export default function DogecoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenDogeSend}
-                  disabled={disableCanSendDoge()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.DOGE,

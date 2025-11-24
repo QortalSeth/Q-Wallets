@@ -1059,7 +1059,7 @@ export default function QortalWallet() {
                     type: string;
                     creatorAddress: string;
                     recipient: string;
-                    description: string | EMPTY_STRING;
+                    description: string | '';
                     amount: number;
                     fee: number;
                     timestamp: number;

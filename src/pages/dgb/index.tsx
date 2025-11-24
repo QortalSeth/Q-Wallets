@@ -1246,7 +1246,6 @@ export default function DigibyteWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenDgbSend}
-                  disabled={disableCanSendDgb()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.DGB,

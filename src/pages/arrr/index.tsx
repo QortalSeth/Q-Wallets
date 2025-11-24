@@ -1544,7 +1544,6 @@ export default function PirateWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenArrrSend}
-                  disabled={disableCanSendArrr()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.ARRR,

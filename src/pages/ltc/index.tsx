@@ -303,9 +303,7 @@ export default function LitecoinWallet() {
     }
   };
 
-  useEffect(() => {
-    getWalletInfoLtc();
-  }, []);
+ 
 
   function computeBalanceFromTransactions(txs: any[]): number {
     if (!Array.isArray(txs)) return 0;
@@ -324,15 +322,7 @@ export default function LitecoinWallet() {
     return +(satoshis / 1e8).toFixed(8);
   }
 
-  useEffect(() => {
-    const intervalgetTransactionsLtc = setInterval(() => {
-      getTransactionsLtc();
-    }, TIME_MINUTES_3);
-    getTransactionsLtc();
-    return () => {
-      clearInterval(intervalgetTransactionsLtc);
-    };
-  }, []);
+
 
   const getTransactionsLtc = async () => {
     try {
@@ -1173,7 +1163,6 @@ export default function LitecoinWallet() {
                   startIcon={<Send style={{ marginBottom: 2 }} />}
                   aria-label="Transfer"
                   onClick={handleOpenLtcSend}
-                  disabled={disableCanSendLtc()}
                 >
                   {t('core:action.transfer_coin', {
                     coin: Coin.LTC,

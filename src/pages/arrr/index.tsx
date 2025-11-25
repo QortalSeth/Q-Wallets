@@ -196,6 +196,7 @@ export default function PirateWallet() {
   const [openArrrSend, setOpenArrrSend] = useState(false);
   const [arrrAmount, setArrrAmount] = useState<number>(0);
   const [arrrRecipient, setArrrRecipient] = useState(EMPTY_STRING);
+  const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
@@ -229,7 +230,18 @@ export default function PirateWallet() {
     setOpenArrrSend(true);
   };
 
-  const disableCanSendArrr = () => arrrAmount <= 0;
+  const disableCanSendArrr = () => arrrAmount <= 0 || arrrRecipient == EMPTY_STRING || addressFormatError;
+
+  const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const pattern = /^(zs1[2-9A-HJ-NP-Za-z]{75})$/;
+    setArrrRecipient(value);
+    if (pattern.test(value) || value === EMPTY_STRING) {
+      setAddressFormatError(false);
+    } else {
+      setAddressFormatError(true);
+    }
+  };
 
   const handleCloseArrrSend = () => {
     setArrrAmount(0);
@@ -1199,7 +1211,7 @@ export default function PirateWallet() {
             variant="outlined"
             label="Amount (ARRR)"
             isAllowed={(values) => {
-              const maxArrrCoin = walletBalanceArrr - 0.0001;
+              const maxArrrCoin = walletBalanceArrr - 0.00010000;
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||
@@ -1219,6 +1231,8 @@ export default function PirateWallet() {
             id="arrr-address"
             margin="normal"
             value={arrrRecipient}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
             helperText={t('core:message.generic.pirate_chain_address', {
               postProcess: 'capitalizeFirstChar',
             })}

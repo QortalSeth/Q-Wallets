@@ -7,7 +7,7 @@
     "change_server": "Vaheta serverit",
     "close": "Sulge",
     "copy_address": "Kopeeri aadress",
-    "copy hash": "Kopeeri räsi: {{ hash }}",
+    "copy_hash": "Kopeeri räsi: {{ hash }}",
     "force_sync": "Sunni sünkroonimist",
     "refresh": "Värskenda",
     "remove": "Eemalda",

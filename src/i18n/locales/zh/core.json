@@ -7,7 +7,7 @@
     "change_server": "更换服务器",
     "close": "关闭",
     "copy_address": "复制地址",
-    "copy hash": "复制哈希：{{ hash }}",
+    "copy_hash": "复制哈希：{{ hash }}",
     "force_sync": "强制同步",
     "refresh": "刷新",
     "remove": "移除",

@@ -7,7 +7,7 @@
     "change_server": "change server",
     "close": "close",
     "copy_address": "copy address",
-    "copy hash": "copy hash: {{ hash }}",
+    "copy_hash": "copy hash: {{ hash }}",
     "force_sync": "force sync",
     "refresh": "refresh",
     "remove": "remove",

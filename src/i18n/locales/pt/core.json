@@ -7,7 +7,7 @@
     "change_server": "alterar servidor",
     "close": "fechar",
     "copy_address": "copiar endereço",
-    "copy hash": "copiar hash: {{ hash }}",
+    "copy_hash": "copiar hash: {{ hash }}",
     "force_sync": "forçar sincronização",
     "refresh": "atualizar",
     "remove": "remover",

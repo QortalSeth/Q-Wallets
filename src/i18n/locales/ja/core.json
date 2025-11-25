@@ -7,7 +7,7 @@
     "change_server": "サーバーを変更",
     "close": "閉じる",
     "copy_address": "アドレスをコピー",
-    "copy hash": "ハッシュをコピー: {{ hash }}",
+    "copy_hash": "ハッシュをコピー: {{ hash }}",
     "force_sync": "同期を強制",
     "refresh": "更新",
     "remove": "削除",

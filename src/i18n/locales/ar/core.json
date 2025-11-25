@@ -7,7 +7,7 @@
     "change_server": "تغيير الخادم",
     "close": "إغلاق",
     "copy_address": "نسخ العنوان",
-    "copy hash": "نسخ التجزئة: {{ hash }}",
+    "copy_hash": "نسخ التجزئة: {{ hash }}",
     "force_sync": "فرض المزامنة",
     "refresh": "تحديث",
     "remove": "إزالة",

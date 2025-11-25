@@ -303,26 +303,22 @@ export default function LitecoinWallet() {
     }
   };
 
- 
-
-  function computeBalanceFromTransactions(txs: any[]): number {
-    if (!Array.isArray(txs)) return 0;
-    let satoshis = 0;
-    for (const tx of txs) {
-      // Only count confirmed txs (those with a timestamp)
-      if (!tx?.timestamp) continue;
-      const inSat = (tx?.inputs || [])
-        .filter((i: any) => i?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      const outSat = (tx?.outputs || [])
-        .filter((o: any) => o?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      satoshis += outSat - inSat; // net effect on wallet
+  const getWalletBalanceLtc = async () => {
+    try {
+      const response = await qortalRequestWithTimeout({
+        action: "GET_WALLET_BALANCE",
+        coin: Coin.LTC
+      }, TIME_MINUTES_5);
+      if (!response?.error) {
+        setWalletBalanceLtc(response);
+        setIsLoadingWalletBalanceLtc(false);
+      }
+    } catch (error) {
+      setWalletBalanceLtc(null);
+      setIsLoadingWalletBalanceLtc(false);
+      console.error("ERROR GET LTC BALANCE", error);
     }
-    return +(satoshis / 1e8).toFixed(8);
   }
-
-
 
   const getTransactionsLtc = async () => {
     try {
@@ -350,10 +346,6 @@ export default function LitecoinWallet() {
         );
       } else {
         setTransactionsLtc(responseLtcTransactions);
-        const computed = computeBalanceFromTransactions(
-          responseLtcTransactions || []
-        );
-        setWalletBalanceLtc(computed);
         setWalletBalanceError(null);
       }
     } catch (error: any) {
@@ -373,8 +365,10 @@ export default function LitecoinWallet() {
     let intervalId: any;
     (async () => {
       await getWalletInfoLtc();
+      await getWalletBalanceLtc();
       await getTransactionsLtc();
       intervalId = setInterval(() => {
+        getWalletBalanceLtc();
         getTransactionsLtc();
       }, TIME_MINUTES_3);
     })();
@@ -603,7 +597,7 @@ export default function LitecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceLtc.toFixed(8) + ' LTC'
+              walletBalanceLtc + ' LTC'
             )}
           </Typography>
         </Box>
@@ -635,9 +629,9 @@ export default function LitecoinWallet() {
               const newMaxLtcAmount =
                 +walletBalanceLtc - estimatedFeeCalculated;
               if (newMaxLtcAmount < 0) {
-                return Number(0.0) + ' LTC';
+                return Number(0.00000000) + ' LTC';
               } else {
-                return newMaxLtcAmount.toFixed(8) + ' LTC';
+                return newMaxLtcAmount + ' LTC';
               }
             })()}
           </Typography>

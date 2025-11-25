@@ -321,7 +321,7 @@ export default function BitcoinWallet() {
     try {
       const response = await qortalRequestWithTimeout({
         action: "GET_WALLET_BALANCE",
-        coin: 'BTC'
+        coin: Coin.BTC
       }, TIME_MINUTES_5);
       if (!response?.error) {
         setWalletBalanceBtc(response);

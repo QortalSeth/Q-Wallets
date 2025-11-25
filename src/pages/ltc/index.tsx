@@ -201,7 +201,7 @@ export default function LitecoinWallet() {
     setOpenLtcSend(true);
   };
 
-  const disableCanSendLtc = () => ltcAmount <= 0 || addressFormatError;
+  const disableCanSendLtc = () => ltcAmount <= 0 || ltcRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

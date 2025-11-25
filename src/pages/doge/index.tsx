@@ -202,7 +202,7 @@ export default function DogecoinWallet() {
     setOpenDogeSend(true);
   };
 
-  const disableCanSendDoge = () => dogeAmount <= 0 || addressFormatError;
+  const disableCanSendDoge = () => dogeAmount <= 0 || dogeRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

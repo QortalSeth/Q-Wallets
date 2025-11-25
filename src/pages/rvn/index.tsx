@@ -217,7 +217,7 @@ export default function RavencoinWallet() {
     setOpenRvnSend(true);
   };
 
-  const disableCanSendRvn = () => rvnAmount <= 0 || addressFormatError;
+  const disableCanSendRvn = () => rvnAmount <= 0 || rvnRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

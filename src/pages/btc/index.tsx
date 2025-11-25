@@ -199,7 +199,7 @@ export default function BitcoinWallet() {
     setOpenBtcSend(true);
   };
 
-  const disableCanSendBtc = () => btcAmount <= 0 || addressFormatError;
+  const disableCanSendBtc = () => btcAmount <= 0 || btcRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

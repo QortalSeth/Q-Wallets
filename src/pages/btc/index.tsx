@@ -325,12 +325,15 @@ export default function BitcoinWallet() {
       }, TIME_MINUTES_5);
       if (!response?.error) {
         setWalletBalanceBtc(response);
-        setIsLoadingWalletBalanceBtc(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletBalanceBtc(null);
-      setIsLoadingWalletBalanceBtc(false);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error("ERROR GET BTC BALANCE", error);
+    } finally {
+      setIsLoadingWalletBalanceBtc(false);
     }
   }
 
@@ -339,7 +342,6 @@ export default function BitcoinWallet() {
       setLoadingRefreshBtc(true);
       setIsLoadingBtcTransactions(true);
       setIsLoadingWalletBalanceBtc(true);
-      setWalletBalanceError(null);
 
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
@@ -350,25 +352,13 @@ export default function BitcoinWallet() {
       );
 
       if (responseBtcTransactions?.error) {
-        setTransactionsBtc([]);
-        setWalletBalanceBtc(null);
-        setWalletBalanceError(
-          typeof responseBtcTransactions.error === 'string'
-            ? responseBtcTransactions.error
-            : t('core:message.error.loading_balance', {
-                postProcess: 'capitalizeFirstChar',
-              })
-        );
+        setTransactionsBtc([]);       
       } else {
         setTransactionsBtc(responseBtcTransactions);
-        setWalletBalanceError(null);
       }
     } catch (error: any) {
       setTransactionsBtc([]);
       setWalletBalanceBtc(null);
-      setWalletBalanceError(
-        error?.message ? String(error.message) : String(error)
-      );
       console.error('ERROR GET BTC TRANSACTIONS', error);
     } finally {
       setIsLoadingBtcTransactions(false);

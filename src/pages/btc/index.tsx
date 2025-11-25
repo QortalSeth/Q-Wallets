@@ -301,36 +301,38 @@ export default function BitcoinWallet() {
     }
   };
 
-  function computeBalanceFromTransactions(txs: any[]): number {
-    if (!Array.isArray(txs)) return 0;
-    let satoshis = 0;
-    for (const tx of txs) {
-      // Only count confirmed txs (those with a timestamp)
-      if (!tx?.timestamp) continue;
-      const inSat = (tx?.inputs || [])
-        .filter((i: any) => i?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      const outSat = (tx?.outputs || [])
-        .filter((o: any) => o?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      satoshis += outSat - inSat; // net effect on wallet
-    }
-    return +(satoshis / 1e8).toFixed(8);
-  }
-
   useEffect(() => {
     getWalletInfoBtc();
   }, []);
 
   useEffect(() => {
     const intervalgetTransactionsBtc = setInterval(() => {
+      getWalletBalanceBtc();
       getTransactionsBtc();
     }, TIME_MINUTES_3);
+    getWalletBalanceBtc();
     getTransactionsBtc();
     return () => {
       clearInterval(intervalgetTransactionsBtc);
     };
   }, []);
+
+  const getWalletBalanceBtc = async () => {
+    try {
+      const response = await qortalRequestWithTimeout({
+        action: "GET_WALLET_BALANCE",
+        coin: 'BTC'
+      }, TIME_MINUTES_5);
+      if (!response?.error) {
+        setWalletBalanceBtc(response);
+        setIsLoadingWalletBalanceBtc(false);
+      }
+    } catch (error) {
+      setWalletBalanceBtc(null);
+      setIsLoadingWalletBalanceBtc(false);
+      console.error("ERROR GET BTC BALANCE", error);
+    }
+  }
 
   const getTransactionsBtc = async () => {
     try {
@@ -359,10 +361,6 @@ export default function BitcoinWallet() {
         );
       } else {
         setTransactionsBtc(responseBtcTransactions);
-        const computed = computeBalanceFromTransactions(
-          responseBtcTransactions || []
-        );
-        setWalletBalanceBtc(computed);
         setWalletBalanceError(null);
       }
     } catch (error: any) {
@@ -611,7 +609,7 @@ export default function BitcoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceBtc.toFixed(8) + ' BTC'
+              walletBalanceBtc + ' BTC'
             )}
           </Typography>
         </Box>
@@ -643,9 +641,9 @@ export default function BitcoinWallet() {
               const newMaxBtcAmount =
                 +walletBalanceBtc - estimatedFeeCalculated;
               if (newMaxBtcAmount < 0) {
-                return Number(0.0) + ' BTC';
+                return Number(0.00000000) + ' BTC';
               } else {
-                return newMaxBtcAmount.toFixed(8) + ' BTC';
+                return newMaxBtcAmount + ' BTC';
               }
             })()}
           </Typography>
@@ -1063,7 +1061,7 @@ export default function BitcoinWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceError
                       ? walletBalanceError
-                      : walletBalanceBtc?.toFixed(8) + ' BTC'}
+                      : walletBalanceBtc + ' BTC'}
                   </Typography>
                 </Grid>
 

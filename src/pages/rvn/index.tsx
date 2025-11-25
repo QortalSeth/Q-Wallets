@@ -174,7 +174,7 @@ export default function RavencoinWallet() {
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
   const [_isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
     useState<boolean>(false);
-  const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(null);
+  const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(0);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] =
     useState<boolean>(true);
   const [transactionsRvn, setTransactionsRvn] = useState<any>([]);

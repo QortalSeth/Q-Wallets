@@ -175,7 +175,7 @@ export default function PirateWallet() {
   const [isSynced, setIsSynced] = useState(false);
   const [syncStatus, setSyncStatus] = useState(EMPTY_STRING);
   const [walletInfoArrr, setWalletInfoArrr] = useState<any>({});
-  const [walletBalanceArrr, setWalletBalanceArrr] = useState<any>(null);
+  const [walletBalanceArrr, setWalletBalanceArrr] = useState<any>(0);
   const [isLoadingWalletBalanceArrr, setIsLoadingWalletBalanceArrr] =
     useState<boolean>(true);
   const [allLightwalletServersArrr, setAllLightwalletServersArrr] =

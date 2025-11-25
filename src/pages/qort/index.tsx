@@ -158,7 +158,7 @@ export default function QortalWallet() {
   const { t } = useTranslation(['core']);
 
   const { address, nodeInfo } = useContext(WalletContext);
-  const [walletBalanceQort, setWalletBalanceQort] = useState<any>(null);
+  const [walletBalanceQort, setWalletBalanceQort] = useState<any>(0);
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
   const [qortTxFee, setQortTxFee] = useState<number>(0);
   const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);

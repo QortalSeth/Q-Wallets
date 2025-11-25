@@ -329,32 +329,34 @@ export default function DigibyteWallet() {
     getWalletInfoDgb();
   }, []);
 
-  function computeBalanceFromTransactions(txs: any[]): number {
-    if (!Array.isArray(txs)) return 0;
-    let satoshis = 0;
-    for (const tx of txs) {
-      // Only count confirmed txs (those with a timestamp)
-      if (!tx?.timestamp) continue;
-      const inSat = (tx?.inputs || [])
-        .filter((i: any) => i?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      const outSat = (tx?.outputs || [])
-        .filter((o: any) => o?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      satoshis += outSat - inSat; // net effect on wallet
-    }
-    return +(satoshis / 1e8).toFixed(8);
-  }
-
   useEffect(() => {
     const intervalgetTransactionsDgb = setInterval(() => {
+      getWalletBalanceDgb();
       getTransactionsDgb();
     }, TIME_MINUTES_3);
+    getWalletBalanceDgb();
     getTransactionsDgb();
     return () => {
       clearInterval(intervalgetTransactionsDgb);
     };
   }, []);
+
+  const getWalletBalanceDgb = async () => {
+    try {
+      const response = await qortalRequestWithTimeout({
+        action: "GET_WALLET_BALANCE",
+        coin: Coin.DGB
+      }, TIME_MINUTES_5);
+      if (!response?.error) {
+        setWalletBalanceDgb(response);
+        setIsLoadingWalletBalanceDgb(false);
+      }
+    } catch (error) {
+      setWalletBalanceDgb(null);
+      setIsLoadingWalletBalanceDgb(false);
+      console.error("ERROR GET DGB BALANCE", error);
+    }
+  }
 
   const getTransactionsDgb = async () => {
     try {
@@ -382,10 +384,6 @@ export default function DigibyteWallet() {
         );
       } else {
         setTransactionsDgb(responseDgbTransactions);
-        const computed = computeBalanceFromTransactions(
-          responseDgbTransactions || []
-        );
-        setWalletBalanceDgb(computed);
         setWalletBalanceError(null);
       }
     } catch (error: any) {
@@ -637,7 +635,7 @@ export default function DigibyteWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceDgb.toFixed(8) + ' DGB'
+              walletBalanceDgb + ' DGB'
             )}
           </Typography>
         </Box>
@@ -670,9 +668,9 @@ export default function DigibyteWallet() {
                 (walletBalanceDgb - (dgbFee * 1000) / 1e8).toFixed(8)
               );
               if (newMaxDgbAmount < 0) {
-                return Number(0.0) + ' DGB';
+                return Number(0.00000000) + ' DGB';
               } else {
-                return newMaxDgbAmount.toFixed(8) + ' DGB';
+                return newMaxDgbAmount + ' DGB';
               }
             })()}
           </Typography>

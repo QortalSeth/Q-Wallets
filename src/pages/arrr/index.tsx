@@ -273,7 +273,7 @@ export default function PirateWallet() {
   const handleSendMaxArrr = () => {
     let maxArrrAmount = 0;
     let WalletBalanceArrr = parseFloat(walletBalanceArrr);
-    maxArrrAmount = WalletBalanceArrr - 0.00010000;
+    maxArrrAmount = WalletBalanceArrr - 0.0001;
     if (maxArrrAmount <= 0) {
       setArrrAmount(0);
     } else {
@@ -462,7 +462,9 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
+              await new Promise((resolve) =>
+                setTimeout(resolve, TIME_SECONDS_5)
+              );
             } else if (response === 'Initializing wallet...') {
               setChangeServer(false);
               setSyncStatus(
@@ -472,12 +474,16 @@ export default function PirateWallet() {
               );
               setIsSynced(false);
               counter2 += 1;
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
+              await new Promise((resolve) =>
+                setTimeout(resolve, TIME_SECONDS_5)
+              );
             } else {
               setChangeServer(false);
               setSyncStatus(response);
               setIsSynced(false);
-              await new Promise((resolve) => setTimeout(resolve, TIME_SECONDS_5));
+              await new Promise((resolve) =>
+                setTimeout(resolve, TIME_SECONDS_5)
+              );
             }
           } else {
             setIsSynced(true);
@@ -844,7 +850,9 @@ export default function PirateWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : theme.palette.info.main,
+                          color: input.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -863,7 +871,9 @@ export default function PirateWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : theme.palette.info.main,
+                          color: output.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -1166,7 +1176,7 @@ export default function PirateWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceArrr - 0.00010000).toFixed(8) + ' ARRR'}
+            {(walletBalanceArrr - 0.0001).toFixed(8) + ' ARRR'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -1386,11 +1396,7 @@ export default function PirateWallet() {
                     p: { xs: 1.5, md: 2 },
                   }}
                 >
-                  <Box
-                    display={'flex'}
-                    alignItems={'center'}
-                    gap={1}
-                  >
+                  <Box display={'flex'} alignItems={'center'} gap={1}>
                     <Typography
                       variant="subtitle1"
                       sx={{ color: 'primary.main', fontWeight: 700 }}
@@ -1437,11 +1443,7 @@ export default function PirateWallet() {
                     p: { xs: 1.5, md: 2 },
                   }}
                 >
-                  <Box
-                    display={'flex'}
-                    alignItems={'center'}
-                    gap={1}
-                  >
+                  <Box display={'flex'} alignItems={'center'} gap={1}>
                     <Typography
                       variant="subtitle1"
                       align="center"

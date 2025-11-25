@@ -73,7 +73,14 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { EMPTY_STRING, QORT_1_UNIT, TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4 } from '../../common/constants';
+import {
+  EMPTY_STRING,
+  QORT_1_UNIT,
+  TIME_MINUTES_1,
+  TIME_SECONDS_2,
+  TIME_SECONDS_3,
+  TIME_SECONDS_4,
+} from '../../common/constants';
 import { Coin } from 'qapp-core';
 
 interface TablePaginationActionsProps {
@@ -2550,12 +2557,16 @@ export default function QortalWallet() {
                           title={row?.identifier}
                         >
                           <Box>
-                            {row?.identifier ? cropString(row?.identifier) : EMPTY_STRING}
+                            {row?.identifier
+                              ? cropString(row?.identifier)
+                              : EMPTY_STRING}
                           </Box>
                         </CustomWidthTooltip>
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="right">
-                        {row?.size > 0 ? humanFileSize(row?.size, true, 2) : EMPTY_STRING}
+                        {row?.size > 0
+                          ? humanFileSize(row?.size, true, 2)
+                          : EMPTY_STRING}
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
                         <CustomWidthTooltip
@@ -3068,7 +3079,10 @@ export default function QortalWallet() {
             isAllowed={(values) => {
               const maxQortCoin = walletBalanceQort - qortTxFee;
               const { formattedValue, floatValue } = values;
-              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxQortCoin;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxQortCoin
+              );
             }}
             onValueChange={(values) => {
               validateCanSendQortAmount(values.floatValue);

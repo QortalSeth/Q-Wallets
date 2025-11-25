@@ -314,10 +314,13 @@ export default function BitcoinWallet() {
     try {
       setIsLoadingWalletBalanceBtc(true);
 
-      const response = await qortalRequestWithTimeout({
-        action: "GET_WALLET_BALANCE",
-        coin: Coin.BTC
-      }, TIME_MINUTES_5);
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: Coin.BTC,
+        },
+        TIME_MINUTES_5
+      );
       if (!response?.error) {
         setWalletBalanceBtc(response);
       }
@@ -326,11 +329,11 @@ export default function BitcoinWallet() {
       setWalletBalanceError(
         error?.message ? String(error.message) : String(error)
       );
-      console.error("ERROR GET BTC BALANCE", error);
+      console.error('ERROR GET BTC BALANCE', error);
     } finally {
       setIsLoadingWalletBalanceBtc(false);
     }
-  }
+  };
 
   const getTransactionsBtc = async () => {
     try {
@@ -344,7 +347,7 @@ export default function BitcoinWallet() {
       );
 
       if (responseBtcTransactions?.error) {
-        setTransactionsBtc([]);       
+        setTransactionsBtc([]);
       } else {
         setTransactionsBtc(responseBtcTransactions);
       }
@@ -621,7 +624,7 @@ export default function BitcoinWallet() {
               const newMaxBtcAmount =
                 +walletBalanceBtc - estimatedFeeCalculated;
               if (newMaxBtcAmount < 0) {
-                return Number(0.00000000) + ' BTC';
+                return Number(0.0) + ' BTC';
               } else {
                 return newMaxBtcAmount + ' BTC';
               }
@@ -662,7 +665,10 @@ export default function BitcoinWallet() {
             isAllowed={(values) => {
               const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxBtcCoin;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxBtcCoin
+              );
             }}
             onValueChange={(values) => {
               setBtcAmount(values.floatValue ?? 0);
@@ -805,7 +811,9 @@ export default function BitcoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : theme.palette.info.main,
+                          color: input.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -824,7 +832,9 @@ export default function BitcoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : theme.palette.info.main,
+                          color: output.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>

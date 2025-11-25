@@ -313,26 +313,29 @@ export default function DogecoinWallet() {
   }, []);
 
   const getWalletBalanceDoge = async () => {
-      try {
-        setIsLoadingWalletBalanceDoge(true);
-  
-        const response = await qortalRequestWithTimeout({
-          action: "GET_WALLET_BALANCE",
-          coin: Coin.DOGE
-        }, TIME_MINUTES_5);
-        if (!response?.error) {
-          setWalletBalanceDoge(response);
-        }
-      } catch (error: any) {
-        setWalletBalanceDoge(null);
-        setWalletBalanceError(
-          error?.message ? String(error.message) : String(error)
-        );
-        console.error("ERROR GET BTC BALANCE", error);
-      } finally {
-        setIsLoadingWalletBalanceDoge(false);
+    try {
+      setIsLoadingWalletBalanceDoge(true);
+
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: Coin.DOGE,
+        },
+        TIME_MINUTES_5
+      );
+      if (!response?.error) {
+        setWalletBalanceDoge(response);
       }
+    } catch (error: any) {
+      setWalletBalanceDoge(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
+      console.error('ERROR GET DOGE BALANCE', error);
+    } finally {
+      setIsLoadingWalletBalanceDoge(false);
     }
+  };
 
   const getTransactionsDoge = async () => {
     try {
@@ -666,7 +669,10 @@ export default function DogecoinWallet() {
             isAllowed={(values) => {
               const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxDogeCoin;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxDogeCoin
+              );
             }}
             onValueChange={(values) => {
               setDogeAmount(values.floatValue ?? 0);
@@ -810,7 +816,9 @@ export default function DogecoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : theme.palette.info.main,
+                          color: input.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -829,7 +837,9 @@ export default function DogecoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : theme.palette.info.main,
+                          color: output.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>

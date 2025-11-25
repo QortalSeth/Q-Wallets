@@ -338,10 +338,13 @@ export default function DigibyteWallet() {
     try {
       setIsLoadingWalletBalanceDgb(true);
 
-      const response = await qortalRequestWithTimeout({
-        action: "GET_WALLET_BALANCE",
-        coin: Coin.DGB
-      }, TIME_MINUTES_5);
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: Coin.DGB,
+        },
+        TIME_MINUTES_5
+      );
       if (!response?.error) {
         setWalletBalanceDgb(response);
       }
@@ -350,15 +353,15 @@ export default function DigibyteWallet() {
       setWalletBalanceError(
         error?.message ? String(error.message) : String(error)
       );
-      console.error("ERROR GET DGB BALANCE", error);
+      console.error('ERROR GET DGB BALANCE', error);
     } finally {
       setIsLoadingWalletBalanceDgb(false);
     }
-  }
+  };
 
   const getTransactionsDgb = async () => {
     try {
-      setIsLoadingDgbTransactions(true);      
+      setIsLoadingDgbTransactions(true);
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
@@ -373,7 +376,7 @@ export default function DigibyteWallet() {
         setTransactionsDgb(responseDgbTransactions);
       }
     } catch (error: any) {
-      setTransactionsDgb([]);    
+      setTransactionsDgb([]);
       console.error('ERROR GET DGB TRANSACTIONS', error);
     } finally {
       setIsLoadingDgbTransactions(false);
@@ -650,7 +653,7 @@ export default function DigibyteWallet() {
                 (walletBalanceDgb - (dgbFee * 1000) / 1e8).toFixed(8)
               );
               if (newMaxDgbAmount < 0) {
-                return Number(0.00000000) + ' DGB';
+                return Number(0.0) + ' DGB';
               } else {
                 return newMaxDgbAmount + ' DGB';
               }
@@ -882,7 +885,9 @@ export default function DigibyteWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : theme.palette.info.main,
+                          color: input.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -901,7 +906,9 @@ export default function DigibyteWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : theme.palette.info.main,
+                          color: output.addressInWallet
+                            ? undefined
+                            : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>

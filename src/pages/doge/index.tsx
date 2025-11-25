@@ -155,7 +155,7 @@ export default function DogecoinWallet() {
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
   const [_isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
     useState<boolean>(false);
-  const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(null);
+  const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(0);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] =
     useState<boolean>(true);
   const [transactionsDoge, setTransactionsDoge] = useState<any>([]);
@@ -180,7 +180,6 @@ export default function DogecoinWallet() {
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
     null
   );
-
 
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
   const estimatedFeeCalculated = +dogeFeeCalculated * 5000;
@@ -305,42 +304,46 @@ export default function DogecoinWallet() {
   };
 
   useEffect(() => {
-    getWalletInfoDoge();
-  }, []);
-
-  function computeBalanceFromTransactions(txs: any[]): number {
-    if (!Array.isArray(txs)) return 0;
-    let satoshis = 0;
-    for (const tx of txs) {
-      // Only count confirmed txs (those with a timestamp)
-      if (!tx?.timestamp) continue;
-      const inSat = (tx?.inputs || [])
-        .filter((i: any) => i?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      const outSat = (tx?.outputs || [])
-        .filter((o: any) => o?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      satoshis += outSat - inSat; // net effect on wallet
-    }
-    return +(satoshis / 1e8).toFixed(8);
-  }
-
-  useEffect(() => {
-    const intervalGetWalletBalanceDoge = setInterval(() => {
-      getTransactionsDoge();
-    }, TIME_MINUTES_3);
-    getTransactionsDoge();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoDoge();
+      await getWalletBalanceDoge();
+      await getTransactionsDoge();
+      intervalId = setInterval(() => {
+        getWalletBalanceDoge();
+        getTransactionsDoge();
+      }, TIME_MINUTES_3);
+    })();
     return () => {
-      clearInterval(intervalGetWalletBalanceDoge);
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
+
+  const getWalletBalanceDoge = async () => {
+      try {
+        setIsLoadingWalletBalanceDoge(true);
+  
+        const response = await qortalRequestWithTimeout({
+          action: "GET_WALLET_BALANCE",
+          coin: Coin.DOGE
+        }, TIME_MINUTES_5);
+        if (!response?.error) {
+          setWalletBalanceDoge(response);
+        }
+      } catch (error: any) {
+        setWalletBalanceDoge(null);
+        setWalletBalanceError(
+          error?.message ? String(error.message) : String(error)
+        );
+        console.error("ERROR GET BTC BALANCE", error);
+      } finally {
+        setIsLoadingWalletBalanceDoge(false);
+      }
+    }
 
   const getTransactionsDoge = async () => {
     try {
       setIsLoadingDogeTransactions(true);
-      setIsLoadingWalletBalanceDoge(true);
-      setWalletBalanceError(null);
-
       const responseDogeTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
@@ -352,31 +355,14 @@ export default function DogecoinWallet() {
       if (responseDogeTransactions?.error) {
         setTransactionsDoge([]);
         setWalletBalanceDoge(null);
-        setWalletBalanceError(
-          typeof responseDogeTransactions.error === 'string'
-            ? responseDogeTransactions.error
-            : t('core:message.error.loading_balance', {
-                postProcess: 'capitalizeFirstChar',
-              })
-        );
       } else {
         setTransactionsDoge(responseDogeTransactions);
-        const computed = computeBalanceFromTransactions(
-          responseDogeTransactions || []
-        );
-        setWalletBalanceDoge(computed);
-        setWalletBalanceError(null);
       }
     } catch (error: any) {
       setTransactionsDoge([]);
-      setWalletBalanceDoge(null);
-      setWalletBalanceError(
-        error?.message ? String(error.message) : String(error)
-      );
       console.error('ERROR GET DOGE TRANSACTIONS', error);
     } finally {
       setIsLoadingDogeTransactions(false);
-      setIsLoadingWalletBalanceDoge(false);
     }
   };
 
@@ -384,8 +370,10 @@ export default function DogecoinWallet() {
     let intervalId: any;
     (async () => {
       await getWalletInfoDoge();
+      await getWalletBalanceDoge();
       await getTransactionsDoge();
       intervalId = setInterval(() => {
+        getWalletBalanceDoge();
         getTransactionsDoge();
       }, TIME_MINUTES_3);
     })();
@@ -612,7 +600,7 @@ export default function DogecoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceDoge.toFixed(8) + ' DOGE'
+              walletBalanceDoge + ' DOGE'
             )}
           </Typography>
         </Box>
@@ -646,7 +634,7 @@ export default function DogecoinWallet() {
               if (newMaxDogeAmount < 0) {
                 return Number(0.0) + ' DOGE';
               } else {
-                return newMaxDogeAmount.toFixed(8) + ' DOGE';
+                return newMaxDogeAmount + ' DOGE';
               }
             })()}
           </Typography>

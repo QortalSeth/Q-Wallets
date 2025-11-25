@@ -172,7 +172,7 @@ export default function DigibyteWallet() {
   const { t } = useTranslation(['core']);
 
   const [walletInfoDgb, setWalletInfoDgb] = useState<any>({});
-  const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(null);
+  const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);
   const [_isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
@@ -343,27 +343,29 @@ export default function DigibyteWallet() {
 
   const getWalletBalanceDgb = async () => {
     try {
+      setIsLoadingWalletBalanceDgb(true);
+
       const response = await qortalRequestWithTimeout({
         action: "GET_WALLET_BALANCE",
         coin: Coin.DGB
       }, TIME_MINUTES_5);
       if (!response?.error) {
         setWalletBalanceDgb(response);
-        setIsLoadingWalletBalanceDgb(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletBalanceDgb(null);
-      setIsLoadingWalletBalanceDgb(false);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error("ERROR GET DGB BALANCE", error);
+    } finally {
+      setIsLoadingWalletBalanceDgb(false);
     }
   }
 
   const getTransactionsDgb = async () => {
     try {
-      setIsLoadingDgbTransactions(true);
-      setIsLoadingWalletBalanceDgb(true);
-      setWalletBalanceError(null);
-
+      setIsLoadingDgbTransactions(true);      
       const responseDgbTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
@@ -374,28 +376,14 @@ export default function DigibyteWallet() {
 
       if (responseDgbTransactions?.error) {
         setTransactionsDgb([]);
-        setWalletBalanceDgb(null);
-        setWalletBalanceError(
-          typeof responseDgbTransactions.error === 'string'
-            ? responseDgbTransactions.error
-            : t('core:message.error.loading_balance', {
-                postProcess: 'capitalizeFirstChar',
-              })
-        );
       } else {
         setTransactionsDgb(responseDgbTransactions);
-        setWalletBalanceError(null);
       }
     } catch (error: any) {
-      setTransactionsDgb([]);
-      setWalletBalanceDgb(null);
-      setWalletBalanceError(
-        error?.message ? String(error.message) : String(error)
-      );
+      setTransactionsDgb([]);    
       console.error('ERROR GET DGB TRANSACTIONS', error);
     } finally {
       setIsLoadingDgbTransactions(false);
-      setIsLoadingWalletBalanceDgb(false);
     }
   };
 
@@ -403,9 +391,10 @@ export default function DigibyteWallet() {
     let intervalId: any;
     (async () => {
       await getWalletInfoDgb();
-      await getTransactionsDgb();
+      await getWalletBalanceDgb();
       await getTransactionsDgb();
       intervalId = setInterval(() => {
+        getWalletBalanceDgb();
         getTransactionsDgb();
       }, TIME_MINUTES_3);
     })();

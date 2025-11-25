@@ -155,7 +155,7 @@ export default function LitecoinWallet() {
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
   const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
     useState<boolean>(false);
-  const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(null);
+  const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(0);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] =
     useState<boolean>(true);
   const [transactionsLtc, setTransactionsLtc] = useState<any>([]);
@@ -305,26 +305,29 @@ export default function LitecoinWallet() {
 
   const getWalletBalanceLtc = async () => {
     try {
+      setIsLoadingWalletBalanceLtc(true);
+
       const response = await qortalRequestWithTimeout({
         action: "GET_WALLET_BALANCE",
         coin: Coin.LTC
       }, TIME_MINUTES_5);
       if (!response?.error) {
         setWalletBalanceLtc(response);
-        setIsLoadingWalletBalanceLtc(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletBalanceLtc(null);
-      setIsLoadingWalletBalanceLtc(false);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
       console.error("ERROR GET LTC BALANCE", error);
+    } finally {
+      setIsLoadingWalletBalanceLtc(false);
     }
   }
 
   const getTransactionsLtc = async () => {
     try {
       setIsLoadingLtcTransactions(true);
-      setIsLoadingWalletBalanceLtc(true);
-      setWalletBalanceError(null);
 
       const responseLtcTransactions = await qortalRequestWithTimeout(
         {
@@ -336,28 +339,14 @@ export default function LitecoinWallet() {
 
       if (responseLtcTransactions?.error) {
         setTransactionsLtc([]);
-        setWalletBalanceLtc(null);
-        setWalletBalanceError(
-          typeof responseLtcTransactions.error === 'string'
-            ? responseLtcTransactions.error
-            : t('core:message.error.loading_balance', {
-                postProcess: 'capitalizeFirstChar',
-              })
-        );
       } else {
         setTransactionsLtc(responseLtcTransactions);
-        setWalletBalanceError(null);
       }
     } catch (error: any) {
       setTransactionsLtc([]);
-      setWalletBalanceLtc(null);
-      setWalletBalanceError(
-        error?.message ? String(error.message) : String(error)
-      );
       console.error('ERROR GET LTC TRANSACTIONS', error);
     } finally {
       setIsLoadingLtcTransactions(false);
-      setIsLoadingWalletBalanceLtc(false);
     }
   };
 
@@ -407,7 +396,6 @@ export default function LitecoinWallet() {
       if (!sendRequest?.error) {
         setLtcAmount(0);
         setLtcRecipient(EMPTY_STRING);
-
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
@@ -417,7 +405,6 @@ export default function LitecoinWallet() {
     } catch (error) {
       setLtcAmount(0);
       setLtcRecipient(EMPTY_STRING);
-
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);

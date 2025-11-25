@@ -155,7 +155,7 @@ export default function BitcoinWallet() {
   const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
   const [_isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =
     useState<boolean>(false);
-  const [walletBalanceBtc, setWalletBalanceBtc] = useState<any>(null);
+  const [walletBalanceBtc, setWalletBalanceBtc] = useState<any>(0);
   const [isLoadingWalletBalanceBtc, setIsLoadingWalletBalanceBtc] =
     useState<boolean>(true);
   const [transactionsBtc, setTransactionsBtc] = useState<any>([]);
@@ -302,23 +302,25 @@ export default function BitcoinWallet() {
   };
 
   useEffect(() => {
-    getWalletInfoBtc();
-  }, []);
-
-  useEffect(() => {
-    const intervalgetTransactionsBtc = setInterval(() => {
-      getWalletBalanceBtc();
-      getTransactionsBtc();
-    }, TIME_MINUTES_3);
-    getWalletBalanceBtc();
-    getTransactionsBtc();
+    let intervalId: any;
+    (async () => {
+      await getWalletInfoBtc();
+      await getWalletBalanceBtc();
+      await getTransactionsBtc();
+      intervalId = setInterval(() => {
+        getWalletBalanceBtc();
+        getTransactionsBtc();
+      }, TIME_MINUTES_3);
+    })();
     return () => {
-      clearInterval(intervalgetTransactionsBtc);
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
   const getWalletBalanceBtc = async () => {
     try {
+      setIsLoadingWalletBalanceBtc(true);
+
       const response = await qortalRequestWithTimeout({
         action: "GET_WALLET_BALANCE",
         coin: Coin.BTC
@@ -339,10 +341,7 @@ export default function BitcoinWallet() {
 
   const getTransactionsBtc = async () => {
     try {
-      setLoadingRefreshBtc(true);
       setIsLoadingBtcTransactions(true);
-      setIsLoadingWalletBalanceBtc(true);
-
       const responseBtcTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
@@ -358,12 +357,9 @@ export default function BitcoinWallet() {
       }
     } catch (error: any) {
       setTransactionsBtc([]);
-      setWalletBalanceBtc(null);
       console.error('ERROR GET BTC TRANSACTIONS', error);
     } finally {
       setIsLoadingBtcTransactions(false);
-      setIsLoadingWalletBalanceBtc(false);
-      setLoadingRefreshBtc(false);
     }
   };
 
@@ -371,9 +367,10 @@ export default function BitcoinWallet() {
     let intervalId: any;
     (async () => {
       await getWalletInfoBtc();
-      await getTransactionsBtc();
+      await getWalletBalanceBtc();
       await getTransactionsBtc();
       intervalId = setInterval(() => {
+        getWalletBalanceBtc();
         getTransactionsBtc();
       }, TIME_MINUTES_3);
     })();

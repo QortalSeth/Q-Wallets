@@ -358,6 +358,8 @@ export default function PirateWallet() {
 
   const getWalletBalanceArrr = async () => {
     try {
+      setIsLoadingWalletBalanceArrr(true);
+
       const response = await qortalRequestWithTimeout(
         {
           action: 'GET_WALLET_BALANCE',
@@ -367,12 +369,12 @@ export default function PirateWallet() {
       );
       if (!response?.error) {
         setWalletBalanceArrr(response);
-        setIsLoadingWalletBalanceArrr(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       setWalletBalanceArrr(null);
-      setIsLoadingWalletBalanceArrr(false);
       console.error('ERROR GET ARRR BALANCE', error);
+    } finally {
+      setIsLoadingWalletBalanceArrr(false);
     }
   };
 

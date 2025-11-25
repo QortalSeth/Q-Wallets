@@ -328,23 +328,6 @@ export default function RavencoinWallet() {
     getWalletInfoRvn();
   }, []);
 
-  function computeBalanceFromTransactions(txs: any[]): number {
-    if (!Array.isArray(txs)) return 0;
-    let satoshis = 0;
-    for (const tx of txs) {
-      // Only count confirmed txs (those with a timestamp)
-      if (!tx?.timestamp) continue;
-      const inSat = (tx?.inputs || [])
-        .filter((i: any) => i?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      const outSat = (tx?.outputs || [])
-        .filter((o: any) => o?.addressInWallet)
-        .reduce((acc: number, cur: any) => acc + Number(cur?.amount || 0), 0);
-      satoshis += outSat - inSat; // net effect on wallet
-    }
-    return +(satoshis / 1e8).toFixed(8);
-  }
-
   useEffect(() => {
     const intervalgetTransactionsRvn = setInterval(() => {
       getTransactionsRvn();
@@ -355,12 +338,31 @@ export default function RavencoinWallet() {
     };
   }, []);
 
+  const getWalletBalanceRvn = async () => {
+    try {
+      setIsLoadingWalletBalanceRvn(true);
+
+      const response = await qortalRequestWithTimeout({
+        action: "GET_WALLET_BALANCE",
+        coin: Coin.RVN
+      }, TIME_MINUTES_5);
+      if (!response?.error) {
+        setWalletBalanceRvn(response);
+      }
+    } catch (error: any) {
+      setWalletBalanceRvn(null);
+      setWalletBalanceError(
+        error?.message ? String(error.message) : String(error)
+      );
+      console.error("ERROR GET RVN BALANCE", error);
+    } finally {
+      setIsLoadingWalletBalanceRvn(false);
+    }
+  }  
+
   const getTransactionsRvn = async () => {
     try {
       setIsLoadingRvnTransactions(true);
-      setIsLoadingWalletBalanceRvn(true);
-      setWalletBalanceError(null);
-
       const responseRvnTransactions = await qortalRequestWithTimeout(
         {
           action: 'GET_USER_WALLET_TRANSACTIONS',
@@ -371,32 +373,14 @@ export default function RavencoinWallet() {
 
       if (responseRvnTransactions?.error) {
         setTransactionsRvn([]);
-        setWalletBalanceRvn(null);
-        setWalletBalanceError(
-          typeof responseRvnTransactions.error === 'string'
-            ? responseRvnTransactions.error
-            : t('core:message.error.loading_balance', {
-                postProcess: 'capitalizeFirstChar',
-              })
-        );
       } else {
         setTransactionsRvn(responseRvnTransactions);
-        const computed = computeBalanceFromTransactions(
-          responseRvnTransactions || []
-        );
-        setWalletBalanceRvn(computed);
-        setWalletBalanceError(null);
       }
     } catch (error: any) {
       setTransactionsRvn([]);
-      setWalletBalanceRvn(null);
-      setWalletBalanceError(
-        error?.message ? String(error.message) : String(error)
-      );
       console.error('ERROR GET RVN TRANSACTIONS', error);
     } finally {
       setIsLoadingRvnTransactions(false);
-      setIsLoadingWalletBalanceRvn(false);
     }
   };
 
@@ -404,8 +388,10 @@ export default function RavencoinWallet() {
     let intervalId: any;
     (async () => {
       await getWalletInfoRvn();
+      await getWalletBalanceRvn();
       await getTransactionsRvn();
       intervalId = setInterval(() => {
+        getWalletBalanceRvn();
         getTransactionsRvn();
       }, TIME_MINUTES_3);
     })();
@@ -634,7 +620,7 @@ export default function RavencoinWallet() {
             ) : walletBalanceError ? (
               walletBalanceError
             ) : (
-              walletBalanceRvn.toFixed(8) + ' RVN'
+              walletBalanceRvn + ' RVN'
             )}
           </Typography>
         </Box>
@@ -669,7 +655,7 @@ export default function RavencoinWallet() {
               if (newMaxRvnAmount < 0) {
                 return Number(0.0) + ' RVN';
               } else {
-                return newMaxRvnAmount.toFixed(8) + ' RVN';
+                return newMaxRvnAmount + ' RVN';
               }
             })()}
           </Typography>

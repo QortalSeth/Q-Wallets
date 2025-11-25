@@ -880,7 +880,7 @@ export default function RavencoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : 'grey',
+                          color: input.addressInWallet ? undefined : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -899,7 +899,7 @@ export default function RavencoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : 'grey',
+                          color: output.addressInWallet ? undefined : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>

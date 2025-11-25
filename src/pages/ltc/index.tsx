@@ -151,6 +151,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function LitecoinWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
   const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
@@ -798,7 +799,7 @@ export default function LitecoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: input.addressInWallet ? undefined : 'grey',
+                          color: input.addressInWallet ? undefined : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>
@@ -817,7 +818,7 @@ export default function LitecoinWallet() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: output.addressInWallet ? undefined : 'grey',
+                          color: output.addressInWallet ? undefined : theme.palette.info.main,
                         }}
                       >
                         <span style={{ flex: 1, textAlign: 'left' }}>

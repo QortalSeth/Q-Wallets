@@ -216,15 +216,7 @@ export default function DigibyteWallet() {
     setOpenDgbSend(true);
   };
 
-  const disableCanSendDgb = () => {
-    if (dgbAmount <= 0 || null || !dgbAmount) {
-      return true;
-    }
-    if (addressFormatError || EMPTY_STRING) {
-      return true;
-    }
-    return false;
-  };
+  const disableCanSendDgb = () => dgbAmount <= 0 || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

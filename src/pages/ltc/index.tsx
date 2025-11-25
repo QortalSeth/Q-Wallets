@@ -200,15 +200,7 @@ export default function LitecoinWallet() {
     setOpenLtcSend(true);
   };
 
-  const disableCanSendLtc = () => {
-    if (ltcAmount <= 0 || null || !ltcAmount) {
-      return true;
-    }
-    if (addressFormatError || EMPTY_STRING) {
-      return true;
-    }
-    return false;
-  };
+  const disableCanSendLtc = () => ltcAmount <= 0 || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -307,10 +299,13 @@ export default function LitecoinWallet() {
     try {
       setIsLoadingWalletBalanceLtc(true);
 
-      const response = await qortalRequestWithTimeout({
-        action: "GET_WALLET_BALANCE",
-        coin: Coin.LTC
-      }, TIME_MINUTES_5);
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: Coin.LTC,
+        },
+        TIME_MINUTES_5
+      );
       if (!response?.error) {
         setWalletBalanceLtc(response);
       }
@@ -319,11 +314,11 @@ export default function LitecoinWallet() {
       setWalletBalanceError(
         error?.message ? String(error.message) : String(error)
       );
-      console.error("ERROR GET LTC BALANCE", error);
+      console.error('ERROR GET LTC BALANCE', error);
     } finally {
       setIsLoadingWalletBalanceLtc(false);
     }
-  }
+  };
 
   const getTransactionsLtc = async () => {
     try {
@@ -616,7 +611,7 @@ export default function LitecoinWallet() {
               const newMaxLtcAmount =
                 +walletBalanceLtc - estimatedFeeCalculated;
               if (newMaxLtcAmount < 0) {
-                return Number(0.00000000) + ' LTC';
+                return Number(0.0) + ' LTC';
               } else {
                 return newMaxLtcAmount + ' LTC';
               }
@@ -657,7 +652,10 @@ export default function LitecoinWallet() {
             isAllowed={(values) => {
               const maxLtcCoin = +walletBalanceLtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
-              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxLtcCoin;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxLtcCoin
+              );
             }}
             onValueChange={(values) => {
               setLtcAmount(values.floatValue ?? 0);

@@ -216,15 +216,7 @@ export default function RavencoinWallet() {
     setOpenRvnSend(true);
   };
 
-  const disableCanSendRvn = () => {
-    if (rvnAmount <= 0 || null || !rvnAmount) {
-      return true;
-    }
-    if (addressFormatError || EMPTY_STRING) {
-      return true;
-    }
-    return false;
-  };
+  const disableCanSendRvn = () => rvnAmount <= 0 || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -342,10 +334,13 @@ export default function RavencoinWallet() {
     try {
       setIsLoadingWalletBalanceRvn(true);
 
-      const response = await qortalRequestWithTimeout({
-        action: "GET_WALLET_BALANCE",
-        coin: Coin.RVN
-      }, TIME_MINUTES_5);
+      const response = await qortalRequestWithTimeout(
+        {
+          action: 'GET_WALLET_BALANCE',
+          coin: Coin.RVN,
+        },
+        TIME_MINUTES_5
+      );
       if (!response?.error) {
         setWalletBalanceRvn(response);
       }
@@ -354,11 +349,11 @@ export default function RavencoinWallet() {
       setWalletBalanceError(
         error?.message ? String(error.message) : String(error)
       );
-      console.error("ERROR GET RVN BALANCE", error);
+      console.error('ERROR GET RVN BALANCE', error);
     } finally {
       setIsLoadingWalletBalanceRvn(false);
     }
-  }  
+  };
 
   const getTransactionsRvn = async () => {
     try {
@@ -694,7 +689,10 @@ export default function RavencoinWallet() {
             isAllowed={(values) => {
               const maxRvnCoin = walletBalanceRvn - (rvnFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
-              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= maxRvnCoin;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxRvnCoin
+              );
             }}
             onValueChange={(values) => {
               setRvnAmount(values.floatValue ?? 0);

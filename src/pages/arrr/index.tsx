@@ -229,15 +229,7 @@ export default function PirateWallet() {
     setOpenArrrSend(true);
   };
 
-  const disableCanSendArrr = () => {
-    if (arrrAmount <= 0 || null || !arrrAmount) {
-      return true;
-    }
-    if (addressFormatError || EMPTY_STRING) {
-      return true;
-    }
-    return false;
-  };
+  const disableCanSendArrr = () => arrrAmount <= 0 || addressFormatError;
 
   const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

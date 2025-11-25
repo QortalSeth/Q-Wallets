@@ -196,7 +196,6 @@ export default function PirateWallet() {
   const [openArrrSend, setOpenArrrSend] = useState(false);
   const [arrrAmount, setArrrAmount] = useState<number>(0);
   const [arrrRecipient, setArrrRecipient] = useState(EMPTY_STRING);
-  const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
@@ -230,7 +229,7 @@ export default function PirateWallet() {
     setOpenArrrSend(true);
   };
 
-  const disableCanSendArrr = () => arrrAmount <= 0 || addressFormatError;
+  const disableCanSendArrr = () => arrrAmount <= 0;
 
   const handleCloseArrrSend = () => {
     setArrrAmount(0);

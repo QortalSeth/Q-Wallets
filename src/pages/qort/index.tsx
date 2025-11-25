@@ -156,6 +156,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function QortalWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(0);

@@ -151,6 +151,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function DogecoinWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
   const [_isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =

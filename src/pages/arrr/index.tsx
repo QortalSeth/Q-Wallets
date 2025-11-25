@@ -160,6 +160,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function PirateWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
   const { isUsingGateway } = useContext(WalletContext);
 
   if (isUsingGateway) {

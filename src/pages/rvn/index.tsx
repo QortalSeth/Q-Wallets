@@ -170,6 +170,7 @@ function valueTextRvn(value: number) {
 
 export default function RavencoinWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
   const [_isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =

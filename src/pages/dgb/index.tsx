@@ -170,6 +170,7 @@ function valueTextDgb(value: number) {
 
 export default function DigibyteWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const [walletInfoDgb, setWalletInfoDgb] = useState<any>({});
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);

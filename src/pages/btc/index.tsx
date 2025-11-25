@@ -151,6 +151,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function BitcoinWallet() {
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const [walletInfoBtc, setWalletInfoBtc] = useState<any>({});
   const [_isLoadingWalletInfoBtc, setIsLoadingWalletInfoBtc] =

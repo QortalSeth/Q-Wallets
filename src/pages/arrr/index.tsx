@@ -232,17 +232,6 @@ export default function PirateWallet() {
 
   const disableCanSendArrr = () => arrrAmount <= 0 || addressFormatError;
 
-  const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const pattern = /^(zs1[2-9A-HJ-NP-Za-z]{75})$/;
-    setArrrRecipient(value);
-    if (pattern.test(value) || value === EMPTY_STRING) {
-      setAddressFormatError(false);
-    } else {
-      setAddressFormatError(true);
-    }
-  };
-
   const handleCloseArrrSend = () => {
     setArrrAmount(0);
     setArrrRecipient(EMPTY_STRING);
@@ -1235,7 +1224,6 @@ export default function PirateWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
             slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
-            onChange={handleRecipientChange}
           />
           <TextField
             label={t('core:memo', {

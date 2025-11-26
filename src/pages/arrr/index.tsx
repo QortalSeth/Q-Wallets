@@ -237,7 +237,7 @@ export default function PirateWallet() {
 
   const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const pattern = /^(zs1[2-9A-HJ-NP-Za-z]{75})$/;
+    const pattern = /^(zs1[a-zA-Z0-9]{75})$/;
     setArrrRecipient(value);
     if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);

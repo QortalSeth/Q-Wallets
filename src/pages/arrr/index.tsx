@@ -228,9 +228,12 @@ export default function PirateWallet() {
     setArrrRecipient(EMPTY_STRING);
     setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(true);
+    setAddressFormatError(false);
+    setOpenSendArrrError(false);
   };
 
-  const disableCanSendArrr = () => arrrAmount <= 0 || arrrRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendArrr = () =>
+    arrrAmount <= 0 || arrrRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -248,6 +251,8 @@ export default function PirateWallet() {
     setArrrRecipient(EMPTY_STRING);
     setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(false);
+    setAddressFormatError(false);
+    setOpenSendArrrError(false);
   };
 
   const changeCopyArrrTxHash = async () => {
@@ -1211,7 +1216,7 @@ export default function PirateWallet() {
             variant="outlined"
             label="Amount (ARRR)"
             isAllowed={(values) => {
-              const maxArrrCoin = walletBalanceArrr - 0.00010000;
+              const maxArrrCoin = walletBalanceArrr - 0.0001;
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||

@@ -169,7 +169,6 @@ export default function DogecoinWallet() {
   const [dogeAmount, setDogeAmount] = useState<number>(0);
   const [dogeRecipient, setDogeRecipient] = useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
-
   const [loadingRefreshDoge, setLoadingRefreshDoge] = useState(false);
   const [openTxDogeSubmit, setOpenTxDogeSubmit] = useState(false);
   const [openSendDogeSuccess, setOpenSendDogeSuccess] = useState(false);
@@ -200,9 +199,12 @@ export default function DogecoinWallet() {
     setDogeAmount(0);
     setDogeRecipient(EMPTY_STRING);
     setOpenDogeSend(true);
+    setAddressFormatError(false);
+    setOpenSendDogeError(false);
   };
 
-  const disableCanSendDoge = () => dogeAmount <= 0 || dogeRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendDoge = () =>
+    dogeAmount <= 0 || dogeRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -222,6 +224,8 @@ export default function DogecoinWallet() {
   const handleCloseDogeSend = () => {
     setDogeAmount(0);
     setOpenDogeSend(false);
+    setAddressFormatError(false);
+    setOpenSendDogeError(false);
   };
 
   const changeCopyDogeTxHash = async () => {

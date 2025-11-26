@@ -197,9 +197,13 @@ export default function BitcoinWallet() {
     setBtcAmount(0);
     setBtcRecipient(EMPTY_STRING);
     setOpenBtcSend(true);
+    setAddressFormatError(false);
+    setOpenSendBtcError(false);
+    setWalletBalanceError(null);
   };
 
-  const disableCanSendBtc = () => btcAmount <= 0 || btcRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendBtc = () =>
+    btcAmount <= 0 || btcRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -220,6 +224,9 @@ export default function BitcoinWallet() {
   const handleCloseBtcSend = () => {
     setBtcAmount(0);
     setOpenBtcSend(false);
+    setAddressFormatError(false);
+    setOpenSendBtcError(false);
+    setWalletBalanceError(null);
   };
 
   const changeCopyBtcTxHash = async () => {

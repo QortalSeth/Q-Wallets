@@ -197,11 +197,15 @@ export default function LitecoinWallet() {
   const handleOpenLtcSend = () => {
     setLtcAmount(0);
     setLtcRecipient(EMPTY_STRING);
-
     setOpenLtcSend(true);
+    setAddressFormatError(false);
+    setOpenSendLtcError(false);
+    setWalletInfoError(null);
+    setWalletBalanceError(null);
   };
 
-  const disableCanSendLtc = () => ltcAmount <= 0 || ltcRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendLtc = () =>
+    ltcAmount <= 0 || ltcRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -222,6 +226,10 @@ export default function LitecoinWallet() {
   const handleCloseLtcSend = () => {
     setLtcAmount(0);
     setOpenLtcSend(false);
+    setAddressFormatError(false);
+    setOpenSendLtcError(false);
+    setWalletInfoError(null);
+    setWalletBalanceError(null);
   };
 
   const changeCopyLtcTxHash = async () => {

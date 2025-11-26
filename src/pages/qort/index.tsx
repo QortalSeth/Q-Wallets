@@ -6,7 +6,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import WalletContext from '../../contexts/walletContext';
@@ -199,10 +198,6 @@ export default function QortalWallet() {
   const [amountTouched, setAmountTouched] = useState(false);
   const [recipientTouched, setRecipientTouched] = useState(false);
 
-  // for cancelling outstanding fetches and preventing race conditions
-  const addressControllerRef = useRef<AbortController | null>(null);
-  const lastLookupId = useRef(0);
-
   const maxQortCoin = walletBalanceQort - qortTxFee;
 
   const emptyRowsPayment =
@@ -255,12 +250,20 @@ export default function QortalWallet() {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
     setOpenQortSend(true);
+    setAmountError(null);
+    setAmountTouched(false);
+    setRecipientError(null);
+    setRecipientTouched(false);
   };
 
   const handleCloseQortSend = () => {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
     setOpenQortSend(false);
+    setAmountError(null);
+    setAmountTouched(false);
+    setRecipientError(null);
+    setRecipientTouched(false);
   };
 
   const handleCloseSendQortSuccess = (
@@ -301,14 +304,18 @@ export default function QortalWallet() {
         typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
       if (a <= 0) {
         setAmountError(
-          t('core:errors.amount_positive') || 'Amount must be > 0'
+          t('core:message.error.amount_positive', {
+            postProcess: 'capitalizeFirstChar',
+          })
         );
         return false;
       }
       if (a > maxQortCoin) {
         setAmountError(
-          t('core:errors.amount_exceeds_balance') ||
-            `Max allowed: ${maxQortCoin}`
+          t('core:message.error.amount_exceeds_balance', {
+            maxAmount: maxQortCoin,
+            postProcess: 'capitalizeFirstChar',
+          })
         );
         return false;
       }
@@ -330,19 +337,15 @@ export default function QortalWallet() {
       return;
     }
 
-    if (qortRecipient === '') {
-      setRecipientError(
-        t('core:errors.recipient_required') || 'Recipient required'
-      );
+    if (qortRecipient === EMPTY_STRING) {
+      setRecipientError(t('core:message.error.recipient_required'));
       setAddressValidating(false);
       validateAll(qortAmount, qortRecipient, false);
       return;
     }
 
     if (qortRecipient.length < ADDRESS_MIN_LENGTH) {
-      setRecipientError(
-        t('core:errors.recipient_too_short') || 'Recipient too short'
-      );
+      setRecipientError(t('core:message.error.recipient_too_short'));
       setAddressValidating(false);
       validateAll(qortAmount, qortRecipient, false);
       return;
@@ -365,16 +368,12 @@ export default function QortalWallet() {
           setRecipientError(null);
           validateAll(qortAmount, qortRecipient, true);
         } else {
-          setRecipientError(
-            t('core:errors.recipient_not_found') || 'Recipient not found'
-          );
+          setRecipientError(t('core:messsage.error.recipient_not_found'));
           validateAll(qortAmount, qortRecipient, false);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
-        setRecipientError(
-          t('core:errors.recipient_lookup_failed') || 'Lookup failed'
-        );
+        setRecipientError(t('core:message.error.recipient_lookup_failed'));
         validateAll(qortAmount, qortRecipient, false);
       } finally {
         setAddressValidating(false);
@@ -431,11 +430,6 @@ export default function QortalWallet() {
 
   const onAmountBlur = () => setAmountTouched(true);
   const onRecipientBlur = () => setRecipientTouched(true);
-
-  const onRecipientChange = (value: string) => {
-    setQortRecipient(value);
-    // effect will pick this up and run debounced lookup
-  };
 
   const getQortalTransactions = async () => {
     setLoadingRefreshQort(true);
@@ -3199,7 +3193,9 @@ export default function QortalWallet() {
             onValueChange={onAmountChange}
             onBlur={onAmountBlur}
             required
-            helperText={amountTouched ? amountError || '' : ''} // show only when touched
+            helperText={
+              amountTouched ? amountError || EMPTY_STRING : EMPTY_STRING
+            } // show only when touched
             error={amountTouched && !!amountError}
           />
 
@@ -3218,7 +3214,9 @@ export default function QortalWallet() {
             helperText={
               recipientTouched
                 ? addressValidating
-                  ? t('core:message.validating') || 'Validating...'
+                  ? t('core:message.generic.validating', {
+                      postProcess: 'capitalizeFirstChar',
+                    })
                   : recipientError || ''
                 : t('core:message.generic.qortal_address', {
                     postProcess: 'capitalizeFirstChar',

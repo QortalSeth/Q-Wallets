@@ -215,9 +215,14 @@ export default function RavencoinWallet() {
     setRvnRecipient(EMPTY_STRING);
     setRvnFee(1500);
     setOpenRvnSend(true);
+    setAddressFormatError(false);
+    setWalletInfoError(null);
+    setWalletBalanceError(null);
+    setOpenSendRvnError(false);
   };
 
-  const disableCanSendRvn = () => rvnAmount <= 0 || rvnRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendRvn = () =>
+    rvnAmount <= 0 || rvnRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -238,6 +243,10 @@ export default function RavencoinWallet() {
     setRvnAmount(0);
     setRvnFee(0);
     setOpenRvnSend(false);
+    setAddressFormatError(false);
+    setWalletInfoError(null);
+    setWalletBalanceError(null);
+    setOpenSendRvnError(false);
   };
 
   const changeCopyRvnTxHash = async () => {

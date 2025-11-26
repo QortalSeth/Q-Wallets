@@ -215,9 +215,12 @@ export default function DigibyteWallet() {
     setDgbRecipient(EMPTY_STRING);
     setDgbFee(10);
     setOpenDgbSend(true);
+    setAddressFormatError(false);
+    setOpenSendDgbError(false);
   };
 
-  const disableCanSendDgb = () => dgbAmount <= 0 || dgbRecipient == EMPTY_STRING || addressFormatError;
+  const disableCanSendDgb = () =>
+    dgbAmount <= 0 || dgbRecipient == EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -239,6 +242,8 @@ export default function DigibyteWallet() {
     setDgbAmount(0);
     setDgbFee(0);
     setOpenDgbSend(false);
+    setAddressFormatError(false);
+    setOpenSendDgbError(false);
   };
 
   const changeCopyDgbTxHash = async () => {

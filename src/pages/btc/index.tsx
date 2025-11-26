@@ -1096,16 +1096,25 @@ export default function BitcoinWallet() {
                     >
                       {walletInfoBtc?.address}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        navigator.clipboard.writeText(
-                          walletInfoBtc?.address ?? EMPTY_STRING
-                        )
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        t('core:action.copy_address', {
+                          postProcess: 'capitalizeFirstChar',
+                        })
                       }
                     >
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            walletInfoBtc?.address ?? EMPTY_STRING
+                          )
+                        }
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </CustomWidthTooltip>
                   </Box>
                 </Grid>
 

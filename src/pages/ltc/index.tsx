@@ -51,6 +51,7 @@ import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
 import {
   EMPTY_STRING,
+  
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -1087,16 +1088,25 @@ export default function LitecoinWallet() {
                     >
                       {walletInfoLtc?.address}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        navigator.clipboard.writeText(
-                          walletInfoLtc?.address ?? EMPTY_STRING
-                        )
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        t('core:action.copy_address', {
+                          postProcess: 'capitalizeFirstChar',
+                        })
                       }
                     >
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          navigator.clipboard.writeText(
+                            walletInfoLtc?.address ?? EMPTY_STRING
+                          )
+                        }
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </CustomWidthTooltip>
                   </Box>
                 </Grid>
 

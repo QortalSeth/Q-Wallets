@@ -3,8 +3,10 @@ import {
   Key,
   MouseEvent,
   SyntheticEvent,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import WalletContext from '../../contexts/walletContext';
@@ -162,6 +164,9 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 }
 
 export default function QortalWallet() {
+  const ADDRESS_MIN_LENGTH = 3;
+  const ADDRESS_LOOKUP_DEBOUNCE_MS = 450;
+
   const { t } = useTranslation(['core']);
 
   const { address, nodeInfo } = useContext(WalletContext);
@@ -185,9 +190,20 @@ export default function QortalWallet() {
   const [openTxQortSubmit, setOpenTxQortSubmit] = useState(false);
   const [openSendQortSuccess, setOpenSendQortSuccess] = useState(false);
   const [openSendQortError, setOpenSendQortError] = useState(false);
-  const [sendDisabled, setSendDisabled] = useState(true);
-  const [qortAmount, setQortAmount] = useState<number>(0);
-  const [qortRecipient, setQortRecipient] = useState(EMPTY_STRING);
+  const [qortAmount, setQortAmount] = useState<number | undefined>(undefined);
+  const [qortRecipient, setQortRecipient] = useState<string>(EMPTY_STRING);
+  const [sendDisabled, setSendDisabled] = useState<boolean>(true);
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [recipientError, setRecipientError] = useState<string | null>(null);
+  const [addressValidating, setAddressValidating] = useState(false);
+  const [amountTouched, setAmountTouched] = useState(false);
+  const [recipientTouched, setRecipientTouched] = useState(false);
+
+  // for cancelling outstanding fetches and preventing race conditions
+  const addressControllerRef = useRef<AbortController | null>(null);
+  const lastLookupId = useRef(0);
+
+  const maxQortCoin = walletBalanceQort - qortTxFee;
 
   const emptyRowsPayment =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo.length) : 0;
@@ -278,46 +294,147 @@ export default function QortalWallet() {
     }
   };
 
-  const validateCanSendQortAmount = async (qAmount: number | undefined) => {
-    let checkAmount = 0;
-    if (typeof qAmount === 'number' && !isNaN(qAmount)) {
-      checkAmount = qAmount;
+  // core validation (synchronous checks)
+  const validateAmountLocal = useCallback(
+    (amount?: number) => {
+      const a =
+        typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
+      if (a <= 0) {
+        setAmountError(
+          t('core:errors.amount_positive') || 'Amount must be > 0'
+        );
+        return false;
+      }
+      if (a > maxQortCoin) {
+        setAmountError(
+          t('core:errors.amount_exceeds_balance') ||
+            `Max allowed: ${maxQortCoin}`
+        );
+        return false;
+      }
+      setAmountError(null);
+      return true;
+    },
+    [maxQortCoin, t]
+  );
+
+  // address lookup with debounce + cancel and race id
+  useEffect(() => {
+    setRecipientError(null);
+
+    if (!recipientTouched) {
+      // skip network lookups and do not set errors before user interacts
+      setAddressValidating(false);
+      // but we still want to compute sendDisabled based on whether other checks pass
+      validateAll(qortAmount, qortRecipient, false);
+      return;
     }
-    setQortAmount(checkAmount);
-    if (checkAmount <= 0 || !checkAmount) {
-      setSendDisabled(true);
-    } else if (qortRecipient.length < 3 || qortRecipient === EMPTY_STRING) {
-      setSendDisabled(true);
-    } else {
-      setSendDisabled(false);
+
+    if (qortRecipient === '') {
+      setRecipientError(
+        t('core:errors.recipient_required') || 'Recipient required'
+      );
+      setAddressValidating(false);
+      validateAll(qortAmount, qortRecipient, false);
+      return;
     }
+
+    if (qortRecipient.length < ADDRESS_MIN_LENGTH) {
+      setRecipientError(
+        t('core:errors.recipient_too_short') || 'Recipient too short'
+      );
+      setAddressValidating(false);
+      validateAll(qortAmount, qortRecipient, false);
+      return;
+    }
+
+    // now perform debounced network lookup
+    setAddressValidating(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(async () => {
+      try {
+        const [addrRes, nameRes] = await Promise.all([
+          fetch(`/addresses/${encodeURIComponent(qortRecipient)}`, {
+            signal: controller.signal,
+          }).then((r) => r.json()),
+          fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
+            signal: controller.signal,
+          }).then((r) => r.json()),
+        ]);
+        if (!addrRes?.error || !nameRes?.error) {
+          setRecipientError(null);
+          validateAll(qortAmount, qortRecipient, true);
+        } else {
+          setRecipientError(
+            t('core:errors.recipient_not_found') || 'Recipient not found'
+          );
+          validateAll(qortAmount, qortRecipient, false);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+        setRecipientError(
+          t('core:errors.recipient_lookup_failed') || 'Lookup failed'
+        );
+        validateAll(qortAmount, qortRecipient, false);
+      } finally {
+        setAddressValidating(false);
+      }
+    }, ADDRESS_LOOKUP_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qortRecipient, recipientTouched, t]);
+
+  // Consolidated validator: enabled only when numeric + recipient ok
+  // `addressFound` indicates whether network lookup succeeded. For local quick validations we pass false.
+  const validateAll = useCallback(
+    (amountVal?: number, recipientVal?: string, addressFound = false) => {
+      const amtValid = validateAmountLocal(amountVal);
+      const recipientLocallyValid =
+        !!recipientVal && recipientVal.length >= ADDRESS_MIN_LENGTH;
+
+      const finalEnabled = amtValid && recipientLocallyValid && addressFound;
+      setSendDisabled(!finalEnabled);
+      return finalEnabled;
+    },
+    [validateAmountLocal]
+  );
+
+  // keep validation in sync when amount changes
+  useEffect(() => {
+    // if recipient not yet touched, addressFound is false
+    const addressFound =
+      !addressValidating &&
+      recipientError === null &&
+      recipientTouched &&
+      qortRecipient.length >= ADDRESS_MIN_LENGTH;
+    validateAll(qortAmount, qortRecipient, !!addressFound);
+  }, [
+    qortAmount,
+    qortRecipient,
+    addressValidating,
+    recipientError,
+    recipientTouched,
+    validateAll,
+  ]);
+
+  // input handlers
+  const onAmountChange = (values: { floatValue?: number }) => {
+    const next = values.floatValue ?? 0;
+    setQortAmount(next);
+    // quick local validation
+    validateAmountLocal(next);
   };
 
-  const validateCanSendQortAddress = async (qRecipient: string) => {
-    let checkRecipient = EMPTY_STRING;
-    checkRecipient = qRecipient;
-    setQortRecipient(checkRecipient);
-    if (qortAmount <= 0 || null || !qortAmount) {
-      setSendDisabled(true);
-    } else if (qRecipient.length < 3 || qRecipient === EMPTY_STRING) {
-      setSendDisabled(true);
-    } else if (qRecipient.length >= 3) {
-      const addressUrl = `/addresses/${checkRecipient}`;
-      const nameUrl = `/names/${checkRecipient}`;
-      const addressUrlResult = await fetch(addressUrl);
-      const addressUrlResponse = await addressUrlResult.json();
-      const nameUrlResult = await fetch(nameUrl);
-      const nameUrlResponse = await nameUrlResult.json();
-      if (!addressUrlResponse?.error) {
-        setSendDisabled(false);
-      } else if (!nameUrlResponse?.error) {
-        setSendDisabled(false);
-      } else {
-        setSendDisabled(true);
-      }
-    } else {
-      setSendDisabled(false);
-    }
+  const onAmountBlur = () => setAmountTouched(true);
+  const onRecipientBlur = () => setRecipientTouched(true);
+
+  const onRecipientChange = (value: string) => {
+    setQortRecipient(value);
+    // effect will pick this up and run debounced lookup
   };
 
   const getQortalTransactions = async () => {
@@ -3065,30 +3182,27 @@ export default function QortalWallet() {
           <NumericFormat
             decimalScale={8}
             defaultValue={0}
-            value={qortAmount}
+            value={qortAmount ?? ''}
             allowNegative={false}
             customInput={TextField}
             valueIsNumericString
             variant="outlined"
             label={
-              t('core:amount', {
-                postProcess: 'capitalizeAll',
-              }) + '(QORT)'
+              t('core:amount', { postProcess: 'capitalizeAll' }) + '(QORT)'
             }
             fullWidth
             isAllowed={(values) => {
-              const maxQortCoin = walletBalanceQort - qortTxFee;
+              const max = maxQortCoin;
               const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue ?? 0) <= maxQortCoin
-              );
+              return formattedValue === '' || (floatValue ?? 0) <= max;
             }}
-            onValueChange={(values) => {
-              validateCanSendQortAmount(values.floatValue);
-            }}
+            onValueChange={onAmountChange}
+            onBlur={onAmountBlur}
             required
+            helperText={amountTouched ? amountError || '' : ''} // show only when touched
+            error={amountTouched && !!amountError}
           />
+
           <TextField
             required
             label={t('core:receiver_address_name', {
@@ -3097,12 +3211,20 @@ export default function QortalWallet() {
             id="qort-address"
             margin="normal"
             value={qortRecipient}
-            helperText={t('core:message.generic.qortal_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
+            onChange={(e) => setQortRecipient(e.target.value)}
+            onBlur={onRecipientBlur}
             slotProps={{ htmlInput: { maxLength: 34, minLength: 3 } }}
-            onChange={(e) => validateCanSendQortAddress(e.target.value)}
             fullWidth
+            helperText={
+              recipientTouched
+                ? addressValidating
+                  ? t('core:message.validating') || 'Validating...'
+                  : recipientError || ''
+                : t('core:message.generic.qortal_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
+            error={recipientTouched && !!recipientError}
           />
         </Box>
         <Box

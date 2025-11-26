@@ -670,10 +670,16 @@ export default function QortalWallet() {
         amount: qortAmount,
       });
       if (!sendRequest?.error) {
+        setAmountError(null);
+        setAmountTouched(false);
+        setRecipientError(null);
+        setRecipientTouched(false);
+
         setQortAmount(0);
         setQortRecipient(EMPTY_STRING);
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
+
         await timeoutDelay(TIME_SECONDS_3);
         getWalletBalanceQort();
         getQortalTransactions();

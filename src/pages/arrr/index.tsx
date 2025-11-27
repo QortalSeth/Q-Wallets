@@ -278,7 +278,7 @@ export default function PirateWallet() {
   const handleSendMaxArrr = () => {
     let maxArrrAmount = 0;
     let WalletBalanceArrr = parseFloat(walletBalanceArrr);
-    maxArrrAmount = WalletBalanceArrr - 0.0001;
+    maxArrrAmount = WalletBalanceArrr - 0.00010000;
     if (maxArrrAmount <= 0) {
       setArrrAmount(0);
     } else {
@@ -1181,7 +1181,7 @@ export default function PirateWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceArrr - 0.0001).toFixed(8) + ' ARRR'}
+            {(walletBalanceArrr - 0.00010000).toFixed(8) + ' ARRR'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -1216,7 +1216,7 @@ export default function PirateWallet() {
             variant="outlined"
             label="Amount (ARRR)"
             isAllowed={(values) => {
-              const maxArrrCoin = walletBalanceArrr - 0.0001;
+              const maxArrrCoin = walletBalanceArrr - 0.00010000;
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||

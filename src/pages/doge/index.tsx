@@ -905,11 +905,15 @@ export default function DogecoinWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -921,6 +925,7 @@ export default function DogecoinWallet() {
             valueIsNumericString
             variant="outlined"
             label="Amount (DOGE)"
+            fullWidth
             isAllowed={(values) => {
               const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
@@ -945,6 +950,7 @@ export default function DogecoinWallet() {
             value={dogeRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={
               addressFormatError
                 ? t('core:message.error.doge_address_invalid', {

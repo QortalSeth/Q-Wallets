@@ -893,11 +893,15 @@ export default function LitecoinWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -909,6 +913,7 @@ export default function LitecoinWallet() {
             valueIsNumericString
             variant="outlined"
             label="Amount (LTC)"
+            fullWidth
             isAllowed={(values) => {
               const maxLtcCoin = +walletBalanceLtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
@@ -932,6 +937,7 @@ export default function LitecoinWallet() {
             value={ltcRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={
               addressFormatError
                 ? t('core:message.error.litecoin_address_invalid', {

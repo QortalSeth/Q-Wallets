@@ -891,11 +891,15 @@ export default function BitcoinWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -907,6 +911,7 @@ export default function BitcoinWallet() {
             valueIsNumericString
             variant="outlined"
             label="Amount (BTC)"
+            fullWidth
             isAllowed={(values) => {
               const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
               const { formattedValue, floatValue } = values;
@@ -930,6 +935,7 @@ export default function BitcoinWallet() {
             value={btcRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={
               addressFormatError
                 ? t('core:message.error.bitcoin_address_invalid', {

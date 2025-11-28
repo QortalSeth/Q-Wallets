@@ -1139,11 +1139,15 @@ export default function PirateWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -1154,6 +1158,7 @@ export default function PirateWallet() {
             customInput={TextField}
             valueIsNumericString
             {...({ label: 'Amount (ARRR)' } as any)}
+            fullWidth
             isAllowed={(values) => {
               const maxArrrCoin = walletBalanceArrr - 0.0001;
               const { formattedValue, floatValue } = values;
@@ -1182,6 +1187,7 @@ export default function PirateWallet() {
             value={arrrRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={t('core:message.generic.pirate_chain_address', {
               postProcess: 'capitalizeFirstChar',
             })}
@@ -1194,6 +1200,7 @@ export default function PirateWallet() {
             id="arrr-memo"
             margin="normal"
             value={arrrMemo}
+            fullWidth
             helperText={t('core:message.generic.pirate_chain_max_chars', {
               postProcess: 'capitalizeFirstChar',
             })}
@@ -1346,7 +1353,7 @@ export default function PirateWallet() {
                     xs: '1fr',
                     md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
                   },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
+                  gridTemplateRows: { xs: 'repeat(4, auto)', md: '1fr 1fr' },
                 }}
               >
                 <Grid
@@ -1488,8 +1495,8 @@ export default function PirateWallet() {
                   justifyContent={'center'}
                   sx={{
                     gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 7, md: 2 },
+                    gridRow: { xs: '4', md: '1 / span 2' },
+                    p: { xs: 1.5, md: 2 },
                   }}
                 >
                   <Box

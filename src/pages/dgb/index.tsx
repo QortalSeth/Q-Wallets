@@ -928,11 +928,15 @@ export default function DigibyteWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -944,6 +948,7 @@ export default function DigibyteWallet() {
             valueIsNumericString
             variant="outlined"
             label="Amount (DGB)"
+            fullWidth
             isAllowed={(values) => {
               const maxDgbCoin = walletBalanceDgb - (dgbFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
@@ -967,6 +972,7 @@ export default function DigibyteWallet() {
             value={dgbRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={
               addressFormatError
                 ? t('core:message.error.digibyte_address_invalid', {
@@ -979,11 +985,16 @@ export default function DigibyteWallet() {
           />
         </Box>
         <Box
-          style={{
+          sx={{
             alignItems: 'center',
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
+            mt: 2.5,
+            mx: 'auto',
             width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <Box
@@ -992,8 +1003,7 @@ export default function DigibyteWallet() {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              marginTop: '20px',
-              width: '50ch',
+              width: '100%',
             }}
           >
             <Typography id="dgb-fee-slider" gutterBottom>

@@ -931,11 +931,15 @@ export default function RavencoinWallet() {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
             flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <NumericFormat
@@ -947,6 +951,7 @@ export default function RavencoinWallet() {
             valueIsNumericString
             variant="outlined"
             label="Amount (RVN)"
+            fullWidth
             isAllowed={(values) => {
               const maxRvnCoin = walletBalanceRvn - (rvnFee * 1000) / 1e8;
               const { formattedValue, floatValue } = values;
@@ -970,6 +975,7 @@ export default function RavencoinWallet() {
             value={rvnRecipient}
             onChange={handleRecipientChange}
             error={addressFormatError}
+            fullWidth
             helperText={
               addressFormatError
                 ? t('core:message.error.ravencoin_address_invalid', {
@@ -982,11 +988,16 @@ export default function RavencoinWallet() {
           />
         </Box>
         <Box
-          style={{
-            width: '100%',
-            display: 'flex',
+          sx={{
             alignItems: 'center',
+            display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
+            mt: 2.5,
+            mx: 'auto',
+            width: '100%',
+            maxWidth: 420,
+            px: { xs: 2, sm: 1 },
           }}
         >
           <Box
@@ -994,9 +1005,8 @@ export default function RavencoinWallet() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              marginTop: '20px',
               flexDirection: 'column',
-              width: '50ch',
+              width: '100%',
             }}
           >
             <Typography id="rvn-fee-slider" gutterBottom>

@@ -1213,8 +1213,7 @@ export default function PirateWallet() {
             allowNegative={false}
             customInput={TextField}
             valueIsNumericString
-            variant="outlined"
-            label="Amount (ARRR)"
+            {...({ label: 'Amount (ARRR)' } as any)}
             isAllowed={(values) => {
               const maxArrrCoin = walletBalanceArrr - 0.00010000;
               const { formattedValue, floatValue } = values;
@@ -1225,6 +1224,11 @@ export default function PirateWallet() {
             }}
             onValueChange={(values) => {
               setArrrAmount(values.floatValue ?? 0);
+            }}
+            slotProps={{
+              input: {
+                variant: 'outlined',
+              },
             }}
             required
           />
@@ -1254,7 +1258,7 @@ export default function PirateWallet() {
               postProcess: 'capitalizeFirstChar',
             })}
             slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
-            onChange={(e) => setArrrMemo(e.target.value)}
+            onChange={(e: any) => setArrrMemo(e.target.value)}
           />
         </Box>
         <Box
@@ -1517,9 +1521,9 @@ export default function PirateWallet() {
                       alignItems: 'center',
                       aspectRatio: '1 / 1',
                       bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
+                      border: (t: any) => `1px solid ${t.palette.divider}`,
                       borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
+                      boxShadow: (t:any) => t.shadows[2],
                       display: 'flex',
                       height: '100%',
                       justifyContent: 'center',

@@ -555,8 +555,8 @@ export default function PirateWallet() {
         port: portServer,
       });
       if (!setServer?.error) {
-        await getLightwalletServersArrr();
         setOpenArrrLightwallet(false);
+        await getLightwalletServersArrr();
         await getWalletBalanceArrr();
         await getTransactionsArrr();
       }

@@ -171,6 +171,8 @@ export default function QortalWallet() {
 
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(0);
+  const [isLoadingWalletBalanceQort, setIsLoadingWalletBalanceQort] =
+    useState<boolean>(true);
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
   const [qortTxFee, setQortTxFee] = useState<number>(0);
   const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);
@@ -614,12 +616,15 @@ export default function QortalWallet() {
 
   const getWalletBalanceQort = async () => {
     try {
+      setIsLoadingWalletBalanceQort(true);
       const balanceLink = `/addresses/balance/${address}`;
       const response = await fetch(balanceLink);
       const data = await response.json();
       setWalletBalanceQort(data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoadingWalletBalanceQort(false);
     }
   };
 
@@ -3102,7 +3107,13 @@ export default function QortalWallet() {
             gutterBottom
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {walletBalanceQort + ' QORT'}
+            {isLoadingWalletBalanceQort ? (
+              <Box sx={{ width: '175px' }}>
+                <LinearProgress />
+              </Box>
+            ) : (
+              walletBalanceQort + ' QORT'
+            )}
           </Typography>
         </Box>
         <Box
@@ -3326,10 +3337,10 @@ export default function QortalWallet() {
                     })}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {walletBalanceQort ? (
-                      `${walletBalanceQort} QORT`
-                    ) : (
+                    {isLoadingWalletBalanceQort ? (
                       <LinearProgress />
+                    ) : (
+                      `${walletBalanceQort} QORT`
                     )}
                   </Typography>
                 </Grid>

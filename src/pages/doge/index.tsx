@@ -155,8 +155,6 @@ export default function DogecoinWallet() {
   const theme = useTheme();
 
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
-  const [isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
-    useState<boolean>(false);
   const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(0);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] =
     useState<boolean>(true);
@@ -270,7 +268,6 @@ export default function DogecoinWallet() {
   };
 
   const getWalletInfoDoge = async () => {
-    setIsLoadingWalletInfoDoge(true);
     try {
       setWalletInfoError(null);
       const response = await qortalRequest({
@@ -296,8 +293,6 @@ export default function DogecoinWallet() {
         error?.message ? String(error.message) : String(error)
       );
       console.error('ERROR GET DOGE WALLET INFO', error);
-    } finally {
-      setIsLoadingWalletInfoDoge(false);
     }
   };
 
@@ -1042,7 +1037,7 @@ export default function DogecoinWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceDoge ? (
                       `${walletBalanceDoge} DOGE`
-                    ) : isLoadingWalletInfoDoge ? (
+                    ) : isLoadingWalletBalanceDoge ? (
                       <LinearProgress />
                     ) : undefined}
                   </Typography>

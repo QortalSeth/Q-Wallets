@@ -177,8 +177,6 @@ export default function DigibyteWallet() {
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);
-  const [isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
-    useState<boolean>(false);
   const [transactionsDgb, setTransactionsDgb] = useState<any>([]);
   const [isLoadingDgbTransactions, setIsLoadingDgbTransactions] =
     useState<boolean>(true);
@@ -293,7 +291,6 @@ export default function DigibyteWallet() {
   };
 
   const getWalletInfoDgb = async () => {
-    setIsLoadingWalletInfoDgb(true);
     try {
       setWalletInfoError(null);
       const response = await qortalRequest({
@@ -319,8 +316,6 @@ export default function DigibyteWallet() {
         error?.message ? String(error.message) : String(error)
       );
       console.error('ERROR GET DGB WALLET INFO', error);
-    } finally {
-      setIsLoadingWalletInfoDgb(false);
     }
   };
 
@@ -1116,7 +1111,7 @@ export default function DigibyteWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceDgb ? (
                       `${walletBalanceDgb} DGB`
-                    ) : isLoadingWalletInfoDgb ? (
+                    ) : isLoadingWalletBalanceDgb ? (
                       <LinearProgress />
                     ) : undefined}
                   </Typography>

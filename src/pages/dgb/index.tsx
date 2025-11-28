@@ -324,19 +324,6 @@ export default function DigibyteWallet() {
     }
   };
 
-  useEffect(() => {
-    const intervalgetTransactionsDgb = setInterval(() => {
-      getWalletBalanceDgb();
-      getTransactionsDgb();
-    }, TIME_MINUTES_3);
-    getWalletInfoDgb();
-    getWalletBalanceDgb();
-    getTransactionsDgb();
-    return () => {
-      clearInterval(intervalgetTransactionsDgb);
-    };
-  }, []);
-
   const getWalletBalanceDgb = async () => {
     try {
       setIsLoadingWalletBalanceDgb(true);
@@ -389,9 +376,11 @@ export default function DigibyteWallet() {
   useEffect(() => {
     let intervalId: any;
     (async () => {
-      await getWalletInfoDgb();
-      await getWalletBalanceDgb();
-      await getTransactionsDgb();
+      await Promise.all([
+        getWalletInfoDgb(),
+        getWalletBalanceDgb(),
+        getTransactionsDgb(),
+      ]);
       intervalId = setInterval(() => {
         getWalletBalanceDgb();
         getTransactionsDgb();

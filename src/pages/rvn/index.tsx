@@ -327,20 +327,6 @@ export default function RavencoinWallet() {
     }
   };
 
-  useEffect(() => {
-    getWalletInfoRvn();
-  }, []);
-
-  useEffect(() => {
-    const intervalgetTransactionsRvn = setInterval(() => {
-      getTransactionsRvn();
-    }, TIME_MINUTES_3);
-    getTransactionsRvn();
-    return () => {
-      clearInterval(intervalgetTransactionsRvn);
-    };
-  }, []);
-
   const getWalletBalanceRvn = async () => {
     try {
       setIsLoadingWalletBalanceRvn(true);
@@ -393,9 +379,11 @@ export default function RavencoinWallet() {
   useEffect(() => {
     let intervalId: any;
     (async () => {
-      await getWalletInfoRvn();
-      await getWalletBalanceRvn();
-      await getTransactionsRvn();
+      await Promise.all([
+        getWalletInfoRvn(),
+        getWalletBalanceRvn(),
+        getTransactionsRvn(),
+      ]);
       intervalId = setInterval(() => {
         getWalletBalanceRvn();
         getTransactionsRvn();

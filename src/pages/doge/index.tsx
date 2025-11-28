@@ -301,22 +301,6 @@ export default function DogecoinWallet() {
     }
   };
 
-  useEffect(() => {
-    let intervalId: any;
-    (async () => {
-      await getWalletInfoDoge();
-      await getWalletBalanceDoge();
-      await getTransactionsDoge();
-      intervalId = setInterval(() => {
-        getWalletBalanceDoge();
-        getTransactionsDoge();
-      }, TIME_MINUTES_3);
-    })();
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
-
   const getWalletBalanceDoge = async () => {
     try {
       setIsLoadingWalletBalanceDoge(true);
@@ -370,9 +354,11 @@ export default function DogecoinWallet() {
   useEffect(() => {
     let intervalId: any;
     (async () => {
-      await getWalletInfoDoge();
-      await getWalletBalanceDoge();
-      await getTransactionsDoge();
+      await Promise.all([
+        getWalletInfoDoge(),
+        getWalletBalanceDoge(),
+        getTransactionsDoge(),
+      ]);
       intervalId = setInterval(() => {
         getWalletBalanceDoge();
         getTransactionsDoge();

@@ -305,9 +305,11 @@ export default function BitcoinWallet() {
   useEffect(() => {
     let intervalId: any;
     (async () => {
-      await getWalletInfoBtc();
-      await getWalletBalanceBtc();
-      await getTransactionsBtc();
+      await Promise.all([
+        getWalletInfoBtc(),
+        getWalletBalanceBtc(),
+        getTransactionsBtc(),
+      ]);
       intervalId = setInterval(() => {
         getWalletBalanceBtc();
         getTransactionsBtc();

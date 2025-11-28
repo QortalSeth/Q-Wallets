@@ -358,9 +358,11 @@ export default function LitecoinWallet() {
   useEffect(() => {
     let intervalId: any;
     (async () => {
-      await getWalletInfoLtc();
-      await getWalletBalanceLtc();
-      await getTransactionsLtc();
+      await Promise.all([
+        getWalletInfoLtc(),
+        getWalletBalanceLtc(),
+        getTransactionsLtc(),
+      ]);
       intervalId = setInterval(() => {
         getWalletBalanceLtc();
         getTransactionsLtc();

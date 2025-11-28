@@ -167,6 +167,7 @@ export default function QortalWallet() {
   const ADDRESS_LOOKUP_DEBOUNCE_MS = 450;
 
   const { t } = useTranslation(['core']);
+  const theme = useTheme();
 
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(0);
@@ -368,7 +369,7 @@ export default function QortalWallet() {
           setRecipientError(null);
           validateAll(qortAmount, qortRecipient, true);
         } else {
-          setRecipientError(t('core:messsage.error.recipient_not_found'));
+          setRecipientError(t('core:message.error.recipient_not_found'));
           validateAll(qortAmount, qortRecipient, false);
         }
       } catch (err: any) {
@@ -696,28 +697,6 @@ export default function QortalWallet() {
     }
   };
 
-  const QortAddressBookDialogPage = () => {
-    return (
-      <DialogGeneral
-        aria-labelledby="qort-electrum-servers"
-        open={openQortAddressBook}
-        keepMounted={false}
-      >
-        <DialogContent>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {t('core:message.generic.coming_soon', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </DialogContent>
-      </DialogGeneral>
-    );
-  };
-
   const tablePayment = () => {
     if (paymentInfo && paymentInfo.length > 0) {
       return (
@@ -812,7 +791,7 @@ export default function QortalWallet() {
                                 <HistoryToggleOff
                                   style={{
                                     fontSize: '15px',
-                                    color: '#f44336',
+                                    color: theme.palette.error.main,
                                     marginTop: '2px',
                                   }}
                                 />
@@ -832,7 +811,7 @@ export default function QortalWallet() {
                                 <CheckCircleOutline
                                   style={{
                                     fontSize: '15px',
-                                    color: '#66bb6a',
+                                    color: theme.palette.success.main,
                                     marginTop: '2px',
                                   }}
                                 />
@@ -846,7 +825,7 @@ export default function QortalWallet() {
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
                         {row?.creatorAddress === address ? (
-                          <Box style={{ color: '#05a2e4' }}>
+                          <Box style={{ color: theme.palette.info.main }}>
                             {row?.creatorAddress}
                           </Box>
                         ) : (
@@ -855,7 +834,7 @@ export default function QortalWallet() {
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
                         {row?.recipient === address ? (
-                          <Box style={{ color: '#05a2e4' }}>
+                          <Box style={{ color: theme.palette.info.main }}>
                             {row?.recipient}
                           </Box>
                         ) : (
@@ -864,11 +843,11 @@ export default function QortalWallet() {
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
                         {row?.recipient === address ? (
-                          <Box style={{ color: '#66bb6a' }}>
+                          <Box style={{ color: theme.palette.success.main }}>
                             + {row?.amount}
                           </Box>
                         ) : (
-                          <Box style={{ color: '#f44336' }}>
+                          <Box style={{ color: theme.palette.error.main }}>
                             - {row?.amount}
                           </Box>
                         )}
@@ -1014,7 +993,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1032,7 +1011,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1046,7 +1025,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -1057,7 +1036,7 @@ export default function QortalWallet() {
                       {row?.identifier}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      <Box style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: theme.palette.success.main }}>
                         {humanFileSize(row?.size, true, 2)}
                       </Box>
                     </StyledTableCell>
@@ -1210,7 +1189,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1228,7 +1207,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1242,7 +1221,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -1254,7 +1233,7 @@ export default function QortalWallet() {
                         if (row?.recipient) {
                           if (row?.recipient === address) {
                             return (
-                              <Box style={{ color: '#05a2e4' }}>
+                              <Box style={{ color: theme.palette.info.main }}>
                                 {row?.recipient}
                               </Box>
                             );
@@ -1270,9 +1249,9 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <Box style={{ color: '#66bb6a' }}>+ {row?.amount}</Box>
+                        <Box style={{ color: theme.palette.success.main }}>+ {row?.amount}</Box>
                       ) : (
-                        <Box style={{ color: '#f44336' }}>- {row?.amount}</Box>
+                        <Box style={{ color: theme.palette.error.main }}>- {row?.amount}</Box>
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
@@ -1424,7 +1403,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1442,7 +1421,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1456,7 +1435,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -1530,7 +1509,7 @@ export default function QortalWallet() {
                                     blue: (
                                       <span
                                         style={{
-                                          color: '#05a2e4',
+                                          color: theme.palette.info.main,
                                           marginLeft: '5px',
                                           marginRight: '5px',
                                         }}
@@ -1718,7 +1697,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1736,7 +1715,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1750,7 +1729,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -1941,7 +1920,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1959,7 +1938,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -1973,7 +1952,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -1984,7 +1963,7 @@ export default function QortalWallet() {
                       {(() => {
                         if (row?.type === 'TRANSFER_ASSET') {
                           return row?.recipient === address ? (
-                            <Box style={{ color: '#05a2e4' }}>
+                            <Box style={{ color: theme.palette.info.main }}>
                               {row?.recipient}
                             </Box>
                           ) : (
@@ -2143,7 +2122,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -2161,7 +2140,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -2175,7 +2154,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -2338,7 +2317,7 @@ export default function QortalWallet() {
                               <HistoryToggleOff
                                 style={{
                                   fontSize: '15px',
-                                  color: '#f44336',
+                                  color: theme.palette.error.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -2356,7 +2335,7 @@ export default function QortalWallet() {
                               <CheckCircleOutline
                                 style={{
                                   fontSize: '15px',
-                                  color: '#66bb6a',
+                                  color: theme.palette.success.main,
                                   marginTop: '2px',
                                 }}
                               />
@@ -2370,7 +2349,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.creatorAddress === address ? (
-                        <Box style={{ color: '#05a2e4' }}>
+                        <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
                       ) : (
@@ -2379,7 +2358,7 @@ export default function QortalWallet() {
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {row?.recipient === address ? (
-                        <Box style={{ color: '#05a2e4' }}>{row?.recipient}</Box>
+                        <Box style={{ color: theme.palette.info.main }}>{row?.recipient}</Box>
                       ) : (
                         row?.recipient
                       )}
@@ -2388,7 +2367,7 @@ export default function QortalWallet() {
                       {row?.sharePercent.startsWith('-') ? (
                         <Box
                           style={{
-                            color: '#f44336',
+                            color: theme.palette.error.main,
                             display: 'flex',
                             alignItems: 'center',
                           }}
@@ -2407,7 +2386,7 @@ export default function QortalWallet() {
                             <InfoOutlined
                               style={{
                                 fontSize: '14px',
-                                color: '#05a2e4',
+                                color: theme.palette.info.main,
                                 marginLeft: '8px',
                               }}
                             />
@@ -2416,7 +2395,7 @@ export default function QortalWallet() {
                       ) : (
                         <Box
                           style={{
-                            color: '#66bb6a',
+                            color: theme.palette.success.main,
                             display: 'flex',
                             alignItems: 'center',
                           }}
@@ -2435,7 +2414,7 @@ export default function QortalWallet() {
                             <InfoOutlined
                               style={{
                                 fontSize: '14px',
-                                color: '#05a2e4',
+                                color: theme.palette.info.main,
                                 marginLeft: '8px',
                               }}
                             />
@@ -2620,7 +2599,7 @@ export default function QortalWallet() {
                                 <HistoryToggleOff
                                   style={{
                                     fontSize: '15px',
-                                    color: '#f44336',
+                                    color: theme.palette.error.main,
                                     marginTop: '2px',
                                   }}
                                 />
@@ -2638,7 +2617,7 @@ export default function QortalWallet() {
                                 <CheckCircleOutline
                                   style={{
                                     fontSize: '15px',
-                                    color: '#66bb6a',
+                                    color: theme.palette.success.main,
                                     marginTop: '2px',
                                   }}
                                 />
@@ -2657,7 +2636,7 @@ export default function QortalWallet() {
                         >
                           <Box>
                             {row?.recipient === address ? (
-                              <Box style={{ color: '#05a2e4' }}>
+                              <Box style={{ color: theme.palette.info.main }}>
                                 {cropString(row?.creatorAddress)}
                               </Box>
                             ) : row?.recipient ? (
@@ -2692,7 +2671,7 @@ export default function QortalWallet() {
                         >
                           <Box>
                             {row?.recipient === address ? (
-                              <Box style={{ color: '#05a2e4' }}>
+                              <Box style={{ color: theme.palette.info.main }}>
                                 {cropString(row?.recipient)}
                               </Box>
                             ) : row?.recipient ? (
@@ -2742,7 +2721,7 @@ export default function QortalWallet() {
                               row?.sharePercent.startsWith('-') ? (
                                 <Box
                                   style={{
-                                    color: '#f44336',
+                                    color: theme.palette.error.main,
                                     display: 'flex',
                                     alignItems: 'center',
                                   }}
@@ -2762,7 +2741,7 @@ export default function QortalWallet() {
                                     <InfoOutlined
                                       style={{
                                         fontSize: '14px',
-                                        color: '#05a2e4',
+                                        color: theme.palette.info.main,
                                         marginLeft: '8px',
                                       }}
                                     />
@@ -2772,7 +2751,7 @@ export default function QortalWallet() {
                                 row?.sharePercent && (
                                   <Box
                                     style={{
-                                      color: '#66bb6a',
+                                      color: theme.palette.success.main,
                                       display: 'flex',
                                       alignItems: 'center',
                                     }}
@@ -2792,7 +2771,7 @@ export default function QortalWallet() {
                                       <InfoOutlined
                                         style={{
                                           fontSize: '14px',
-                                          color: '#05a2e4',
+                                          color: theme.palette.info.main,
                                           marginLeft: '8px',
                                         }}
                                       />
@@ -2960,8 +2939,8 @@ export default function QortalWallet() {
     );
   };
 
-  const QortSendDialogPage = () => {
-    return (
+  return (
+    <Box sx={{ width: '100%', mt: 2 }}>
       <Dialog
         fullScreen
         open={openQortSend}
@@ -3086,9 +3065,9 @@ export default function QortalWallet() {
               aria-label="send-qort"
               onClick={sendQortRequest}
               sx={{
-                backgroundColor: '#05a2e4',
+                backgroundcolor: theme.palette.info.main,
                 color: 'white',
-                '&:hover': { backgroundColor: '#02648d' },
+                '&:hover': { backgroundcolor: 'action.hover' },
               }}
             >
               {t('core:action.send', {
@@ -3251,13 +3230,24 @@ export default function QortalWallet() {
           </Typography>
         </Box>
       </Dialog>
-    );
-  };
 
-  return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      {QortSendDialogPage()}
-      {QortAddressBookDialogPage()}
+      <DialogGeneral
+        aria-labelledby="qort-electrum-servers"
+        open={openQortAddressBook}
+        keepMounted={false}
+      >
+        <DialogContent>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {t('core:message.generic.coming_soon', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+          </Typography>
+        </DialogContent>
+      </DialogGeneral>
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
         <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
@@ -3380,11 +3370,9 @@ export default function QortalWallet() {
                     </Typography>
                     <CustomWidthTooltip
                       placement="top"
-                      title={
-                        t('core:action.copy_address', {
-                          postProcess: 'capitalizeFirstChar',
-                        })
-                      }
+                      title={t('core:action.copy_address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
                     >
                       <IconButton
                         size="small"

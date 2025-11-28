@@ -592,152 +592,6 @@ export default function PirateWallet() {
     }
   };
 
-  const ArrrLightwalletDialogPage = () => {
-    return (
-      <LightwalletDialog
-        onClose={handleCloseArrrLightwallet}
-        aria-labelledby="arrr-electrum-servers"
-        open={openArrrLightwallet}
-        keepMounted={false}
-      >
-        <DialogTitle
-          sx={{ m: 0, p: 2, fontSize: '14px' }}
-          id="arrr-electrum-servers"
-        >
-          {t('core:message.generic.pirate_chain_servers', {
-            postProcess: 'capitalizeFirstChar',
-          })}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            sx={{
-              width: '100%',
-              maxWidth: 500,
-              position: 'relative',
-              overflow: 'auto',
-              maxHeight: 400,
-            }}
-          >
-            <List>
-              {allLightwalletServersArrr.map(
-                (
-                  server: {
-                    connectionType: string;
-                    hostName: string;
-                    port: number;
-                  },
-                  i: Key
-                ) => (
-                  <ListItemButton
-                    key={i}
-                    onClick={() => {
-                      setNewCurrentArrrServer(
-                        server?.connectionType,
-                        server?.hostName,
-                        server?.port
-                      );
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        server?.connectionType +
-                        '://' +
-                        server?.hostName +
-                        ':' +
-                        server?.port
-                      }
-                      key={i}
-                    />
-                  </ListItemButton>
-                )
-              )}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseArrrLightwallet}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </LightwalletDialog>
-    );
-  };
-
-  const ArrrServerChangeDialogPage = () => {
-    return (
-      <LightwalletDialog
-        onClose={handleCloseArrrServerChange}
-        aria-labelledby="arrr-electrum-servers"
-        open={openArrrServerChange}
-        keepMounted={false}
-      >
-        <DialogTitle
-          sx={{ m: 0, p: 2, fontSize: '14px' }}
-          id="arrr-electrum-servers"
-        >
-          {t('core:message.generic.pirate_chain_servers', {
-            postProcess: 'capitalizeFirstChar',
-          })}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            sx={{
-              width: '100%',
-              maxWidth: 500,
-              position: 'relative',
-              overflow: 'auto',
-              maxHeight: 400,
-            }}
-          >
-            <List>
-              {allLightwalletServersArrr.map(
-                (
-                  server: {
-                    connectionType: string;
-                    hostName: string;
-                    port: number;
-                  },
-                  i: Key
-                ) => (
-                  <ListItemButton
-                    key={i}
-                    onClick={() => {
-                      setNewArrrServer(
-                        server?.connectionType,
-                        server?.hostName,
-                        server?.port
-                      );
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        server?.connectionType +
-                        '://' +
-                        server?.hostName +
-                        ':' +
-                        server?.port
-                      }
-                      key={i}
-                    />
-                  </ListItemButton>
-                )
-              )}
-            </List>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handleCloseArrrServerChange}>
-            {t('core:action.close', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
-        </DialogActions>
-      </LightwalletDialog>
-    );
-  };
-
   const ArrrTableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -919,18 +773,18 @@ export default function PirateWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <Box style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: theme.palette.success.main }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box style={{ color: theme.palette.error.main }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box style={{ color: theme.palette.error.main }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
@@ -984,9 +838,96 @@ export default function PirateWallet() {
     );
   };
 
-  const ArrrSendDialogPage = () => {
-    return (
-      <Dialog
+  return (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <DialogGeneral
+        aria-labelledby="arrr-electrum-servers"
+        open={openArrrAddressBook}
+        keepMounted={false}
+      >
+        <DialogContent>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {t('core:message.generic.coming_soon', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+          </Typography>
+        </DialogContent>
+      </DialogGeneral>
+
+      <LightwalletDialog
+        onClose={handleCloseArrrLightwallet}
+        aria-labelledby="arrr-electrum-servers"
+        open={openArrrLightwallet}
+        keepMounted={false}
+      >
+        <DialogTitle
+          sx={{ m: 0, p: 2, fontSize: '14px' }}
+          id="arrr-electrum-servers"
+        >
+          {t('core:message.generic.pirate_chain_servers', {
+            postProcess: 'capitalizeFirstChar',
+          })}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 500,
+              position: 'relative',
+              overflow: 'auto',
+              maxHeight: 400,
+            }}
+          >
+            <List>
+              {allLightwalletServersArrr.map(
+                (
+                  server: {
+                    connectionType: string;
+                    hostName: string;
+                    port: number;
+                  },
+                  i: Key
+                ) => (
+                  <ListItemButton
+                    key={i}
+                    onClick={() => {
+                      setNewCurrentArrrServer(
+                        server?.connectionType,
+                        server?.hostName,
+                        server?.port
+                      );
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        server?.connectionType +
+                        '://' +
+                        server?.hostName +
+                        ':' +
+                        server?.port
+                      }
+                      key={i}
+                    />
+                  </ListItemButton>
+                )
+              )}
+            </List>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={handleCloseArrrLightwallet}>
+            {t('core:action.close', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+          </Button>
+        </DialogActions>
+      </LightwalletDialog>
+
+       <Dialog
         fullScreen
         open={openArrrSend}
         onClose={handleCloseArrrSend}
@@ -1110,9 +1051,9 @@ export default function PirateWallet() {
               aria-label="send-arrr"
               onClick={sendArrrRequest}
               sx={{
-                backgroundColor: '#05a2e4',
+                backgroundcolor: 'action.main',
                 color: 'white',
-                '&:hover': { backgroundColor: '#02648d' },
+                '&:hover': { backgroundcolor: 'action.hover' },
               }}
             >
               {t('core:action.send', {
@@ -1280,37 +1221,75 @@ export default function PirateWallet() {
           </Typography>
         </Box>
       </Dialog>
-    );
-  };
 
-  const ArrrAddressBookDialogPage = () => {
-    return (
-      <DialogGeneral
+      <LightwalletDialog
+        onClose={handleCloseArrrServerChange}
         aria-labelledby="arrr-electrum-servers"
-        open={openArrrAddressBook}
+        open={openArrrServerChange}
         keepMounted={false}
       >
-        <DialogContent>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
+        <DialogTitle
+          sx={{ m: 0, p: 2, fontSize: '14px' }}
+          id="arrr-electrum-servers"
+        >
+          {t('core:message.generic.pirate_chain_servers', {
+            postProcess: 'capitalizeFirstChar',
+          })}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 500,
+              position: 'relative',
+              overflow: 'auto',
+              maxHeight: 400,
+            }}
           >
-            {t('core:message.generic.coming_soon', {
+            <List>
+              {allLightwalletServersArrr.map(
+                (
+                  server: {
+                    connectionType: string;
+                    hostName: string;
+                    port: number;
+                  },
+                  i: Key
+                ) => (
+                  <ListItemButton
+                    key={i}
+                    onClick={() => {
+                      setNewArrrServer(
+                        server?.connectionType,
+                        server?.hostName,
+                        server?.port
+                      );
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        server?.connectionType +
+                        '://' +
+                        server?.hostName +
+                        ':' +
+                        server?.port
+                      }
+                      key={i}
+                    />
+                  </ListItemButton>
+                )
+              )}
+            </List>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={handleCloseArrrServerChange}>
+            {t('core:action.close', {
               postProcess: 'capitalizeFirstChar',
             })}
-          </Typography>
-        </DialogContent>
-      </DialogGeneral>
-    );
-  };
-
-  return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      {ArrrAddressBookDialogPage()}
-      {ArrrLightwalletDialogPage()}
-      {ArrrSendDialogPage()}
-      {ArrrServerChangeDialogPage()}
+          </Button>
+        </DialogActions>
+      </LightwalletDialog>
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
         <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>

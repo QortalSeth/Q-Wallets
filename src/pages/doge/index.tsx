@@ -430,286 +430,6 @@ export default function DogecoinWallet() {
     }
   };
 
-  const DogeSendDialogPage = () => {
-    return (
-      <Dialog
-        fullScreen
-        open={openDogeSend}
-        onClose={handleCloseDogeSend}
-        slots={{ transition: Transition }}
-      >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxDogeSubmit}>
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-              }}
-            >
-              <Box
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                }}
-              >
-                <CircularProgress color="success" size={64} />
-              </Box>
-              <Box
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: '20px',
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: 'primary.main',
-                    fontStyle: 'italic',
-                    fontWeight: 700,
-                  }}
-                >
-                  {t('core:message.generic.processing_transaction', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-            </Box>
-          </DialogContent>
-        </SubmitDialog>
-        <Snackbar
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          open={openSendDogeSuccess}
-          autoHideDuration={TIME_SECONDS_4}
-          slots={{ transition: SlideTransition }}
-          onClose={handleCloseSendDogeSuccess}
-        >
-          <Alert
-            onClose={handleCloseSendDogeSuccess}
-            severity="success"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {t('core:message.generic.sent_transaction', {
-              coin: Coin.DOGE,
-              postProcess: 'capitalizeAll',
-            })}
-          </Alert>
-        </Snackbar>
-        <Snackbar
-          open={openSendDogeError}
-          autoHideDuration={TIME_SECONDS_4}
-          onClose={handleCloseSendDogeError}
-        >
-          <Alert
-            onClose={handleCloseSendDogeError}
-            severity="error"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {t('core:message.error.something_went_wrong', {
-              postProcess: 'capitalizeAll',
-            })}
-          </Alert>
-        </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseDogeSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="DOGE Logo"
-              src={coinLogoDOGE}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.DOGE,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendDoge()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-doge"
-              onClick={sendDogeRequest}
-              sx={{
-                backgroundColor: '#05a2e4',
-                color: 'white',
-                '&:hover': { backgroundColor: '#02648d' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceDoge ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : walletBalanceError ? (
-              walletBalanceError
-            ) : (
-              walletBalanceDoge + ' DOGE'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {(() => {
-              const newMaxDogeAmount =
-                +walletBalanceDoge - estimatedFeeCalculated;
-              if (newMaxDogeAmount < 0) {
-                return Number(0.0) + ' DOGE';
-              } else {
-                return newMaxDogeAmount + ' DOGE';
-              }
-            })()}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxDoge}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
-            flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={dogeAmount}
-            allowNegative={false}
-            customInput={TextField}
-            valueIsNumericString
-            variant="outlined"
-            label="Amount (DOGE)"
-            isAllowed={(values) => {
-              const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue ?? 0) <= maxDogeCoin
-              );
-            }}
-            onValueChange={(values) => {
-              setDogeAmount(values.floatValue ?? 0);
-            }}
-            required
-          />
-
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="doge-address"
-            margin="normal"
-            value={dogeRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            helperText={
-              addressFormatError
-                ? t('core:message.error.doge_address_invalid', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-                : t('core:message.generic.doge_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          />
-        </Box>
-        <FeeManager coin="DOGE" onChange={setInputFee} />
-      </Dialog>
-    );
-  };
-
   const tableLoader = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -882,18 +602,18 @@ export default function DogecoinWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <Box style={{ color: '#66bb6a' }}>
+                      <Box style={{ color: theme.palette.success.main }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box style={{ color: theme.palette.error.main }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box style={{ color: theme.palette.error.main }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
@@ -961,8 +681,284 @@ export default function DogecoinWallet() {
     );
   };
 
-  const DogeAddressBookDialogPage = () => {
-    return (
+  return (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <Dialog
+        fullScreen
+        open={openDogeSend}
+        onClose={handleCloseDogeSend}
+        slots={{ transition: Transition }}
+      >
+        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxDogeSubmit}>
+          <DialogContent>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Box
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
+                <CircularProgress color="success" size={64} />
+              </Box>
+              <Box
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginTop: '20px',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'primary.main',
+                    fontStyle: 'italic',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+        </SubmitDialog>
+        <Snackbar
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          open={openSendDogeSuccess}
+          autoHideDuration={TIME_SECONDS_4}
+          slots={{ transition: SlideTransition }}
+          onClose={handleCloseSendDogeSuccess}
+        >
+          <Alert
+            onClose={handleCloseSendDogeSuccess}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {t('core:message.generic.sent_transaction', {
+              coin: Coin.DOGE,
+              postProcess: 'capitalizeAll',
+            })}
+          </Alert>
+        </Snackbar>
+        <Snackbar
+          open={openSendDogeError}
+          autoHideDuration={TIME_SECONDS_4}
+          onClose={handleCloseSendDogeError}
+        >
+          <Alert
+            onClose={handleCloseSendDogeError}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {t('core:message.error.something_went_wrong', {
+              postProcess: 'capitalizeAll',
+            })}
+          </Alert>
+        </Snackbar>
+        <AppBar sx={{ position: 'static' }}>
+          <Toolbar>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={handleCloseDogeSend}
+              aria-label="close"
+            >
+              <Close />
+            </IconButton>
+            <Avatar
+              sx={{ width: 28, height: 28 }}
+              alt="DOGE Logo"
+              src={coinLogoDOGE}
+            />
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                flexGrow: 1,
+                display: {
+                  xs: 'none',
+                  sm: 'block',
+                  paddingLeft: '10px',
+                  paddingTop: '3px',
+                },
+              }}
+            >
+              {t('core:action.transfer_coin', {
+                coin: Coin.DOGE,
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+            <Button
+              disabled={disableCanSendDoge()}
+              variant="contained"
+              startIcon={<Send />}
+              aria-label="send-doge"
+              onClick={sendDogeRequest}
+              sx={{
+                backgroundcolor: 'action.main',
+                color: 'white',
+                '&:hover': { backgroundcolor: 'action.hover' },
+              }}
+            >
+              {t('core:action.send', {
+                postProcess: 'capitalizeAll',
+              })}
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Box
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
+          <Typography
+            variant="h5"
+            align="center"
+            gutterBottom
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            {t('core:balance_available', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            gutterBottom
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {isLoadingWalletBalanceDoge ? (
+              <Box sx={{ width: '175px' }}>
+                <LinearProgress />
+              </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
+            ) : (
+              walletBalanceDoge + ' DOGE'
+            )}
+          </Typography>
+        </Box>
+        <Box
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            {t('core:max_sendable', {
+              postProcess: 'capitalizeAll',
+            })}
+            &nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {(() => {
+              const newMaxDogeAmount =
+                +walletBalanceDoge - estimatedFeeCalculated;
+              if (newMaxDogeAmount < 0) {
+                return Number(0.0) + ' DOGE';
+              } else {
+                return newMaxDogeAmount + ' DOGE';
+              }
+            })()}
+          </Typography>
+          <Box style={{ marginInlineStart: '15px' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSendMaxDoge}
+              style={{ borderRadius: 50 }}
+            >
+              {t('core:action.send_max', {
+                postProcess: 'capitalizeAll',
+              })}
+            </Button>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '20px',
+            flexDirection: 'column',
+            '& .MuiTextField-root': { width: '50ch' },
+          }}
+        >
+          <NumericFormat
+            decimalScale={8}
+            defaultValue={0}
+            value={dogeAmount}
+            allowNegative={false}
+            customInput={TextField}
+            valueIsNumericString
+            variant="outlined"
+            label="Amount (DOGE)"
+            isAllowed={(values) => {
+              const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
+              const { formattedValue, floatValue } = values;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxDogeCoin
+              );
+            }}
+            onValueChange={(values) => {
+              setDogeAmount(values.floatValue ?? 0);
+            }}
+            required
+          />
+
+          <TextField
+            required
+            label={t('core:receiver_address', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            id="doge-address"
+            margin="normal"
+            value={dogeRecipient}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={
+              addressFormatError
+                ? t('core:message.error.doge_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.doge_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
+          />
+        </Box>
+        <FeeManager coin="DOGE" onChange={setInputFee} />
+      </Dialog>
+
       <DialogGeneral
         aria-labelledby="doge-electrum-servers"
         open={openDogeAddressBook}
@@ -980,13 +976,6 @@ export default function DogecoinWallet() {
           </Typography>
         </DialogContent>
       </DialogGeneral>
-    );
-  };
-
-  return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      {DogeSendDialogPage()}
-      {DogeAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
         <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
@@ -1102,11 +1091,9 @@ export default function DogecoinWallet() {
                     </Typography>
                     <CustomWidthTooltip
                       placement="top"
-                      title={
-                        t('core:action.copy_address', {
-                          postProcess: 'capitalizeFirstChar',
-                        })
-                      }
+                      title={t('core:action.copy_address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
                     >
                       <IconButton
                         size="small"

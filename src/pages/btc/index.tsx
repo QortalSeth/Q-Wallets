@@ -414,284 +414,6 @@ export default function BitcoinWallet() {
     }
   };
 
-  const BtcSendDialogPage = () => {
-    return (
-      <Dialog
-        fullScreen
-        open={openBtcSend}
-        onClose={handleCloseBtcSend}
-        slots={{ transition: Transition }}
-      >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxBtcSubmit}>
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-              }}
-            >
-              <Box
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                }}
-              >
-                <CircularProgress color="success" size={64} />
-              </Box>
-              <Box
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: '20px',
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: 'primary.main',
-                    fontStyle: 'italic',
-                    fontWeight: 700,
-                  }}
-                >
-                  {t('core:message.generic.processing_transaction', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-            </Box>
-          </DialogContent>
-        </SubmitDialog>
-        <Snackbar
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          open={openSendBtcSuccess}
-          autoHideDuration={TIME_SECONDS_4}
-          slots={{ transition: SlideTransition }}
-          onClose={handleCloseSendBtcSuccess}
-        >
-          <Alert
-            onClose={handleCloseSendBtcSuccess}
-            severity="success"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {t('core:message.generic.sent_transaction', {
-              coin: Coin.BTC,
-              postProcess: 'capitalizeAll',
-            })}
-          </Alert>
-        </Snackbar>
-        <Snackbar
-          open={openSendBtcError}
-          autoHideDuration={TIME_SECONDS_4}
-          onClose={handleCloseSendBtcError}
-        >
-          <Alert
-            onClose={handleCloseSendBtcError}
-            severity="error"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {t('core:message.error.something_went_wrong', {
-              postProcess: 'capitalizeAll',
-            })}
-          </Alert>
-        </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseBtcSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="BTC Logo"
-              src={coinLogoBTC}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.BTC,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendBtc()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-btc"
-              onClick={sendBtcRequest}
-              sx={{
-                backgroundColor: '#05a2e4',
-                color: 'white',
-                '&:hover': { backgroundColor: '#02648d' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceBtc ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : walletBalanceError ? (
-              walletBalanceError
-            ) : (
-              walletBalanceBtc + ' BTC'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {(() => {
-              const newMaxBtcAmount =
-                +walletBalanceBtc - estimatedFeeCalculated;
-              if (newMaxBtcAmount < 0) {
-                return Number(0.0) + ' BTC';
-              } else {
-                return newMaxBtcAmount + ' BTC';
-              }
-            })()}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxBtc}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '20px',
-            flexDirection: 'column',
-            '& .MuiTextField-root': { width: '50ch' },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={btcAmount}
-            allowNegative={false}
-            customInput={TextField}
-            valueIsNumericString
-            variant="outlined"
-            label="Amount (BTC)"
-            isAllowed={(values) => {
-              const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue ?? 0) <= maxBtcCoin
-              );
-            }}
-            onValueChange={(values) => {
-              setBtcAmount(values.floatValue ?? 0);
-            }}
-            required
-          />
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="btc-address"
-            margin="normal"
-            value={btcRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            helperText={
-              addressFormatError
-                ? t('core:message.error.bitcoin_address_invalid', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-                : t('core:message.generic.bitcoin_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          />
-        </Box>
-        <FeeManager coin="BTC" onChange={setInputFee} />
-      </Dialog>
-    );
-  };
 
   const tableLoader = () => {
     return (
@@ -865,18 +587,18 @@ export default function BitcoinWallet() {
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="left">
                     {row?.totalAmount > 0 ? (
-                      <Box style={{ color: '#66bb6a' }}>
+                      <Box sx={{ color: theme.palette.success.main }}>
                         +{(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box sx={{ color: theme.palette.error.main }}>
                         {(Number(row?.totalAmount) / 1e8).toFixed(8)}
                       </Box>
                     )}
                   </StyledTableCell>
                   <StyledTableCell style={{ width: 'auto' }} align="right">
                     {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: '#f44336' }}>
+                      <Box sx={{ color: theme.palette.error.main }}>
                         -{(Number(row?.feeAmount) / 1e8).toFixed(8)}
                       </Box>
                     ) : (
@@ -944,8 +666,284 @@ export default function BitcoinWallet() {
     );
   };
 
-  const BtcAddressBookDialogPage = () => {
-    return (
+
+  return (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <Dialog
+        fullScreen
+        open={openBtcSend}
+        onClose={handleCloseBtcSend}
+        slots={{ transition: Transition }}
+      >
+        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxBtcSubmit}>
+          <DialogContent>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Box
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
+                <CircularProgress color="success" size={64} />
+              </Box>
+              <Box
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginTop: '20px',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'primary.main',
+                    fontStyle: 'italic',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('core:message.generic.processing_transaction', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+        </SubmitDialog>
+        <Snackbar
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          open={openSendBtcSuccess}
+          autoHideDuration={TIME_SECONDS_4}
+          slots={{ transition: SlideTransition }}
+          onClose={handleCloseSendBtcSuccess}
+        >
+          <Alert
+            onClose={handleCloseSendBtcSuccess}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {t('core:message.generic.sent_transaction', {
+              coin: Coin.BTC,
+              postProcess: 'capitalizeAll',
+            })}
+          </Alert>
+        </Snackbar>
+        <Snackbar
+          open={openSendBtcError}
+          autoHideDuration={TIME_SECONDS_4}
+          onClose={handleCloseSendBtcError}
+        >
+          <Alert
+            onClose={handleCloseSendBtcError}
+            severity="error"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {t('core:message.error.something_went_wrong', {
+              postProcess: 'capitalizeAll',
+            })}
+          </Alert>
+        </Snackbar>
+        <AppBar sx={{ position: 'static' }}>
+          <Toolbar>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={handleCloseBtcSend}
+              aria-label="close"
+            >
+              <Close />
+            </IconButton>
+            <Avatar
+              sx={{ width: 28, height: 28 }}
+              alt="BTC Logo"
+              src={coinLogoBTC}
+            />
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                flexGrow: 1,
+                display: {
+                  xs: 'none',
+                  sm: 'block',
+                  paddingLeft: '10px',
+                  paddingTop: '3px',
+                },
+              }}
+            >
+              {t('core:action.transfer_coin', {
+                coin: Coin.BTC,
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+            <Button
+              disabled={disableCanSendBtc()}
+              variant="contained"
+              startIcon={<Send />}
+              aria-label="send-btc"
+              onClick={sendBtcRequest}
+              sx={{
+                backgroundColor: 'action.main',
+                color: 'white',
+                '&:hover': { backgroundColor: 'action.hover' },
+              }}
+            >
+              {t('core:action.send', {
+                postProcess: 'capitalizeAll',
+              })}
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Box
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
+          <Typography
+            variant="h5"
+            align="center"
+            gutterBottom
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            {t('core:balance_available', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            &nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            gutterBottom
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {isLoadingWalletBalanceBtc ? (
+              <Box sx={{ width: '175px' }}>
+                <LinearProgress />
+              </Box>
+            ) : walletBalanceError ? (
+              walletBalanceError
+            ) : (
+              walletBalanceBtc + ' BTC'
+            )}
+          </Typography>
+        </Box>
+        <Box
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+        >
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'primary.main', fontWeight: 700 }}
+          >
+            {t('core:max_sendable', {
+              postProcess: 'capitalizeAll',
+            })}
+            &nbsp;&nbsp;
+          </Typography>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{ color: 'text.primary', fontWeight: 700 }}
+          >
+            {(() => {
+              const newMaxBtcAmount =
+                +walletBalanceBtc - estimatedFeeCalculated;
+              if (newMaxBtcAmount < 0) {
+                return Number(0.0) + ' BTC';
+              } else {
+                return newMaxBtcAmount + ' BTC';
+              }
+            })()}
+          </Typography>
+          <Box style={{ marginInlineStart: '15px' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSendMaxBtc}
+              style={{ borderRadius: 50 }}
+            >
+              {t('core:action.send_max', {
+                postProcess: 'capitalizeAll',
+              })}
+            </Button>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '20px',
+            flexDirection: 'column',
+            '& .MuiTextField-root': { width: '50ch' },
+          }}
+        >
+          <NumericFormat
+            decimalScale={8}
+            defaultValue={0}
+            value={btcAmount}
+            allowNegative={false}
+            customInput={TextField}
+            valueIsNumericString
+            variant="outlined"
+            label="Amount (BTC)"
+            isAllowed={(values) => {
+              const maxBtcCoin = +walletBalanceBtc - estimatedFeeCalculated;
+              const { formattedValue, floatValue } = values;
+              return (
+                formattedValue === EMPTY_STRING ||
+                (floatValue ?? 0) <= maxBtcCoin
+              );
+            }}
+            onValueChange={(values) => {
+              setBtcAmount(values.floatValue ?? 0);
+            }}
+            required
+          />
+          <TextField
+            required
+            label={t('core:receiver_address', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            id="btc-address"
+            margin="normal"
+            value={btcRecipient}
+            onChange={handleRecipientChange}
+            error={addressFormatError}
+            helperText={
+              addressFormatError
+                ? t('core:message.error.bitcoin_address_invalid', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:message.generic.bitcoin_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+            }
+          />
+        </Box>
+        <FeeManager coin="BTC" onChange={setInputFee} />
+      </Dialog>
+
       <DialogGeneral
         aria-labelledby="btc-electrum-servers"
         open={openBtcAddressBook}
@@ -963,13 +961,6 @@ export default function BitcoinWallet() {
           </Typography>
         </DialogContent>
       </DialogGeneral>
-    );
-  };
-
-  return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      {BtcSendDialogPage()}
-      {BtcAddressBookDialogPage()}
 
       <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
         <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>

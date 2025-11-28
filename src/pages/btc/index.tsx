@@ -328,6 +328,7 @@ export default function BitcoinWallet() {
         },
         TIME_MINUTES_5
       );
+      
       if (!response?.error) {
         setWalletBalanceBtc(response);
       }
@@ -365,22 +366,6 @@ export default function BitcoinWallet() {
       setIsLoadingBtcTransactions(false);
     }
   };
-
-  useEffect(() => {
-    let intervalId: any;
-    (async () => {
-      await getWalletInfoBtc();
-      await getWalletBalanceBtc();
-      await getTransactionsBtc();
-      intervalId = setInterval(() => {
-        getWalletBalanceBtc();
-        getTransactionsBtc();
-      }, TIME_MINUTES_3);
-    })();
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
 
   const handleLoadingRefreshBtc = async () => {
     setLoadingRefreshBtc(true);

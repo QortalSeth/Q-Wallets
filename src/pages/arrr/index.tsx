@@ -162,17 +162,6 @@ export default function PirateWallet() {
   const { t } = useTranslation(['core']);
   const theme = useTheme();
   const { isUsingGateway } = useContext(WalletContext);
-
-  if (isUsingGateway) {
-    return (
-      <Alert variant="filled" severity="error">
-        {t('core:message.error.pirate_chain_gateway', {
-          postProcess: 'capitalizeEachFirst',
-        })}
-      </Alert>
-    );
-  }
-
   const [isSynced, setIsSynced] = useState(false);
   const [syncStatus, setSyncStatus] = useState(EMPTY_STRING);
   const [walletInfoArrr, setWalletInfoArrr] = useState<any>({});
@@ -278,7 +267,7 @@ export default function PirateWallet() {
   const handleSendMaxArrr = () => {
     let maxArrrAmount = 0;
     let WalletBalanceArrr = parseFloat(walletBalanceArrr);
-    maxArrrAmount = WalletBalanceArrr - 0.00010000;
+    maxArrrAmount = WalletBalanceArrr - 0.0001;
     if (maxArrrAmount <= 0) {
       setArrrAmount(0);
     } else {
@@ -540,6 +529,16 @@ export default function PirateWallet() {
   useEffect(() => {
     getArrrSyncStatus();
   }, []);
+
+  if (isUsingGateway) {
+    return (
+      <Alert variant="filled" severity="error">
+        {t('core:message.error.pirate_chain_gateway', {
+          postProcess: 'capitalizeEachFirst',
+        })}
+      </Alert>
+    );
+  }
 
   const setNewCurrentArrrServer = async (
     typeServer: string,
@@ -1181,7 +1180,7 @@ export default function PirateWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceArrr - 0.00010000).toFixed(8) + ' ARRR'}
+            {(walletBalanceArrr - 0.0001).toFixed(8) + ' ARRR'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -1215,7 +1214,7 @@ export default function PirateWallet() {
             valueIsNumericString
             {...({ label: 'Amount (ARRR)' } as any)}
             isAllowed={(values) => {
-              const maxArrrCoin = walletBalanceArrr - 0.00010000;
+              const maxArrrCoin = walletBalanceArrr - 0.0001;
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||
@@ -1436,11 +1435,9 @@ export default function PirateWallet() {
 
                     <CustomWidthTooltip
                       placement="top"
-                      title={
-                        t('core:action.copy_address', {
-                          postProcess: 'capitalizeFirstChar',
-                        })
-                      }
+                      title={t('core:action.copy_address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
                     >
                       <IconButton
                         size="small"
@@ -1523,7 +1520,7 @@ export default function PirateWallet() {
                       bgcolor: '#fff',
                       border: (t: any) => `1px solid ${t.palette.divider}`,
                       borderRadius: 1,
-                      boxShadow: (t:any) => t.shadows[2],
+                      boxShadow: (t: any) => t.shadows[2],
                       display: 'flex',
                       height: '100%',
                       justifyContent: 'center',

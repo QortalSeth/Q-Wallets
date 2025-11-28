@@ -3172,7 +3172,7 @@ export default function QortalWallet() {
           <NumericFormat
             decimalScale={8}
             defaultValue={0}
-            value={qortAmount ?? ''}
+            value={qortAmount ?? EMPTY_STRING}
             allowNegative={false}
             customInput={TextField}
             valueIsNumericString
@@ -3184,7 +3184,7 @@ export default function QortalWallet() {
             isAllowed={(values) => {
               const max = maxQortCoin;
               const { formattedValue, floatValue } = values;
-              return formattedValue === '' || (floatValue ?? 0) <= max;
+              return formattedValue === EMPTY_STRING || (floatValue ?? 0) <= max;
             }}
             onValueChange={onAmountChange}
             onBlur={onAmountBlur}
@@ -3213,7 +3213,7 @@ export default function QortalWallet() {
                   ? t('core:message.generic.validating', {
                       postProcess: 'capitalizeFirstChar',
                     })
-                  : recipientError || ''
+                  : recipientError || EMPTY_STRING
                 : t('core:message.generic.qortal_address', {
                     postProcess: 'capitalizeFirstChar',
                   })

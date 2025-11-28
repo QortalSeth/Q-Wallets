@@ -51,6 +51,7 @@ import {
 import coinLogoDGB from '../../assets/dgb.png';
 import { useTranslation } from 'react-i18next';
 import {
+  DGB_FEE,
   EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
@@ -213,7 +214,7 @@ export default function DigibyteWallet() {
   const handleOpenDgbSend = () => {
     setDgbAmount(0);
     setDgbRecipient(EMPTY_STRING);
-    setDgbFee(10);
+    setDgbFee(DGB_FEE);
     setOpenDgbSend(true);
     setAddressFormatError(false);
     setOpenSendDgbError(false);
@@ -432,7 +433,7 @@ export default function DigibyteWallet() {
       if (!sendRequest?.error) {
         setDgbAmount(0);
         setDgbRecipient(EMPTY_STRING);
-        setDgbFee(10);
+        setDgbFee(DGB_FEE);
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
         setIsLoadingWalletBalanceDgb(true);
@@ -442,7 +443,7 @@ export default function DigibyteWallet() {
     } catch (error) {
       setDgbAmount(0);
       setDgbRecipient(EMPTY_STRING);
-      setDgbFee(10);
+      setDgbFee(DGB_FEE);
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
       setIsLoadingWalletBalanceDgb(true);
@@ -614,8 +615,8 @@ export default function DigibyteWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyDgbTxHash());
+                          navigator.clipboard.writeText(row?.txHash);
+                          changeCopyDgbTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />
@@ -705,7 +706,7 @@ export default function DigibyteWallet() {
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-    <Dialog
+      <Dialog
         fullScreen
         open={openDgbSend}
         onClose={handleCloseDgbSend}
@@ -1168,11 +1169,9 @@ export default function DigibyteWallet() {
                     </Typography>
                     <CustomWidthTooltip
                       placement="top"
-                      title={
-                        t('core:action.copy_address', {
-                          postProcess: 'capitalizeFirstChar',
-                        })
-                      }
+                      title={t('core:action.copy_address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
                     >
                       <IconButton
                         size="small"

@@ -52,6 +52,7 @@ import coinLogoRVN from '../../assets/rvn.png';
 import { useTranslation } from 'react-i18next';
 import {
   EMPTY_STRING,
+  RVN_FEE,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -213,7 +214,7 @@ export default function RavencoinWallet() {
   const handleOpenRvnSend = () => {
     setRvnAmount(0);
     setRvnRecipient(EMPTY_STRING);
-    setRvnFee(1500);
+    setRvnFee(RVN_FEE);
     setOpenRvnSend(true);
     setAddressFormatError(false);
     setWalletInfoError(null);
@@ -222,7 +223,7 @@ export default function RavencoinWallet() {
   };
 
   const disableCanSendRvn = () =>
-    rvnAmount <= 0 || rvnRecipient == EMPTY_STRING || addressFormatError;
+    rvnAmount <= 0 || rvnRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -436,7 +437,7 @@ export default function RavencoinWallet() {
       if (!sendRequest?.error) {
         setRvnAmount(0);
         setRvnRecipient(EMPTY_STRING);
-        setRvnFee(1500);
+        setRvnFee(RVN_FEE);
         setOpenTxRvnSubmit(false);
         setOpenSendRvnSuccess(true);
         setIsLoadingWalletBalanceRvn(true);
@@ -446,7 +447,7 @@ export default function RavencoinWallet() {
     } catch (error) {
       setRvnAmount(0);
       setRvnRecipient(EMPTY_STRING);
-      setRvnFee(1500);
+      setRvnFee(RVN_FEE);
       setOpenTxRvnSubmit(false);
       setOpenSendRvnError(true);
       setIsLoadingWalletBalanceRvn(true);
@@ -618,8 +619,8 @@ export default function RavencoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyRvnTxHash());
+                          navigator.clipboard.writeText(row?.txHash);
+                          changeCopyRvnTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />

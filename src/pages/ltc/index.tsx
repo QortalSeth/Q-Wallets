@@ -51,6 +51,7 @@ import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
 import {
   EMPTY_STRING,
+  LTC_FEE,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -181,7 +182,7 @@ export default function LitecoinWallet() {
   );
 
   const ltcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
-  const estimatedFeeCalculated = +ltcFeeCalculated * 1000;
+  const estimatedFeeCalculated = +ltcFeeCalculated * LTC_FEE;
 
   const emptyRows =
     page > 0
@@ -205,12 +206,12 @@ export default function LitecoinWallet() {
   };
 
   const disableCanSendLtc = () =>
-    ltcAmount <= 0 || ltcRecipient == EMPTY_STRING || addressFormatError;
+    ltcAmount <= 0 || ltcRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const value = e.target.value;
+    const value: string = e.target.value.trim();
     const pattern =
       /^(L[1-9A-HJ-NP-Za-km-z]{33}|M[1-9A-HJ-NP-Za-km-z]{33}|ltc1[2-9A-HJ-NP-Za-z]{39})$/;
 
@@ -580,8 +581,8 @@ export default function LitecoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyLtcTxHash());
+                          navigator.clipboard.writeText(row?.txHash);
+                          changeCopyLtcTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />

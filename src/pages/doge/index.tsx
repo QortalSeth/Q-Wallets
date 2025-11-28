@@ -50,6 +50,7 @@ import {
 import coinLogoDOGE from '../../assets/doge.png';
 import { useTranslation } from 'react-i18next';
 import {
+  DOGE_FEE,
   EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
@@ -182,7 +183,7 @@ export default function DogecoinWallet() {
   );
 
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
-  const estimatedFeeCalculated = +dogeFeeCalculated * 5000;
+  const estimatedFeeCalculated = +dogeFeeCalculated * DOGE_FEE;
 
   const emptyRows =
     page > 0
@@ -204,7 +205,7 @@ export default function DogecoinWallet() {
   };
 
   const disableCanSendDoge = () =>
-    dogeAmount <= 0 || dogeRecipient == EMPTY_STRING || addressFormatError;
+    dogeAmount <= 0 || dogeRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -592,8 +593,8 @@ export default function DogecoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyDogeTxHash());
+                          navigator.clipboard.writeText(row?.txHash);
+                          changeCopyDogeTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />

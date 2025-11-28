@@ -5,6 +5,14 @@ export const ONE_SPACE: string = ' ';
 // QORT section
 export const QORT_1_UNIT: number = 100000000;
 
+// Fees
+export const ARRR_FEE: number = 0.0001;
+export const BTC_FEE: number = 500;
+export const DGB_FEE: number = 10;
+export const DOGE_FEE: number = 5000;
+export const LTC_FEE: number = 1000;
+export const RVN_FEE: number = 1500;
+
 // Time section
 // milliseconds
 export const TIME_MILLISECONDS_50: number = 50;

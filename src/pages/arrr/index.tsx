@@ -57,6 +57,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Refresh } from '@mui/icons-material';
 import {
+  ARRR_FEE,
   EMPTY_STRING,
   TIME_MINUTES_2,
   TIME_MINUTES_3,
@@ -222,7 +223,7 @@ export default function PirateWallet() {
   };
 
   const disableCanSendArrr = () =>
-    arrrAmount <= 0 || arrrRecipient == EMPTY_STRING || addressFormatError;
+    arrrAmount <= 0 || arrrRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -760,8 +761,8 @@ export default function PirateWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyArrrTxHash());
+                            navigator.clipboard.writeText(row?.txHash);
+                            changeCopyArrrTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />
@@ -1221,7 +1222,7 @@ export default function PirateWallet() {
             sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
           >
             {t('core:message.generic.sending_fee', {
-              quantity: 0.0001,
+              quantity: ARRR_FEE,
               coin: Coin.ARRR,
               postProcess: 'capitalizeFirstChar',
             })}

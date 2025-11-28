@@ -51,6 +51,7 @@ import coinLogoBTC from '../../assets/btc.png';
 import { FeeManager } from '../../components/FeeManager';
 import { useTranslation } from 'react-i18next';
 import {
+  BTC_FEE,
   EMPTY_STRING,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
@@ -181,7 +182,7 @@ export default function BitcoinWallet() {
   );
 
   const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(8);
-  const estimatedFeeCalculated = +btcFeeCalculated * 500;
+  const estimatedFeeCalculated = +btcFeeCalculated * BTC_FEE;
   const emptyRows =
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length)
@@ -203,7 +204,7 @@ export default function BitcoinWallet() {
   };
 
   const disableCanSendBtc = () =>
-    btcAmount <= 0 || btcRecipient == EMPTY_STRING || addressFormatError;
+    btcAmount <= 0 || btcRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -328,7 +329,7 @@ export default function BitcoinWallet() {
         },
         TIME_MINUTES_5
       );
-      
+
       if (!response?.error) {
         setWalletBalanceBtc(response);
       }
@@ -413,7 +414,6 @@ export default function BitcoinWallet() {
       console.error('ERROR SENDING BTC', error);
     }
   };
-
 
   const tableLoader = () => {
     return (
@@ -577,8 +577,8 @@ export default function BitcoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          (navigator.clipboard.writeText(row?.txHash),
-                            changeCopyBtcTxHash());
+                          navigator.clipboard.writeText(row?.txHash);
+                          changeCopyBtcTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />
@@ -665,7 +665,6 @@ export default function BitcoinWallet() {
       </TableContainer>
     );
   };
-
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
@@ -1080,11 +1079,9 @@ export default function BitcoinWallet() {
                     </Typography>
                     <CustomWidthTooltip
                       placement="top"
-                      title={
-                        t('core:action.copy_address', {
-                          postProcess: 'capitalizeFirstChar',
-                        })
-                      }
+                      title={t('core:action.copy_address', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
                     >
                       <IconButton
                         size="small"

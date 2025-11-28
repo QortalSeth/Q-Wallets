@@ -170,7 +170,7 @@ export default function AppLayout() {
     },
   ];
 
-  const drawerWidth = 115;
+  const drawerWidth = isMobile ? 120 : 140;
 
   const drawerSx = {
     width: drawerWidth,
@@ -245,7 +245,6 @@ export default function AppLayout() {
                   <Box
                     sx={{
                       fontSize: 11,
-                      maxWidth: 70,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',

@@ -226,7 +226,7 @@ export default function PirateWallet() {
     arrrAmount <= 0 || arrrRecipient === EMPTY_STRING || addressFormatError;
 
   const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     const pattern = /^(zs1[a-zA-Z0-9]{75})$/;
     setArrrRecipient(value);
     if (pattern.test(value) || value === EMPTY_STRING) {

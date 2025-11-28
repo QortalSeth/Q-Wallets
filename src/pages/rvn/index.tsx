@@ -228,7 +228,7 @@ export default function RavencoinWallet() {
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     const pattern = /^(R[1-9A-HJ-NP-Za-km-z]{33})$/;
 
     setRvnRecipient(value);

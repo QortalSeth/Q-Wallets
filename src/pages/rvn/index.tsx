@@ -174,7 +174,7 @@ export default function RavencoinWallet() {
   const theme = useTheme();
 
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
-  const [_isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
+  const [isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
     useState<boolean>(false);
   const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(0);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] =
@@ -1118,9 +1118,9 @@ export default function RavencoinWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceRvn ? (
                       `${walletBalanceRvn} RVN`
-                    ) : (
+                    ) : isLoadingWalletInfoRvn ? (
                       <LinearProgress />
-                    )}
+                    ) : undefined}
                   </Typography>
                 </Grid>
 

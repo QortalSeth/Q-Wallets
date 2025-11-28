@@ -155,7 +155,7 @@ export default function LitecoinWallet() {
   const theme = useTheme();
 
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
-  const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
+  const [isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
     useState<boolean>(false);
   const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(0);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] =
@@ -1045,9 +1045,9 @@ export default function LitecoinWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceLtc ? (
                       `${walletBalanceLtc} LTC`
-                    ) : (
+                    ) : isLoadingWalletInfoLtc ? (
                       <LinearProgress />
-                    )}
+                    ) : undefined}
                   </Typography>
                 </Grid>
 

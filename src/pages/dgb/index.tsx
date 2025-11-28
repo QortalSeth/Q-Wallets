@@ -177,7 +177,7 @@ export default function DigibyteWallet() {
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);
-  const [_isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
+  const [isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
     useState<boolean>(false);
   const [transactionsDgb, setTransactionsDgb] = useState<any>([]);
   const [isLoadingDgbTransactions, setIsLoadingDgbTransactions] =
@@ -1116,9 +1116,9 @@ export default function DigibyteWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceDgb ? (
                       `${walletBalanceDgb} DGB`
-                    ) : (
+                    ) : isLoadingWalletInfoDgb ? (
                       <LinearProgress />
-                    )}
+                    ) : undefined}
                   </Typography>
                 </Grid>
 

@@ -155,7 +155,7 @@ export default function DogecoinWallet() {
   const theme = useTheme();
 
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
-  const [_isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
+  const [isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
     useState<boolean>(false);
   const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(0);
   const [isLoadingWalletBalanceDoge, setIsLoadingWalletBalanceDoge] =
@@ -1042,9 +1042,9 @@ export default function DogecoinWallet() {
                   <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {walletBalanceDoge ? (
                       `${walletBalanceDoge} DOGE`
-                    ) : (
+                    ) : isLoadingWalletInfoDoge ? (
                       <LinearProgress />
-                    )}
+                    ) : undefined}
                   </Typography>
                 </Grid>
 

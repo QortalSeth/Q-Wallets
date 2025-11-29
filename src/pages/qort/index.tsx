@@ -328,34 +328,32 @@ export default function QortalWallet() {
     [maxQortCoin, t]
   );
 
-  // address lookup with debounce + cancel and race id
+  // address lookup with debounce + cancel
   useEffect(() => {
-    setRecipientError(null);
-
+    // Early exit: if recipient not touched, no validation needed
     if (!recipientTouched) {
-      // skip network lookups and do not set errors before user interacts
+      setRecipientError(null);
       setAddressValidating(false);
-      // but we still want to compute sendDisabled based on whether other checks pass
-      validateAll(qortAmount, qortRecipient, false);
       return;
     }
 
+    // Synchronous validations
     if (qortRecipient === EMPTY_STRING) {
       setRecipientError(t('core:message.error.recipient_required'));
       setAddressValidating(false);
-      validateAll(qortAmount, qortRecipient, false);
       return;
     }
 
     if (qortRecipient.length < ADDRESS_MIN_LENGTH) {
       setRecipientError(t('core:message.error.recipient_too_short'));
       setAddressValidating(false);
-      validateAll(qortAmount, qortRecipient, false);
       return;
     }
 
-    // now perform debounced network lookup
+    // Perform debounced network lookup
     setAddressValidating(true);
+    setRecipientError(null);
+
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
@@ -363,21 +361,18 @@ export default function QortalWallet() {
           fetch(`/addresses/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then((r) => r.json()),
-          fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
+          fetch(`/names/address/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then((r) => r.json()),
         ]);
         if (!addrRes?.error || !nameRes?.error) {
           setRecipientError(null);
-          validateAll(qortAmount, qortRecipient, true);
         } else {
           setRecipientError(t('core:message.error.recipient_not_found'));
-          validateAll(qortAmount, qortRecipient, false);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         setRecipientError(t('core:message.error.recipient_lookup_failed'));
-        validateAll(qortAmount, qortRecipient, false);
       } finally {
         setAddressValidating(false);
       }
@@ -387,40 +382,28 @@ export default function QortalWallet() {
       clearTimeout(timeout);
       controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qortRecipient, recipientTouched, t]);
 
-  // Consolidated validator: enabled only when numeric + recipient ok
-  // `addressFound` indicates whether network lookup succeeded. For local quick validations we pass false.
-  const validateAll = useCallback(
-    (amountVal?: number, recipientVal?: string, addressFound = false) => {
-      const amtValid = validateAmountLocal(amountVal);
-      const recipientLocallyValid =
-        !!recipientVal && recipientVal.length >= ADDRESS_MIN_LENGTH;
-
-      const finalEnabled = amtValid && recipientLocallyValid && addressFound;
-      setSendDisabled(!finalEnabled);
-      return finalEnabled;
-    },
-    [validateAmountLocal]
-  );
-
-  // keep validation in sync when amount changes
+  // Consolidated send button enablement - derived from all validation states
   useEffect(() => {
-    // if recipient not yet touched, addressFound is false
+    const amountValid = validateAmountLocal(qortAmount);
+    const recipientLocallyValid =
+      !!qortRecipient && qortRecipient.length >= ADDRESS_MIN_LENGTH;
     const addressFound =
       !addressValidating &&
       recipientError === null &&
       recipientTouched &&
-      qortRecipient.length >= ADDRESS_MIN_LENGTH;
-    validateAll(qortAmount, qortRecipient, !!addressFound);
+      recipientLocallyValid;
+
+    const finalEnabled = amountValid && recipientLocallyValid && addressFound;
+    setSendDisabled(!finalEnabled);
   }, [
     qortAmount,
     qortRecipient,
     addressValidating,
     recipientError,
     recipientTouched,
-    validateAll,
+    validateAmountLocal,
   ]);
 
   // input handlers
@@ -434,210 +417,230 @@ export default function QortalWallet() {
   const onAmountBlur = () => setAmountTouched(true);
   const onRecipientBlur = () => setRecipientTouched(true);
 
-  const getQortalTransactions = async () => {
-    setLoadingRefreshQort(true);
+  const getQortalTransactions = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoadingRefreshQort(true);
 
-    const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
-    const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${address}&limit=0&reverse=true`;
-    const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
-    const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
-    const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;
-    const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${address}&limit=0&reverse=true`;
-    const pendingPollLink = `/transactions/unconfirmed?txType=CREATE_POLL&txType=VOTE_ON_POLL&creator=${address}&limit=0&reverse=true`;
-    const pendingRewardshareLink = `/transactions/unconfirmed?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&creator=${address}&limit=0&reverse=true`;
-    const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-    const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
+      const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${address}&limit=0&reverse=true`;
+      const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
+      const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
+      const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;
+      const pendingPaymentLink = `/transactions/unconfirmed?txType=PAYMENT&creator=${address}&limit=0&reverse=true`;
+      const pendingPollLink = `/transactions/unconfirmed?txType=CREATE_POLL&txType=VOTE_ON_POLL&creator=${address}&limit=0&reverse=true`;
+      const pendingRewardshareLink = `/transactions/unconfirmed?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&creator=${address}&limit=0&reverse=true`;
+      const pollLink = `/transactions/search?txType=CREATE_POLL&txType=VOTE_ON_POLL&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const rewardshareLink = `/transactions/search?txType=REWARD_SHARE&txType=TRANSFER_PRIVS&txType=PRESENCE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
 
-    const compareFn = (a: { timestamp: number }, b: { timestamp: number }) => {
-      return b.timestamp - a.timestamp;
-    };
+      const compareFn = (a: { timestamp: number }, b: { timestamp: number }) => {
+        return b.timestamp - a.timestamp;
+      };
 
-    const toArray = (value: unknown) =>
-      Array.isArray(value) ? value : ([] as any[]);
+      const toArray = (value: unknown) =>
+        Array.isArray(value) ? value : ([] as any[]);
 
-    const fetchPayment = async () => {
-      const paymentResponse = await fetch(paymentLink);
-      const pendingPaymentResponse = await fetch(pendingPaymentLink);
-      const paymentResult = await paymentResponse.json();
-      const pendingPaymentResult = await pendingPaymentResponse.json();
-      const allPayment = [
-        ...toArray(paymentResult),
-        ...toArray(pendingPaymentResult),
-      ];
-      const allPaymentSorted = allPayment.sort(compareFn);
-      setPaymentInfo(allPaymentSorted);
-      return allPaymentSorted;
-    };
+      const fetchPayment = async () => {
+        const paymentResponse = await fetch(paymentLink, { signal });
+        const pendingPaymentResponse = await fetch(pendingPaymentLink, {
+          signal,
+        });
+        const paymentResult = await paymentResponse.json();
+        const pendingPaymentResult = await pendingPaymentResponse.json();
+        const allPayment = [
+          ...toArray(paymentResult),
+          ...toArray(pendingPaymentResult),
+        ];
+        const allPaymentSorted = allPayment.sort(compareFn);
+        setPaymentInfo(allPaymentSorted);
+        return allPaymentSorted;
+      };
 
-    const fetchArbitrary = async () => {
-      const arbitraryResponse = await fetch(arbitraryLink);
-      const pendingArbitraryResponse = await fetch(pendingArbitraryLink);
-      const arbitraryResult = await arbitraryResponse.json();
-      const pendingArbitraryResult = await pendingArbitraryResponse.json();
-      const allArbitrary = [
-        ...toArray(arbitraryResult),
-        ...toArray(pendingArbitraryResult),
-      ];
-      const allArbitrarySorted = allArbitrary.sort(compareFn);
-      setArbitraryInfo(allArbitrarySorted);
-      return allArbitrarySorted;
-    };
+      const fetchArbitrary = async () => {
+        const arbitraryResponse = await fetch(arbitraryLink, { signal });
+        const pendingArbitraryResponse = await fetch(pendingArbitraryLink, {
+          signal,
+        });
+        const arbitraryResult = await arbitraryResponse.json();
+        const pendingArbitraryResult = await pendingArbitraryResponse.json();
+        const allArbitrary = [
+          ...toArray(arbitraryResult),
+          ...toArray(pendingArbitraryResult),
+        ];
+        const allArbitrarySorted = allArbitrary.sort(compareFn);
+        setArbitraryInfo(allArbitrarySorted);
+        return allArbitrarySorted;
+      };
 
-    const fetchAt = async () => {
-      const atResponse = await fetch(atLink);
-      const pendingAtResponse = await fetch(pendingAtLink);
-      const atResult = await atResponse.json();
-      const pendingAtResult = await pendingAtResponse.json();
-      const allAt = [...toArray(atResult), ...toArray(pendingAtResult)];
-      const allAtSorted = allAt.sort(compareFn);
-      setAtInfo(allAtSorted);
-      return allAtSorted;
-    };
+      const fetchAt = async () => {
+        const atResponse = await fetch(atLink, { signal });
+        const pendingAtResponse = await fetch(pendingAtLink, { signal });
+        const atResult = await atResponse.json();
+        const pendingAtResult = await pendingAtResponse.json();
+        const allAt = [...toArray(atResult), ...toArray(pendingAtResult)];
+        const allAtSorted = allAt.sort(compareFn);
+        setAtInfo(allAtSorted);
+        return allAtSorted;
+      };
 
-    const fetchGroup = async () => {
-      const groupResponse = await fetch(groupLink);
-      const pendingGroupResponse = await fetch(pendingGroupLink);
-      const groupResult = await groupResponse.json();
-      const pendingGroupResult = await pendingGroupResponse.json();
-      const allGroup = [
-        ...toArray(groupResult),
-        ...toArray(pendingGroupResult),
-      ];
-      const allGroupSorted = allGroup.sort(compareFn);
-      setGroupInfo(allGroupSorted);
-      return allGroupSorted;
-    };
+      const fetchGroup = async () => {
+        const groupResponse = await fetch(groupLink, { signal });
+        const pendingGroupResponse = await fetch(pendingGroupLink, { signal });
+        const groupResult = await groupResponse.json();
+        const pendingGroupResult = await pendingGroupResponse.json();
+        const allGroup = [
+          ...toArray(groupResult),
+          ...toArray(pendingGroupResult),
+        ];
+        const allGroupSorted = allGroup.sort(compareFn);
+        setGroupInfo(allGroupSorted);
+        return allGroupSorted;
+      };
 
-    const fetchName = async () => {
-      const nameResponse = await fetch(nameLink);
-      const pendingNameResponse = await fetch(pendingNameLink);
-      const nameResult = await nameResponse.json();
-      const pendingNameResult = await pendingNameResponse.json();
-      const allName = [...toArray(nameResult), ...toArray(pendingNameResult)];
-      const allNameSorted = allName.sort(compareFn);
-      setNameInfo(allNameSorted);
-      return allNameSorted;
-    };
+      const fetchName = async () => {
+        const nameResponse = await fetch(nameLink, { signal });
+        const pendingNameResponse = await fetch(pendingNameLink, { signal });
+        const nameResult = await nameResponse.json();
+        const pendingNameResult = await pendingNameResponse.json();
+        const allName = [...toArray(nameResult), ...toArray(pendingNameResult)];
+        const allNameSorted = allName.sort(compareFn);
+        setNameInfo(allNameSorted);
+        return allNameSorted;
+      };
 
-    const fetchAsset = async () => {
-      const assetResponse = await fetch(assetLink);
-      const pendingAssetResponse = await fetch(pendingAssetLink);
-      const assetResult = await assetResponse.json();
-      const pendingAssetResult = await pendingAssetResponse.json();
-      const allAsset = [
-        ...toArray(assetResult),
-        ...toArray(pendingAssetResult),
-      ];
-      const allAssetSorted = allAsset.sort(compareFn);
-      setAssetInfo(allAssetSorted);
-      return allAssetSorted;
-    };
+      const fetchAsset = async () => {
+        const assetResponse = await fetch(assetLink, { signal });
+        const pendingAssetResponse = await fetch(pendingAssetLink, { signal });
+        const assetResult = await assetResponse.json();
+        const pendingAssetResult = await pendingAssetResponse.json();
+        const allAsset = [
+          ...toArray(assetResult),
+          ...toArray(pendingAssetResult),
+        ];
+        const allAssetSorted = allAsset.sort(compareFn);
+        setAssetInfo(allAssetSorted);
+        return allAssetSorted;
+      };
 
-    const fetchPoll = async () => {
-      const pollResponse = await fetch(pollLink);
-      const pendingPollResponse = await fetch(pendingPollLink);
-      const pollResult = await pollResponse.json();
-      const pendingPollResult = await pendingPollResponse.json();
-      const allPoll = [...toArray(pollResult), ...toArray(pendingPollResult)];
-      const allPollSorted = allPoll.sort(compareFn);
-      setPollInfo(allPollSorted);
-      return allPollSorted;
-    };
+      const fetchPoll = async () => {
+        const pollResponse = await fetch(pollLink, { signal });
+        const pendingPollResponse = await fetch(pendingPollLink, { signal });
+        const pollResult = await pollResponse.json();
+        const pendingPollResult = await pendingPollResponse.json();
+        const allPoll = [...toArray(pollResult), ...toArray(pendingPollResult)];
+        const allPollSorted = allPoll.sort(compareFn);
+        setPollInfo(allPollSorted);
+        return allPollSorted;
+      };
 
-    const fetchRewardshare = async () => {
-      const rewardshareResponse = await fetch(rewardshareLink);
-      const pendingRewardshareResponse = await fetch(pendingRewardshareLink);
-      const rewardshareResult = await rewardshareResponse.json();
-      const pendingRewardshareResult = await pendingRewardshareResponse.json();
-      const allRewardshare = [
-        ...toArray(rewardshareResult),
-        ...toArray(pendingRewardshareResult),
-      ];
-      const allRewardshareSorted = allRewardshare.sort(compareFn);
-      setRewardshareInfo(allRewardshareSorted);
-      return allRewardshareSorted;
-    };
+      const fetchRewardshare = async () => {
+        const rewardshareResponse = await fetch(rewardshareLink, { signal });
+        const pendingRewardshareResponse = await fetch(
+          pendingRewardshareLink,
+          { signal }
+        );
+        const rewardshareResult = await rewardshareResponse.json();
+        const pendingRewardshareResult =
+          await pendingRewardshareResponse.json();
+        const allRewardshare = [
+          ...toArray(rewardshareResult),
+          ...toArray(pendingRewardshareResult),
+        ];
+        const allRewardshareSorted = allRewardshare.sort(compareFn);
+        setRewardshareInfo(allRewardshareSorted);
+        return allRewardshareSorted;
+      };
 
-    try {
-      const [
-        arbitraries,
-        assets,
-        ats,
-        groups,
-        names,
-        payments,
-        polls,
-        rewardshares,
-      ] = await Promise.all([
-        fetchPayment(),
-        fetchArbitrary(),
-        fetchAt(),
-        fetchGroup(),
-        fetchName(),
-        fetchAsset(),
-        fetchPoll(),
-        fetchRewardshare(),
-      ]);
+      try {
+        const [
+          arbitraries,
+          assets,
+          ats,
+          groups,
+          names,
+          payments,
+          polls,
+          rewardshares,
+        ] = await Promise.all([
+          fetchPayment(),
+          fetchArbitrary(),
+          fetchAt(),
+          fetchGroup(),
+          fetchName(),
+          fetchAsset(),
+          fetchPoll(),
+          fetchRewardshare(),
+        ]);
 
-      const combinedTransactions = [
-        arbitraries,
-        assets,
-        ats,
-        groups,
-        names,
-        payments,
-        polls,
-        rewardshares,
-      ].reduce<any[]>((acc, list) => {
-        if (Array.isArray(list)) {
-          acc.push(...list);
-        }
-        return acc;
-      }, []);
+        const combinedTransactions = [
+          arbitraries,
+          assets,
+          ats,
+          groups,
+          names,
+          payments,
+          polls,
+          rewardshares,
+        ].reduce<any[]>((acc, list) => {
+          if (Array.isArray(list)) {
+            acc.push(...list);
+          }
+          return acc;
+        }, []);
 
-      setAllInfo(combinedTransactions.sort(compareFn));
-    } catch (error) {
-      console.error('Failed to fetch QORT transactions', error);
-      setAllInfo([]);
-    } finally {
-      setLoadingRefreshQort(false);
-    }
-  };
+        setAllInfo(combinedTransactions.sort(compareFn));
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error('Failed to fetch QORT transactions', error);
+        setAllInfo([]);
+      } finally {
+        setLoadingRefreshQort(false);
+      }
+    },
+    [address]
+  );
 
   const handleLoadingRefreshQort = async () => {
     await getQortalTransactions();
   };
 
-  const getWalletBalanceQort = async () => {
-    try {
-      setIsLoadingWalletBalanceQort(true);
-      const balanceLink = `/addresses/balance/${address}`;
-      const response = await fetch(balanceLink);
-      const data = await response.json();
-      setWalletBalanceQort(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoadingWalletBalanceQort(false);
-    }
-  };
+  const getWalletBalanceQort = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        setIsLoadingWalletBalanceQort(true);
+        const balanceLink = `/addresses/balance/${address}`;
+        const response = await fetch(balanceLink, { signal });
+        const data = await response.json();
+        setWalletBalanceQort(data);
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error(error);
+      } finally {
+        setIsLoadingWalletBalanceQort(false);
+      }
+    },
+    [address]
+  );
 
   useEffect(() => {
     if (!address) return;
+
+    const controller = new AbortController();
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
     }, TIME_MINUTES_1);
-    getWalletBalanceQort();
+    getWalletBalanceQort(controller.signal);
+
     return () => {
       clearInterval(intervalGetWalletBalance);
+      controller.abort();
     };
-  }, [address]);
+  }, [address, getWalletBalanceQort]);
 
   useEffect(() => {
     let cancelled = false;
@@ -663,8 +666,14 @@ export default function QortalWallet() {
 
   useEffect(() => {
     if (!address) return;
-    getQortalTransactions();
-  }, [address]);
+
+    const controller = new AbortController();
+    getQortalTransactions(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [address, getQortalTransactions]);
 
   const sendQortRequest = async () => {
     setOpenTxQortSubmit(true);

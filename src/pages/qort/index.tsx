@@ -367,11 +367,11 @@ export default function QortalWallet() {
             }
             return r.json();
           }),
-          fetch(`/names/primary/${encodeURIComponent(qortRecipient)}`, {
+          fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then(async (r) => {
             if (!r.ok) {
-              console.warn(`No name found for address: ${qortRecipient}`);
+              console.warn(`No name found: ${qortRecipient}`);
               return { error: 'Name not found' };
             }
             return r.json();

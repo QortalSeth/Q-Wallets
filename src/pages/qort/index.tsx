@@ -367,7 +367,7 @@ export default function QortalWallet() {
             }
             return r.json();
           }),
-          fetch(`/names/address/${encodeURIComponent(qortRecipient)}`, {
+          fetch(`/names/primary/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then(async (r) => {
             if (!r.ok) {

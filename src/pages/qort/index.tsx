@@ -360,10 +360,22 @@ export default function QortalWallet() {
         const [addrRes, nameRes] = await Promise.all([
           fetch(`/addresses/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
-          }).then((r) => r.json()),
+          }).then(async (r) => {
+            if (!r.ok) {
+              console.warn(`Invalid address format: ${qortRecipient}`);
+              return { error: 'Invalid address' };
+            }
+            return r.json();
+          }),
           fetch(`/names/address/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
-          }).then((r) => r.json()),
+          }).then(async (r) => {
+            if (!r.ok) {
+              console.warn(`No name found for address: ${qortRecipient}`);
+              return { error: 'Name not found' };
+            }
+            return r.json();
+          }),
         ]);
         if (!addrRes?.error || !nameRes?.error) {
           setRecipientError(null);
@@ -372,6 +384,7 @@ export default function QortalWallet() {
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
+        console.error('Recipient lookup failed:', err.message);
         setRecipientError(t('core:message.error.recipient_lookup_failed'));
       } finally {
         setAddressValidating(false);

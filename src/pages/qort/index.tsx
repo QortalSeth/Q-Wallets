@@ -435,13 +435,13 @@ export default function QortalWallet() {
       setLoadingRefreshQort(true);
 
       const arbitraryLink = `/transactions/search?txType=ARBITRARY&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
-      const assetLink = `/transactions/search?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
+      const assetLink = `/transactions/search?txType=CANCEL_ASSET_ORDER&txType=CREATE_ASSET_ORDER&txType=ISSUE_ASSET&txType=TRANSFER_ASSET&txType=UPDATE_ASSET&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
       const atLink = `/transactions/search?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
       const groupLink = `/transactions/search?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
       const nameLink = `/transactions/search?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
       const paymentLink = `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=0&reverse=true`;
       const pendingArbitraryLink = `/transactions/unconfirmed?txType=ARBITRARY&creator=${address}&limit=0&reverse=true`;
-      const pendingAssetLink = `/transactions/unconfirmed?txType=ISSUE_ASSET&txType=TRANSFER_ASSET&creator=${address}&limit=0&reverse=true`;
+      const pendingAssetLink = `/transactions/unconfirmed?txType=CANCEL_ASSET_ORDER&txType=CREATE_ASSET_ORDER&txType=ISSUE_ASSET&txType=TRANSFER_ASSET&txType=UPDATE_ASSET&creator=${address}&limit=0&reverse=true`;
       const pendingAtLink = `/transactions/unconfirmed?txType=AT&txType=DEPLOY_AT&txType=MESSAGE&creator=${address}&limit=0&reverse=true`;
       const pendingGroupLink = `/transactions/unconfirmed?txType=CREATE_GROUP&txType=UPDATE_GROUP&txType=ADD_GROUP_ADMIN&txType=REMOVE_GROUP_ADMIN&txType=GROUP_BAN&txType=CANCEL_GROUP_BAN&txType=GROUP_KICK&txType=GROUP_INVITE&txType=CANCEL_GROUP_INVITE&txType=JOIN_GROUP&txType=LEAVE_GROUP&txType=GROUP_APPROVAL&txType=SET_GROUP&creator=${address}&limit=0&reverse=true`;
       const pendingNameLink = `/transactions/unconfirmed?txType=REGISTER_NAME&txType=UPDATE_NAME&txType=SELL_NAME&txType=CANCEL_SELL_NAME&txType=BUY_NAME&creator=${address}&limit=0&reverse=true`;

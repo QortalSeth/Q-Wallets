@@ -167,6 +167,8 @@ export default function PirateWallet() {
   const [syncStatus, setSyncStatus] = useState(EMPTY_STRING);
   const [walletInfoArrr, setWalletInfoArrr] = useState<any>({});
   const [walletBalanceArrr, setWalletBalanceArrr] = useState<any>(0);
+  const [_isLoadingWalletInfoArrr, setIsLoadingWalletInfoArrr] =
+    useState<boolean>(true);
   const [isLoadingWalletBalanceArrr, setIsLoadingWalletBalanceArrr] =
     useState<boolean>(true);
   const [allLightwalletServersArrr, setAllLightwalletServersArrr] =
@@ -330,6 +332,7 @@ export default function PirateWallet() {
   };
 
   const getWalletInfoArrr = async () => {
+    setIsLoadingWalletInfoArrr(true);
     try {
       const response = await qortalRequest({
         action: 'GET_USER_WALLET',
@@ -341,6 +344,8 @@ export default function PirateWallet() {
     } catch (error) {
       setWalletInfoArrr({});
       console.error('ERROR GET ARRR WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoArrr(false);
     }
   };
 

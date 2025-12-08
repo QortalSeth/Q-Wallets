@@ -175,6 +175,8 @@ export default function RavencoinWallet() {
 
   const [walletInfoRvn, setWalletInfoRvn] = useState<any>({});
   const [walletBalanceRvn, setWalletBalanceRvn] = useState<any>(0);
+  const [_isLoadingWalletInfoRvn, setIsLoadingWalletInfoRvn] =
+    useState<boolean>(true);
   const [isLoadingWalletBalanceRvn, setIsLoadingWalletBalanceRvn] =
     useState<boolean>(true);
   const [transactionsRvn, setTransactionsRvn] = useState<any>([]);
@@ -294,6 +296,7 @@ export default function RavencoinWallet() {
   };
 
   const getWalletInfoRvn = async () => {
+    setIsLoadingWalletInfoRvn(true);
     try {
       setWalletInfoError(null);
       const response = await qortalRequest({
@@ -319,6 +322,8 @@ export default function RavencoinWallet() {
         error?.message ? String(error.message) : String(error)
       );
       console.error('ERROR GET RVN WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoRvn(false);
     }
   };
 

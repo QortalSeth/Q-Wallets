@@ -156,6 +156,8 @@ export default function LitecoinWallet() {
 
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
   const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(0);
+  const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
+    useState<boolean>(true);
   const [isLoadingWalletBalanceLtc, setIsLoadingWalletBalanceLtc] =
     useState<boolean>(true);
   const [transactionsLtc, setTransactionsLtc] = useState<any>([]);
@@ -272,6 +274,7 @@ export default function LitecoinWallet() {
   };
 
   const getWalletInfoLtc = async () => {
+    setIsLoadingWalletInfoLtc(true);
     try {
       setWalletInfoError(null);
       const response = await qortalRequest({
@@ -297,6 +300,8 @@ export default function LitecoinWallet() {
         error?.message ? String(error.message) : String(error)
       );
       console.error('ERROR GET LTC WALLET INFO', error);
+    } finally {
+      setIsLoadingWalletInfoLtc(false);
     }
   };
 

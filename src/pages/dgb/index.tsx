@@ -175,7 +175,7 @@ export default function DigibyteWallet() {
 
   const [walletInfoDgb, setWalletInfoDgb] = useState<any>({});
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);
-  const [isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
+  const [_isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
     useState<boolean>(true);
   const [isLoadingWalletBalanceDgb, setIsLoadingWalletBalanceDgb] =
     useState<boolean>(true);

@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
+import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -583,7 +583,7 @@ export default function LitecoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          navigator.clipboard.writeText(row?.txHash);
+                          copyToClipboard(row?.txHash);
                           changeCopyLtcTxHash();
                         }}
                       >
@@ -1094,7 +1094,7 @@ export default function LitecoinWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(
+                          copyToClipboard(
                             walletInfoLtc?.address ?? EMPTY_STRING
                           )
                         }

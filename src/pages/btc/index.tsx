@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
+import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -579,7 +579,7 @@ export default function BitcoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          navigator.clipboard.writeText(row?.txHash);
+                          copyToClipboard(row?.txHash);
                           changeCopyBtcTxHash();
                         }}
                       >
@@ -1088,7 +1088,7 @@ export default function BitcoinWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(
+                          copyToClipboard(
                             walletInfoBtc?.address ?? EMPTY_STRING
                           )
                         }

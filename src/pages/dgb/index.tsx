@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
+import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -604,7 +604,7 @@ export default function DigibyteWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          navigator.clipboard.writeText(row?.txHash);
+                          copyToClipboard(row?.txHash);
                           changeCopyDgbTxHash();
                         }}
                       >
@@ -1165,7 +1165,7 @@ export default function DigibyteWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(
+                          copyToClipboard(
                             walletInfoDgb?.address ?? EMPTY_STRING
                           )
                         }

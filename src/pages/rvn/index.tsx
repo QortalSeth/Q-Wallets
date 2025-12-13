@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString } from '../../common/functions';
+import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -607,7 +607,7 @@ export default function RavencoinWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                          navigator.clipboard.writeText(row?.txHash);
+                          copyToClipboard(row?.txHash);
                           changeCopyRvnTxHash();
                         }}
                       >
@@ -1167,7 +1167,7 @@ export default function RavencoinWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(
+                          copyToClipboard(
                             walletInfoRvn?.address ?? EMPTY_STRING
                           )
                         }

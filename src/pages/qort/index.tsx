@@ -10,6 +10,7 @@ import {
 } from 'react';
 import WalletContext from '../../contexts/walletContext';
 import {
+  copyToClipboard,
   cropString,
   epochToAgo,
   humanFileSize,
@@ -3410,7 +3411,7 @@ export default function QortalWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(address ?? EMPTY_STRING)
+                          copyToClipboard(address ?? EMPTY_STRING)
                         }
                       >
                         <CopyAllTwoTone fontSize="small" />

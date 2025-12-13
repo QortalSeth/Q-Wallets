@@ -1,5 +1,10 @@
 import WalletContext from '../../contexts/walletContext';
-import { cropString, epochToAgo, timeoutDelay } from '../../common/functions';
+import {
+  copyToClipboard,
+  cropString,
+  epochToAgo,
+  timeoutDelay,
+} from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -766,8 +771,8 @@ export default function PirateWallet() {
                         aria-label="copy"
                         size="small"
                         onClick={() => {
-                            navigator.clipboard.writeText(row?.txHash);
-                            changeCopyArrrTxHash();
+                          copyToClipboard(row?.txHash);
+                          changeCopyArrrTxHash();
                         }}
                       >
                         <CopyAllTwoTone fontSize="small" />
@@ -933,7 +938,7 @@ export default function PirateWallet() {
         </DialogActions>
       </LightwalletDialog>
 
-       <Dialog
+      <Dialog
         fullScreen
         open={openArrrSend}
         onClose={handleCloseArrrSend}
@@ -1434,7 +1439,7 @@ export default function PirateWallet() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          navigator.clipboard.writeText(
+                          copyToClipboard(
                             walletInfoArrr?.address ?? EMPTY_STRING
                           )
                         }

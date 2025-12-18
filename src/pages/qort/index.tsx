@@ -165,7 +165,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function QortalWallet() {
   const ADDRESS_MIN_LENGTH = 3;
-  const ADDRESS_LOOKUP_DEBOUNCE_MS = 450;
+  const ADDRESS_LOOKUP_DEBOUNCE_MS = 1000;
 
   const { t } = useTranslation(['core']);
   const theme = useTheme();
@@ -359,14 +359,16 @@ export default function QortalWallet() {
     const timeout = setTimeout(async () => {
       try {
         const [addrRes, nameRes] = await Promise.all([
-          fetch(`/addresses/${encodeURIComponent(qortRecipient)}`, {
+          fetch(`/addresses/validate/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then(async (r) => {
-            if (!r.ok) {
+            const json = await r.json()
+
+            if (!json) {
               console.warn(`Invalid address format: ${qortRecipient}`);
               return { error: 'Invalid address' };
             }
-            return r.json();
+            return json;
           }),
           fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,

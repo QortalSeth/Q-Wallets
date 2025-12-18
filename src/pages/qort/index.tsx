@@ -362,11 +362,13 @@ export default function QortalWallet() {
           fetch(`/addresses/validate/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then(async (r) => {
-            if (!r.ok) {
+            const json = await r.json()
+
+            if (!json) {
               console.warn(`Invalid address format: ${qortRecipient}`);
               return { error: 'Invalid address' };
             }
-            return r.json();
+            return json;
           }),
           fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,

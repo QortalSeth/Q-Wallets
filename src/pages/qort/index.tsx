@@ -359,7 +359,7 @@ export default function QortalWallet() {
     const timeout = setTimeout(async () => {
       try {
         const [addrRes, nameRes] = await Promise.all([
-          fetch(`/addresses/${encodeURIComponent(qortRecipient)}`, {
+          fetch(`/addresses/validate/${encodeURIComponent(qortRecipient)}`, {
             signal: controller.signal,
           }).then(async (r) => {
             if (!r.ok) {

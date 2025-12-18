@@ -165,7 +165,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function QortalWallet() {
   const ADDRESS_MIN_LENGTH = 3;
-  const ADDRESS_LOOKUP_DEBOUNCE_MS = 450;
+  const ADDRESS_LOOKUP_DEBOUNCE_MS = 1000;
 
   const { t } = useTranslation(['core']);
   const theme = useTheme();

@@ -54,8 +54,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Changelog
-        id: github_release
+        id: github_changelog
         uses: mikepenz/release-changelog-builder-action@v6.0.1
+        with:
+          mode: "COMMIT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,7 +66,7 @@ jobs:
         with:
           tag_name: v${{ steps.package-version.outputs.version }}
           name: Release v${{ steps.package-version.outputs.version }}
-          body: ${{steps.github_release.outputs.changelog}}
+          body: ${{steps.github_changelog.outputs.changelog}}
           draft: false
           prerelease: false
           files: |

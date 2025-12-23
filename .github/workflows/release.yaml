@@ -52,30 +52,31 @@ jobs:
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
+          echo "## Changes" > release_notes.txt
+          echo "" >> release_notes.txt
+
           if [ -z "$PREVIOUS_TAG" ]; then
-            # If no previous tag, get all commits
-            RELEASE_NOTES="## Changes\n\n$(git log --pretty=format:'- %s (%h)' --no-merges)"
+            # If no previous tag, get all merge commits
+            git log --merges --pretty=format:'%s' | while read line; do
+              # Extract PR number and commit message
+              if echo "$line" | grep -q "Merge pull request #"; then
+                PR_NUM=$(echo "$line" | grep -oP '#\d+' | head -1)
+                PR_TITLE=$(echo "$line" | sed 's/.*Merge pull request #[0-9]* from [^ ]* //')
+                AUTHOR=$(git log --merges --pretty=format:'%an' --grep="$PR_NUM" -1)
+                echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+              fi
+            done
           else
-            # Get commits since last tag
-            RELEASE_NOTES="## Changes\n\n$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:'- %s (%h)' --no-merges)"
-          fi
-
-          # Get merged PRs since last tag
-          if [ -n "$PREVIOUS_TAG" ]; then
-            PRS=$(git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s' | grep -oP '#\d+' | sort -u || echo "")
-          else
-            PRS=$(git log --merges --pretty=format:'%s' | grep -oP '#\d+' | sort -u || echo "")
-          fi
-
-          if [ -n "$PRS" ]; then
-            RELEASE_NOTES="${RELEASE_NOTES}\n\n## Pull Requests\n\n"
-            for pr in $PRS; do
-              RELEASE_NOTES="${RELEASE_NOTES}- ${pr}\n"
+            # Get merge commits since last tag
+            git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s|||%an' | while IFS='|||' read -r message author; do
+              # Extract PR number and commit message
+              if echo "$message" | grep -q "Merge pull request #"; then
+                PR_NUM=$(echo "$message" | grep -oP '#\d+' | head -1)
+                PR_TITLE=$(echo "$message" | sed 's/.*Merge pull request #[0-9]* from [^ ]* //')
+                echo "- $PR_TITLE by @$author in $PR_NUM" >> release_notes.txt
+              fi
             done
           fi
-
-          # Save to file to handle multiline output
-          echo -e "$RELEASE_NOTES" > release_notes.txt
 
       - name: Delete existing release if exists
         continue-on-error: true

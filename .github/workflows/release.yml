@@ -47,12 +47,14 @@ jobs:
           cd dist
           zip -r ../${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip .
           cd ..
+          
       - name: Delete existing release if exists
         continue-on-error: true
         run: |
           gh release delete v${{ steps.package-version.outputs.version }} --yes --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Build Changelog
         id: github_changelog
         uses: mikepenz/release-changelog-builder-action@v6.0.1

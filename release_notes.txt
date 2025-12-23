@@ -1,0 +1,1 @@
+- feature/refactor-get-wallet by @|Refactor code & improvements|||nico.benaz in #15

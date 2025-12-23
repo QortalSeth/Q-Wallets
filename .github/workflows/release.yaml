@@ -17,6 +17,8 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    env:
+      APP: q-wallets
 
     steps:
       - name: Checkout code
@@ -43,7 +45,7 @@ jobs:
       - name: Create zip artifact
         run: |
           cd dist
-          zip -r ../q-wallets-${{ steps.package-version.outputs.version }}.zip .
+          zip -r ../${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip .
           cd ..
 
       - name: Generate release notes
@@ -52,28 +54,41 @@ jobs:
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
-          echo "## Changes" > release_notes.txt
+          echo "## What's Changed" > release_notes.txt
           echo "" >> release_notes.txt
 
           if [ -z "$PREVIOUS_TAG" ]; then
             # If no previous tag, get all merge commits
-            git log --merges --pretty=format:'%s' | while read line; do
+            git log --merges --pretty=format:'%s %an' | while read -r line; do
               # Extract PR number and commit message
-              if echo "$line" | grep -q "Merge pull request #"; then
-                PR_NUM=$(echo "$line" | grep -oP '#\d+' | head -1)
-                PR_TITLE=$(echo "$line" | sed 's/.*Merge pull request #[0-9]* from [^ ]* //')
-                AUTHOR=$(git log --merges --pretty=format:'%an' --grep="$PR_NUM" -1)
-                echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+              if echo "$line" | grep -q "Merge pull request"; then
+                # Extract PR number (handle both #123 and Repo#123 formats)
+                PR_NUM=$(echo "$line" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
+                # Extract author (last word in the line)
+                AUTHOR=$(echo "$line" | awk '{print $NF}')
+                # Extract PR title (everything after "from branch_name")
+                PR_TITLE=$(echo "$line" | sed -E 's/^Merge pull request [^ ]+ from [^ ]+ //' | sed -E "s/ $AUTHOR$//")
+
+                if [ -n "$PR_TITLE" ]; then
+                  echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+                fi
               fi
             done
           else
             # Get merge commits since last tag
-            git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s|||%an' | while IFS='|||' read -r message author; do
+            git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s %an' | while read -r line; do
               # Extract PR number and commit message
-              if echo "$message" | grep -q "Merge pull request #"; then
-                PR_NUM=$(echo "$message" | grep -oP '#\d+' | head -1)
-                PR_TITLE=$(echo "$message" | sed 's/.*Merge pull request #[0-9]* from [^ ]* //')
-                echo "- $PR_TITLE by @$author in $PR_NUM" >> release_notes.txt
+              if echo "$line" | grep -q "Merge pull request"; then
+                # Extract PR number (handle both #123 and Repo#123 formats)
+                PR_NUM=$(echo "$line" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
+                # Extract author (last word in the line)
+                AUTHOR=$(echo "$line" | awk '{print $NF}')
+                # Extract PR title (everything after "from branch_name")
+                PR_TITLE=$(echo "$line" | sed -E 's/^Merge pull request [^ ]+ from [^ ]+ //' | sed -E "s/ $AUTHOR$//")
+
+                if [ -n "$PR_TITLE" ]; then
+                  echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+                fi
               fi
             done
           fi
@@ -94,6 +109,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            q-wallets-${{ steps.package-version.outputs.version }}.zip
+            ${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

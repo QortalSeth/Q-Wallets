@@ -5,6 +5,10 @@ on:
     branches:
       - test
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch to build'
+        required: true
 
 permissions:
   contents: write

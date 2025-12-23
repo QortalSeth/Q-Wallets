@@ -58,36 +58,32 @@ jobs:
           echo "" >> release_notes.txt
 
           if [ -z "$PREVIOUS_TAG" ]; then
-            # If no previous tag, get all merge commits
-            git log --merges --pretty=format:'%s %an' | while read -r line; do
-              # Extract PR number and commit message
-              if echo "$line" | grep -q "Merge pull request"; then
-                # Extract PR number (handle both #123 and Repo#123 formats)
-                PR_NUM=$(echo "$line" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
-                # Extract author (last word in the line)
-                AUTHOR=$(echo "$line" | awk '{print $NF}')
-                # Extract PR title (everything after "from branch_name")
-                PR_TITLE=$(echo "$line" | sed -E 's/^Merge pull request [^ ]+ from [^ ]+ //' | sed -E "s/ $AUTHOR$//")
+            git log --merges --pretty=format:'%s|||%b|||%an' --reverse | while IFS='|||' read -r subject body author; do
+              if echo "$subject" | grep -q "Merge pull request"; then
+                PR_NUM=$(echo "$subject" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
+                PR_TITLE=$(echo "$body" | head -n1 | xargs)
 
-                if [ -n "$PR_TITLE" ]; then
-                  echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+                if [ -z "$PR_TITLE" ] || [ "$PR_TITLE" = "Merge branch" ]; then
+                  PR_TITLE=$(echo "$subject" | sed -E 's/^Merge pull request [^ ]+ from [^\/]+\///' | xargs)
+                fi
+
+                if [ -n "$PR_TITLE" ] && [ -n "$PR_NUM" ]; then
+                  echo "- $PR_TITLE by @$author in $PR_NUM" >> release_notes.txt
                 fi
               fi
             done
           else
-            # Get merge commits since last tag
-            git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s %an' | while read -r line; do
-              # Extract PR number and commit message
-              if echo "$line" | grep -q "Merge pull request"; then
-                # Extract PR number (handle both #123 and Repo#123 formats)
-                PR_NUM=$(echo "$line" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
-                # Extract author (last word in the line)
-                AUTHOR=$(echo "$line" | awk '{print $NF}')
-                # Extract PR title (everything after "from branch_name")
-                PR_TITLE=$(echo "$line" | sed -E 's/^Merge pull request [^ ]+ from [^ ]+ //' | sed -E "s/ $AUTHOR$//")
+            git log ${PREVIOUS_TAG}..HEAD --merges --pretty=format:'%s|||%b|||%an' --reverse | while IFS='|||' read -r subject body author; do
+              if echo "$subject" | grep -q "Merge pull request"; then
+                PR_NUM=$(echo "$subject" | grep -oP '(#|[A-Za-z]+#)\d+' | head -1)
+                PR_TITLE=$(echo "$body" | head -n1 | xargs)
 
-                if [ -n "$PR_TITLE" ]; then
-                  echo "- $PR_TITLE by @$AUTHOR in $PR_NUM" >> release_notes.txt
+                if [ -z "$PR_TITLE" ] || [ "$PR_TITLE" = "Merge branch" ]; then
+                  PR_TITLE=$(echo "$subject" | sed -E 's/^Merge pull request [^ ]+ from [^\/]+\///' | xargs)
+                fi
+
+                if [ -n "$PR_TITLE" ] && [ -n "$PR_NUM" ]; then
+                  echo "- $PR_TITLE by @$author in $PR_NUM" >> release_notes.txt
                 fi
               fi
             done

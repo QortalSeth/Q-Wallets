@@ -1,9 +1,9 @@
-name: Release
+name: Build New Release
 
 on:
   push:
     branches:
-      - test
+      - master
   workflow_dispatch:
     inputs:
       branch:

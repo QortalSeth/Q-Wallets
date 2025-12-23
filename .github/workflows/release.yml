@@ -75,16 +75,12 @@ jobs:
                   "labels": ["test"]
                 },
                 {
-                  "title": "## 📦 Uncategorized",
+                  "title": "## 📦 Other",
                   "labels": []
                 }
               ],
               "max_pull_requests": 100,
-              "max_back_track_time_days": 180,
-              "sort": {
-                "order": "ASC",
-                "on_property": "mergedAt"
-              }
+              "max_back_track_time_days": 180
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

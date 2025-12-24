@@ -88,7 +88,7 @@ jobs:
                   "labels": []
                 }
               ],
-              "template": "#{{CHANGELOG}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "template": "#{{CHANGELOG}}\n\n## New Contributors\n#{{CONTRIBUTORS}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
               "pr_template": "- #{{TITLE}} (PR ##{{NUMBER}}) by @#{{AUTHOR}}",
               "max_pull_requests": 100,
               "max_back_track_time_days": 180

@@ -47,24 +47,64 @@ jobs:
           cd dist
           zip -r ../${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip .
           cd ..
+          
       - name: Delete existing release if exists
-        continue-on-error: true
         run: |
-          gh release delete v${{ steps.package-version.outputs.version }} --yes --cleanup-tag
+          gh release delete v${{ steps.package-version.outputs.version }} --yes --cleanup-tag || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get previous tag
+        id: previous_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
       - name: Build Changelog
         id: github_changelog
+        continue-on-error: true
         uses: mikepenz/release-changelog-builder-action@v6.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fromTag: ${{ steps.previous_tag.outputs.tag }}
+          toTag: ${{ github.sha }}
+          configurationJson: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["enhancement"]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": ["bug"]
+                },
+                {
+                  "title": "## 🧪 Tests",
+                  "labels": ["test"]
+                },
+                {
+                  "title": "## 📦 Other",
+                  "labels": []
+                }
+              ],
+              "template": "#{{CHANGELOG}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "pr_template": "- #{{TITLE}} (PR ##{{NUMBER}}) by @#{{AUTHOR}}",
+              "max_pull_requests": 100,
+              "max_back_track_time_days": 180
+            }
+
+      - name: Set default changelog if build failed
+        id: default_changelog
+        if: steps.github_changelog.outcome == 'failure'
+        run: echo "changelog=Initial release" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.package-version.outputs.version }}
           name: Release v${{ steps.package-version.outputs.version }}
-          body: ${{steps.github_changelog.outputs.changelog}}
+          body: ${{ steps.github_changelog.outcome == 'success' && steps.github_changelog.outputs.changelog || steps.default_changelog.outputs.changelog }}
           draft: false
           prerelease: false
           files: |

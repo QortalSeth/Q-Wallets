@@ -53,12 +53,14 @@ jobs:
           gh release delete v${{ steps.package-version.outputs.version }} --yes --cleanup-tag || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Build Changelog
         id: github_changelog
         continue-on-error: true
         uses: mikepenz/release-changelog-builder-action@v6.0.1
         with:
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
           toTag: HEAD
           configurationJson: |
             {

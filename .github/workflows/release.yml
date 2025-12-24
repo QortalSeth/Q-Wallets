@@ -88,6 +88,8 @@ jobs:
                   "labels": []
                 }
               ],
+              "template": "#{{CHANGELOG}}",
+              "pr_template": "- #{{TITLE}} (PR ##{{NUMBER}}) by @#{{AUTHOR}}",
               "max_pull_requests": 100,
               "max_back_track_time_days": 180
             }

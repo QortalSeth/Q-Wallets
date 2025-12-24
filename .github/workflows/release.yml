@@ -86,9 +86,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set default changelog if build failed
+        id: default_changelog
         if: steps.github_changelog.outcome == 'failure'
         run: echo "changelog=Initial release" >> $GITHUB_OUTPUT
-        id: default_changelog
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

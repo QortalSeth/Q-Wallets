@@ -59,6 +59,7 @@ jobs:
         continue-on-error: true
         uses: mikepenz/release-changelog-builder-action@v6.0.1
         with:
+          toTag: HEAD
           configurationJson: |
             {
               "categories": [

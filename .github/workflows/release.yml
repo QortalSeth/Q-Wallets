@@ -54,13 +54,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get previous tag
+        id: previous_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
       - name: Build Changelog
         id: github_changelog
         continue-on-error: true
         uses: mikepenz/release-changelog-builder-action@v6.0.1
         with:
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fromTag: ${{ steps.previous_tag.outputs.tag }}
+          toTag: ${{ github.sha }}
           configurationJson: |
             {
               "categories": [
@@ -84,8 +91,6 @@ jobs:
               "max_pull_requests": 100,
               "max_back_track_time_days": 180
             }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set default changelog if build failed
         id: default_changelog

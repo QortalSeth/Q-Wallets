@@ -64,7 +64,7 @@ jobs:
               "categories": [
                 {
                   "title": "## 🚀 Features",
-                  "labels": ["feature"]
+                  "labels": ["enhancement"]
                 },
                 {
                   "title": "## 🐛 Fixes",

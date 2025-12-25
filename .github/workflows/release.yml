@@ -18,7 +18,7 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     env:
-      APP: q-wallets
+      APP_NAME: ${{ github.event.repository.name }}
 
     steps:
       - name: Checkout code
@@ -45,7 +45,7 @@ jobs:
       - name: Create zip artifact
         run: |
           cd dist
-          zip -r ../${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip .
+          zip -r ../${{ env.APP_NAME }}-${{ steps.package-version.outputs.version }}.zip .
           cd ..
           
       - name: Delete existing release if exists
@@ -108,6 +108,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.APP }}-${{ steps.package-version.outputs.version }}.zip
+            ${{ env.APP_NAME }}-${{ steps.package-version.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

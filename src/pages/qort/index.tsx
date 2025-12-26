@@ -1,22 +1,18 @@
 import {
-  ChangeEvent,
-  Key,
-  MouseEvent,
-  SyntheticEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import WalletContext from '../../contexts/walletContext';
-import {
-  copyToClipboard,
-  cropString,
-  epochToAgo,
-  humanFileSize,
-  timeoutDelay,
-} from '../../common/functions';
-import { useTheme } from '@mui/material/styles';
+  CheckCircleOutline,
+  Close,
+  CopyAllTwoTone,
+  FirstPage,
+  HistoryToggleOff,
+  ImportContacts,
+  InfoOutlined,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
+  LastPage,
+  Refresh,
+  Send,
+} from '@mui/icons-material';
+import {TabContext, TabList, TabPanel} from '@mui/lab';
 import {
   Alert,
   AppBar,
@@ -41,29 +37,20 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { NumericFormat } from 'react-number-format';
-import TableCell from '@mui/material/TableCell';
-import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
-import { TabContext, TabList, TabPanel } from '@mui/lab';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
+import Snackbar, {SnackbarCloseReason} from '@mui/material/Snackbar';
+import {useTheme} from '@mui/material/styles';
+import TableCell from '@mui/material/TableCell';
+import {Coin, RequestQueueWithPromise, useGlobal} from 'qapp-core';
+import {ChangeEvent, Key, MouseEvent, SyntheticEvent, useCallback, useContext, useEffect, useState,} from 'react';
+import {Trans, useTranslation} from 'react-i18next';
+import {NumericFormat} from 'react-number-format';
 import QRCode from 'react-qr-code';
-import {
-  CheckCircleOutline,
-  Close,
-  CopyAllTwoTone,
-  FirstPage,
-  HistoryToggleOff,
-  ImportContacts,
-  InfoOutlined,
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  LastPage,
-  Refresh,
-  Send,
-} from '@mui/icons-material';
 import coinLogoQORT from '../../assets/qort.png';
-import { Trans, useTranslation } from 'react-i18next';
+import {EMPTY_STRING, QORT_1_UNIT, TIME_MINUTES_1, TIME_SECONDS_2, TIME_SECONDS_3, TIME_SECONDS_4,} from '../../common/constants';
+import {copyToClipboard, cropString, epochToAgo, humanFileSize, timeoutDelay,} from '../../common/functions';
+import WalletContext from '../../contexts/walletContext';
 import {
   CustomWidthTooltip,
   DialogGeneral,
@@ -75,15 +62,7 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import {
-  EMPTY_STRING,
-  QORT_1_UNIT,
-  TIME_MINUTES_1,
-  TIME_SECONDS_2,
-  TIME_SECONDS_3,
-  TIME_SECONDS_4,
-} from '../../common/constants';
-import { Coin } from 'qapp-core';
+import {SearchTransactionsResponse} from "../../utils/Types.tsx";
 
 interface TablePaginationActionsProps {
   count: number;
@@ -91,6 +70,67 @@ interface TablePaginationActionsProps {
   rowsPerPage: number;
   onPageChange: (event: MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
+
+
+
+const addressToPrimaryName: any = {}
+const requestQueueGetPrimaryName = new RequestQueueWithPromise(10)
+
+export const getPrimaryAccountName = async (address: string) => {
+  if(addressToPrimaryName[address]) return addressToPrimaryName[address];
+  try{
+  const primaryName = await requestQueueGetPrimaryName.enqueue(()=>qortalRequest({action: 'GET_PRIMARY_NAME', address,}))
+  if(primaryName) addressToPrimaryName[address] = primaryName
+    return primaryName ?? '';
+    }
+    catch(e){console.log(e)}
+  return ''
+};
+
+
+
+
+export const replaceAddressesWithNames = async (
+    data: SearchTransactionsResponse[]
+) => {
+  if (!data || data.length === 0) return;
+  const addressToNames: {address:string, name?:string}[] = [];
+  const namePromises: Promise<string>[] = [];
+
+  const addAddressIfNotInArray = (address: string) => {
+    const isAddressInArray = addressToNames.find(
+        arrayAddress => arrayAddress.address === address
+    );
+
+    if (!isAddressInArray && address) {
+      addressToNames.push({ address });
+      namePromises.push(getPrimaryAccountName(address));
+    }
+  };
+
+  data.map(d => {
+    addAddressIfNotInArray(d.creatorAddress);
+    addAddressIfNotInArray(d.recipient);
+  });
+
+  const accountNames = await Promise.all(namePromises);
+  addressToNames.map((value, index) => (value.name = accountNames[index]));
+
+  const findName = (address: string) => {
+    const data = addressToNames.find(d => d.address === address);
+    return data?.name || data?.address;
+  };
+
+  return data.map(d => {
+    const creatorAddress = findName(d.creatorAddress);
+    const recipient = findName(d.recipient);
+    return {
+      ...d,
+      creatorAddress,
+      recipient,
+    } as SearchTransactionsResponse;
+  });
+};
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
   const { t } = useTranslation(['core']);
@@ -201,29 +241,30 @@ export default function QortalWallet() {
   const [addressValidating, setAddressValidating] = useState(false);
   const [amountTouched, setAmountTouched] = useState(false);
   const [recipientTouched, setRecipientTouched] = useState(false);
+  const userName = useGlobal().auth.name;
 
   const maxQortCoin = walletBalanceQort - qortTxFee;
 
   const emptyRowsPayment =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo?.length || 0) : 0;
   const emptyRowsArbitrary =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - arbitraryInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - arbitraryInfo?.length || 0) : 0;
   const emptyRowsAt =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - atInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - atInfo?.length || 0) : 0;
   const emptyRowsGroup =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - groupInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - groupInfo?.length || 0) : 0;
   const emptyRowsName =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - nameInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - nameInfo?.length || 0) : 0;
   const emptyRowsAsset =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - assetInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - assetInfo?.length || 0) : 0;
   const emptyRowsPoll =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - pollInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - pollInfo?.length || 0) : 0;
   const emptyRowsRewardshare =
     page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - rewardshareInfo.length)
+      ? Math.max(0, (1 + page) * rowsPerPage - rewardshareInfo?.length || 0)
       : 0;
   const emptyRowsAll =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - allInfo.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - allInfo?.length || 0) : 0;
 
   const handleOpenAddressBook = async () => {
     setOpenQortAddressBook(true);
@@ -472,7 +513,7 @@ export default function QortalWallet() {
           ...toArray(paymentResult),
           ...toArray(pendingPaymentResult),
         ];
-        const allPaymentSorted = allPayment.sort(compareFn);
+        const allPaymentSorted = await replaceAddressesWithNames(allPayment.sort(compareFn)) as any[];
         setPaymentInfo(allPaymentSorted);
         return allPaymentSorted;
       };
@@ -488,7 +529,8 @@ export default function QortalWallet() {
           ...toArray(arbitraryResult),
           ...toArray(pendingArbitraryResult),
         ];
-        const allArbitrarySorted = allArbitrary.sort(compareFn);
+        const allArbitrarySorted = await replaceAddressesWithNames(allArbitrary.sort(compareFn)) as any[];
+
         setArbitraryInfo(allArbitrarySorted);
         return allArbitrarySorted;
       };
@@ -499,7 +541,8 @@ export default function QortalWallet() {
         const atResult = await atResponse.json();
         const pendingAtResult = await pendingAtResponse.json();
         const allAt = [...toArray(atResult), ...toArray(pendingAtResult)];
-        const allAtSorted = allAt.sort(compareFn);
+        const allAtSorted = await replaceAddressesWithNames(allAt.sort(compareFn)) as any[];
+
         setAtInfo(allAtSorted);
         return allAtSorted;
       };
@@ -513,7 +556,7 @@ export default function QortalWallet() {
           ...toArray(groupResult),
           ...toArray(pendingGroupResult),
         ];
-        const allGroupSorted = allGroup.sort(compareFn);
+        const allGroupSorted = await replaceAddressesWithNames(allGroup.sort(compareFn)) as any[];
         setGroupInfo(allGroupSorted);
         return allGroupSorted;
       };
@@ -524,7 +567,7 @@ export default function QortalWallet() {
         const nameResult = await nameResponse.json();
         const pendingNameResult = await pendingNameResponse.json();
         const allName = [...toArray(nameResult), ...toArray(pendingNameResult)];
-        const allNameSorted = allName.sort(compareFn);
+        const allNameSorted = await replaceAddressesWithNames(allName.sort(compareFn)) as any[];
         setNameInfo(allNameSorted);
         return allNameSorted;
       };
@@ -538,7 +581,8 @@ export default function QortalWallet() {
           ...toArray(assetResult),
           ...toArray(pendingAssetResult),
         ];
-        const allAssetSorted = allAsset.sort(compareFn);
+        const allAssetSorted = await replaceAddressesWithNames(allAsset.sort(compareFn)) as any[];
+
         setAssetInfo(allAssetSorted);
         return allAssetSorted;
       };
@@ -549,7 +593,8 @@ export default function QortalWallet() {
         const pollResult = await pollResponse.json();
         const pendingPollResult = await pendingPollResponse.json();
         const allPoll = [...toArray(pollResult), ...toArray(pendingPollResult)];
-        const allPollSorted = allPoll.sort(compareFn);
+        const allPollSorted = await replaceAddressesWithNames(allPoll.sort(compareFn)) as any[];
+
         setPollInfo(allPollSorted);
         return allPollSorted;
       };
@@ -567,7 +612,8 @@ export default function QortalWallet() {
           ...toArray(rewardshareResult),
           ...toArray(pendingRewardshareResult),
         ];
-        const allRewardshareSorted = allRewardshare.sort(compareFn);
+        const allRewardshareSorted = await replaceAddressesWithNames(allRewardshare.sort(compareFn)) as any[];
+
         setRewardshareInfo(allRewardshareSorted);
         return allRewardshareSorted;
       };
@@ -854,7 +900,7 @@ export default function QortalWallet() {
                         {row?.type}
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
-                        {row?.creatorAddress === address ? (
+                        {(row?.creatorAddress ===  address || row?.creatorAddress === userName) ? (
                           <Box style={{ color: theme.palette.info.main }}>
                             {row?.creatorAddress}
                           </Box>
@@ -863,7 +909,7 @@ export default function QortalWallet() {
                         )}
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
-                        {row?.recipient === address ? (
+                        {(row?.recipient === address || row?.recipient === userName) ? (
                           <Box style={{ color: theme.palette.info.main }}>
                             {row?.recipient}
                           </Box>
@@ -872,7 +918,7 @@ export default function QortalWallet() {
                         )}
                       </StyledTableCell>
                       <StyledTableCell style={{ width: 'auto' }} align="left">
-                        {row?.recipient === address ? (
+                        {(row?.recipient === address || row?.recipient === userName) ? (
                           <Box style={{ color: theme.palette.success.main }}>
                             + {row?.amount}
                           </Box>
@@ -1054,7 +1100,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -1250,7 +1296,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -1261,7 +1307,7 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.recipient) {
-                          if (row?.recipient === address) {
+                          if (row?.recipient === address || row?.recipient === userName) {
                             return (
                               <Box style={{ color: theme.palette.info.main }}>
                                 {row?.recipient}
@@ -1278,7 +1324,7 @@ export default function QortalWallet() {
                       })()}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.recipient === address ? (
+                      {(row?.recipient === address || row?.recipient === userName) ? (
                         <Box style={{ color: theme.palette.success.main }}>+ {row?.amount}</Box>
                       ) : (
                         <Box style={{ color: theme.palette.error.main }}>- {row?.amount}</Box>
@@ -1464,7 +1510,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -1758,7 +1804,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -1981,7 +2027,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -1992,7 +2038,7 @@ export default function QortalWallet() {
                     <StyledTableCell style={{ width: 'auto' }} align="left">
                       {(() => {
                         if (row?.type === 'TRANSFER_ASSET') {
-                          return row?.recipient === address ? (
+                          return (row?.recipient === address || row?.recipient === userName) ? (
                             <Box style={{ color: theme.palette.info.main }}>
                               {row?.recipient}
                             </Box>
@@ -2183,7 +2229,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -2378,7 +2424,7 @@ export default function QortalWallet() {
                       {row?.type}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.creatorAddress === address ? (
+                      {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>
                           {row?.creatorAddress}
                         </Box>
@@ -2387,7 +2433,7 @@ export default function QortalWallet() {
                       )}
                     </StyledTableCell>
                     <StyledTableCell style={{ width: 'auto' }} align="left">
-                      {row?.recipient === address ? (
+                      {(row?.recipient === address || row?.recipient === userName) ? (
                         <Box style={{ color: theme.palette.info.main }}>{row?.recipient}</Box>
                       ) : (
                         row?.recipient
@@ -2436,7 +2482,7 @@ export default function QortalWallet() {
                           <CustomWidthTooltip
                             placement="top"
                             title={
-                              row?.recipient === row?.creatorAddress
+                              (row?.recipient === row?.creatorAddress || row?.recipient === userName)
                                 ? 'Minting Key: ' + row?.rewardSharePublicKey
                                 : EMPTY_STRING
                             }
@@ -2665,15 +2711,13 @@ export default function QortalWallet() {
                           title={row?.creatorAddress}
                         >
                           <Box>
-                            {row?.recipient === address ? (
+                            {(row?.creatorAddress === address || row?.creatorAddress === userName) ? (
                               <Box style={{ color: theme.palette.info.main }}>
                                 {cropString(row?.creatorAddress)}
                               </Box>
-                            ) : row?.recipient ? (
+                            ) :
                               cropString(row?.creatorAddress)
-                            ) : (
-                              EMPTY_STRING
-                            )}
+                             }
                           </Box>
                         </CustomWidthTooltip>
                       </StyledTableCell>
@@ -2700,7 +2744,7 @@ export default function QortalWallet() {
                           title={row?.recipient}
                         >
                           <Box>
-                            {row?.recipient === address ? (
+                            {(row?.recipient === address || row?.recipient === userName) ? (
                               <Box style={{ color: theme.palette.info.main }}>
                                 {cropString(row?.recipient)}
                               </Box>
@@ -2885,6 +2929,10 @@ export default function QortalWallet() {
               aria-label="Qortal Transactions"
             >
               <Tab
+                  label={<span style={{ fontSize: '14px' }}>ALL</span>}
+                  value="Nine"
+              />
+              <Tab
                 label={<span style={{ fontSize: '14px' }}>PAYMENT</span>}
                 value="One"
               />
@@ -2916,12 +2964,9 @@ export default function QortalWallet() {
                 label={<span style={{ fontSize: '14px' }}>REWARDSHARE</span>}
                 value="Eight"
               />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ALL</span>}
-                value="Nine"
-              />
             </TabList>
           </Box>
+          <TabPanel value="Nine">{tableAll()}</TabPanel>
           <TabPanel value="One">{tablePayment()}</TabPanel>
           <TabPanel value="Two">{tableArbitrary()}</TabPanel>
           <TabPanel value="Three">{tableAt()}</TabPanel>
@@ -2930,7 +2975,6 @@ export default function QortalWallet() {
           <TabPanel value="Six">{tableAsset()}</TabPanel>
           <TabPanel value="Seven">{tablePoll()}</TabPanel>
           <TabPanel value="Eight">{tableRewardshare()}</TabPanel>
-          <TabPanel value="Nine">{tableAll()}</TabPanel>
         </TabContext>
       </Box>
     );

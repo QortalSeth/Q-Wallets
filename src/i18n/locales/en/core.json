@@ -123,7 +123,7 @@
   "poll_name": "poll name",
   "qortal": {
     "asset_name": "Asset name: {{ name }}",
-    "registered_name": "Registered mame: {{ name }}",
+    "registered_name": "Registered name: {{ name }}",
     "old_new_name": "Old name: {{ oldName }} New Name: {{ newName }}",
     "name_to_sell": "Name to sell: {{ name }} Amount: {{ amount }} QORT",
     "cancelled_name_sale": "Cancelled name to sell: {{ name }}",

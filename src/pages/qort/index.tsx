@@ -1,7 +1,11 @@
 import {
+  Add,
   CheckCircleOutline,
+  CloudSync,
   Close,
   CopyAllTwoTone,
+  ExpandMore,
+  FileDownloadOutlined,
   FirstPage,
   HistoryToggleOff,
   ImportContacts,
@@ -9,22 +13,28 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
+  LockOutlined,
   Refresh,
+  Search,
   Send,
+  VerifiedRounded,
 } from '@mui/icons-material';
-import { TabContext, TabList, TabPanel } from '@mui/lab';
 import {
   Alert,
   AppBar,
   Avatar,
   Box,
   Button,
+  ButtonBase,
+  Collapse,
   Dialog,
   DialogContent,
-  Grid,
+  DialogTitle,
   IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
   Paper,
-  Tab,
   Table,
   TableBody,
   TableContainer,
@@ -52,11 +62,14 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { NumericFormat as _NumericFormat } from 'react-number-format';
-const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>>;
+const NumericFormat = _NumericFormat as React.FC<
+  React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>
+>;
 import QRCode from 'react-qr-code';
 import coinLogoQORT from '../../assets/qort.png';
 import {
@@ -64,7 +77,6 @@ import {
   EMPTY_STRING,
   QORT_1_UNIT,
   TIME_MINUTES_1,
-  
   TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
@@ -86,8 +98,16 @@ import {
   WalletButtons,
   WalletCard,
 } from '../../styles/page-styles';
-import { SearchTransactionsResponse } from '../../utils/Types.tsx';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import {
+  AddressBookEntry,
+  SearchTransactionsResponse,
+} from '../../utils/Types';
+import {
+  getAddressBook,
+  searchAddresses,
+} from '../../utils/addressBookStorage';
+import { publishToQDN } from '../../utils/addressBookQDN';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -234,6 +254,7 @@ export default function QortalWallet() {
 
   const { t } = useTranslation(['core']);
   const theme = useTheme();
+  const receiveQrRef = useRef<HTMLDivElement | null>(null);
 
   const { address, nodeInfo } = useContext(WalletContext);
   const [walletBalanceQort, setWalletBalanceQort] = useState<any>(0);
@@ -249,11 +270,30 @@ export default function QortalWallet() {
   const [pollInfo, setPollInfo] = useState<any>([]);
   const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
   const [allInfo, setAllInfo] = useState<any>([]);
-  const [value, setValue] = useState('One');
+  const [value, setValue] = useState('all');
+  const [advancedFilterAnchor, setAdvancedFilterAnchor] =
+    useState<null | HTMLElement>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
-  const [addressBookPrefill, setAddressBookPrefill] = useState<{name: string, address: string} | null>(null);
+  const [openQortReceive, setOpenQortReceive] = useState(false);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
+  const [qortAddressBookEntries, setQortAddressBookEntries] = useState<
+    AddressBookEntry[]
+  >([]);
+  const [qortAddressBookSearch, setQortAddressBookSearch] =
+    useState(EMPTY_STRING);
+  const [qortAddressBookSyncing, setQortAddressBookSyncing] = useState(false);
+  const [qortAddressBookSyncStatus, setQortAddressBookSyncStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
+  const [qortAddressBookLastSync, setQortAddressBookLastSync] = useState<
+    number | null
+  >(null);
+  const [addressBookPrefill, setAddressBookPrefill] = useState<{
+    name: string;
+    address: string;
+  } | null>(null);
   const [loadingRefreshQort, setLoadingRefreshQort] = useState(false);
   const [openQortSend, setOpenQortSend] = useState(false);
   const [openTxQortSubmit, setOpenTxQortSubmit] = useState(false);
@@ -268,16 +308,42 @@ export default function QortalWallet() {
   const [amountTouched, setAmountTouched] = useState(false);
   const [recipientTouched, setRecipientTouched] = useState(false);
   const userName = useGlobal().auth.name;
-  
+
   const maxSendableQortCoin = () => {
     // manage the correct round up
-    const value = (walletBalanceQort - qortTxFee).toString();
+    const value = (
+      toFiniteNumber(walletBalanceQort) - toFiniteNumber(qortTxFee)
+    ).toString();
     const [integer, decimal = EMPTY_STRING] = value.split('.');
-    const truncated = decimal.substring(0, DECIMAL_ROUND_UP).padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableQortCoin: number = parseFloat(`${integer}.${truncated}`);
+    const truncated = decimal
+      .substring(0, DECIMAL_ROUND_UP)
+      .padEnd(DECIMAL_ROUND_UP, '0');
+    let truncatedMaxSendableQortCoin: number = parseFloat(
+      `${integer}.${truncated}`
+    );
     return truncatedMaxSendableQortCoin;
   };
-  
+
+  const toFiniteNumber = (value: unknown) => {
+    const parsed =
+      typeof value === 'number' ? value : Number.parseFloat(String(value ?? 0));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const formatDecimal = (
+    value: unknown,
+    minimumFractionDigits = 2,
+    maximumFractionDigits = 2
+  ) => {
+    return toFiniteNumber(value).toLocaleString(undefined, {
+      minimumFractionDigits,
+      maximumFractionDigits,
+    });
+  };
+
+  const formatQortAmount = (value: unknown) => formatDecimal(value, 2, 2);
+  const formatQortFee = (value: unknown) => formatDecimal(value, 2, 4);
+
   const emptyRowsPayment =
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo?.length || 0)
@@ -315,7 +381,47 @@ export default function QortalWallet() {
     setOpenQortAddressBook(true);
   };
 
-  const handleOpenAddressBookWithData = (name: string, addressValue: string) => {
+  const loadQortAddressBookEntries = useCallback(() => {
+    const entries = qortAddressBookSearch.trim()
+      ? searchAddresses(Coin.QORT, qortAddressBookSearch)
+      : getAddressBook(Coin.QORT);
+    setQortAddressBookEntries(entries);
+  }, [qortAddressBookSearch]);
+
+  const handleOpenQortReceive = () => {
+    setOpenQortReceive(true);
+  };
+
+  const handleToggleReceivePanel = () => {
+    setReceivePanelOpen((prev) => !prev);
+  };
+
+  const handleCloseQortReceive = () => {
+    setOpenQortReceive(false);
+  };
+
+  const handleDownloadReceiveQr = () => {
+    const svg = receiveQrRef.current?.querySelector('svg');
+    if (!svg) return;
+
+    const clonedSvg = svg.cloneNode(true) as SVGElement;
+    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const svgData = new XMLSerializer().serializeToString(clonedSvg);
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'qort-receive-qr.svg';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleOpenAddressBookWithData = (
+    name: string,
+    addressValue: string
+  ) => {
     setAddressBookPrefill({ name, address: addressValue });
     setOpenQortAddressBook(true);
   };
@@ -323,7 +429,58 @@ export default function QortalWallet() {
   const handleCloseAddressBook = () => {
     setOpenQortAddressBook(false);
     setAddressBookPrefill(null);
+    loadQortAddressBookEntries();
   };
+
+  const handleSyncQortAddressBook = async () => {
+    setQortAddressBookSyncing(true);
+    setQortAddressBookSyncStatus('idle');
+    try {
+      const entries = getAddressBook(Coin.QORT);
+      const publishedAt = await publishToQDN(
+        Coin.QORT,
+        entries,
+        userName || undefined
+      );
+      if (publishedAt) {
+        setQortAddressBookLastSync(publishedAt);
+        setQortAddressBookSyncStatus('success');
+      } else {
+        setQortAddressBookSyncStatus('error');
+      }
+    } catch (error) {
+      console.error('Failed to sync QORT address book:', error);
+      setQortAddressBookSyncStatus('error');
+    } finally {
+      setQortAddressBookSyncing(false);
+      loadQortAddressBookEntries();
+    }
+  };
+
+  useEffect(() => {
+    loadQortAddressBookEntries();
+  }, [loadQortAddressBookEntries, openQortAddressBook]);
+
+  useEffect(() => {
+    const handleAddressBookRequest = () => {
+      const panel = document.getElementById('qort-address-book-panel');
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    window.addEventListener(
+      'q-wallets-open-address-book',
+      handleAddressBookRequest
+    );
+
+    return () => {
+      window.removeEventListener(
+        'q-wallets-open-address-book',
+        handleAddressBookRequest
+      );
+    };
+  }, []);
 
   const handleSelectAddress = (address: string, _name: string) => {
     setQortRecipient(address);
@@ -336,9 +493,35 @@ export default function QortalWallet() {
     setRecipientTouched(true); // Trigger validation for QORT addresses
   };
 
-  const handleChange = (_event: SyntheticEvent, newValue: string) => {
+  const openUserLookup = (addressOrName: string) => {
+    const value = addressOrName?.trim();
+    if (!value || value === '-') return;
+
+    window.parent?.postMessage(
+      {
+        action: 'OPEN_USER_LOOKUP',
+        addressOrName: value,
+      },
+      '*'
+    );
+  };
+
+  const handleTransactionFilterChange = (newValue: string) => {
     setValue(newValue);
     setPage(0);
+  };
+
+  const handleAdvancedFilterClick = (event: MouseEvent<HTMLElement>) => {
+    setAdvancedFilterAnchor(event.currentTarget);
+  };
+
+  const handleAdvancedFilterClose = () => {
+    setAdvancedFilterAnchor(null);
+  };
+
+  const handleAdvancedFilterSelect = (newValue: string) => {
+    handleTransactionFilterChange(newValue);
+    handleAdvancedFilterClose();
   };
 
   const handleChangePage = (
@@ -982,8 +1165,18 @@ export default function QortalWallet() {
                       <StyledTableCell
                         style={{ width: 'auto', cursor: 'pointer' }}
                         align="left"
-                        title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                        onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                        title={t('core:action.double_click_addressbook', {
+                          address:
+                            row?.creatorAddressOriginal || row?.creatorAddress,
+                        })}
+                        onDoubleClick={() =>
+                          handleOpenAddressBookWithData(
+                            row?.creatorAddress || EMPTY_STRING,
+                            row?.creatorAddressOriginal ||
+                              row?.creatorAddress ||
+                              EMPTY_STRING
+                          )
+                        }
                       >
                         {row?.creatorAddress === address ||
                         row?.creatorAddress === userName ? (
@@ -997,8 +1190,17 @@ export default function QortalWallet() {
                       <StyledTableCell
                         style={{ width: 'auto', cursor: 'pointer' }}
                         align="left"
-                        title={t('core:action.double_click_addressbook', { address: row?.recipientOriginal || row?.recipient })}
-                        onDoubleClick={() => handleOpenAddressBookWithData(row?.recipient || EMPTY_STRING, row?.recipientOriginal || row?.recipient || EMPTY_STRING)}
+                        title={t('core:action.double_click_addressbook', {
+                          address: row?.recipientOriginal || row?.recipient,
+                        })}
+                        onDoubleClick={() =>
+                          handleOpenAddressBookWithData(
+                            row?.recipient || EMPTY_STRING,
+                            row?.recipientOriginal ||
+                              row?.recipient ||
+                              EMPTY_STRING
+                          )
+                        }
                       >
                         {row?.recipient === address ||
                         row?.recipient === userName ? (
@@ -1196,8 +1398,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -1400,8 +1612,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -1413,10 +1635,30 @@ export default function QortalWallet() {
                       )}
                     </StyledTableCell>
                     <StyledTableCell
-                      style={{ width: 'auto', cursor: row?.recipientOriginal || row?.recipient ? 'pointer' : 'default' }}
+                      style={{
+                        width: 'auto',
+                        cursor:
+                          row?.recipientOriginal || row?.recipient
+                            ? 'pointer'
+                            : 'default',
+                      }}
                       align="left"
-                      title={(row?.recipientOriginal || row?.recipient) ? t('core:action.double_click_addressbook', { address: row?.recipientOriginal || row?.recipient }) : undefined}
-                      onDoubleClick={() => (row?.recipientOriginal || row?.recipient) && handleOpenAddressBookWithData(row?.recipient || EMPTY_STRING, row?.recipientOriginal || row?.recipient || EMPTY_STRING)}
+                      title={
+                        row?.recipientOriginal || row?.recipient
+                          ? t('core:action.double_click_addressbook', {
+                              address: row?.recipientOriginal || row?.recipient,
+                            })
+                          : undefined
+                      }
+                      onDoubleClick={() =>
+                        (row?.recipientOriginal || row?.recipient) &&
+                        handleOpenAddressBookWithData(
+                          row?.recipient || EMPTY_STRING,
+                          row?.recipientOriginal ||
+                            row?.recipient ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {(() => {
                         if (row?.recipient) {
@@ -1634,8 +1876,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -3056,65 +3308,496 @@ export default function QortalWallet() {
     }
   };
 
+  // Retain the legacy per-type renderers while the unified table handles the visible UX.
+  void tablePayment;
+  void tableArbitrary;
+  void tableAt;
+  void tableGroup;
+  void tableName;
+  void tableAsset;
+  void tablePoll;
+  void tableRewardshare;
+  void tableAll;
+
   const qortalTables = () => {
+    const rewardTypes = ['REWARD_SHARE', 'TRANSFER_PRIVS', 'PRESENCE'];
+    const activityInfo = allInfo.filter(
+      (row: any) =>
+        row?.type && row.type !== 'PAYMENT' && !rewardTypes.includes(row.type)
+    );
+    const primaryFilters = [
+      { label: 'All', rows: allInfo, value: 'all' },
+      { label: 'Payments', rows: paymentInfo, value: 'payments' },
+      { label: 'Rewards', rows: rewardshareInfo, value: 'rewards' },
+      { label: 'Activity', rows: activityInfo, value: 'activity' },
+    ];
+    const advancedFilters = [
+      { label: 'Arbitrary', rows: arbitraryInfo, value: 'arbitrary' },
+      { label: 'AT', rows: atInfo, value: 'at' },
+      { label: 'Group', rows: groupInfo, value: 'group' },
+      { label: 'Name', rows: nameInfo, value: 'name' },
+      { label: 'Asset', rows: assetInfo, value: 'asset' },
+      { label: 'Poll', rows: pollInfo, value: 'poll' },
+      { label: 'Rewardshare', rows: rewardshareInfo, value: 'rewardshare' },
+    ];
+    const filters = [...primaryFilters, ...advancedFilters];
+    const selectedFilter =
+      filters.find((filter) => filter.value === value) ?? primaryFilters[0];
+    const selectedAdvancedFilter = advancedFilters.find(
+      (filter) => filter.value === value
+    );
+    const advancedFilterOpen = Boolean(advancedFilterAnchor);
+    const transactionGridColumns =
+      '44px minmax(88px, 0.7fr) minmax(112px, 1fr) minmax(112px, 1fr) minmax(102px, 0.75fr) minmax(84px, 0.62fr) minmax(80px, 0.58fr)';
+    const transactionHeaderSx = {
+      color: 'text.secondary',
+      fontSize: 11,
+      fontWeight: 500,
+      letterSpacing: 0,
+      lineHeight: 1,
+    } as const;
+
+    const formatTransactionType = (type?: string) => {
+      if (!type) return '-';
+      return type
+        .toLowerCase()
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    };
+
+    const getDisplayAddress = (row: any, field: 'creator' | 'recipient') => {
+      if (field === 'creator') {
+        return row?.creatorAddress || row?.sender || row?.owner || '-';
+      }
+
+      return row?.recipient || row?.recipientAddress || row?.atAddress || '-';
+    };
+
+    const getRawAddress = (row: any, field: 'creator' | 'recipient') => {
+      if (field === 'creator') {
+        return row?.creatorAddressOriginal || row?.creatorAddress || '';
+      }
+
+      return (
+        row?.recipientOriginal || row?.recipientAddress || row?.recipient || ''
+      );
+    };
+
+    const renderAddressCell = (row: any, field: 'creator' | 'recipient') => {
+      const displayAddress = getDisplayAddress(row, field);
+      const rawAddress = getRawAddress(row, field);
+      const lookupValue = rawAddress || displayAddress;
+      const canLookup = lookupValue && lookupValue !== '-';
+      const isCurrentUser =
+        displayAddress === address ||
+        displayAddress === userName ||
+        rawAddress === address;
+
+      return (
+        <Typography
+          component="span"
+          role={canLookup ? 'button' : undefined}
+          tabIndex={canLookup ? 0 : undefined}
+          title={canLookup ? 'Open in User Search' : undefined}
+          onClick={() => openUserLookup(lookupValue)}
+          onKeyDown={(event) => {
+            if (!canLookup) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openUserLookup(lookupValue);
+            }
+          }}
+          sx={{
+            color: isCurrentUser ? 'info.main' : 'text.primary',
+            cursor: canLookup ? 'pointer' : 'default',
+            display: 'block',
+            fontSize: 13,
+            fontWeight: isCurrentUser ? 600 : 400,
+            maxWidth: 156,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            '&:hover': canLookup
+              ? {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                }
+              : undefined,
+          }}
+        >
+          {displayAddress}
+        </Typography>
+      );
+    };
+
+    const renderStatusIcon = (row: any) => {
+      const confirmations =
+        typeof row?.blockHeight === 'number' &&
+        typeof nodeInfo?.height === 'number'
+          ? nodeInfo.height - row.blockHeight
+          : null;
+      const isPending = confirmations == null || confirmations < 3;
+
+      return (
+        <Tooltip
+          placement="top"
+          title={
+            confirmations == null
+              ? 'Pending confirmation'
+              : isPending
+                ? `Pending, ${confirmations} of 3 confirmations`
+                : 'Confirmed'
+          }
+        >
+          {isPending ? (
+            <HistoryToggleOff sx={{ color: 'error.main', fontSize: 16 }} />
+          ) : (
+            <CheckCircleOutline sx={{ color: 'success.main', fontSize: 16 }} />
+          )}
+        </Tooltip>
+      );
+    };
+
+    const renderAmountCell = (row: any) => {
+      const hasAmount = row?.amount !== undefined && row?.amount !== null;
+      if (!hasAmount) {
+        return (
+          <Typography
+            sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 400 }}
+          >
+            -
+          </Typography>
+        );
+      }
+
+      const amount = Math.abs(toFiniteNumber(row.amount));
+      const rawRecipient = getRawAddress(row, 'recipient');
+      const displayRecipient = getDisplayAddress(row, 'recipient');
+      const isIncoming =
+        rawRecipient === address ||
+        displayRecipient === address ||
+        displayRecipient === userName;
+
+      return (
+        <Typography
+          sx={{
+            color: isIncoming ? 'success.main' : 'error.main',
+            fontSize: 13,
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isIncoming ? '+' : '-'}
+          {formatQortAmount(amount)} QORT
+        </Typography>
+      );
+    };
+
+    const renderTransactionRows = (rows: any[], emptyLabel: string) => {
+      if (!rows || rows.length === 0) {
+        const emptyMessage =
+          emptyLabel.toLowerCase() === 'all'
+            ? 'No transactions yet.'
+            : `No ${emptyLabel.toLowerCase()} transactions yet.`;
+        return (
+          <Box
+            sx={{
+              bgcolor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.025)'
+                  : 'rgba(17,24,39,0.035)',
+              borderRadius: 1,
+              color: 'text.secondary',
+              px: 2,
+              py: 4,
+              textAlign: 'center',
+            }}
+          >
+            <Typography sx={{ fontWeight: 600 }}>{emptyMessage}</Typography>
+          </Box>
+        );
+      }
+
+      const pagedRows =
+        rowsPerPage > 0
+          ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          : rows;
+
+      return (
+        <>
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box sx={{ minWidth: 760 }}>
+              <Box
+                aria-hidden
+                sx={{
+                  alignItems: 'center',
+                  borderBottom: (t) =>
+                    `1px solid ${
+                      t.palette.mode === 'dark'
+                        ? 'rgba(116,158,180,0.15)'
+                        : 'rgba(17,24,39,0.08)'
+                  }`,
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: transactionGridColumns,
+                  px: 1.25,
+                  py: 1,
+                }}
+              >
+                <Typography
+                  sx={{ ...transactionHeaderSx, textAlign: 'center' }}
+                >
+                  Status
+                </Typography>
+                <Typography sx={transactionHeaderSx}>Type</Typography>
+                <Typography sx={transactionHeaderSx}>Creator</Typography>
+                <Typography sx={transactionHeaderSx}>Recipient</Typography>
+                <Typography sx={{ ...transactionHeaderSx, textAlign: 'right' }}>
+                  Amount
+                </Typography>
+                <Typography sx={{ ...transactionHeaderSx, textAlign: 'right' }}>
+                  Fee
+                </Typography>
+                <Typography sx={transactionHeaderSx}>Time</Typography>
+              </Box>
+
+              <Box sx={{ display: 'grid' }}>
+                {pagedRows.map((row: any, index: Key) => (
+                  <Box
+                    key={row?.signature || index}
+                    sx={{
+                      alignItems: 'center',
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.012)'
+                          : 'rgba(17,24,39,0.018)',
+                      borderBottom: (t) =>
+                        `1px solid ${
+                          t.palette.mode === 'dark'
+                            ? 'rgba(116,158,180,0.085)'
+                            : 'rgba(17,24,39,0.06)'
+                      }`,
+                      display: 'grid',
+                      gap: 1,
+                      gridTemplateColumns: transactionGridColumns,
+                      minHeight: 46,
+                      px: 1.25,
+                      py: 0.85,
+                      transition:
+                        'background-color 150ms ease, border-color 150ms ease',
+                      '&:hover': {
+                        bgcolor: (t) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(24,189,242,0.055)'
+                            : 'rgba(5,127,168,0.05)',
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      {renderStatusIcon(row)}
+                    </Box>
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 400,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {formatTransactionType(row?.type)}
+                    </Typography>
+                    {renderAddressCell(row, 'creator')}
+                    {renderAddressCell(row, 'recipient')}
+                    <Box sx={{ textAlign: 'right' }}>
+                      {renderAmountCell(row)}
+                    </Box>
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 400,
+                        textAlign: 'right',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row?.fee !== undefined && row?.fee !== null
+                        ? `${formatQortFee(row.fee)} QORT`
+                        : '-'}
+                    </Typography>
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={new Date(row?.timestamp).toLocaleString()}
+                    >
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 13,
+                          fontWeight: 400,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
+                      </Typography>
+                    </CustomWidthTooltip>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+          <TablePagination
+            component="div"
+            labelRowsPerPage={t('core:rows_per_page', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={TablePaginationActions}
+            sx={{
+              color: 'text.secondary',
+              mt: 0.5,
+              '& .MuiTablePagination-toolbar': {
+                minHeight: 44,
+                px: 0,
+              },
+              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
+                {
+                  color: 'text.secondary',
+                  fontSize: 13,
+                },
+            }}
+          />
+        </>
+      );
+    };
+
     return (
       <Box sx={{ width: '100%' }}>
-        <TabContext value={value}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <TabList
-              onChange={handleChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="Qortal Transactions"
-            >
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ALL</span>}
-                value="Nine"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>PAYMENT</span>}
-                value="One"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ARBITRARY</span>}
-                value="Two"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>AT</span>}
-                value="Three"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>GROUP</span>}
-                value="Four"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>NAME</span>}
-                value="Five"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ASSET</span>}
-                value="Six"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>POLL</span>}
-                value="Seven"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>REWARDSHARE</span>}
-                value="Eight"
-              />
-            </TabList>
+        <Box
+          sx={{
+            alignItems: { xs: 'stretch', sm: 'center' },
+            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            justifyContent: 'space-between',
+            minWidth: 0,
+            pb: 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 0.5,
+              minWidth: 0,
+            }}
+          >
+            {primaryFilters.map((filter) => {
+              const isSelected = value === filter.value;
+              return (
+                <ButtonBase
+                  key={filter.value}
+                  onClick={() => handleTransactionFilterChange(filter.value)}
+                  sx={{
+                    borderBottom: (t) =>
+                      `2px solid ${isSelected ? t.palette.primary.main : 'transparent'}`,
+                    color: isSelected ? 'primary.main' : 'text.secondary',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    minHeight: 34,
+                    px: 1.25,
+                    transition: 'color 160ms ease, border-color 160ms ease',
+                    '&:hover': {
+                      color: 'text.primary',
+                    },
+                  }}
+                >
+                  {filter.label}
+                </ButtonBase>
+              );
+            })}
           </Box>
-          <TabPanel value="Nine">{tableAll()}</TabPanel>
-          <TabPanel value="One">{tablePayment()}</TabPanel>
-          <TabPanel value="Two">{tableArbitrary()}</TabPanel>
-          <TabPanel value="Three">{tableAt()}</TabPanel>
-          <TabPanel value="Four">{tableGroup()}</TabPanel>
-          <TabPanel value="Five">{tableName()}</TabPanel>
-          <TabPanel value="Six">{tableAsset()}</TabPanel>
-          <TabPanel value="Seven">{tablePoll()}</TabPanel>
-          <TabPanel value="Eight">{tableRewardshare()}</TabPanel>
-        </TabContext>
+
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              gap: 1,
+              justifyContent: { xs: 'space-between', sm: 'flex-end' },
+            }}
+          >
+            <Button
+              aria-controls={
+                advancedFilterOpen ? 'advanced-filter-menu' : undefined
+              }
+              aria-haspopup="true"
+              aria-expanded={advancedFilterOpen ? 'true' : undefined}
+              endIcon={<ExpandMore />}
+              onClick={handleAdvancedFilterClick}
+              size="small"
+              variant={selectedAdvancedFilter ? 'outlined' : 'text'}
+              sx={{
+                color: selectedAdvancedFilter
+                  ? 'primary.main'
+                  : 'text.secondary',
+                minHeight: 34,
+                px: 1,
+              }}
+            >
+              {selectedAdvancedFilter?.label || 'Advanced filters'}
+            </Button>
+            <Button
+              onClick={handleLoadingRefreshQort}
+              loading={loadingRefreshQort}
+              loadingPosition="start"
+              startIcon={<Refresh />}
+              variant="text"
+              size="small"
+              sx={{ minHeight: 34 }}
+            >
+              {t('core:action.refresh', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Button>
+          </Box>
+        </Box>
+
+        <Menu
+          id="advanced-filter-menu"
+          anchorEl={advancedFilterAnchor}
+          open={advancedFilterOpen}
+          onClose={handleAdvancedFilterClose}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 0.5,
+                minWidth: 180,
+              },
+            },
+          }}
+        >
+          {advancedFilters.map((filter) => (
+            <MenuItem
+              key={filter.value}
+              onClick={() => handleAdvancedFilterSelect(filter.value)}
+              selected={value === filter.value}
+            >
+              {filter.label}
+            </MenuItem>
+          ))}
+        </Menu>
+
+        <Box sx={{ pt: 1.25 }}>
+          {renderTransactionRows(selectedFilter.rows, selectedFilter.label)}
+        </Box>
       </Box>
     );
   };
@@ -3152,8 +3835,43 @@ export default function QortalWallet() {
     );
   };
 
+  const qortAddress = address ?? EMPTY_STRING;
+  const qortAddressLabel =
+    qortAddress ||
+    t('core:message.generic.no_address', {
+      postProcess: 'capitalizeFirstChar',
+    });
+  const visibleAddressBookEntries = qortAddressBookEntries.slice(0, 5);
+  const hasQortAddressBookSearch = qortAddressBookSearch.trim().length > 0;
+  const addressBookShowingLabel =
+    visibleAddressBookEntries.length > 0
+      ? `Showing 1 to ${visibleAddressBookEntries.length} of ${qortAddressBookEntries.length}`
+      : EMPTY_STRING;
+  const addressBookEmptyTitle = hasQortAddressBookSearch
+    ? 'No matching contacts'
+    : 'No QORT contacts found';
+  const addressBookEmptyDescription = hasQortAddressBookSearch
+    ? 'Try a different name, address or note.'
+    : 'Add a contact to make sends faster.';
+  const syncStatusLabel =
+    qortAddressBookSyncStatus === 'error'
+      ? 'Sync needs attention'
+      : qortAddressBookSyncing
+        ? 'Syncing...'
+        : 'Up to date';
+  const syncStatusTooltip =
+    qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
+      ? `Last sync: ${new Intl.DateTimeFormat(undefined, {
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }).format(new Date(qortAddressBookLastSync))}`
+      : syncStatusLabel;
+
   return (
-    <Box sx={{ width: '100%', mt: 2 }}>
+    <Box sx={{ width: '100%', mt: 1 }}>
       <Dialog
         fullScreen
         open={openQortSend}
@@ -3320,7 +4038,7 @@ export default function QortalWallet() {
                 <LinearProgress />
               </Box>
             ) : (
-              walletBalanceQort + ' QORT'
+              formatQortAmount(walletBalanceQort) + ' QORT'
             )}
           </Typography>
         </Box>
@@ -3348,7 +4066,8 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceQort - qortTxFee).toFixed(DECIMAL_ROUND_UP) + ' QORT'}
+            {formatQortAmount(toFiniteNumber(walletBalanceQort) - qortTxFee) +
+              ' QORT'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -3454,6 +4173,126 @@ export default function QortalWallet() {
         </Box>
       </Dialog>
 
+      <Dialog
+        open={openQortReceive}
+        onClose={handleCloseQortReceive}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ alignItems: 'center', display: 'flex', gap: 1.5, pr: 6 }}
+        >
+          <Box
+            component="img"
+            alt="QORT Logo"
+            src={coinLogoQORT}
+            sx={{ height: 32, width: 32 }}
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, lineHeight: 1.15 }}
+            >
+              {t('core:message.generic.qortal_wallet', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', fontWeight: 600 }}
+            >
+              {t('core:action.show_qrcode', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+          </Box>
+          <IconButton
+            aria-label="Close receive dialog"
+            onClick={handleCloseQortReceive}
+            size="small"
+            sx={{ position: 'absolute', right: 12, top: 12 }}
+          >
+            <Close fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 0 }}>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              pb: 2,
+            }}
+          >
+            <Box
+              sx={{
+                alignItems: 'center',
+                aspectRatio: '1 / 1',
+                bgcolor: '#fff',
+                border: (t) => `1px solid ${t.palette.divider}`,
+                borderRadius: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                maxWidth: 240,
+                p: 1,
+                width: '100%',
+              }}
+            >
+              <QRCode
+                value={address ?? EMPTY_STRING}
+                size={220}
+                fgColor="#000000"
+                bgColor="#ffffff"
+                level="H"
+                style={{ width: '100%', height: '100%' }}
+              />
+            </Box>
+            <Box
+              sx={{
+                alignItems: 'center',
+                bgcolor: 'action.hover',
+                border: (t) => `1px solid ${t.palette.divider}`,
+                borderRadius: 1,
+                display: 'flex',
+                gap: 1,
+                maxWidth: '100%',
+                px: 1.25,
+                py: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 700,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {address ||
+                  t('core:message.generic.no_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+              </Typography>
+              <CustomWidthTooltip
+                placement="top"
+                title={t('core:action.copy_address', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+              >
+                <IconButton
+                  size="small"
+                  onClick={() => copyToClipboard(address ?? EMPTY_STRING)}
+                >
+                  <CopyAllTwoTone fontSize="small" />
+                </IconButton>
+              </CustomWidthTooltip>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
       <AddressBookDialog
         open={openQortAddressBook}
         onClose={handleCloseAddressBook}
@@ -3462,124 +4301,224 @@ export default function QortalWallet() {
         prefillData={addressBookPrefill}
       />
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
+      <Box
+        sx={{
+          alignItems: 'start',
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 360px' },
+          width: '100%',
+        }}
+      >
+        <Box sx={{ display: 'grid', gap: 1.5, minWidth: 0 }}>
+          <Box
+            sx={{
+              alignItems: 'stretch',
+              display: 'grid',
+              gap: 1.5,
+            }}
           >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
+            <WalletCard
               sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
+                minHeight: { md: 168 },
+                overflow: 'hidden',
+                position: 'relative',
+                width: '100%',
               }}
             >
               <Box
                 sx={{
                   display: 'grid',
-                  alignItems: 'center',
-                  justifyItems: { xs: 'center', md: 'start' },
-                  gap: 1,
+                  gap: { xs: 2.25, md: 0 },
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'minmax(300px, 0.82fr) minmax(420px, 1.18fr)',
+                  },
+                  height: '100%',
+                  minHeight: { md: 168 },
+                  p: { xs: 2.25, md: 0 },
+                  position: 'relative',
+                  zIndex: 1,
                 }}
               >
                 <Box
-                  component="img"
-                  alt="QORT Logo"
-                  src={coinLogoQORT}
                   sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
+                    alignContent: { md: 'space-between' },
+                    display: 'grid',
+                    gap: { xs: 2, md: 1 },
+                    minHeight: { md: '100%' },
+                    minWidth: 0,
+                    p: { md: 3 },
                   }}
-                />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
                 >
-                  {t('core:message.generic.qortal_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
-                }}
-              >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      display: 'flex',
+                      gap: 1.5,
+                      minWidth: 0,
+                    }}
                   >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {isLoadingWalletBalanceQort ? (
-                      <LinearProgress />
-                    ) : (
-                      `${walletBalanceQort} QORT`
-                    )}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box alignItems={'center'} display={'flex'} gap={1}>
+                    <Box
+                      component="img"
+                      alt="QORT Logo"
+                      src={coinLogoQORT}
+                      sx={{ height: 58, width: 58 }}
+                    />
+                    <Box sx={{ minWidth: 0 }}>
+                      <Box
+                        sx={{ alignItems: 'center', display: 'flex', gap: 0.6 }}
+                      >
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            fontSize: { md: 24 },
+                            fontWeight: 700,
+                            lineHeight: 1.08,
+                          }}
+                        >
+                          QORT Wallet
+                        </Typography>
+                        <VerifiedRounded
+                          sx={{
+                            color: 'primary.main',
+                            filter:
+                              'drop-shadow(0 0 8px rgba(24,189,242,0.45))',
+                            fontSize: 18,
+                          }}
+                        />
+                      </Box>
                     <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
+                      variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 16,
+                          fontWeight: 500,
+                        }}
                     >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
+                      QORT
+                    </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ alignSelf: 'end' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'text.secondary', fontWeight: 500 }}
+                    >
+                      Available balance
                     </Typography>
                     <Typography
-                      variant="subtitle1"
+                      component="div"
+                      sx={{
+                        fontSize: { xs: '2.45rem', sm: '2.95rem' },
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        mt: 0.5,
+                      }}
+                    >
+                      {isLoadingWalletBalanceQort ? (
+                        <Box sx={{ maxWidth: 260, py: 1 }}>
+                          <LinearProgress />
+                        </Box>
+                      ) : (
+                        <>
+                          {formatQortAmount(walletBalanceQort)}
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: { xs: '1.05rem', sm: '1.22rem' },
+                              fontWeight: 600,
+                              ml: 0.6,
+                            }}
+                          >
+                            QORT
+                          </Typography>
+                        </>
+                      )}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    alignContent: { md: 'center' },
+                    background: 'transparent',
+                    bgcolor: 'transparent',
+                    display: 'grid',
+                    gap: 1.25,
+                    minWidth: 0,
+                    p: { md: 2.5 },
+                    pl: { md: 4 },
+                    position: 'relative',
+                    width: '100%',
+                    '&::before': {
+                      bgcolor: 'rgba(116,158,180,0.38)',
+                      bottom: { md: 24 },
+                      content: '""',
+                      display: { xs: 'none', md: 'block' },
+                      left: 0,
+                      position: 'absolute',
+                      top: { md: 24 },
+                      width: '1px',
+                      zIndex: 2,
+                    },
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      px: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    Your Address
+                  </Typography>
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(0, 7, 12, 0.2)'
+                          : 'rgba(17,24,39,0.035)',
+                      border: (t) =>
+                        `1px solid ${
+                          t.palette.mode === 'dark'
+                            ? 'rgba(116,158,180,0.18)'
+                            : 'rgba(17,24,39,0.08)'
+                        }`,
+                      borderRadius: 1,
+                      display: 'flex',
+                      gap: 1,
+                      minHeight: 50,
+                      minWidth: 0,
+                      px: 1.5,
+                      py: 0.9,
+                    }}
+                  >
+                    <ImportContacts
+                      fontSize="small"
+                      sx={{
+                        color: 'text.secondary',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
                       sx={{
                         color: 'text.primary',
-                        fontWeight: 700,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        minWidth: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
                       }}
                     >
-                      {address}
+                      {qortAddressLabel}
                     </Typography>
                     <CustomWidthTooltip
                       placement="top"
@@ -3589,106 +4528,89 @@ export default function QortalWallet() {
                     >
                       <IconButton
                         size="small"
-                        onClick={() => copyToClipboard(address ?? EMPTY_STRING)}
+                        onClick={() => copyToClipboard(qortAddress)}
+                        sx={{
+                          color: 'text.secondary',
+                          ml: 'auto',
+                          '&:hover': {
+                            color: 'primary.main',
+                          },
+                        }}
                       >
                         <CopyAllTwoTone fontSize="small" />
                       </IconButton>
                     </CustomWidthTooltip>
                   </Box>
-                </Grid>
 
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
                   <Box
                     sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
-                      display: 'flex',
-                      justifyContent: 'center',
-                      height: '100%',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
+                      display: 'grid',
+                      gap: 1.25,
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                     }}
                   >
-                    <QRCode
-                      value={address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
+                    <WalletButtons
+                      variant="contained"
+                      startIcon={<Send />}
+                      aria-label="Send QORT"
+                      onClick={handleOpenQortSend}
+                      sx={{ fontSize: 15, fontWeight: 700, minHeight: 46 }}
+                    >
+                      {t('core:action.send', {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </WalletButtons>
+                    <Button
+                      onClick={handleToggleReceivePanel}
+                      startIcon={
+                        receivePanelOpen ? <Close /> : <FileDownloadOutlined />
+                      }
+                      variant="outlined"
+                      sx={{
+                        borderColor: (t) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(116,158,180,0.18)'
+                            : 'rgba(17,24,39,0.08)',
+                        color: 'primary.main',
+                        fontSize: 15,
+                        fontWeight: 700,
+                        minHeight: 46,
+                        bgcolor: (t) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(0, 7, 12, 0.18)'
+                            : 'transparent',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'rgba(24,189,242,0.08)',
+                        },
+                      }}
+                    >
+                      {receivePanelOpen ? 'Hide QR' : 'Receive'}
+                    </Button>
                   </Box>
-                </Grid>
-              </Grid>
-            </Grid>
+                </Box>
+              </Box>
+            </WalletCard>
+          </Box>
 
-            <Grid size={12}>
+          <WalletCard sx={{ overflow: 'hidden', width: '100%' }}>
+            <Box sx={{ p: { xs: 1.5, md: 2 } }}>
               <Box
                 sx={{
+                  alignItems: { xs: 'flex-start', sm: 'center' },
                   display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 1,
+                  justifyContent: 'space-between',
+                  mb: 1,
                 }}
               >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenQortSend}
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 600, lineHeight: 1.1 }}
                 >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.QORT,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshQort}
-                  loading={loadingRefreshQort}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
-                </Button>
+                  Transactions
+                </Typography>
               </Box>
 
               {loadingRefreshQort ? (
@@ -3697,9 +4619,452 @@ export default function QortalWallet() {
                 <Box sx={{ width: '100%' }}>{qortalTables()}</Box>
               )}
             </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+          </WalletCard>
+        </Box>
+
+        <Box sx={{ display: 'grid', gap: 1.5, minWidth: 0 }}>
+          <Collapse
+            in={receivePanelOpen}
+            timeout={260}
+            unmountOnExit
+            sx={{
+              '& .MuiCollapse-wrapperInner': {
+                opacity: receivePanelOpen ? 1 : 0,
+                transform: receivePanelOpen
+                  ? 'translateY(0)'
+                  : 'translateY(-10px)',
+                transition:
+                  'opacity 260ms ease-out, transform 260ms ease-out',
+              },
+            }}
+          >
+            <WalletCard
+              sx={{
+                alignItems: 'center',
+                display: 'grid',
+                justifyItems: 'center',
+                minHeight: { md: 288 },
+                overflow: 'hidden',
+                p: 2,
+                width: '100%',
+              }}
+            >
+              <Box sx={{ textAlign: 'center', width: '100%' }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.25 }}>
+                  Receive QORT
+                </Typography>
+                <ButtonBase
+                  aria-label="Show receive QR code"
+                  onClick={handleOpenQortReceive}
+                  sx={{
+                    borderRadius: 1.5,
+                    display: 'inline-grid',
+                    p: 0.75,
+                    position: 'relative',
+                    '&:hover .qr-target-frame': {
+                      borderColor: 'primary.main',
+                      boxShadow: '0 0 28px rgba(24,189,242,0.2)',
+                    },
+                  }}
+                >
+                  <Box
+                    className="qr-target-frame"
+                    sx={{
+                      border: '1px solid rgba(24,189,242,0.5)',
+                      borderRadius: 1.5,
+                      p: 1.25,
+                      position: 'relative',
+                      transition:
+                        'border-color 160ms ease, box-shadow 160ms ease',
+                      '&::before, &::after': {
+                        borderColor: 'primary.main',
+                        borderStyle: 'solid',
+                        content: '""',
+                        height: 24,
+                        position: 'absolute',
+                        width: 24,
+                      },
+                      '&::before': {
+                        borderBottomWidth: 0,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 0,
+                        borderTopWidth: 1,
+                        left: -1,
+                        top: -1,
+                      },
+                      '&::after': {
+                        borderBottomWidth: 1,
+                        borderLeftWidth: 0,
+                        borderRightWidth: 1,
+                        borderTopWidth: 0,
+                        bottom: -1,
+                        right: -1,
+                      },
+                    }}
+                  >
+                    <Box
+                      ref={receiveQrRef}
+                      sx={{
+                        aspectRatio: '1 / 1',
+                        bgcolor: '#fff',
+                        borderRadius: 1,
+                        p: 1,
+                        width: 150,
+                      }}
+                    >
+                      <QRCode
+                        value={qortAddress}
+                        size={142}
+                        fgColor="#000000"
+                        bgColor="#ffffff"
+                        level="H"
+                        style={{ height: '100%', width: '100%' }}
+                      />
+                    </Box>
+                  </Box>
+                </ButtonBase>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mt: 1.25 }}
+                >
+                  Scan to receive
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: '1fr 1fr',
+                    mt: 1.5,
+                  }}
+                >
+                  <Button
+                    onClick={() => copyToClipboard(qortAddress)}
+                    size="small"
+                    startIcon={<CopyAllTwoTone />}
+                    variant="outlined"
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    onClick={handleDownloadReceiveQr}
+                    size="small"
+                    startIcon={<FileDownloadOutlined />}
+                    variant="outlined"
+                  >
+                    Download
+                  </Button>
+                </Box>
+              </Box>
+            </WalletCard>
+          </Collapse>
+
+          <WalletCard
+            id="qort-address-book-panel"
+            sx={{ overflow: 'hidden', width: '100%' }}
+          >
+            <Box sx={{ p: { xs: 2, md: 2.25 }, pb: 1.5 }}>
+              <Typography sx={{ fontWeight: 600, mb: 2 }}>
+                Address book (QORT)
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="Search by name, address or note"
+                size="small"
+                value={qortAddressBookSearch}
+                onChange={(event) =>
+                  setQortAddressBookSearch(event.target.value)
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search
+                        fontSize="small"
+                        sx={{ color: 'text.secondary' }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 1.5,
+                  '& .MuiInputBase-input': {
+                    fontSize: 13,
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: (t) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(2, 10, 16, 0.22)'
+                        : 'rgba(17,24,39,0.025)',
+                    '& fieldset': {
+                      borderColor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(116,158,180,0.18)'
+                          : 'rgba(17,24,39,0.08)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.main',
+                    },
+                  },
+                }}
+              />
+              <Button
+                fullWidth
+                startIcon={<Add />}
+                variant="outlined"
+                onClick={handleOpenAddressBook}
+                sx={{
+                  borderColor: (t) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(24,189,242,0.42)'
+                      : undefined,
+                  mb: 1.25,
+                }}
+              >
+                Add contact
+              </Button>
+
+              <Box sx={{ display: 'grid' }}>
+                {visibleAddressBookEntries.length > 0 ? (
+                  visibleAddressBookEntries.map((entry, index) => {
+                    const initials =
+                      entry.name
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((part) => part[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase() || 'Q';
+                    const avatarColors = [
+                      '#7446b8',
+                      '#2669a7',
+                      '#aa5a31',
+                      '#4c7d48',
+                      '#a18b22',
+                    ];
+
+                    return (
+                      <Box
+                        key={entry.id}
+                        sx={{
+                          alignItems: 'center',
+                          borderBottom:
+                            index === visibleAddressBookEntries.length - 1
+                              ? 'none'
+                              : (t) => `1px solid ${t.palette.divider}`,
+                          display: 'grid',
+                          gap: 1,
+                          gridTemplateColumns: '44px minmax(0, 1fr) auto auto',
+                          py: 1.5,
+                        }}
+                      >
+                        <Avatar
+                          sx={{
+                            bgcolor: avatarColors[index % avatarColors.length],
+                            fontSize: 13,
+                            fontWeight: 600,
+                            height: 38,
+                            width: 38,
+                          }}
+                        >
+                          {initials}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 600,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {entry.name}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: 'text.secondary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {cropString(entry.address, 18)}
+                          </Typography>
+                          {entry.note && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                display: 'block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {entry.note}
+                            </Typography>
+                          )}
+                        </Box>
+                        <CustomWidthTooltip
+                          placement="top"
+                          title={t('core:action.copy_address', {
+                            postProcess: 'capitalizeFirstChar',
+                          })}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => copyToClipboard(entry.address)}
+                            sx={{
+                              border: (t) => `1px solid ${t.palette.divider}`,
+                              borderRadius: 1,
+                            }}
+                          >
+                            <CopyAllTwoTone fontSize="small" />
+                          </IconButton>
+                        </CustomWidthTooltip>
+                        <CustomWidthTooltip placement="top" title="Send QORT">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              handleSelectAddress(entry.address, entry.name)
+                            }
+                            sx={{
+                              border: (t) => `1px solid ${t.palette.divider}`,
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Send fontSize="small" />
+                          </IconButton>
+                        </CustomWidthTooltip>
+                      </Box>
+                    );
+                  })
+                ) : (
+                  <Box
+                    sx={{
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.018)'
+                          : 'rgba(17,24,39,0.035)',
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      px: 2,
+                      py: 2.25,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <ImportContacts
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 34,
+                        mb: 0.75,
+                        opacity: 0.5,
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {addressBookEmptyTitle}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      {addressBookEmptyDescription}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {addressBookShowingLabel && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mt: 1.5 }}
+                >
+                  {addressBookShowingLabel}
+                </Typography>
+              )}
+            </Box>
+          </WalletCard>
+
+          <WalletCard sx={{ overflow: 'hidden', width: '100%' }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                px: { xs: 2, md: 2.25 },
+                py: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  gap: 1.25,
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Box sx={{ alignItems: 'center', display: 'flex', gap: 1 }}>
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      bgcolor: 'rgba(34,227,138,0.12)',
+                      border: '1px solid rgba(34,227,138,0.28)',
+                      borderRadius: 1.25,
+                      boxShadow: 'inset 0 0 18px rgba(34,227,138,0.16)',
+                      color: 'success.main',
+                      display: 'inline-flex',
+                      height: 34,
+                      justifyContent: 'center',
+                      width: 34,
+                    }}
+                  >
+                    <LockOutlined fontSize="small" />
+                  </Box>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    Encrypted sync
+                  </Typography>
+                </Box>
+                <Box
+                  title={syncStatusTooltip}
+                  sx={{
+                    alignItems: 'center',
+                    bgcolor:
+                      qortAddressBookSyncStatus === 'error'
+                        ? 'rgba(255,95,102,0.12)'
+                        : 'rgba(34,227,138,0.12)',
+                    borderRadius: 999,
+                    color:
+                      qortAddressBookSyncStatus === 'error'
+                        ? 'error.main'
+                        : 'success.main',
+                    display: 'inline-flex',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    gap: 0.5,
+                    px: 1,
+                    py: 0.45,
+                  }}
+                >
+                  <CheckCircleOutline sx={{ fontSize: 15 }} />
+                  {syncStatusLabel}
+                </Box>
+              </Box>
+
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Local address book
+                </Typography>
+              </Box>
+              <Button
+                fullWidth
+                loading={qortAddressBookSyncing}
+                loadingPosition="start"
+                onClick={handleSyncQortAddressBook}
+                startIcon={<CloudSync />}
+                variant="contained"
+                sx={{ minHeight: 46 }}
+              >
+                Sync now
+              </Button>
+            </Box>
+          </WalletCard>
+        </Box>
+      </Box>
     </Box>
   );
 }

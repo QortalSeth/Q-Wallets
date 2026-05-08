@@ -4,6 +4,9 @@ import ThemeProviderWrapper from './styles/theme/theme-provider.tsx';
 import './index.css';
 import { Routes } from './routes/Routes.tsx';
 import WalletContext, { defaultState } from './contexts/walletContext.ts';
+import { installQortalRequestBridge } from './utils/qortalRequestBridge.ts';
+
+installQortalRequestBridge();
 
 type WalletProviderProps = { children: ReactNode };
 

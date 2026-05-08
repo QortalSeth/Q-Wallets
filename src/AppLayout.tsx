@@ -1,6 +1,8 @@
 import {
   AppBar,
   Box,
+  ButtonBase,
+  Button,
   Container,
   Dialog,
   DialogContent,
@@ -20,6 +22,7 @@ import {
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import walletContext, { IContextProps } from './contexts/walletContext';
@@ -31,6 +34,7 @@ import doge from './assets/doge.png';
 import dgb from './assets/dgb.png';
 import rvn from './assets/rvn.png';
 import arrr from './assets/arrr.png';
+import qWalletsLogo from './assets/q-wallets-logo.webp';
 import { useIframe } from './hooks/useIframeListener';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../package.json';
@@ -158,14 +162,14 @@ export default function AppLayout() {
       icon: <img src={qort} style={coinStyle} />,
     },
     {
-      segment: 'litecoin',
-      title: t('core:coins.litecoin', { postProcess: 'capitalizeFirstChar' }),
-      icon: <img src={ltc} style={coinStyle} />,
-    },
-    {
       segment: 'bitcoin',
       title: t('core:coins.bitcoin', { postProcess: 'capitalizeFirstChar' }),
       icon: <img src={btc} style={coinStyle} />,
+    },
+    {
+      segment: 'litecoin',
+      title: t('core:coins.litecoin', { postProcess: 'capitalizeFirstChar' }),
+      icon: <img src={ltc} style={coinStyle} />,
     },
     {
       segment: 'dogecoin',
@@ -191,7 +195,26 @@ export default function AppLayout() {
     },
   ];
 
-  const drawerWidth = isMobile ? 120 : 140;
+  const navItems = NAVIGATION.filter(
+    (i): i is NavSegment => (i as any).segment
+  );
+  const coinLabels: Record<string, string> = {
+    qortal: 'QORT',
+    litecoin: 'LTC',
+    bitcoin: 'BTC',
+    dogecoin: 'DOGE',
+    digibyte: 'DGB',
+    ravencoin: 'RVN',
+    piratechain: 'ARRR',
+  };
+  const activeNavItem =
+    navItems.find(
+      (item) =>
+        selectedSegment === item.segment ||
+        (selectedSegment === '/' && item.segment === '/')
+    ) ?? navItems[0];
+
+  const drawerWidth = 280;
 
   const drawerSx = {
     width: drawerWidth,
@@ -201,7 +224,7 @@ export default function AppLayout() {
       display: 'flex',
       flexDirection: 'column',
       overflowX: 'hidden',
-      pt: 1,
+      p: 1.5,
       width: drawerWidth,
     },
   } as const;
@@ -218,18 +241,29 @@ export default function AppLayout() {
   };
 
   const drawerContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: drawerWidth }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+      }}
+    >
       <List
         disablePadding
         subheader={
           <ListSubheader
             component="div"
             sx={{
+              bgcolor: 'transparent',
+              color: 'text.secondary',
               fontSize: 11,
-              letterSpacing: 1.2,
+              fontWeight: 700,
+              letterSpacing: 1,
               lineHeight: 1.2,
+              px: 1,
               py: 1.5,
-              textAlign: 'center',
+              textTransform: 'uppercase',
             }}
           >
             {t('core:wallets', { postProcess: 'capitalizeAll' })}
@@ -237,35 +271,43 @@ export default function AppLayout() {
         }
         sx={{ flexGrow: 1 }}
       >
-        {NAVIGATION.filter((i): i is NavSegment => (i as any).segment).map((item) => {
+        {navItems.map((item) => {
           const isSelected =
             selectedSegment === item.segment ||
             (selectedSegment === '/' && item.segment === '/');
           return (
-            <ListItem key={item.segment} disablePadding>
+            <ListItem key={item.segment} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => handleNavigate(item.segment)}
                 selected={isSelected}
                 sx={{
-                  py: 2,
-                  minHeight: 56,
+                  borderRadius: 1.5,
+                  minHeight: 48,
+                  px: 1,
+                  py: 1,
                   '&.Mui-selected': (theme: Theme) => ({
-                    borderRight: `3px solid ${theme.palette.primary.main}`,
+                    bgcolor: theme.palette.action.selected,
+                    color: theme.palette.primary.main,
+                    fontWeight: 700,
                   }),
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: 0,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    minWidth: 0,
+                    width: '100%',
                   }}
                 >
-                  <Box sx={{ width: 24, height: 24, display: 'inline-flex' }}>{item.icon}</Box>
+                  <Box sx={{ width: 24, height: 24, display: 'inline-flex' }}>
+                    {item.icon}
+                  </Box>
                   <Box
                     sx={{
-                      fontSize: 11,
+                      fontSize: 13,
+                      fontWeight: 500,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -280,7 +322,10 @@ export default function AppLayout() {
         })}
       </List>
       <Box sx={{ mt: 'auto', mb: 1, textAlign: 'center' }}>
-        <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>
+        <Typography
+          variant="caption"
+          sx={{ fontSize: 10, color: 'text.secondary' }}
+        >
           v{packageJson.version}
         </Typography>
         <br />
@@ -296,27 +341,234 @@ export default function AppLayout() {
     </Box>
   );
 
+  const desktopNavigation = (
+    <Box
+      sx={{
+        alignItems: 'center',
+        background: (t) =>
+          t.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 22% 0%, rgba(24, 189, 242, 0.08), transparent 34%), linear-gradient(180deg, rgba(10, 21, 30, 0.9) 0%, rgba(7, 16, 23, 0.96) 100%)'
+            : 'rgba(255,255,255,0.96)',
+        border: (t) =>
+          `1px solid ${
+            t.palette.mode === 'dark'
+              ? 'rgba(116, 158, 180, 0.16)'
+              : 'rgba(17,24,39,0.08)'
+          }`,
+        borderRadius: 1,
+        display: { xs: 'none', md: 'block' },
+        mb: 2.5,
+        overflow: 'hidden',
+      }}
+    >
+      <Box
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 2,
+          justifyContent: 'space-between',
+          minHeight: 72,
+          px: 2,
+        }}
+      >
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            gap: 1,
+            minWidth: 210,
+          }}
+        >
+          <Box
+            component="img"
+            alt="Q-Wallets"
+            src={qWalletsLogo}
+            sx={{
+              filter: 'drop-shadow(0 0 12px rgba(24,189,242,0.26))',
+              height: 34,
+              width: 34,
+            }}
+          />
+          <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
+            Q-Wallets
+          </Typography>
+          <Link
+            component="button"
+            variant="caption"
+            onClick={() => setChangelogOpen(true)}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.055)',
+              border: (t) =>
+                `1px solid ${
+                  t.palette.mode === 'dark'
+                    ? 'rgba(116,158,180,0.16)'
+                    : 'rgba(17,24,39,0.08)'
+                }`,
+              borderRadius: 999,
+              color: 'text.secondary',
+              fontSize: 11,
+              fontWeight: 600,
+              lineHeight: 1,
+              px: 1,
+              py: 0.5,
+              textDecoration: 'none',
+            }}
+          >
+            v{packageJson.version}
+          </Link>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+            justifyContent: 'center',
+            maxWidth: 700,
+          }}
+        >
+          {navItems.map((item) => {
+            const isSelected =
+              selectedSegment === item.segment ||
+              (selectedSegment === '/' && item.segment === '/');
+            return (
+              <ButtonBase
+                key={item.segment}
+                onClick={() => handleNavigate(item.segment)}
+                sx={{
+                  alignItems: 'center',
+                  border: (t) =>
+                    `1px solid ${
+                      isSelected ? t.palette.primary.main : 'transparent'
+                    }`,
+                  borderRadius: 1,
+                  color: isSelected ? 'primary.contrastText' : 'text.secondary',
+                  display: 'inline-flex',
+                  gap: 0.75,
+                  minHeight: 42,
+                  minWidth: 86,
+                  px: 1.5,
+                  py: 0.75,
+                  bgcolor: isSelected
+                    ? 'rgba(24, 189, 242, 0.14)'
+                    : 'transparent',
+                  boxShadow: isSelected
+                    ? 'inset 0 0 0 1px rgba(24, 189, 242, 0.24)'
+                    : 'none',
+                  '&:hover': {
+                    bgcolor: isSelected
+                      ? 'rgba(24, 189, 242, 0.2)'
+                      : 'action.hover',
+                    color: 'text.primary',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'inline-flex', height: 22, width: 22 }}>
+                  {item.icon}
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: isSelected ? 600 : 500, lineHeight: 1 }}
+                >
+                  {coinLabels[item.segment] ?? item.title}
+                </Typography>
+              </ButtonBase>
+            );
+          })}
+        </Box>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            gap: 1.25,
+            justifyContent: 'flex-end',
+            minWidth: 190,
+          }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<HistoryOutlinedIcon />}
+            onClick={() => setChangelogOpen(true)}
+            sx={{ minHeight: 42 }}
+          >
+            Changelog
+          </Button>
+          <Box
+            sx={{
+              borderLeft: (t) => `1px solid ${t.palette.divider}`,
+              height: 34,
+              mx: 0.25,
+            }}
+          />
+          <IconButton
+            aria-label="close"
+            onClick={() =>
+              window.parent?.postMessage({ action: 'CLOSE_QAPP' }, '*')
+            }
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
+  );
+
   return (
-    <Box sx={{ display: 'flex', width: '100%' }}>
+    <Box
+      sx={{
+        bgcolor: 'background.default',
+        backgroundImage: (t) =>
+          t.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 8% 5%, rgba(24, 189, 242, 0.11), transparent 28%), radial-gradient(circle at 92% 18%, rgba(24, 189, 242, 0.08), transparent 28%), linear-gradient(180deg, #071016 0%, #050b10 100%)'
+            : 'none',
+        minHeight: '100dvh',
+        width: '100%',
+      }}
+    >
       {isMobile && (
-        <AppBar position="fixed" color="primary" sx={{ zIndex: (t: Theme) => t.zIndex.drawer + 1 }}>
-          <Toolbar sx={{ minHeight: 56 }}>
+        <AppBar
+          position="sticky"
+          elevation={0}
+          sx={{
+            bgcolor: 'background.paper',
+            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+            color: 'text.primary',
+            zIndex: (t: Theme) => t.zIndex.drawer + 1,
+          }}
+        >
+          <Toolbar sx={{ minHeight: 56, px: 1.5 }}>
             <IconButton
-              color="inherit"
+              color="primary"
               edge="start"
               onClick={handleDrawerToggle}
               sx={{ mr: 1 }}
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" component="div" noWrap>
-              {t('core:wallets', { postProcess: 'capitalizeAll' })}
-            </Typography>
+            <Box sx={{ display: 'inline-flex', height: 26, mr: 1, width: 26 }}>
+              {activeNavItem?.icon}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="subtitle1"
+                component="div"
+                noWrap
+                sx={{ fontWeight: 700 }}
+              >
+                {activeNavItem?.title}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', fontWeight: 600 }}
+              >
+                {t('core:wallets', { postProcess: 'capitalizeAll' })}
+              </Typography>
+            </Box>
           </Toolbar>
         </AppBar>
       )}
 
-      {isMobile ? (
+      {isMobile && (
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -326,15 +578,23 @@ export default function AppLayout() {
         >
           {drawerContent}
         </Drawer>
-      ) : (
-        <Drawer variant="permanent" sx={drawerSx}>
-          {drawerContent}
-        </Drawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, width: '100%', overflowX: 'auto' }}>
-        {isMobile && <Toolbar />}
-        <Container maxWidth="xl" sx={{ my: isMobile ? 6 : 8 }}>
+      <Box
+        component="main"
+        sx={{
+          overflowX: 'auto',
+          px: { xs: 1.5, sm: 2, md: 3 },
+          py: { xs: 2, md: 3 },
+          width: '100%',
+        }}
+      >
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{ maxWidth: 1280, mx: 'auto' }}
+        >
+          {desktopNavigation}
           <Outlet />
         </Container>
       </Box>
@@ -349,9 +609,15 @@ export default function AppLayout() {
         <DialogTitle sx={{ textAlign: 'center', position: 'relative' }}>
           CHANGELOG
           <IconButton
+            aria-label="Close changelog"
             onClick={() => setChangelogOpen(false)}
             size="small"
-            sx={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
           >
             <CloseIcon />
           </IconButton>
@@ -360,7 +626,13 @@ export default function AppLayout() {
           <Box
             sx={{
               '& h1': { fontSize: '1.5rem', fontWeight: 600, mb: 2, mt: 0 },
-              '& h2': { fontSize: '1.2rem', fontWeight: 600, mb: 1, mt: 3, color: 'primary.main' },
+              '& h2': {
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                mb: 1,
+                mt: 3,
+                color: 'primary.main',
+              },
               '& h3': { fontSize: '1rem', fontWeight: 600, mb: 1, mt: 2 },
               '& ul': { pl: 2, mb: 1 },
               '& li': { mb: 0.5, fontSize: 14 },

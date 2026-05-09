@@ -1,58 +1,27 @@
 import {
   ChangeEvent,
-  Key,
   MouseEvent,
   SyntheticEvent,
   useEffect,
   useState,
 } from 'react';
-import {
-  epochToAgo,
-  timeoutDelay,
-  cropString,
-  copyToClipboard,
-} from '../../common/functions';
+import { timeoutDelay, copyToClipboard } from '../../common/functions';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
-  AppBar,
-  Avatar,
   Box,
-  Button,
-  Dialog,
   DialogContent,
-  Grid,
   IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableContainer,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Toolbar,
   Typography,
 } from '@mui/material';
-import { NumericFormat as _NumericFormat } from 'react-number-format';
-const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>>;
-import TableCell from '@mui/material/TableCell';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
-import QRCode from 'react-qr-code';
 import {
-  Close,
-  CopyAllTwoTone,
   FirstPage,
-  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  Refresh,
-  Send,
 } from '@mui/icons-material';
 import coinLogoLTC from '../../assets/ltc.png';
 import { useTranslation } from 'react-i18next';
@@ -67,19 +36,22 @@ import {
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
-  CustomWidthTooltip,
   SlideTransition,
-  StyledTableCell,
-  StyledTableRow,
   SubmitDialog,
   Transition,
-  WalletButtons,
-  WalletCard,
+  WalletSendDialog,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
 import { Coin } from 'qapp-core';
 import { validateLtcAddress } from '../../utils/addressValidation';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import {
+  WalletExternalTransactionsList,
+  WalletTransactionsCard,
+  WalletTransactionsLoader,
+  WalletWorkspace,
+} from '../../components/WalletWorkspace';
+import { ExternalSendForm } from '../../components/ExternalSendForm';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -161,8 +133,6 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function LitecoinWallet() {
   const { t } = useTranslation(['core']);
-  const theme = useTheme();
-
   const [walletInfoLtc, setWalletInfoLtc] = useState<any>({});
   const [walletBalanceLtc, setWalletBalanceLtc] = useState<any>(0);
   const [_isLoadingWalletInfoLtc, setIsLoadingWalletInfoLtc] =
@@ -184,6 +154,7 @@ export default function LitecoinWallet() {
   const [openSendLtcSuccess, setOpenSendLtcSuccess] = useState(false);
   const [openSendLtcError, setOpenSendLtcError] = useState(false);
   const [openLtcAddressBook, setOpenLtcAddressBook] = useState(false);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
   const [inputFee, setInputFee] = useState(0);
   const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(
@@ -205,11 +176,6 @@ export default function LitecoinWallet() {
     );
     return truncatedMaxSendableLtcCoin;
   };
-
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsLtc.length)
-      : 0;
 
   const handleOpenAddressBook = () => {
     setOpenLtcAddressBook(true);
@@ -454,279 +420,87 @@ export default function LitecoinWallet() {
 
   const tableLoader = () => {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-          >
-            {t('core:message.generic.loading_transactions', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Box>
+      <WalletTransactionsLoader
+        label={t('core:message.generic.loading_transactions', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+      />
     );
   };
 
-  const transactionsTable = () => {
-    return (
-      <TableContainer component={Paper}>
-        <Table
-          stickyHeader
-          sx={{ width: '100%' }}
-          aria-label="transactions table"
-        >
-          <TableHead>
-            <TableRow>
-              <StyledTableCell align="left">
-                {t('core:sender', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:receiver', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:transaction_hash', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:total_amount', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:fee.fee', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:time', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(rowsPerPage > 0
-              ? transactionsLtc.slice(
-                  page * rowsPerPage,
-                  page * rowsPerPage + rowsPerPage
-                )
-              : transactionsLtc
-            )?.map(
-              (
-                row: {
-                  inputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  outputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  txHash: string;
-                  totalAmount: any;
-                  feeAmount: any;
-                  timestamp: number;
-                },
-                k: Key
-              ) => (
-                <StyledTableRow key={k}>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.inputs.map((input, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: input.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {input.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(input.amount) / 1e8).toFixed(
-                            DECIMAL_ROUND_UP
-                          )}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.outputs.map((output, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: output.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {output.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(output.amount) / 1e8).toFixed(
-                            DECIMAL_ROUND_UP
-                          )}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {cropString(row?.txHash)}
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        copyLtcTxHash
-                          ? copyLtcTxHash
-                          : t('core:action.copy_hash', {
-                              hash: row?.txHash,
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <IconButton
-                        aria-label="copy"
-                        size="small"
-                        onClick={() => {
-                          copyToClipboard(row?.txHash);
-                          changeCopyLtcTxHash();
-                        }}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.totalAmount > 0 ? (
-                      <Box style={{ color: theme.palette.success.main }}>
-                        +
-                        {(Number(row?.totalAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        {(Number(row?.totalAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="right">
-                    {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        -
-                        {(Number(row?.feeAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: 'grey' }}>
-                        -
-                        {(Number(row?.feeAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        row?.timestamp
-                          ? new Date(row?.timestamp).toLocaleString()
-                          : t('core:message.generic.waiting_confirmation', {
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <Box>
-                        {row?.timestamp
-                          ? epochToAgo(row?.timestamp)
-                          : t('core:message.generic.unconfirmed_transaction', {
-                              postProcess: 'capitalizeFirstChar',
-                            })}
-                      </Box>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                </StyledTableRow>
-              )
-            )}
-            {emptyRows > 0 && (
-              <TableRow style={{ height: 53 * emptyRows }}>
-                <TableCell colSpan={6} />
-              </TableRow>
-            )}
-          </TableBody>
-          <TableFooter sx={{ width: '100%' }}>
-            <TableRow>
-              <TablePagination
-                labelRowsPerPage={t('core:rows_per_page', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                colSpan={6}
-                count={transactionsLtc.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      'aria-label': 'rows per page',
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={TablePaginationActions}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-    );
-  };
+  const transactionsTable = () => (
+    <WalletExternalTransactionsList
+      ActionsComponent={TablePaginationActions}
+      coin="LTC"
+      copyHashLabel={copyLtcTxHash || undefined}
+      labels={{
+        allRows: 'All',
+        copyHash: (hash) =>
+          t('core:action.copy_hash', {
+            hash,
+            postProcess: 'capitalizeFirstChar',
+          }),
+        fee: t('core:fee.fee', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        noTransactions: 'No transactions.',
+        receiver: t('core:receiver', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        rowsPerPage: t('core:rows_per_page', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        sender: t('core:sender', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        time: t('core:time', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        totalAmount: t('core:total_amount', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        transactionHash: t('core:transaction_hash', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        waitingConfirmation: t('core:message.generic.waiting_confirmation', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+      }}
+      onCopyHash={(hash) => {
+        copyToClipboard(hash);
+        changeCopyLtcTxHash();
+      }}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      page={page}
+      rows={transactionsLtc}
+      rowsPerPage={rowsPerPage}
+    />
+  );
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      <Dialog
-        fullScreen
+      <WalletSendDialog
         open={openLtcSend}
         onClose={handleCloseLtcSend}
         slots={{ transition: Transition }}
+        maxWidth={false}
+        fullWidth
+        disableScrollLock
+        slotProps={{
+          paper: {
+            sx: {
+              width: 'min(653px, calc(100vw - 32px))',
+            },
+          },
+        }}
       >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxLtcSubmit}>
+        <SubmitDialog
+          fullWidth={true}
+          maxWidth="xs"
+          open={openTxLtcSubmit}
+          disableScrollLock
+        >
           <DialogContent>
             <Box
               sx={{
@@ -803,202 +577,36 @@ export default function LitecoinWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseLtcSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="LTC Logo"
-              src={coinLogoLTC}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.LTC,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendLtc()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-ltc"
-              onClick={sendLtcRequest}
-              sx={{
-                backgroundcolor: 'action.main',
-                color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceLtc ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : walletBalanceError ? (
-              walletBalanceError
-            ) : (
-              walletBalanceLtc + ' LTC'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {(() => {
-              const newMaxLtcAmount =
-                +walletBalanceLtc - estimatedFeeCalculated;
-              if (newMaxLtcAmount < 0) {
-                return Number(0.0) + ' LTC';
-              } else {
-                return newMaxLtcAmount + ' LTC';
-              }
-            })()}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxLtc}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={ltcAmount}
-            allowNegative={false}
-            customInput={TextField as React.ComponentType<any>}
-            valueIsNumericString
-            label="Amount (LTC)"
-            fullWidth
-            isAllowed={(values) => {
-              const maxLtcCoin = +walletBalanceLtc - estimatedFeeCalculated;
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue ?? 0) <= maxLtcCoin
-              );
-            }}
-            onValueChange={(values) => {
-              setLtcAmount(values.floatValue ?? 0);
-            }}
-            required
-          />
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="ltc-address"
-            margin="normal"
-            value={ltcRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            fullWidth
-            helperText={
-              addressFormatError
-                ? t('core:message.error.litecoin_address_invalid', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-                : t('core:message.generic.litecoin_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          />
-        </Box>
-        <FeeManager coin="LTC" onChange={setInputFee} />
-      </Dialog>
+        <ExternalSendForm
+          addressError={addressFormatError}
+          addressHelperText={
+            addressFormatError
+              ? t('core:message.error.litecoin_address_invalid', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:message.generic.litecoin_address', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+          }
+          addressInputId="ltc-address"
+          amount={ltcAmount}
+          balance={walletBalanceLtc}
+          balanceError={walletBalanceError}
+          coinLogo={coinLogoLTC}
+          feeContent={<FeeManager coin="LTC" onChange={setInputFee} />}
+          isBalanceLoading={isLoadingWalletBalanceLtc}
+          maxSendable={maxSendableLtcCoin()}
+          onAmountChange={setLtcAmount}
+          onClose={handleCloseLtcSend}
+          onOpenAddressBook={handleOpenAddressBook}
+          onRecipientChange={handleRecipientChange}
+          onSend={sendLtcRequest}
+          onSendMax={handleSendMaxLtc}
+          recipient={ltcRecipient}
+          sendDisabled={disableCanSendLtc()}
+          symbol="LTC"
+        />
+      </WalletSendDialog>
 
       <AddressBookDialog
         open={openLtcAddressBook}
@@ -1007,241 +615,32 @@ export default function LitecoinWallet() {
         onSelectAddress={handleSelectAddress}
       />
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
+      <WalletWorkspace
+        address={walletInfoLtc?.address ?? EMPTY_STRING}
+        addressBookRefreshKey={openLtcAddressBook}
+        balance={walletBalanceLtc}
+        balanceDecimals={8}
+        balanceError={walletBalanceError}
+        coin="LTC"
+        isBalanceLoading={isLoadingWalletBalanceLtc}
+        onAddContact={handleOpenAddressBook}
+        onSelectAddress={handleSelectAddress}
+        onSend={handleOpenLtcSend}
+        onToggleReceive={() => setReceivePanelOpen((prev) => !prev)}
+        receiveOpen={receivePanelOpen}
+        transactions={
+          <WalletTransactionsCard
+            isRefreshing={loadingRefreshLtc}
+            onRefresh={handleLoadingRefreshLtc}
           >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
-              sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
-              }}
-            >
-              <Box sx={{ display: 'grid', alignItems: 'center' }}>
-                <Box
-                  component="img"
-                  alt="LTC Logo"
-                  src={coinLogoLTC}
-                  sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
-                  }}
-                />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {t('core:message.generic.litecoin_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
-                }}
-              >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
-                  >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {walletBalanceLtc ? (
-                      `${walletBalanceLtc} LTC`
-                    ) : isLoadingWalletBalanceLtc ? (
-                      <LinearProgress />
-                    ) : undefined}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
-                      }}
-                    >
-                      {walletInfoLtc?.address}
-                    </Typography>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={t('core:action.copy_address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          copyToClipboard(
-                            walletInfoLtc?.address ?? EMPTY_STRING
-                          )
-                        }
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
-                      display: 'flex',
-                      height: '100%',
-                      justifyContent: 'center',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
-                    }}
-                  >
-                    <QRCode
-                      value={walletInfoLtc?.address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid size={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
-                }}
-              >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenLtcSend}
-                >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.LTC,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshLtc}
-                  loading={loadingRefreshLtc}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
-                </Button>
-              </Box>
-
-              {isLoadingLtcTransactions ? (
-                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
-              ) : (
-                <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+            {isLoadingLtcTransactions || loadingRefreshLtc ? (
+              tableLoader()
+            ) : (
+              <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
+            )}
+          </WalletTransactionsCard>
+        }
+      />
     </Box>
   );
 }

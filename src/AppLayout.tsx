@@ -2,7 +2,6 @@ import {
   AppBar,
   Box,
   ButtonBase,
-  Button,
   Container,
   Dialog,
   DialogContent,
@@ -22,7 +21,6 @@ import {
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import walletContext, { IContextProps } from './contexts/walletContext';
@@ -365,10 +363,10 @@ export default function AppLayout() {
         sx={{
           alignItems: 'center',
           display: 'flex',
-          gap: 2,
+          gap: 1.5,
           justifyContent: 'space-between',
-          minHeight: 72,
-          px: 2,
+          minHeight: 60,
+          px: 1.5,
         }}
       >
         <Box
@@ -376,7 +374,7 @@ export default function AppLayout() {
             alignItems: 'center',
             display: 'flex',
             gap: 1,
-            minWidth: 210,
+            minWidth: 184,
           }}
         >
           <Box
@@ -385,8 +383,8 @@ export default function AppLayout() {
             src={qWalletsLogo}
             sx={{
               filter: 'drop-shadow(0 0 12px rgba(24,189,242,0.26))',
-              height: 34,
-              width: 34,
+              height: 32,
+              width: 32,
             }}
           />
           <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
@@ -420,58 +418,71 @@ export default function AppLayout() {
         <Box
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: 1,
+            flex: '1 1 auto',
+            flexWrap: 'nowrap',
+            gap: 0,
             justifyContent: 'center',
-            maxWidth: 700,
+            minWidth: 0,
           }}
         >
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const isSelected =
               selectedSegment === item.segment ||
               (selectedSegment === '/' && item.segment === '/');
             return (
-              <ButtonBase
+              <Box
                 key={item.segment}
-                onClick={() => handleNavigate(item.segment)}
                 sx={{
                   alignItems: 'center',
-                  border: (t) =>
-                    `1px solid ${
-                      isSelected ? t.palette.primary.main : 'transparent'
-                    }`,
-                  borderRadius: 1,
-                  color: isSelected ? 'primary.contrastText' : 'text.secondary',
                   display: 'inline-flex',
-                  gap: 0.75,
-                  minHeight: 42,
-                  minWidth: 86,
-                  px: 1.5,
-                  py: 0.75,
-                  bgcolor: isSelected
-                    ? 'rgba(24, 189, 242, 0.14)'
-                    : 'transparent',
-                  boxShadow: isSelected
-                    ? 'inset 0 0 0 1px rgba(24, 189, 242, 0.24)'
-                    : 'none',
-                  '&:hover': {
-                    bgcolor: isSelected
-                      ? 'rgba(24, 189, 242, 0.2)'
-                      : 'action.hover',
-                    color: 'text.primary',
-                  },
                 }}
               >
-                <Box sx={{ display: 'inline-flex', height: 22, width: 22 }}>
-                  {item.icon}
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: isSelected ? 600 : 500, lineHeight: 1 }}
+                <ButtonBase
+                  onClick={() => handleNavigate(item.segment)}
+                  sx={{
+                    alignItems: 'center',
+                    border: '1px solid transparent',
+                    borderRadius: 1,
+                    color: isSelected ? 'text.primary' : 'text.secondary',
+                    display: 'inline-flex',
+                    gap: 0.75,
+                    minHeight: 42,
+                    minWidth: 74,
+                    overflow: 'hidden',
+                    px: 1.2,
+                    py: 0.75,
+                    position: 'relative',
+                    bgcolor: isSelected
+                      ? 'rgba(24, 189, 242, 0.1)'
+                      : 'transparent',
+                    '&:hover': {
+                      bgcolor: isSelected
+                        ? 'rgba(24, 189, 242, 0.16)'
+                        : 'rgba(255,255,255,0.035)',
+                      color: 'text.primary',
+                    },
+                  }}
                 >
-                  {coinLabels[item.segment] ?? item.title}
-                </Typography>
-              </ButtonBase>
+                  <Box sx={{ display: 'inline-flex', height: 22, width: 22 }}>
+                    {item.icon}
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: isSelected ? 700 : 600, lineHeight: 1 }}
+                  >
+                    {coinLabels[item.segment] ?? item.title}
+                  </Typography>
+                </ButtonBase>
+                {index < navItems.length - 1 && (
+                  <Box
+                    sx={{
+                      borderLeft: '1px solid rgba(116,158,180,0.22)',
+                      height: 28,
+                      mx: 0.7,
+                    }}
+                  />
+                )}
+              </Box>
             );
           })}
         </Box>
@@ -479,22 +490,14 @@ export default function AppLayout() {
           sx={{
             alignItems: 'center',
             display: 'flex',
-            gap: 1.25,
+            gap: 1,
             justifyContent: 'flex-end',
-            minWidth: 190,
+            minWidth: 54,
           }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<HistoryOutlinedIcon />}
-            onClick={() => setChangelogOpen(true)}
-            sx={{ minHeight: 42 }}
-          >
-            Changelog
-          </Button>
           <Box
             sx={{
-              borderLeft: (t) => `1px solid ${t.palette.divider}`,
+              borderLeft: '1px solid rgba(116,158,180,0.2)',
               height: 34,
               mx: 0.25,
             }}
@@ -504,7 +507,13 @@ export default function AppLayout() {
             onClick={() =>
               window.parent?.postMessage({ action: 'CLOSE_QAPP' }, '*')
             }
-            sx={{ color: 'text.secondary' }}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.035)',
+                color: 'text.primary',
+              },
+            }}
           >
             <CloseIcon />
           </IconButton>
@@ -583,7 +592,7 @@ export default function AppLayout() {
       <Box
         component="main"
         sx={{
-          overflowX: 'auto',
+          overflowX: 'hidden',
           px: { xs: 1.5, sm: 2, md: 3 },
           py: { xs: 2, md: 3 },
           width: '100%',
@@ -592,7 +601,7 @@ export default function AppLayout() {
         <Container
           maxWidth={false}
           disableGutters
-          sx={{ maxWidth: 1280, mx: 'auto' }}
+          sx={{ maxWidth: 1340, mx: 'auto' }}
         >
           {desktopNavigation}
           <Outlet />
@@ -600,6 +609,7 @@ export default function AppLayout() {
       </Box>
 
       <Dialog
+        disableScrollLock
         open={changelogOpen}
         onClose={() => setChangelogOpen(false)}
         maxWidth="md"
@@ -622,7 +632,7 @@ export default function AppLayout() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ scrollbarGutter: 'stable' }}>
           <Box
             sx={{
               '& h1': { fontSize: '1.5rem', fontWeight: 600, mb: 2, mt: 0 },

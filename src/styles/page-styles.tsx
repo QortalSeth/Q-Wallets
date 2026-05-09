@@ -25,6 +25,10 @@ export function SlideTransition(props: ComponentProps<typeof Slide>) {
 }
 
 export const DialogGeneral = styled(Dialog)(({ theme }: { theme: Theme }) => ({
+  '& .MuiBackdrop-root': {
+    backdropFilter: 'blur(8px)',
+    backgroundColor: 'rgba(0, 7, 12, 0.68)',
+  },
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
   },
@@ -32,9 +36,62 @@ export const DialogGeneral = styled(Dialog)(({ theme }: { theme: Theme }) => ({
     padding: theme.spacing(1),
   },
   '& .MuiDialog-paper': {
+    backgroundColor:
+      theme.palette.mode === 'dark'
+        ? 'rgba(4, 18, 31, 0.98)'
+        : theme.palette.background.paper,
+    border:
+      theme.palette.mode === 'dark'
+        ? `1px solid ${theme.palette.divider}`
+        : undefined,
     borderRadius: 8,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 28px 72px rgba(0, 0, 0, 0.46)'
+        : undefined,
   },
 }));
+
+export const WalletSendDialog = styled(Dialog)(
+  ({ theme }: { theme: Theme }) => ({
+    '& .MuiBackdrop-root': {
+      backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(0, 7, 12, 0.68)',
+    },
+    '& .MuiDialog-paper': {
+      backgroundColor: 'rgba(4, 18, 31, 0.98)',
+      backgroundImage:
+        'radial-gradient(circle at 18% 0%, rgba(24, 189, 242, 0.1), transparent 36%), linear-gradient(180deg, rgba(7, 27, 42, 0.98) 0%, rgba(4, 13, 23, 0.99) 100%)',
+      border: `1px solid ${theme.palette.divider}`,
+      borderRadius: 8,
+      boxShadow:
+        '0 28px 72px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255,255,255,0.04)',
+      maxHeight: 'calc(100dvh - 48px)',
+      overflowX: 'hidden',
+    },
+    '& .MuiAppBar-root': {
+      backgroundColor: 'rgba(10, 28, 42, 0.96)',
+      backgroundImage:
+        'linear-gradient(180deg, rgba(13, 39, 57, 0.92) 0%, rgba(7, 22, 34, 0.98) 100%)',
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      boxShadow: 'none',
+    },
+    '& .MuiToolbar-root': {
+      gap: theme.spacing(1),
+      minHeight: 60,
+    },
+    '& .MuiButton-outlined': {
+      backgroundColor: 'rgba(116, 158, 180, 0.055)',
+      borderColor: 'rgba(116, 158, 180, 0.2)',
+      color: theme.palette.text.secondary,
+      '&:hover': {
+        backgroundColor: 'rgba(116, 158, 180, 0.1)',
+        borderColor: 'rgba(116, 158, 180, 0.36)',
+        color: theme.palette.text.primary,
+      },
+    },
+  })
+);
 
 export const LightwalletDialog = styled(Dialog)(
   ({ theme }: { theme: Theme }) => ({

@@ -349,55 +349,15 @@ export function WalletSummaryCard({
     <WalletCard
       sx={{
         ...getWalletVars(visual),
-        backgroundColor: 'rgba(6, 21, 33, 0.98)',
-        backgroundImage: `
-          linear-gradient(90deg, rgba(7, 30, 44, 0.98) 0%, rgba(6, 23, 36, 0.99) 44%, rgba(4, 16, 27, 0.995) 100%)
-        `,
-        borderColor:
-          'color-mix(in srgb, var(--wallet-accent) 38%, rgba(116,158,180,0.18))',
-        boxShadow:
-          '0 22px 58px rgba(0, 0, 0, 0.28), inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.035)',
+        backgroundColor: 'transparent',
+        backgroundImage: 'none',
+        borderColor: 'transparent',
+        borderRadius: 0,
+        boxShadow: 'none',
         minHeight: { md: 224 },
-        overflow: 'hidden',
+        overflow: 'visible',
         position: 'relative',
         width: '100%',
-        '&::before': {
-          background: {
-            xs: `
-              radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--wallet-accent) 34%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 13%, transparent) 13%, rgba(6, 21, 33, 0) 28%),
-              linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 7%, transparent) 0%, rgba(6, 21, 33, 0) 62%)
-            `,
-            md: `
-              radial-gradient(circle at 13.5% 50%, color-mix(in srgb, var(--wallet-accent) 48%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 18%, transparent) 8%, rgba(6, 21, 33, 0) 18%),
-              linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 12%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 6%, transparent) 24%, rgba(6, 21, 33, 0) 52%)
-            `,
-          },
-          content: '""',
-          inset: 0,
-          maskImage: {
-            xs: 'radial-gradient(ellipse at 50% 34%, #000 0%, #000 24%, transparent 54%)',
-            md: 'radial-gradient(ellipse at 17% 50%, #000 0%, #000 30%, transparent 66%)',
-          },
-          opacity: 0.88,
-          pointerEvents: 'none',
-          position: 'absolute',
-        },
-        '&::after': {
-          background: {
-            xs: 'none',
-            md: 'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 16%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 7%, transparent) 32%, rgba(6, 21, 33, 0) 100%)',
-          },
-          bottom: '18%',
-          content: '""',
-          filter: 'blur(18px)',
-          left: '13%',
-          opacity: 0.36,
-          pointerEvents: 'none',
-          position: 'absolute',
-          top: '18%',
-          transform: 'skewX(-7deg)',
-          width: '42%',
-        },
       }}
     >
       <Box
@@ -445,7 +405,7 @@ export function WalletSummaryCard({
                 borderRadius: '50%',
                 content: '""',
                 filter: 'blur(16px)',
-                inset: '-2%',
+                inset: '-8% -6% -6% -18%',
                 opacity: 0.9,
                 position: 'absolute',
                 transform: 'scale(1.02)',

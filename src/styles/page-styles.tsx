@@ -132,11 +132,11 @@ export const CustomWidthTooltip = styled(
 export const WalletCard = styled(Card)(({ theme }: { theme: Theme }) => ({
   backgroundColor:
     theme.palette.mode === 'dark'
-      ? 'rgba(13, 25, 34, 0.86)'
+      ? '#0E2431'
       : 'rgba(255,255,255,0.96)',
   backgroundImage:
     theme.palette.mode === 'dark'
-      ? 'radial-gradient(circle at 18% 0%, rgba(31, 184, 242, 0.08), transparent 34%), linear-gradient(180deg, rgba(13, 28, 39, 0.9) 0%, rgba(9, 19, 27, 0.94) 100%)'
+      ? 'none'
       : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)',
   border: `1px solid ${
     theme.palette.mode === 'dark'

@@ -18,11 +18,13 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   List,
   ListItemButton,
   ListItemText,
   TextField,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { NumericFormat } from 'react-number-format';
@@ -31,8 +33,14 @@ type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import {
+  AccountBalanceWalletOutlined,
+  CheckCircleOutline,
   Close,
+  CreditCardOutlined,
+  DescriptionOutlined,
+  FileUploadOutlined,
   FirstPage,
+  InfoOutlined,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
@@ -189,7 +197,7 @@ export default function PirateWallet() {
 
   const maxSendableArrrCoin = () => {
     // manage the correct round up
-    const value = (walletBalanceArrr - ARRR_FEE).toString();
+    const value = Math.max(0, walletBalanceArrr - ARRR_FEE).toString();
     const [integer, decimal = ''] = value.split('.');
     const truncated = decimal
       .substring(0, DECIMAL_ROUND_UP)
@@ -199,6 +207,54 @@ export default function PirateWallet() {
     );
     return truncatedMaxSendableArrrCoin;
   };
+  const arrrSendLabelSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 13, sm: 13.5 },
+    fontWeight: 600,
+    lineHeight: 1.3,
+  } as const;
+  const arrrHelperSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 12.5, sm: 13 },
+    fontWeight: 500,
+    lineHeight: 1.45,
+    ml: 1.6,
+    mt: 0.85,
+  } as const;
+  const arrrFieldSx = {
+    '& .MuiFormHelperText-root': arrrHelperSx,
+    '& .MuiOutlinedInput-root': {
+      bgcolor: 'rgba(0,8,16,0.13)',
+      borderRadius: 1.2,
+      minHeight: { xs: 56, sm: 60 },
+      px: { xs: 1.05, sm: 1.25 },
+      transition: 'background-color 160ms ease',
+      '& fieldset': {
+        borderColor: 'rgba(116,158,180,0.16)',
+      },
+      '&:hover fieldset': {
+        borderColor: 'rgba(116,158,180,0.3)',
+      },
+      '&.Mui-focused': {
+        bgcolor: 'rgba(0,8,16,0.2)',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'rgba(24,189,242,0.62)',
+        borderWidth: 1,
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      color: 'text.primary',
+      fontSize: { xs: 16, sm: 16.5 },
+      fontWeight: 500,
+      py: 0,
+      '&::placeholder': {
+        color: 'text.secondary',
+        fontWeight: 400,
+        opacity: 0.58,
+      },
+    },
+  } as const;
 
   const handleCloseArrrLightwallet = () => {
     setOpenArrrLightwallet(false);
@@ -218,8 +274,6 @@ export default function PirateWallet() {
 
   const handleSelectAddress = (address: string, _name: string) => {
     setArrrRecipient(address);
-    setArrrAmount(0);
-    setArrrMemo(EMPTY_STRING);
     setOpenArrrAddressBook(false);
     setOpenArrrSend(true);
     setAddressFormatError(false);
@@ -838,18 +892,43 @@ export default function PirateWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
+        <AppBar
+          sx={{
+            bgcolor: 'rgba(7, 24, 38, 0.98)',
+            backgroundColor: 'rgba(7, 24, 38, 0.98)',
+            backgroundImage:
+              'linear-gradient(180deg, rgba(9,32,49,0.98) 0%, rgba(5,20,33,0.99) 100%)',
+            borderBottom: '1px solid rgba(116,158,180,0.14)',
+            boxShadow: 'none',
+            position: 'static',
+          }}
+        >
+          <Toolbar sx={{ minHeight: '60px !important', px: 2.75 }}>
             <IconButton
-              edge="start"
               color="inherit"
               onClick={handleCloseArrrSend}
               aria-label="close"
+              sx={{
+                color: 'text.secondary',
+                mr: 1.25,
+                p: 0.55,
+                '& svg': { fontSize: 24 },
+                '&:hover': {
+                  bgcolor: 'rgba(116,158,180,0.08)',
+                  color: 'text.primary',
+                },
+              }}
             >
               <Close />
             </IconButton>
             <Avatar
-              sx={{ width: 28, height: 28 }}
+              sx={{
+                bgcolor: 'transparent',
+                boxShadow: '0 0 16px rgba(24,189,242,0.2)',
+                height: 32,
+                mr: 1.3,
+                width: 32,
+              }}
               alt="ARRR Logo"
               src={coinLogoARRR}
             />
@@ -858,18 +937,17 @@ export default function PirateWallet() {
               noWrap
               component="div"
               sx={{
+                color: 'text.primary',
                 flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
+                fontSize: 17,
+                fontWeight: 700,
+                letterSpacing: 0,
+                lineHeight: 1,
               }}
             >
               {t('core:action.transfer_coin', {
                 coin: Coin.ARRR,
-                postProcess: 'capitalizeAll',
+                postProcess: 'capitalizeFirstChar',
               })}
             </Typography>
             <Button
@@ -879,181 +957,443 @@ export default function PirateWallet() {
               aria-label="send-arrr"
               onClick={sendArrrRequest}
               sx={{
-                backgroundcolor: 'action.main',
+                bgcolor: 'primary.main',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 1.4,
+                boxShadow: '0 10px 24px rgba(24,189,242,0.2)',
                 color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
+                fontSize: { xs: 13, sm: 13.5 },
+                fontWeight: 700,
+                minHeight: 36,
+                minWidth: 98,
+                px: 2,
+                '& .MuiButton-startIcon svg': { fontSize: 19 },
+                '&:hover': {
+                  bgcolor: '#16baf2',
+                  boxShadow: '0 16px 36px rgba(24,189,242,0.34)',
+                },
+                '&:disabled': {
+                  bgcolor: 'rgba(116,158,180,0.18)',
+                  borderColor: 'rgba(116,158,180,0.08)',
+                  boxShadow: 'none',
+                  color: 'rgba(255,255,255,0.44)',
+                },
               }}
             >
               {t('core:action.send', {
-                postProcess: 'capitalizeAll',
+                postProcess: 'capitalizeFirstChar',
               })}
             </Button>
           </Toolbar>
         </AppBar>
         <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceArrr ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : (
-              walletBalanceArrr + ' ARRR'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {(walletBalanceArrr - ARRR_FEE).toFixed(DECIMAL_ROUND_UP) + ' ARRR'}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxArrr}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
+            display: 'grid',
+            gap: 2.25,
+            px: { xs: 2.4, sm: 2.75 },
+            pb: 2.45,
+            pt: 2,
           }}
         >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={arrrAmount}
-            allowNegative={false}
-            customInput={TextField}
-            valueIsNumericString
-            {...({ label: 'Amount (ARRR)' } as any)}
-            fullWidth
-            isAllowed={(values) => {
-              const maxArrrCoin = walletBalanceArrr - ARRR_FEE;
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue !== undefined && floatValue <= maxArrrCoin)
-              );
-            }}
-            onValueChange={(values) => {
-              setArrrAmount(values.floatValue ?? 0);
-            }}
-            slotProps={{
-              input: {
-                variant: 'outlined',
+          <Box
+            sx={{
+              alignItems: 'center',
+              bgcolor: 'rgba(9, 32, 49, 0.38)',
+              border: '1px solid rgba(116,158,180,0.14)',
+              borderRadius: 1.15,
+              display: 'grid',
+              gap: { xs: 1.8, sm: 2.4 },
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'minmax(0, 0.88fr) 1px minmax(0, 1.12fr)',
               },
+              minHeight: 92,
+              px: { xs: 1.7, sm: 2.15 },
+              py: { xs: 1.6, sm: 1.65 },
             }}
-            required
-          />
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="arrr-address"
-            margin="normal"
-            value={arrrRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            fullWidth
-            helperText={t('core:message.generic.pirate_chain_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
-          />
-          <TextField
-            label={t('core:memo', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="arrr-memo"
-            margin="normal"
-            value={arrrMemo}
-            fullWidth
-            helperText={t('core:message.generic.pirate_chain_max_chars', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
-            onChange={(e: any) => setArrrMemo(e.target.value)}
-          />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            align="center"
-            sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
           >
-            {t('core:message.generic.sending_fee', {
-              quantity: ARRR_FEE,
-              coin: Coin.ARRR,
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
+            <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.25 }}>
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  bgcolor: 'rgba(24,189,242,0.08)',
+                  borderRadius: '50%',
+                  color: 'primary.main',
+                  display: 'grid',
+                  flexShrink: 0,
+                  height: 34,
+                  placeItems: 'center',
+                  width: 34,
+                }}
+              >
+                <AccountBalanceWalletOutlined sx={{ fontSize: 18 }} />
+              </Box>
+              <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Available balance
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { xs: 17, sm: 17 },
+                    fontWeight: 650,
+                    lineHeight: 1.2,
+                    overflowWrap: 'anywhere',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isLoadingWalletBalanceArrr ? (
+                    <Box sx={{ width: 150, maxWidth: '100%' }}>
+                      <LinearProgress />
+                    </Box>
+                  ) : (
+                    walletBalanceArrr + ' ARRR'
+                  )}
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              aria-hidden
+              sx={{
+                bgcolor: 'rgba(116,158,180,0.12)',
+                display: { xs: 'none', sm: 'block' },
+                height: 54,
+                width: 1,
+              }}
+            />
+            <Box
+              sx={{
+                alignItems: 'center',
+                display: 'grid',
+                gap: 1.2,
+                gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                minWidth: 0,
+              }}
+            >
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  bgcolor: 'rgba(24,189,242,0.08)',
+                  borderRadius: '50%',
+                  color: 'primary.main',
+                  display: 'grid',
+                  flexShrink: 0,
+                  height: 34,
+                  placeItems: 'center',
+                  width: 34,
+                }}
+              >
+                <FileUploadOutlined sx={{ fontSize: 18 }} />
+              </Box>
+              <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+                <Box sx={{ alignItems: 'center', display: 'flex', gap: 0.65 }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Max sendable
+                  </Typography>
+                  <Tooltip title="Maximum amount available after reserving the sending fee">
+                    <InfoOutlined
+                      sx={{ color: 'text.secondary', fontSize: 15, opacity: 0.8 }}
+                    />
+                  </Tooltip>
+                </Box>
+                <Typography
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { xs: 17, sm: 17 },
+                    fontWeight: 650,
+                    lineHeight: 1.2,
+                    overflowWrap: 'anywhere',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {maxSendableArrrCoin().toFixed(DECIMAL_ROUND_UP) + ' ARRR'}
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleSendMaxArrr}
+                sx={{
+                  borderColor: 'rgba(24,189,242,0.28)',
+                  borderRadius: 999,
+                  color: 'text.primary',
+                  flexShrink: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  minHeight: 32,
+                  minWidth: 82,
+                  px: 1.8,
+                  '&:hover': {
+                    bgcolor: 'rgba(24,189,242,0.08)',
+                    borderColor: 'rgba(24,189,242,0.44)',
+                    color: 'primary.main',
+                  },
+                }}
+              >
+                Send max
+              </Button>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: 0.85 }}>
+            <Typography sx={arrrSendLabelSx}>
+              Amount{' '}
+              <Box component="span" sx={{ fontWeight: 500 }}>
+                (ARRR)
+              </Box>{' '}
+              <Box component="span" sx={{ color: 'primary.main' }}>
+                *
+              </Box>
+            </Typography>
+            <NumericFormat
+              decimalScale={8}
+              defaultValue={0}
+              value={arrrAmount === 0 ? EMPTY_STRING : arrrAmount}
+              allowNegative={false}
+              customInput={TextField}
+              valueIsNumericString
+              placeholder="0.00"
+              fullWidth
+              isAllowed={(values) => {
+                const maxArrrCoin = maxSendableArrrCoin();
+                const { formattedValue, floatValue } = values;
+                return (
+                  formattedValue === EMPTY_STRING ||
+                  (floatValue !== undefined && floatValue <= maxArrrCoin)
+                );
+              }}
+              onValueChange={(values) => {
+                setArrrAmount(values.floatValue ?? 0);
+              }}
+              slotProps={{
+                htmlInput: {
+                  'aria-label': 'ARRR amount',
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Avatar
+                        src={coinLogoARRR}
+                        alt=""
+                        sx={{
+                          bgcolor: 'rgba(24,189,242,0.07)',
+                          height: { xs: 28, sm: 30 },
+                          opacity: 0.82,
+                          width: { xs: 28, sm: 30 },
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Box sx={{ display: 'grid', justifyItems: 'end' }}>
+                        <Typography
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: { xs: 13, sm: 13.5 },
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          ARRR
+                        </Typography>
+                        <Button
+                          variant="text"
+                          onClick={handleSendMaxArrr}
+                          sx={{
+                            color: 'primary.main',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                            minHeight: 0,
+                            minWidth: 0,
+                            mt: 0.35,
+                            p: 0,
+                            '&:hover': {
+                              bgcolor: 'transparent',
+                              color: '#37d0ff',
+                            },
+                          }}
+                        >
+                          Max
+                        </Button>
+                      </Box>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{
+                ...arrrFieldSx,
+                '& .MuiOutlinedInput-input': {
+                  color: 'text.primary',
+                  fontSize: { xs: 17.5, sm: 18 },
+                  fontWeight: 500,
+                  py: 0,
+                },
+              }}
+              required
+            />
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: 0.85 }}>
+            <Typography sx={arrrSendLabelSx}>
+              Receiver address{' '}
+              <Box component="span" sx={{ color: 'primary.main' }}>
+                *
+              </Box>
+            </Typography>
+            <TextField
+              required
+              id="arrr-address"
+              value={arrrRecipient}
+              onChange={handleRecipientChange}
+              error={addressFormatError}
+              fullWidth
+              placeholder="Enter ARRR address"
+              helperText={
+                addressFormatError
+                  ? t('core:message.generic.pirate_chain_address', {
+                      postProcess: 'capitalizeFirstChar',
+                    })
+                  : undefined
+              }
+              slotProps={{
+                htmlInput: {
+                  'aria-label': 'ARRR receiver address',
+                  maxLength: 78,
+                  minLength: 78,
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CreditCardOutlined
+                        sx={{ color: 'text.secondary', fontSize: 21 }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{
+                ...arrrFieldSx,
+                '& .MuiFormHelperText-root': {
+                  ...arrrHelperSx,
+                  color: addressFormatError ? 'error.main' : 'text.secondary',
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: 0.85 }}>
+            <Typography sx={arrrSendLabelSx}>Memo</Typography>
+            <TextField
+              id="arrr-memo"
+              value={arrrMemo}
+              fullWidth
+              placeholder="Optional memo"
+              slotProps={{
+                htmlInput: {
+                  'aria-label': 'ARRR memo',
+                  maxLength: 40,
+                  minLength: 40,
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DescriptionOutlined
+                        sx={{ color: 'text.secondary', fontSize: 21 }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              onChange={(e: any) => setArrrMemo(e.target.value)}
+              sx={arrrFieldSx}
+            />
+          </Box>
+
+          <Tooltip title="Current network sending fee. This amount is reserved from the maximum sendable balance.">
+            <Box
+              sx={{
+                alignItems: 'center',
+                color: 'text.secondary',
+                display: 'inline-flex',
+                gap: 0.75,
+                justifySelf: 'end',
+                mt: -0.55,
+                opacity: 0.78,
+                px: 0.4,
+              }}
+            >
+              <InfoOutlined sx={{ color: 'primary.main', fontSize: 16 }} />
+              <Typography sx={{ fontSize: { xs: 12.5, sm: 13 }, fontWeight: 500 }}>
+                Fee
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontSize: { xs: 12.5, sm: 13 },
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {ARRR_FEE} ARRR
+              </Typography>
+            </Box>
+          </Tooltip>
+
+          <Box
+            sx={{
+              alignItems: 'flex-start',
+              bgcolor: 'rgba(34, 227, 138, 0.045)',
+              border: '1px solid rgba(34, 227, 138, 0.1)',
+              borderRadius: 1.2,
+              display: 'flex',
+              gap: 1.15,
+              mt: -0.35,
+              px: 1.5,
+              py: 1.25,
+            }}
+          >
+            <CheckCircleOutline
+              sx={{ color: 'success.main', fontSize: 19, mt: 0.1 }}
+            />
+            <Box sx={{ display: 'grid', gap: 0.35 }}>
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  lineHeight: 1.25,
+                }}
+              >
+                Always double-check the address before sending.
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 12.5,
+                  fontWeight: 400,
+                  lineHeight: 1.35,
+                }}
+              >
+                Transactions cannot be reversed after broadcast.
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </WalletSendDialog>
 

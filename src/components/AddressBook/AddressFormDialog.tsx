@@ -354,7 +354,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
           borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
           display: 'flex',
           justifyContent: 'center',
-          minHeight: 74,
+          minHeight: 68,
           px: 6,
           py: 0,
           position: 'relative',
@@ -417,11 +417,11 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
         sx={{
           overflow: 'visible',
           px: '28px !important',
-          pb: '20px !important',
-          pt: '26px !important',
+          pb: '18px !important',
+          pt: '23px !important',
         }}
       >
-        <Box sx={{ display: 'grid', gap: 2.15 }}>
+        <Box sx={{ display: 'grid', gap: 2 }}>
           <Box sx={{ position: 'relative' }}>
             <Typography sx={fieldLabelSx}>
               {t('core:address_book_name', {
@@ -714,8 +714,8 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
         sx={{
           borderTop: (theme) => `1px solid ${theme.palette.divider}`,
           justifyContent: 'space-between',
-          pb: '14px !important',
-          pt: '14px !important',
+          pb: '12px !important',
+          pt: '12px !important',
           px: '28px !important',
         }}
       >

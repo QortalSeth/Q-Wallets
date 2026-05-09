@@ -11,18 +11,18 @@ import {
   SliderProps,
   TextField,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
   AccountBalanceWalletOutlined,
-  CenterFocusWeak,
+  CheckCircleOutline,
   Close,
   ContactsOutlined,
   CreditCardOutlined,
   FileUploadOutlined,
   InfoOutlined,
   Send,
-  Tune,
 } from '@mui/icons-material';
 import { NumericFormat as _NumericFormat } from 'react-number-format';
 
@@ -35,7 +35,7 @@ type ExternalSendFormProps = {
   addressHelperText: ReactNode;
   addressInputId: string;
   amount: number;
-  balance: number | string;
+  balance: number | string | null | undefined;
   balanceError?: string | null;
   coinLogo: string;
   feeContent: ReactNode;
@@ -66,51 +66,79 @@ type ExternalFeeSliderProps = {
   step: number;
 };
 
-const compactValue = (value: number | string, symbol: string) =>
-  `${value} ${symbol}`;
+const compactValue = (
+  value: number | string | null | undefined,
+  symbol: string
+) => {
+  if (value === null || value === undefined || value === '') {
+    return `0 ${symbol}`;
+  }
+
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return `0 ${symbol}`;
+  }
+
+  return `${value} ${symbol}`;
+};
 
 const maxOrZero = (value: number) =>
   Number.isFinite(value) && value > 0 ? value : 0;
 
+const sendLabelSx = {
+  color: 'text.secondary',
+  fontSize: { xs: 13, sm: 13.5 },
+  fontWeight: 600,
+  lineHeight: 1.3,
+} as const;
+
+const mutedLabelSx = {
+  color: 'text.secondary',
+  fontSize: { xs: 12.5, sm: 13 },
+  fontWeight: 500,
+} as const;
+
+const helperSx = {
+  color: 'text.secondary',
+  fontSize: { xs: 12.5, sm: 13 },
+  fontWeight: 500,
+  lineHeight: 1.45,
+  ml: 1.6,
+  mt: 0.85,
+} as const;
+
 const fieldSx = {
-  '& .MuiInputLabel-root': {
-    color: 'text.secondary',
-    fontSize: { xs: 10.5, sm: 11 },
-    fontWeight: 800,
-    letterSpacing: 0,
-    textTransform: 'uppercase',
-  },
   '& .MuiFormHelperText-root': {
-    color: 'text.secondary',
-    fontSize: { xs: 12, sm: 12 },
-    fontWeight: 600,
-    lineHeight: 1.35,
-    mt: 0.8,
+    ...helperSx,
   },
   '& .MuiOutlinedInput-root': {
-    bgcolor: 'rgba(0,8,16,0.2)',
-    borderRadius: 1.4,
-    minHeight: { xs: 58, sm: 64 },
+    bgcolor: 'rgba(0,8,16,0.13)',
+    borderRadius: 1.2,
+    minHeight: { xs: 56, sm: 60 },
     px: { xs: 1.05, sm: 1.25 },
+    transition: 'background-color 160ms ease',
     '& fieldset': {
-      borderColor: 'rgba(116,158,180,0.32)',
+      borderColor: 'rgba(116,158,180,0.16)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(24,189,242,0.55)',
+      borderColor: 'rgba(116,158,180,0.3)',
+    },
+    '&.Mui-focused': {
+      bgcolor: 'rgba(0,8,16,0.2)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: 'primary.main',
+      borderColor: 'rgba(24,189,242,0.62)',
       borderWidth: 1,
     },
   },
   '& .MuiOutlinedInput-input': {
     color: 'text.primary',
-    fontSize: { xs: 18, sm: 20 },
-    fontWeight: 700,
+    fontSize: { xs: 16, sm: 16.5 },
+    fontWeight: 500,
     py: 0,
     '&::placeholder': {
       color: 'text.secondary',
-      opacity: 0.72,
+      fontWeight: 400,
+      opacity: 0.58,
     },
   },
 } as const;
@@ -144,18 +172,19 @@ export function ExternalSendForm({
     <>
       <AppBar
         sx={{
-          bgcolor: 'transparent',
-          backgroundColor: 'transparent',
-          backgroundImage: 'none',
-          borderBottom: 'none',
+          bgcolor: 'rgba(7, 24, 38, 0.98)',
+          backgroundColor: 'rgba(7, 24, 38, 0.98)',
+          backgroundImage:
+            'linear-gradient(180deg, rgba(9,32,49,0.98) 0%, rgba(5,20,33,0.99) 100%)',
+          borderBottom: '1px solid rgba(116,158,180,0.14)',
           boxShadow: 'none',
           position: 'static',
         }}
       >
         <Toolbar
           sx={{
-            minHeight: 64,
-            px: 3,
+            minHeight: '60px !important',
+            px: { xs: 2.4, sm: 2.75 },
           }}
         >
           <IconButton
@@ -163,11 +192,14 @@ export function ExternalSendForm({
             onClick={onClose}
             aria-label="close"
             sx={{
-              color: 'text.primary',
-              mr: 1.1,
+              color: 'text.secondary',
+              mr: { xs: 1, sm: 1.25 },
               p: 0.55,
-              '& svg': { fontSize: 25 },
-              '&:hover': { bgcolor: 'rgba(116,158,180,0.08)' },
+              '& svg': { fontSize: 24 },
+              '&:hover': {
+                bgcolor: 'rgba(116,158,180,0.08)',
+                color: 'text.primary',
+              },
             }}
           >
             <Close />
@@ -175,9 +207,9 @@ export function ExternalSendForm({
           <Avatar
             sx={{
               bgcolor: 'transparent',
-              boxShadow: '0 0 20px rgba(24,189,242,0.16)',
+              boxShadow: '0 0 16px rgba(24,189,242,0.2)',
               height: 32,
-              mr: 1.25,
+              mr: { xs: 1.2, sm: 1.3 },
               width: 32,
             }}
             alt={`${symbol} Logo`}
@@ -191,7 +223,7 @@ export function ExternalSendForm({
               color: 'text.primary',
               flexGrow: 1,
               fontSize: 17,
-              fontWeight: 800,
+              fontWeight: 700,
               letterSpacing: 0,
               lineHeight: 1,
             }}
@@ -208,15 +240,15 @@ export function ExternalSendForm({
               bgcolor: 'primary.main',
               border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 1.4,
-              boxShadow: '0 14px 32px rgba(24,189,242,0.26)',
+              boxShadow: '0 10px 24px rgba(24,189,242,0.2)',
               color: 'white',
-              fontSize: 14,
-              fontWeight: 800,
+              fontSize: { xs: 13, sm: 13.5 },
+              fontWeight: 700,
               minHeight: 36,
-              minWidth: 102,
+              minWidth: 98,
               px: 2,
               '& .MuiButton-startIcon svg': {
-                fontSize: 20,
+                fontSize: 19,
               },
               '&:hover': {
                 bgcolor: '#16baf2',
@@ -226,11 +258,11 @@ export function ExternalSendForm({
                 bgcolor: 'rgba(116,158,180,0.18)',
                 borderColor: 'rgba(116,158,180,0.08)',
                 boxShadow: 'none',
-                color: 'rgba(255,255,255,0.38)',
+                color: 'rgba(255,255,255,0.44)',
               },
             }}
           >
-            SEND
+            Send
           </Button>
         </Toolbar>
       </AppBar>
@@ -238,61 +270,66 @@ export function ExternalSendForm({
       <Box
         sx={{
           display: 'grid',
-          gap: 1.65,
-          px: 3,
-          pb: showBalanceMeter ? 1.1 : 2.5,
-          pt: 0.5,
+          gap: 2.25,
+          px: { xs: 2.4, sm: 2.75 },
+          pb: 2.45,
+          pt: 2,
         }}
       >
         <Box
           sx={{
             alignItems: 'center',
-            bgcolor: 'rgba(0,8,16,0.2)',
-            border: '1px solid rgba(116,158,180,0.24)',
-            borderRadius: 1.5,
+            bgcolor: 'rgba(9, 32, 49, 0.38)',
+            border: '1px solid rgba(116,158,180,0.14)',
+            borderRadius: 1.15,
             display: 'grid',
-            gap: 2.2,
-            gridTemplateColumns: { xs: '1fr', sm: '1fr auto 1fr' },
-            minHeight: showBalanceMeter ? 96 : 84,
-            px: 2,
-            py: 1.2,
+            gap: { xs: 1.8, sm: 2.4 },
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'minmax(0, 0.88fr) 1px minmax(0, 1.12fr)',
+            },
+            minHeight: 92,
+            px: { xs: 1.7, sm: 2.15 },
+            py: { xs: 1.6, sm: 1.65 },
           }}
         >
-          <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.15 }}>
+          <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.25 }}>
             <Box
               sx={{
                 alignItems: 'center',
-                bgcolor: 'rgba(24,189,242,0.09)',
+                bgcolor: 'rgba(24,189,242,0.08)',
                 borderRadius: '50%',
                 color: 'primary.main',
                 display: 'grid',
                 flexShrink: 0,
-                height: 38,
+                height: 34,
                 placeItems: 'center',
-                width: 38,
+                width: 34,
               }}
             >
-              <AccountBalanceWalletOutlined sx={{ fontSize: 20 }} />
+              <AccountBalanceWalletOutlined sx={{ fontSize: 18 }} />
             </Box>
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
               <Typography
                 sx={{
                   color: 'text.secondary',
                   fontSize: 13,
-                  fontWeight: 600,
-                  lineHeight: 1.1,
+                  fontWeight: 500,
+                  lineHeight: 1.2,
                 }}
               >
                 Available balance
               </Typography>
               <Typography
                 sx={{
-                  color: 'text.primary',
-                  fontSize: 18,
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  mt: 0.45,
+                  color: balanceError ? 'text.secondary' : 'text.primary',
+                  fontSize: balanceError
+                    ? { xs: 13, sm: 13.5 }
+                    : { xs: 17, sm: 17 },
+                  fontWeight: balanceError ? 500 : 650,
+                  lineHeight: balanceError ? 1.18 : 1.2,
                   overflowWrap: 'anywhere',
+                  whiteSpace: balanceError ? 'normal' : 'nowrap',
                 }}
               >
                 {isBalanceLoading ? (
@@ -300,21 +337,33 @@ export function ExternalSendForm({
                     <LinearProgress />
                   </Box>
                 ) : balanceError ? (
-                  balanceError
+                  <Tooltip title={balanceError}>
+                    <Box
+                      component="span"
+                      sx={{
+                        alignItems: 'center',
+                        display: 'inline-flex',
+                        gap: 0.55,
+                      }}
+                    >
+                      <InfoOutlined sx={{ color: 'primary.main', fontSize: 15 }} />
+                      Balance unavailable
+                    </Box>
+                  </Tooltip>
                 ) : (
                   compactValue(balance, symbol)
                 )}
               </Typography>
-              {showBalanceMeter && (
+              {showBalanceMeter && !isBalanceLoading && !balanceError && (
                 <Box
                   aria-hidden
                   sx={{
                     bgcolor: 'rgba(24,189,242,0.13)',
                     borderRadius: 999,
                     height: 4,
-                    mt: 0.8,
+                    mt: 0.1,
                     overflow: 'hidden',
-                    width: 198,
+                    width: 150,
                     maxWidth: '100%',
                   }}
                 >
@@ -334,199 +383,299 @@ export function ExternalSendForm({
           <Box
             aria-hidden
             sx={{
-              bgcolor: 'rgba(116,158,180,0.18)',
+              bgcolor: 'rgba(116,158,180,0.12)',
               display: { xs: 'none', sm: 'block' },
-              height: 38,
+              height: 54,
               width: 1,
             }}
           />
-          <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.15 }}>
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'grid',
+              gap: 1.2,
+              gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+              minWidth: 0,
+            }}
+          >
             <Box
               sx={{
                 alignItems: 'center',
-                bgcolor: 'rgba(24,189,242,0.09)',
+                bgcolor: 'rgba(24,189,242,0.08)',
                 borderRadius: '50%',
                 color: 'primary.main',
                 display: 'grid',
                 flexShrink: 0,
-                height: 38,
+                height: 34,
                 placeItems: 'center',
-                width: 38,
+                width: 34,
               }}
             >
-              <FileUploadOutlined sx={{ fontSize: 20 }} />
+              <FileUploadOutlined sx={{ fontSize: 18 }} />
             </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  lineHeight: 1.1,
-                }}
-              >
-                Max sendable
-              </Typography>
-              <Box
-                sx={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  gap: 1,
-                  mt: 0.45,
-                  minWidth: 0,
-                }}
-              >
+            <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+              <Box sx={{ alignItems: 'center', display: 'flex', gap: 0.65 }}>
                 <Typography
                   sx={{
-                    color: 'text.primary',
-                    fontSize: 18,
-                    fontWeight: 800,
+                    color: 'text.secondary',
+                    fontSize: 13,
+                    fontWeight: 500,
                     lineHeight: 1.2,
-                    minWidth: 0,
-                    overflowWrap: 'anywhere',
                   }}
                 >
-                  {compactValue(safeMax, symbol)}
+                  Max sendable
                 </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={onSendMax}
-                  sx={{
-                    borderColor: 'rgba(24,189,242,0.38)',
-                    borderRadius: 999,
-                    color: 'primary.main',
-                    flexShrink: 0,
-                    fontSize: 12,
-                    fontWeight: 800,
-                    minHeight: 30,
-                    px: 1.5,
-                  }}
-                >
-                  SEND MAX
-                </Button>
+                <Tooltip title="Maximum amount available after reserving the sending fee">
+                  <InfoOutlined
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: 15,
+                      opacity: 0.8,
+                    }}
+                  />
+                </Tooltip>
               </Box>
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontSize: { xs: 17, sm: 17 },
+                  fontWeight: 650,
+                  lineHeight: 1.2,
+                  minWidth: 0,
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {compactValue(safeMax, symbol)}
+              </Typography>
             </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={onSendMax}
+              sx={{
+                borderColor: 'rgba(24,189,242,0.28)',
+                borderRadius: 999,
+                color: 'text.primary',
+                flexShrink: 0,
+                fontSize: 12,
+                fontWeight: 600,
+                minHeight: 32,
+                minWidth: 82,
+                px: 1.8,
+                '&:hover': {
+                  bgcolor: 'rgba(24,189,242,0.08)',
+                  borderColor: 'rgba(24,189,242,0.44)',
+                  color: 'primary.main',
+                },
+              }}
+            >
+              Send max
+            </Button>
           </Box>
         </Box>
 
-        <NumericFormat
-          decimalScale={8}
-          defaultValue={0}
-          value={amount}
-          allowNegative={false}
-          customInput={TextField as React.ComponentType<any>}
-          valueIsNumericString
-          label={`Amount (${symbol})`}
-          placeholder="0"
-          fullWidth
-          isAllowed={(values) => {
-            const { formattedValue, floatValue } = values;
-            return formattedValue === '' || (floatValue ?? 0) <= safeMax;
-          }}
-          onValueChange={(values) => {
-            onAmountChange(values.floatValue ?? 0);
-          }}
-          required
-          helperText={`Enter the amount of ${symbol} to send`}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Avatar
-                    src={coinLogo}
-                    alt=""
-                    sx={{
-                      bgcolor: 'rgba(24,189,242,0.05)',
-                      height: 28,
-                      opacity: 0.75,
-                      width: 28,
-                    }}
-                  />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Typography
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: 14, sm: 16 },
-                      fontWeight: 800,
-                    }}
-                  >
-                    {symbol}
-                  </Typography>
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{ ...fieldSx, mt: 1.5 }}
-        />
+        <Box sx={{ display: 'grid', gap: 0.85 }}>
+          <Typography sx={sendLabelSx}>
+            Amount{' '}
+            <Box component="span" sx={mutedLabelSx}>
+              ({symbol})
+            </Box>{' '}
+            <Box component="span" sx={{ color: 'primary.main' }}>
+              *
+            </Box>
+          </Typography>
+          <NumericFormat
+            decimalScale={8}
+            defaultValue={0}
+            value={amount}
+            allowNegative={false}
+            customInput={TextField as React.ComponentType<any>}
+            valueIsNumericString
+            placeholder="0.00"
+            fullWidth
+            isAllowed={(values) => {
+              const { formattedValue, floatValue } = values;
+              return formattedValue === '' || (floatValue ?? 0) <= safeMax;
+            }}
+            onValueChange={(values) => {
+              onAmountChange(values.floatValue ?? 0);
+            }}
+            required
+            slotProps={{
+              htmlInput: {
+                'aria-label': `${symbol} amount`,
+              },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Avatar
+                      src={coinLogo}
+                      alt=""
+                      sx={{
+                        bgcolor: 'rgba(24,189,242,0.07)',
+                        height: { xs: 28, sm: 30 },
+                        opacity: 0.82,
+                        width: { xs: 28, sm: 30 },
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Box sx={{ display: 'grid', justifyItems: 'end' }}>
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: 13, sm: 13.5 },
+                          fontWeight: 600,
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {symbol}
+                      </Typography>
+                      <Button
+                        variant="text"
+                        onClick={onSendMax}
+                        sx={{
+                          color: 'primary.main',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          lineHeight: 1.1,
+                          minHeight: 0,
+                          minWidth: 0,
+                          mt: 0.35,
+                          p: 0,
+                          '&:hover': {
+                            bgcolor: 'transparent',
+                            color: '#37d0ff',
+                          },
+                        }}
+                      >
+                        Max
+                      </Button>
+                    </Box>
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              ...fieldSx,
+              '& .MuiOutlinedInput-input': {
+                color: 'text.primary',
+                fontSize: { xs: 17.5, sm: 18 },
+                fontWeight: 500,
+                py: 0,
+              },
+            }}
+          />
+        </Box>
 
-        <TextField
-          required
-          label="Receiver address"
-          id={addressInputId}
-          value={recipient}
-          onChange={onRecipientChange}
-          error={addressError}
-          fullWidth
-          placeholder={`Enter ${symbol} address`}
-          helperText={addressHelperText}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <CreditCardOutlined
-                    sx={{ color: 'text.secondary', fontSize: 22 }}
-                  />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Box sx={{ alignItems: 'center', display: 'flex', gap: 0.8 }}>
-                    {showAddressBookButton && onOpenAddressBook && (
+        <Box sx={{ display: 'grid', gap: 0.85 }}>
+          <Typography sx={sendLabelSx}>
+            Receiver address{' '}
+            <Box component="span" sx={{ color: 'primary.main' }}>
+              *
+            </Box>
+          </Typography>
+          <TextField
+            required
+            id={addressInputId}
+            value={recipient}
+            onChange={onRecipientChange}
+            error={addressError}
+            fullWidth
+            placeholder={`Enter ${symbol} address`}
+            helperText={addressError ? addressHelperText : undefined}
+            slotProps={{
+              htmlInput: {
+                'aria-label': `${symbol} receiver address`,
+              },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <CreditCardOutlined
+                      sx={{ color: 'text.secondary', fontSize: 21 }}
+                    />
+                  </InputAdornment>
+                ),
+                endAdornment: showAddressBookButton && onOpenAddressBook ? (
+                  <InputAdornment position="end">
+                    <Tooltip title="Open address book">
                       <IconButton
                         aria-label="Open address book"
                         onClick={onOpenAddressBook}
                         sx={{
-                          border: '1px solid rgba(116,158,180,0.16)',
+                          border: '1px solid rgba(116,158,180,0.12)',
                           borderRadius: 1,
-                          color: 'text.secondary',
-                          height: 32,
-                          width: 32,
+                          color: 'primary.main',
+                          height: { xs: 32, sm: 34 },
+                          width: { xs: 32, sm: 34 },
                           '&:hover': {
                             bgcolor: 'rgba(24,189,242,0.08)',
-                            color: 'primary.main',
+                            borderColor: 'rgba(24,189,242,0.34)',
+                            color: '#37d0ff',
                           },
                         }}
                       >
                         <ContactsOutlined sx={{ fontSize: 18 }} />
                       </IconButton>
-                    )}
-                    <Box
-                      sx={{
-                        alignItems: 'center',
-                        border: '1px solid rgba(24,189,242,0.18)',
-                        borderRadius: 1,
-                        color: 'primary.main',
-                        display: 'grid',
-                        height: 32,
-                        placeItems: 'center',
-                        width: 32,
-                      }}
-                    >
-                      <CenterFocusWeak sx={{ fontSize: 18 }} />
-                    </Box>
-                  </Box>
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={fieldSx}
-        />
+                    </Tooltip>
+                  </InputAdornment>
+                ) : undefined,
+              },
+            }}
+            sx={{
+              ...fieldSx,
+              '& .MuiFormHelperText-root': {
+                ...helperSx,
+                color: addressError ? 'error.main' : 'text.secondary',
+              },
+            }}
+          />
+        </Box>
 
         {feeContent}
+
+        <Box
+          sx={{
+            alignItems: 'flex-start',
+            bgcolor: 'rgba(34, 227, 138, 0.045)',
+            border: '1px solid rgba(34, 227, 138, 0.1)',
+            borderRadius: 1.2,
+            display: 'flex',
+            gap: 1.15,
+            mt: -0.35,
+            px: 1.5,
+            py: 1.25,
+          }}
+        >
+          <CheckCircleOutline
+            sx={{ color: 'success.main', fontSize: 19, mt: 0.1 }}
+          />
+          <Box sx={{ display: 'grid', gap: 0.35 }}>
+            <Typography
+              sx={{
+                color: 'text.primary',
+                fontSize: 13,
+                fontWeight: 600,
+                lineHeight: 1.25,
+              }}
+            >
+              Always double-check the address before sending.
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: 12.5,
+                fontWeight: 400,
+                lineHeight: 1.35,
+              }}
+            >
+              Transactions cannot be reversed after broadcast.
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     </>
   );
@@ -548,14 +697,14 @@ export function ExternalFeeSlider({
       <Box
         sx={{
           alignItems: 'center',
-          bgcolor: 'rgba(0,8,16,0.2)',
-          border: '1px solid rgba(116,158,180,0.18)',
-          borderRadius: 1.4,
+          bgcolor: 'rgba(0,8,16,0.13)',
+          border: '1px solid rgba(116,158,180,0.14)',
+          borderRadius: 1.15,
           display: 'grid',
-          gap: { xs: 1.5, sm: 1.7 },
-          gridTemplateColumns: { xs: '1fr', sm: '178px minmax(0, 1fr) auto' },
-          minHeight: 68,
-          px: 1.7,
+          gap: { xs: 1.35, sm: 1.55 },
+          gridTemplateColumns: { xs: '1fr', sm: '148px minmax(0, 1fr)' },
+          minHeight: 64,
+          px: 1.55,
           py: 0.85,
         }}
       >
@@ -563,22 +712,21 @@ export function ExternalFeeSlider({
           <Typography
             sx={{
               color: 'text.secondary',
-              fontSize: 12,
-              fontWeight: 800,
+              fontSize: 12.5,
+              fontWeight: 500,
               letterSpacing: 0,
-              textTransform: 'uppercase',
               whiteSpace: 'nowrap',
             }}
           >
-            Current fee per byte
+            Fee per byte
           </Typography>
           <Typography
             sx={{
               color: 'text.primary',
-              fontSize: 20,
-              fontWeight: 800,
+              fontSize: 17,
+              fontWeight: 650,
               lineHeight: 1.1,
-              mt: 0.55,
+              mt: 0.45,
             }}
           >
             {fee} SAT
@@ -590,10 +738,10 @@ export function ExternalFeeSlider({
             step={step}
             min={min}
             max={max}
+            value={fee || defaultValue}
             valueLabelDisplay="auto"
             aria-labelledby={sliderId}
             getAriaValueText={getAriaValueText}
-            defaultValue={defaultValue}
             marks={marks}
             onChange={onChange}
             sx={{
@@ -606,65 +754,39 @@ export function ExternalFeeSlider({
               '& .MuiSlider-markLabel': {
                 color: 'text.secondary',
                 fontSize: 11,
-                fontWeight: 800,
-                textTransform: 'uppercase',
+                fontWeight: 500,
               },
               '& .MuiSlider-rail': {
                 bgcolor: 'rgba(116,158,180,0.28)',
                 height: 3,
               },
               '& .MuiSlider-thumb': {
-                boxShadow: '0 0 18px rgba(24,189,242,0.36)',
-                height: 20,
-                width: 20,
+                boxShadow: '0 0 16px rgba(24,189,242,0.3)',
+                height: 18,
+                width: 18,
               },
             }}
           />
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<Tune />}
-          sx={{
-            borderColor: 'rgba(116,158,180,0.2)',
-            borderRadius: 1.2,
-            color: 'text.primary',
-            fontSize: 12,
-            fontWeight: 800,
-            minHeight: 38,
-            minWidth: 112,
-            px: 1.35,
-            whiteSpace: 'nowrap',
-            '&:hover': {
-              bgcolor: 'rgba(116,158,180,0.08)',
-              borderColor: 'rgba(24,189,242,0.45)',
-            },
-          }}
-        >
-          Custom fee
-        </Button>
       </Box>
       <Box
         sx={{
           alignItems: 'center',
-          bgcolor: 'rgba(0,8,16,0.2)',
-          border: '1px solid rgba(116,158,180,0.14)',
-          borderRadius: 1.2,
-          display: 'flex',
-          gap: 1.3,
-          minHeight: 42,
-          px: 1.5,
+          color: 'text.secondary',
+          display: 'inline-flex',
+          gap: 0.75,
+          justifySelf: 'end',
+          mt: -0.75,
+          opacity: 0.74,
+          px: 0.4,
         }}
       >
-        <InfoOutlined sx={{ color: 'primary.main', fontSize: 21 }} />
-        <Typography
-          sx={{
-            color: 'text.secondary',
-            fontSize: { xs: 13, sm: 14 },
-            fontWeight: 600,
-          }}
-        >
-          Low fees may result in slow or unconfirmed transactions
-        </Typography>
+        <InfoOutlined sx={{ color: 'primary.main', fontSize: 16 }} />
+        <Tooltip title="Low fees may result in slow or unconfirmed transactions">
+          <Typography sx={{ fontSize: { xs: 12.5, sm: 13 }, fontWeight: 500 }}>
+            Confirmation speed depends on the selected fee
+          </Typography>
+        </Tooltip>
       </Box>
     </>
   );

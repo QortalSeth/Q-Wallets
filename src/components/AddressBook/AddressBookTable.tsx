@@ -25,6 +25,10 @@ import { useTranslation } from 'react-i18next';
 import { AddressBookEntry } from '../../utils/Types';
 import { copyToClipboard, cropString } from '../../common/functions';
 import { EMPTY_STRING, TIME_SECONDS_2 } from '../../common/constants';
+import {
+  getAddressBookAvatarColor,
+  getAddressBookAvatarSx,
+} from './avatarPalette';
 
 interface AddressBookTableProps {
   entries: AddressBookEntry[];
@@ -36,8 +40,6 @@ interface AddressBookTableProps {
   onPageChange: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
-
-const avatarColors = ['#2d82c8', '#5652bd', '#419b79', '#b99732', '#b24f68'];
 
 const getInitial = (value: string) =>
   value.trim().charAt(0).toUpperCase() || '?';
@@ -337,7 +339,12 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
               <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.2 }}>
                 <Avatar
                   sx={{
-                    bgcolor: avatarColors[index % avatarColors.length],
+                    ...getAddressBookAvatarSx(
+                      getAddressBookAvatarColor(
+                        `${entry.name}-${entry.address}`,
+                        page * rowsPerPage + index
+                      )
+                    ),
                     fontSize: 16,
                     fontWeight: 800,
                     height: 42,
@@ -481,7 +488,12 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
               >
                 <Avatar
                   sx={{
-                    bgcolor: avatarColors[index % avatarColors.length],
+                    ...getAddressBookAvatarSx(
+                      getAddressBookAvatarColor(
+                        `${entry.name}-${entry.address}`,
+                        page * rowsPerPage + index
+                      )
+                    ),
                     fontSize: 13,
                     fontWeight: 800,
                     height: 28,

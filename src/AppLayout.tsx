@@ -343,20 +343,8 @@ export default function AppLayout() {
     <Box
       sx={{
         alignItems: 'center',
-        background: (t) =>
-          t.palette.mode === 'dark'
-            ? 'radial-gradient(circle at 22% 0%, rgba(24, 189, 242, 0.08), transparent 34%), linear-gradient(180deg, rgba(10, 21, 30, 0.9) 0%, rgba(7, 16, 23, 0.96) 100%)'
-            : 'rgba(255,255,255,0.96)',
-        border: (t) =>
-          `1px solid ${
-            t.palette.mode === 'dark'
-              ? 'rgba(116, 158, 180, 0.16)'
-              : 'rgba(17,24,39,0.08)'
-          }`,
-        borderRadius: 1,
         display: { xs: 'none', md: 'block' },
-        mb: 2.5,
-        overflow: 'hidden',
+        mb: 2,
       }}
     >
       <Box
@@ -526,10 +514,7 @@ export default function AppLayout() {
     <Box
       sx={{
         bgcolor: 'background.default',
-        backgroundImage: (t) =>
-          t.palette.mode === 'dark'
-            ? 'radial-gradient(circle at 8% 5%, rgba(24, 189, 242, 0.11), transparent 28%), radial-gradient(circle at 92% 18%, rgba(24, 189, 242, 0.08), transparent 28%), linear-gradient(180deg, #071016 0%, #050b10 100%)'
-            : 'none',
+        backgroundImage: 'none',
         minHeight: '100dvh',
         width: '100%',
       }}

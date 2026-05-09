@@ -27,6 +27,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { Coin } from 'qapp-core';
 import {
   ChangeEvent,
@@ -57,6 +58,10 @@ import {
 } from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
 import { getAddressBook } from '../../utils/addressBookStorage';
+import {
+  getAddressBookAvatarColor,
+  getAddressBookAvatarSx,
+} from '../AddressBook/avatarPalette';
 
 export type WalletCoinSymbol =
   | 'QORT'
@@ -151,8 +156,6 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
 };
 
-const avatarColors = ['#7446b8', '#2669a7', '#aa5a31', '#4c7d48', '#a18b22'];
-
 const getWalletVars = (visual: WalletVisual) =>
   ({
     '--wallet-accent': visual.accent,
@@ -160,6 +163,17 @@ const getWalletVars = (visual: WalletVisual) =>
     '--wallet-glow': visual.glow,
     '--wallet-glow-soft': visual.glowSoft,
   }) as Record<string, string>;
+
+const walletOuterSurfaceSx = {
+  backgroundColor: (t: Theme) =>
+    t.palette.mode === 'dark' ? '#0E2431' : t.palette.background.paper,
+  backgroundImage: 'none',
+} as const;
+
+const walletInnerSurfaceSx = {
+  bgcolor: (t: Theme) =>
+    t.palette.mode === 'dark' ? '#112C38' : 'background.paper',
+} as const;
 
 export const formatWalletAmount = (
   value: unknown,
@@ -335,27 +349,54 @@ export function WalletSummaryCard({
     <WalletCard
       sx={{
         ...getWalletVars(visual),
-        backgroundColor: 'rgba(4, 18, 31, 0.96)',
+        backgroundColor: 'rgba(6, 21, 33, 0.98)',
         backgroundImage: `
-          radial-gradient(circle at 17% 48%, var(--wallet-glow-soft), transparent 32%),
-          radial-gradient(circle at 50% 0%, var(--wallet-glow-soft), transparent 30%),
-          linear-gradient(180deg, rgba(7, 27, 42, 0.95) 0%, rgba(4, 13, 23, 0.98) 100%)
+          linear-gradient(90deg, rgba(7, 30, 44, 0.98) 0%, rgba(6, 23, 36, 0.99) 44%, rgba(4, 16, 27, 0.995) 100%)
         `,
         borderColor:
-          'color-mix(in srgb, var(--wallet-accent) 46%, transparent)',
+          'color-mix(in srgb, var(--wallet-accent) 38%, rgba(116,158,180,0.18))',
         boxShadow:
-          '0 22px 58px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.035)',
+          '0 22px 58px rgba(0, 0, 0, 0.28), inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.035)',
         minHeight: { md: 224 },
         overflow: 'hidden',
         position: 'relative',
         width: '100%',
         '&::before': {
-          background:
-            'linear-gradient(90deg, rgba(4, 18, 31, 0) 0%, var(--wallet-glow-soft) 52%, rgba(4, 18, 31, 0) 100%)',
+          background: {
+            xs: `
+              radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--wallet-accent) 34%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 13%, transparent) 13%, rgba(6, 21, 33, 0) 28%),
+              linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 7%, transparent) 0%, rgba(6, 21, 33, 0) 62%)
+            `,
+            md: `
+              radial-gradient(circle at 13.5% 50%, color-mix(in srgb, var(--wallet-accent) 48%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 18%, transparent) 8%, rgba(6, 21, 33, 0) 18%),
+              linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 12%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 6%, transparent) 24%, rgba(6, 21, 33, 0) 52%)
+            `,
+          },
           content: '""',
           inset: 0,
+          maskImage: {
+            xs: 'radial-gradient(ellipse at 50% 34%, #000 0%, #000 24%, transparent 54%)',
+            md: 'radial-gradient(ellipse at 17% 50%, #000 0%, #000 30%, transparent 66%)',
+          },
+          opacity: 0.88,
           pointerEvents: 'none',
           position: 'absolute',
+        },
+        '&::after': {
+          background: {
+            xs: 'none',
+            md: 'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 16%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 7%, transparent) 32%, rgba(6, 21, 33, 0) 100%)',
+          },
+          bottom: '18%',
+          content: '""',
+          filter: 'blur(18px)',
+          left: '13%',
+          opacity: 0.36,
+          pointerEvents: 'none',
+          position: 'absolute',
+          top: '18%',
+          transform: 'skewX(-7deg)',
+          width: '42%',
         },
       }}
     >
@@ -399,27 +440,27 @@ export function WalletSummaryCard({
               width: 'clamp(154px, 17vw, 212px)',
               '&::before': {
                 background: `
-                  radial-gradient(ellipse at 50% 54%, var(--wallet-glow), transparent 36%),
-                  radial-gradient(ellipse at 48% 72%, var(--wallet-glow-soft), transparent 68%)
+                  radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--wallet-accent) 58%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 28%, transparent) 30%, rgba(4, 15, 26, 0) 54%)
                 `,
-                borderRadius: '42%',
+                borderRadius: '50%',
                 content: '""',
-                filter: 'blur(36px)',
-                inset: '-8% -20% -2%',
-                opacity: 0.62,
+                filter: 'blur(16px)',
+                inset: '-2%',
+                opacity: 0.9,
                 position: 'absolute',
-                transform: 'scale(1.18, 0.94) rotate(-6deg)',
+                transform: 'scale(1.02)',
               },
               '&::after': {
                 background:
-                  'radial-gradient(ellipse at 54% 46%, color-mix(in srgb, var(--wallet-accent) 34%, transparent), transparent 58%)',
+                  'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 26%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 12%, transparent) 42%, transparent 100%)',
                 content: '""',
-                filter: 'blur(18px)',
-                inset: '14% 0 8%',
+                filter: 'blur(16px)',
+                inset: '18% -48% 20% 48%',
                 mixBlendMode: 'screen',
-                opacity: 0.18,
+                opacity: 0.42,
                 pointerEvents: 'none',
                 position: 'absolute',
+                transform: 'skewX(-8deg)',
                 zIndex: 2,
               },
             }}
@@ -430,7 +471,7 @@ export function WalletSummaryCard({
               src={visual.coinImage}
               sx={{
                 filter:
-                  'drop-shadow(0 24px 22px rgba(0,0,0,0.44)) drop-shadow(0 0 18px color-mix(in srgb, var(--wallet-accent) 22%, transparent))',
+                  'drop-shadow(0 24px 22px rgba(0,0,0,0.48)) drop-shadow(0 0 9px color-mix(in srgb, var(--wallet-accent) 62%, transparent)) drop-shadow(18px 0 22px color-mix(in srgb, var(--wallet-accent) 22%, transparent))',
                 maxHeight: 'clamp(150px, 18vw, 224px)',
                 maxWidth: 'clamp(150px, 18vw, 224px)',
                 objectFit: 'contain',
@@ -444,7 +485,15 @@ export function WalletSummaryCard({
           </Box>
         </Box>
 
-        <Box sx={{ display: 'grid', gap: 2.2, minWidth: 0 }}>
+        <Box
+          sx={{
+            alignContent: 'center',
+            display: 'grid',
+            gap: { xs: 1.85, md: 1.7 },
+            minHeight: { md: 170 },
+            minWidth: 0,
+          }}
+        >
           <Box
             sx={{
               display: 'grid',
@@ -480,7 +529,6 @@ export function WalletSummaryCard({
           <Box
             sx={{
               containerType: 'inline-size',
-              minHeight: 102,
               minWidth: 0,
             }}
           >
@@ -500,13 +548,17 @@ export function WalletSummaryCard({
                 gap: '0.32em',
                 lineHeight: 1,
                 maxWidth: '100%',
+                minHeight: {
+                  xs: 'clamp(2.15rem, 12vw, 3.1rem)',
+                  md: 'clamp(2.6rem, 4vw, 3.45rem)',
+                },
                 mt: 0.55,
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
               }}
             >
               {isBalanceLoading && !balanceError ? (
-                <Box sx={{ maxWidth: 260, py: 1.1 }}>
+                <Box sx={{ alignSelf: 'center', maxWidth: 260, width: '100%' }}>
                   <LinearProgress />
                 </Box>
               ) : balanceError ? (
@@ -551,7 +603,7 @@ export function WalletSummaryCard({
             alignContent: 'center',
             display: 'grid',
             gap: 1.35,
-            transform: { md: 'translateY(7px)' },
+            minHeight: { md: 170 },
           }}
         >
           <Typography
@@ -568,9 +620,13 @@ export function WalletSummaryCard({
           <Box
             sx={{
               alignItems: 'center',
-              bgcolor: 'rgba(0, 8, 16, 0.34)',
-              border: '1px solid rgba(116,158,180,0.24)',
+              background:
+                'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 7%, rgba(0, 8, 16, 0.4)) 0%, rgba(0, 8, 16, 0.36) 38%, rgba(0, 8, 16, 0.44) 100%)',
+              border:
+                '1px solid color-mix(in srgb, var(--wallet-accent) 18%, rgba(116,158,180,0.24))',
               borderRadius: 1,
+              boxShadow:
+                'inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 18%, transparent), inset 0 1px 0 rgba(255,255,255,0.035)',
               display: 'flex',
               gap: 1,
               minHeight: 50,
@@ -626,7 +682,7 @@ export function WalletSummaryCard({
                 border:
                   '1px solid color-mix(in srgb, var(--wallet-accent) 52%, transparent)',
                 boxShadow:
-                  '0 12px 28px color-mix(in srgb, var(--wallet-accent) 18%, transparent), inset 0 1px 0 rgba(255,255,255,0.09)',
+                  '0 12px 28px color-mix(in srgb, var(--wallet-accent) 14%, transparent), inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 26%, transparent), inset 0 1px 0 rgba(255,255,255,0.1)',
                 color: 'text.primary',
                 fontSize: 15,
                 fontWeight: 700,
@@ -648,7 +704,10 @@ export function WalletSummaryCard({
               variant="outlined"
               sx={{
                 bgcolor: 'rgba(0, 8, 16, 0.28)',
-                borderColor: 'rgba(116,158,180,0.24)',
+                borderColor:
+                  'color-mix(in srgb, var(--wallet-accent) 16%, rgba(116,158,180,0.24))',
+                boxShadow:
+                  'inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 12%, transparent)',
                 color: 'var(--wallet-accent)',
                 fontSize: 15,
                 fontWeight: 700,
@@ -710,6 +769,7 @@ export function ReceiveQrPanel({
     <WalletCard
       sx={{
         ...getWalletVars(visual),
+        ...walletOuterSurfaceSx,
         alignItems: 'center',
         display: 'grid',
         justifyItems: 'center',
@@ -740,19 +800,19 @@ export function ReceiveQrPanel({
             position: 'relative',
             '&:hover .qr-target-frame': {
               borderColor: 'var(--wallet-accent)',
-              boxShadow: '0 0 28px var(--wallet-glow-soft)',
             },
           }}
         >
           <Box
             className="qr-target-frame"
             sx={{
+              ...walletInnerSurfaceSx,
               border:
-                '1px solid color-mix(in srgb, var(--wallet-accent) 50%, transparent)',
+                '1px solid rgba(116,158,180,0.16)',
               borderRadius: 1.5,
               p: 1.25,
               position: 'relative',
-              transition: 'border-color 160ms ease, box-shadow 160ms ease',
+              transition: 'border-color 160ms ease',
             }}
           >
             <Box
@@ -845,6 +905,7 @@ export function WalletAddressBookPanel({
     <WalletCard
       sx={{
         ...getWalletVars(visual),
+        ...walletOuterSurfaceSx,
         overflow: 'hidden',
         width: '100%',
       }}
@@ -870,10 +931,7 @@ export function WalletAddressBookPanel({
             mb: 1.5,
             '& .MuiInputBase-input': { fontSize: 13 },
             '& .MuiOutlinedInput-root': {
-              bgcolor: (t) =>
-                t.palette.mode === 'dark'
-                  ? 'rgba(2, 10, 16, 0.22)'
-                  : 'rgba(17,24,39,0.025)',
+              ...walletInnerSurfaceSx,
               '& fieldset': {
                 borderColor: (t) =>
                   t.palette.mode === 'dark'
@@ -890,7 +948,7 @@ export function WalletAddressBookPanel({
           variant="outlined"
           onClick={onAddContact}
           sx={{
-            bgcolor: 'transparent',
+            ...walletInnerSurfaceSx,
             borderColor: (t) =>
               t.palette.mode === 'dark'
                 ? 'rgba(116,158,180,0.2)'
@@ -899,8 +957,8 @@ export function WalletAddressBookPanel({
             fontWeight: 600,
             mb: 1.25,
             '&:hover': {
-              bgcolor:
-                'color-mix(in srgb, var(--wallet-accent, #18bdf2) 5%, transparent)',
+              bgcolor: (t) =>
+                t.palette.mode === 'dark' ? '#143342' : 'rgba(17,24,39,0.04)',
               borderColor:
                 'color-mix(in srgb, var(--wallet-accent, #18bdf2) 28%, transparent)',
               color: 'text.primary',
@@ -910,7 +968,15 @@ export function WalletAddressBookPanel({
           Add contact
         </Button>
 
-        <Box sx={{ display: 'grid' }}>
+        <Box
+          sx={{
+            ...walletInnerSurfaceSx,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            borderRadius: 1,
+            display: 'grid',
+            overflow: 'hidden',
+          }}
+        >
           {visibleEntries.length > 0 ? (
             visibleEntries.map((entry, index) => {
               const initials =
@@ -921,6 +987,10 @@ export function WalletAddressBookPanel({
                   .join('')
                   .slice(0, 2)
                   .toUpperCase() || visual.symbol[0];
+              const avatarColor = getAddressBookAvatarColor(
+                `${entry.name}-${entry.address}`,
+                index
+              );
 
               return (
                 <Box
@@ -934,12 +1004,13 @@ export function WalletAddressBookPanel({
                     display: 'grid',
                     gap: 1,
                     gridTemplateColumns: '44px minmax(0, 1fr) auto auto',
+                    px: 1.25,
                     py: 1.5,
                   }}
                 >
                   <Avatar
                     sx={{
-                      bgcolor: avatarColors[index % avatarColors.length],
+                      ...getAddressBookAvatarSx(avatarColor),
                       fontSize: 13,
                       fontWeight: 600,
                       height: 38,
@@ -1408,10 +1479,7 @@ export function WalletExternalTransactionsList({
                   key={hash || index}
                   sx={{
                     alignItems: 'center',
-                    bgcolor: (t) =>
-                      t.palette.mode === 'dark'
-                        ? 'rgba(255,255,255,0.012)'
-                        : 'rgba(17,24,39,0.018)',
+                    bgcolor: 'transparent',
                     borderBottom: (t) =>
                       `1px solid ${
                         t.palette.mode === 'dark'
@@ -1569,15 +1637,13 @@ export function WalletTransactionsCard({
   return (
     <WalletCard
       sx={{
+        ...walletOuterSurfaceSx,
         overflow: 'hidden',
         width: '100%',
         '& .MuiTableContainer-root': {
-          bgcolor: (t) =>
-            t.palette.mode === 'dark'
-              ? 'rgba(255,255,255,0.018)'
-              : 'rgba(17,24,39,0.025)',
-          border: (t) => `1px solid ${t.palette.divider}`,
-          borderRadius: 1,
+          bgcolor: 'transparent',
+          border: 0,
+          borderRadius: 0,
           boxShadow: 'none',
           overflowX: 'hidden',
         },
@@ -1684,7 +1750,7 @@ export function WalletTransactionsCard({
           },
       }}
     >
-      <Box sx={{ p: { xs: 1.5, md: 2 } }}>
+      <Box sx={{ px: { xs: 1.5, md: 2 }, pt: { xs: 1.5, md: 2 }, pb: 1.1 }}>
         <Box
           sx={{
             alignItems: { xs: 'flex-start', sm: 'center' },
@@ -1733,12 +1799,24 @@ export function WalletTransactionsCard({
                     },
                   }}
                 >
-                  Refresh
+                Refresh
                 </Button>
               )}
             </Box>
           )}
         </Box>
+      </Box>
+      <Box
+        sx={{
+          ...walletInnerSurfaceSx,
+          borderTop: (t) => `1px solid ${t.palette.divider}`,
+          boxShadow: (t) =>
+            t.palette.mode === 'dark'
+              ? 'inset 0 1px 0 rgba(255,255,255,0.018)'
+              : '0 1px 2px rgba(16,24,40,0.04)',
+          overflow: 'hidden',
+        }}
+      >
         {children}
       </Box>
     </WalletCard>
@@ -1967,15 +2045,17 @@ export function WalletWorkspace({
       <Box sx={{ display: 'grid', gap: 1.5, minWidth: 0 }}>
         <Collapse
           in={receiveOpen}
-          timeout={reduceMotion ? 0 : 260}
+          timeout={reduceMotion ? 0 : 440}
           unmountOnExit
           sx={{
             '& .MuiCollapse-wrapperInner': {
               opacity: receiveOpen ? 1 : 0,
-              transform: receiveOpen ? 'translateY(0)' : 'translateY(-10px)',
+              transform: receiveOpen ? 'translateY(0)' : 'translateY(-14px)',
+              transformOrigin: 'top center',
               transition: reduceMotion
                 ? 'none'
-                : 'opacity 260ms ease-out, transform 260ms ease-out',
+                : 'opacity 340ms ease-out, transform 440ms cubic-bezier(0.2, 0, 0, 1)',
+              willChange: 'opacity, transform',
             },
           }}
         >

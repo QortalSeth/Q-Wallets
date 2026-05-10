@@ -271,7 +271,7 @@ export default function QortalWallet() {
   const [advancedFilterAnchor, setAdvancedFilterAnchor] =
     useState<null | HTMLElement>(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
   const [openQortReceive, setOpenQortReceive] = useState(false);
   const [receivePanelOpen, setReceivePanelOpen] = useState(false);
@@ -3670,6 +3670,13 @@ export default function QortalWallet() {
             count={rows.length}
             rowsPerPage={rowsPerPage}
             page={page}
+            slotProps={{
+              select: {
+                MenuProps: {
+                  disableScrollLock: true,
+                },
+              },
+            }}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             ActionsComponent={TablePaginationActions}
@@ -3959,12 +3966,12 @@ export default function QortalWallet() {
         </Snackbar>
         <AppBar
           sx={{
-            bgcolor: 'rgba(7, 24, 38, 0.98)',
-            backgroundColor: 'rgba(7, 24, 38, 0.98)',
-            backgroundImage:
-              'linear-gradient(180deg, rgba(9,32,49,0.98) 0%, rgba(5,20,33,0.99) 100%)',
-            borderBottom: '1px solid rgba(116,158,180,0.14)',
+            bgcolor: 'transparent',
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
+            borderBottom: 'none',
             boxShadow: 'none',
+            color: 'text.primary',
             position: 'static',
           }}
         >
@@ -4064,7 +4071,7 @@ export default function QortalWallet() {
             gap: 2.25,
             px: { xs: 2.4, md: 2.75 },
             pb: 2.45,
-            pt: 2,
+            pt: 1.5,
           }}
         >
           <Box

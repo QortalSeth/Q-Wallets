@@ -281,11 +281,12 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
       >
         <AppBar
           sx={{
-            bgcolor: 'rgba(10, 28, 42, 0.86)',
-            backgroundImage:
-              'radial-gradient(circle at 50% 0%, rgba(24,189,242,0.1), transparent 35%), linear-gradient(180deg, rgba(12,39,59,0.94) 0%, rgba(7,23,36,0.98) 100%)',
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+            bgcolor: 'transparent',
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
+            borderBottom: 'none',
             boxShadow: 'none',
+            color: 'text.primary',
             position: 'relative',
           }}
         >

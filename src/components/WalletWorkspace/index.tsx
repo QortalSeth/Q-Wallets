@@ -1194,15 +1194,10 @@ export function WalletAddressBookPanel({
   const visual = WALLET_VISUALS[coin];
   const [entries, setEntries] = useState<AddressBookEntry[]>([]);
   const [search, setSearch] = useState('');
-  const [showAllContacts, setShowAllContacts] = useState(false);
 
   useEffect(() => {
     setEntries(getAddressBook(visual.coinType));
   }, [refreshKey, visual.coinType]);
-
-  useEffect(() => {
-    setShowAllContacts(false);
-  }, [search, visual.coinType]);
 
   const visibleEntries = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1216,9 +1211,7 @@ export function WalletAddressBookPanel({
   }, [entries, search]);
 
   const maxVisibleContacts = 13;
-  const displayedEntries = showAllContacts
-    ? visibleEntries
-    : visibleEntries.slice(0, maxVisibleContacts);
+  const displayedEntries = visibleEntries.slice(0, maxVisibleContacts);
   const hasMoreContacts = visibleEntries.length > maxVisibleContacts;
 
   return (
@@ -1234,8 +1227,8 @@ export function WalletAddressBookPanel({
         width: '100%',
       }}
     >
-      <Box sx={{ p: { xs: 2, md: 2.25 }, pb: 2 }}>
-        <Typography sx={{ fontWeight: 700, mb: 1.7 }}>
+      <Box sx={{ px: { xs: 1.75, md: 2.1 }, py: { xs: 1.75, md: 2 } }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1.2 }}>
           Address book ({visual.symbol})
         </Typography>
         <TextField
@@ -1252,10 +1245,15 @@ export function WalletAddressBookPanel({
             ),
           }}
           sx={{
-            mb: 1.5,
-            '& .MuiInputBase-input': { fontSize: 13 },
+            mb: 1.1,
+            '& .MuiInputBase-input': {
+              fontSize: 13,
+              lineHeight: '18px',
+              py: 0.65,
+            },
             '& .MuiOutlinedInput-root': {
               bgcolor: 'rgba(1, 12, 24, 0.34)',
+              minHeight: 32,
               '& fieldset': {
                 borderColor: (t) =>
                   t.palette.mode === 'dark'
@@ -1276,7 +1274,9 @@ export function WalletAddressBookPanel({
             borderColor: 'rgba(116,158,180,0.16)',
             color: 'text.secondary',
             fontWeight: 600,
-            mb: 1.45,
+            mb: 1.35,
+            minHeight: 32,
+            py: 0.4,
             '&:hover': {
               bgcolor: (t) =>
                 t.palette.mode === 'dark'
@@ -1294,7 +1294,7 @@ export function WalletAddressBookPanel({
         <Box
           sx={{
             display: 'grid',
-            gap: 0.55,
+            gap: 0.45,
             overflow: 'visible',
           }}
         >
@@ -1322,10 +1322,11 @@ export function WalletAddressBookPanel({
                     border: '1px solid rgba(116,158,180,0.075)',
                     borderRadius: 1,
                     display: 'grid',
-                    gap: 1,
-                    gridTemplateColumns: '44px minmax(0, 1fr) auto auto',
-                    px: 1.25,
-                    py: 0.66,
+                    gap: 0.85,
+                    gridTemplateColumns: '38px minmax(0, 1fr) 32px 32px',
+                    minHeight: 46,
+                    px: 1,
+                    py: 0.55,
                     transition:
                       'background-color 150ms ease, border-color 150ms ease',
                     '&:hover': {
@@ -1337,10 +1338,10 @@ export function WalletAddressBookPanel({
                   <Avatar
                     sx={{
                       ...getAddressBookAvatarSx(avatarColor),
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: 600,
-                      height: 38,
-                      width: 38,
+                      height: 32,
+                      width: 32,
                     }}
                   >
                     {initials}
@@ -1348,7 +1349,9 @@ export function WalletAddressBookPanel({
                   <Box sx={{ minWidth: 0 }}>
                     <Typography
                       sx={{
+                        fontSize: 14,
                         fontWeight: 600,
+                        lineHeight: 1.15,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -1360,6 +1363,8 @@ export function WalletAddressBookPanel({
                       variant="body2"
                       sx={{
                         color: 'text.secondary',
+                        fontSize: 12.5,
+                        lineHeight: 1.2,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -1373,6 +1378,8 @@ export function WalletAddressBookPanel({
                         sx={{
                           color: 'text.secondary',
                           display: 'block',
+                          fontSize: 11.5,
+                          lineHeight: 1.15,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -1394,7 +1401,9 @@ export function WalletAddressBookPanel({
                         borderRadius: 1,
                         boxShadow: 'none',
                         color: 'text.secondary',
+                        height: 32,
                         overflow: 'hidden',
+                        width: 32,
                         '& .MuiTouchRipple-root': { display: 'none' },
                         '&:hover': {
                           bgcolor: 'rgba(116,158,180,0.08)',
@@ -1422,7 +1431,9 @@ export function WalletAddressBookPanel({
                         borderRadius: 1,
                         boxShadow: 'none',
                         color: 'text.primary',
+                        height: 32,
                         overflow: 'hidden',
+                        width: 32,
                         '& .MuiTouchRipple-root': { display: 'none' },
                         '&:hover': {
                           bgcolor: 'rgba(116,158,180,0.08)',
@@ -1489,22 +1500,23 @@ export function WalletAddressBookPanel({
         {hasMoreContacts && (
           <Button
             variant="text"
-            onClick={() => setShowAllContacts((prev) => !prev)}
+            onClick={onAddContact}
             sx={{
               color: 'primary.main',
               fontSize: 13,
               fontWeight: 700,
               justifyContent: 'flex-start',
-              minHeight: 32,
-              mt: 1,
+              minHeight: 28,
+              mt: 0.8,
               px: 0,
+              py: 0,
               '&:hover': {
                 bgcolor: 'transparent',
                 color: '#37d0ff',
               },
             }}
           >
-            {showAllContacts ? 'Show fewer contacts' : 'View all contacts'}
+            View all contacts
           </Button>
         )}
       </Box>
@@ -1977,6 +1989,9 @@ export function WalletExternalTransactionsList({
             inputProps: {
               'aria-label': labels.rowsPerPage,
             },
+            MenuProps: {
+              disableScrollLock: true,
+            },
             native: true,
           },
         }}
@@ -2016,7 +2031,6 @@ export function WalletTransactionsCard({
         borderColor: 'rgba(116,158,180,0.15)',
         boxShadow:
           '0 24px 72px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.045)',
-        minHeight: { md: 560 },
         overflow: 'hidden',
         width: '100%',
         '& .MuiTableContainer-root': {
@@ -2198,7 +2212,6 @@ export function WalletTransactionsCard({
           borderTop: '1px solid rgba(116,158,180,0.11)',
           boxShadow:
             'inset 0 1px 0 rgba(255,255,255,0.028), inset 0 18px 54px rgba(24,189,242,0.025)',
-          minHeight: { md: 480 },
           overflow: 'hidden',
         }}
       >
@@ -2434,7 +2447,7 @@ export function WalletWorkspace({
         gridTemplateColumns: {
           xs: '1fr',
           lg: 'minmax(0, 1fr) minmax(320px, 360px)',
-          xl: 'minmax(0, 1fr) minmax(410px, 430px)',
+          xl: 'minmax(0, 1fr) minmax(404px, 424px)',
         },
         isolation: 'isolate',
         position: 'relative',

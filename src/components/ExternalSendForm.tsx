@@ -172,12 +172,12 @@ export function ExternalSendForm({
     <>
       <AppBar
         sx={{
-          bgcolor: 'rgba(7, 24, 38, 0.98)',
-          backgroundColor: 'rgba(7, 24, 38, 0.98)',
-          backgroundImage:
-            'linear-gradient(180deg, rgba(9,32,49,0.98) 0%, rgba(5,20,33,0.99) 100%)',
-          borderBottom: '1px solid rgba(116,158,180,0.14)',
+          bgcolor: 'transparent',
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          borderBottom: 'none',
           boxShadow: 'none',
+          color: 'text.primary',
           position: 'static',
         }}
       >
@@ -273,7 +273,7 @@ export function ExternalSendForm({
           gap: 2.25,
           px: { xs: 2.4, sm: 2.75 },
           pb: 2.45,
-          pt: 2,
+          pt: 1.5,
         }}
       >
         <Box

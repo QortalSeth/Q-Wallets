@@ -70,10 +70,9 @@ export const WalletSendDialog = styled(Dialog)(
       overflowX: 'hidden',
     },
     '& .MuiAppBar-root': {
-      backgroundColor: 'rgba(10, 28, 42, 0.96)',
-      backgroundImage:
-        'linear-gradient(180deg, rgba(13, 39, 57, 0.92) 0%, rgba(7, 22, 34, 0.98) 100%)',
-      borderBottom: `1px solid ${theme.palette.divider}`,
+      backgroundColor: 'transparent',
+      backgroundImage: 'none',
+      borderBottom: 'none',
       boxShadow: 'none',
     },
     '& .MuiToolbar-root': {

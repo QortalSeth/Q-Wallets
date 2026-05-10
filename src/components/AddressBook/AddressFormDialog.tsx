@@ -350,8 +350,10 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       <DialogTitle
         sx={{
           alignItems: 'center',
-          bgcolor: 'rgba(10, 28, 42, 0.74)',
-          borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+          bgcolor: 'transparent',
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          borderBottom: 'none',
           display: 'flex',
           justifyContent: 'center',
           minHeight: 68,

@@ -471,11 +471,6 @@ export default function QortalWallet() {
   };
 
   const handleAdvancedFilterSelect = (newValue: string) => {
-    if (newValue === 'all') {
-      handleTransactionFiltersChange(['all']);
-      return;
-    }
-
     const nonAllFilterValues = [
       'payments',
       'rewards',
@@ -487,6 +482,17 @@ export default function QortalWallet() {
       'asset',
       'poll',
     ];
+
+    if (newValue === 'all') {
+      const allFiltersAreActive =
+        selectedTransactionFilters.includes('all') ||
+        nonAllFilterValues.every((filterValue) =>
+          selectedTransactionFilters.includes(filterValue)
+        );
+      handleTransactionFiltersChange(allFiltersAreActive ? [] : ['all']);
+      return;
+    }
+
     const activeValues = selectedTransactionFilters.includes('all')
       ? nonAllFilterValues
       : selectedTransactionFilters;
@@ -3329,8 +3335,10 @@ export default function QortalWallet() {
               ?.label ?? 'Filtered')
           : `${activeFilterValues.length} filters`;
     const advancedFilterOpen = Boolean(advancedFilterAnchor);
-    const transactionGridColumns =
-      '44px minmax(88px, 0.7fr) minmax(112px, 1fr) minmax(112px, 1fr) minmax(102px, 0.75fr) minmax(84px, 0.62fr) minmax(80px, 0.58fr)';
+    const transactionGridColumns = {
+      xs: '42px minmax(82px, 0.55fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(95px, 0.72fr) minmax(76px, 0.55fr) minmax(88px, 0.58fr)',
+      xl: '54px minmax(110px, 0.7fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(118px, 0.78fr) minmax(92px, 0.62fr) minmax(112px, 0.66fr)',
+    } as const;
     const transactionHeaderSx = {
       color: 'text.secondary',
       fontSize: 11,
@@ -3535,7 +3543,7 @@ export default function QortalWallet() {
       return (
         <>
           <Box sx={{ overflowX: 'auto' }}>
-            <Box sx={{ minWidth: 760 }}>
+            <Box sx={{ minWidth: { xs: 680, lg: 720, xl: 900 } }}>
               <Box
                 aria-hidden
                 sx={{
@@ -3549,8 +3557,8 @@ export default function QortalWallet() {
                   display: 'grid',
                   gap: 1,
                   gridTemplateColumns: transactionGridColumns,
-                  px: 1.25,
-                  py: 1,
+                  px: { xs: 1.25, md: 2 },
+                  py: 1.15,
                 }}
               >
                 <Typography
@@ -3570,31 +3578,32 @@ export default function QortalWallet() {
                 <Typography sx={transactionHeaderSx}>Time</Typography>
               </Box>
 
-              <Box sx={{ display: 'grid' }}>
+              <Box sx={{ display: 'grid', gap: 0.15, px: { md: 0.4 }, py: 0.35 }}>
                 {pagedRows.map((row: any, index: Key) => (
                   <Box
                     key={row?.signature || index}
                     sx={{
                       alignItems: 'center',
-                      bgcolor: 'transparent',
+                      bgcolor: 'rgba(4, 22, 38, 0.16)',
                       borderBottom: (t) =>
                         `1px solid ${
                           t.palette.mode === 'dark'
-                            ? 'rgba(116,158,180,0.085)'
+                            ? 'rgba(116,158,180,0.06)'
                             : 'rgba(17,24,39,0.06)'
                         }`,
+                      borderRadius: 0.65,
                       display: 'grid',
                       gap: 1,
                       gridTemplateColumns: transactionGridColumns,
                       minHeight: 46,
-                      px: 1.25,
+                      px: { xs: 1.25, md: 1.6 },
                       py: 0.85,
                       transition:
                         'background-color 150ms ease, border-color 150ms ease',
                       '&:hover': {
                         bgcolor: (t) =>
                           t.palette.mode === 'dark'
-                            ? 'rgba(24,189,242,0.055)'
+                            ? 'rgba(24,189,242,0.06)'
                             : 'rgba(5,127,168,0.05)',
                       },
                     }}
@@ -3849,7 +3858,7 @@ export default function QortalWallet() {
   } as const;
 
   return (
-    <Box sx={{ width: '100%', mt: 1 }}>
+    <Box sx={{ width: '100%', mt: 2 }}>
       <WalletSendDialog
         open={openQortSend}
         onClose={handleCloseQortSend}

@@ -22,6 +22,7 @@ import {
   IconButton,
   InputAdornment,
   LinearProgress,
+  Slider,
   TablePagination,
   TextField,
   Typography,
@@ -164,15 +165,347 @@ const getWalletVars = (visual: WalletVisual) =>
     '--wallet-glow-soft': visual.glowSoft,
   }) as Record<string, string>;
 
+type WalletGlowLayerKey =
+  | 'coinShadow'
+  | 'floorReflection'
+  | 'floorShadow';
+
+type WalletGlowLayerSettings = {
+  blur: number;
+  intensity: number;
+  spread: number;
+  x: number;
+  y: number;
+};
+
+type WalletGlowDevSettings = Record<
+  WalletGlowLayerKey,
+  WalletGlowLayerSettings
+>;
+
+const DEFAULT_WALLET_GLOW_SETTINGS: WalletGlowDevSettings = {
+  coinShadow: { blur: 57, intensity: 75, spread: 75, x: -7, y: 2 },
+  floorReflection: { blur: 8, intensity: 220, spread: 109, x: -16, y: 14 },
+  floorShadow: { blur: 7, intensity: 220, spread: 100, x: -7, y: 0 },
+};
+
+const WALLET_GLOW_STORAGE_KEY = 'q-wallets.coinGlowSettings.v1';
+
+const WALLET_GLOW_LAYERS: Array<{
+  key: WalletGlowLayerKey;
+  label: string;
+}> = [
+  { key: 'coinShadow', label: 'Coin shadow' },
+  { key: 'floorReflection', label: 'Floor reflection' },
+  { key: 'floorShadow', label: 'Floor shadow' },
+];
+
+const WALLET_GLOW_CONTROLS: Array<{
+  key: keyof WalletGlowLayerSettings;
+  label: string;
+  max: number;
+  min: number;
+  step: number;
+}> = [
+  { key: 'x', label: 'X', min: -220, max: 220, step: 1 },
+  { key: 'y', label: 'Y', min: -220, max: 220, step: 1 },
+  { key: 'blur', label: 'Blur', min: 0, max: 100, step: 1 },
+  { key: 'spread', label: 'Spread', min: 10, max: 260, step: 1 },
+  { key: 'intensity', label: 'Intensity', min: 0, max: 220, step: 1 },
+];
+
+const cloneWalletGlowSettings = (settings: WalletGlowDevSettings) =>
+  Object.fromEntries(
+    Object.entries(settings).map(([key, value]) => [key, { ...value }])
+  ) as WalletGlowDevSettings;
+
+const normalizeWalletGlowSettings = (value: unknown): WalletGlowDevSettings => {
+  const fallback = cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
+  if (!value || typeof value !== 'object') return fallback;
+
+  const source = value as Partial<
+    Record<WalletGlowLayerKey, Partial<WalletGlowLayerSettings>>
+  >;
+
+  WALLET_GLOW_LAYERS.forEach(({ key }) => {
+    const layer = source[key];
+    if (!layer || typeof layer !== 'object') return;
+
+    WALLET_GLOW_CONTROLS.forEach((control) => {
+      const nextValue = layer[control.key];
+      if (typeof nextValue === 'number' && Number.isFinite(nextValue)) {
+        fallback[key][control.key] = nextValue;
+      }
+    });
+  });
+
+  return fallback;
+};
+
+const loadWalletGlowSettings = () => {
+  if (typeof window === 'undefined') {
+    return cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
+  }
+
+  try {
+    const savedSettings = window.localStorage.getItem(WALLET_GLOW_STORAGE_KEY);
+    return savedSettings
+      ? normalizeWalletGlowSettings(JSON.parse(savedSettings))
+      : cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
+  } catch {
+    return cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
+  }
+};
+
+const createWalletGlowCssVars = (settings: WalletGlowDevSettings) => {
+  const layerVars = (prefix: string, layer: WalletGlowLayerSettings) => ({
+    [`--${prefix}-blur`]: `${layer.blur}px`,
+    [`--${prefix}-intensity`]: `${layer.intensity / 100}`,
+    [`--${prefix}-spread`]: `${layer.spread / 100}`,
+    [`--${prefix}-x`]: `${layer.x}px`,
+    [`--${prefix}-y`]: `${layer.y}px`,
+  });
+
+  return {
+    ...layerVars('wallet-coin-shadow', settings.coinShadow),
+    '--wallet-coin-shadow-blur-effective': `${
+      (settings.coinShadow.blur * settings.coinShadow.spread) / 100
+    }px`,
+    '--wallet-coin-shadow-x-effective': `${
+      (settings.coinShadow.x * settings.coinShadow.spread) / 100
+    }px`,
+    '--wallet-coin-shadow-y-effective': `${
+      (settings.coinShadow.y * settings.coinShadow.spread) / 100
+    }px`,
+    ...layerVars('wallet-floor-reflection', settings.floorReflection),
+    ...layerVars('wallet-floor-shadow', settings.floorShadow),
+  } as Record<string, string>;
+};
+
+type CoinGlowTunerProps = {
+  onChange: (settings: WalletGlowDevSettings) => void;
+  onReset: () => void;
+  settings: WalletGlowDevSettings;
+};
+
+function CoinGlowTuner({ onChange, onReset, settings }: CoinGlowTunerProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [jsonDraft, setJsonDraft] = useState(() =>
+    JSON.stringify(settings, null, 2)
+  );
+  const [jsonError, setJsonError] = useState('');
+  const settingsJson = useMemo(() => JSON.stringify(settings, null, 2), [
+    settings,
+  ]);
+
+  useEffect(() => {
+    setJsonDraft(settingsJson);
+    setJsonError('');
+  }, [settingsJson]);
+
+  const updateLayer = (
+    layerKey: WalletGlowLayerKey,
+    controlKey: keyof WalletGlowLayerSettings,
+    value: number
+  ) => {
+    onChange({
+      ...settings,
+      [layerKey]: {
+        ...settings[layerKey],
+        [controlKey]: value,
+      },
+    });
+  };
+
+  const applyJson = () => {
+    try {
+      onChange(normalizeWalletGlowSettings(JSON.parse(jsonDraft)));
+      setJsonError('');
+    } catch {
+      setJsonError('Invalid JSON');
+    }
+  };
+
+  if (isCollapsed) {
+    return (
+      <Button
+        onClick={() => setIsCollapsed(false)}
+        size="small"
+        variant="outlined"
+        sx={{
+          bgcolor: 'rgba(6, 20, 32, 0.88)',
+          borderColor: 'rgba(24,189,242,0.34)',
+          borderRadius: 1,
+          bottom: 16,
+          boxShadow: '0 16px 40px rgba(0,0,0,0.32)',
+          color: 'primary.main',
+          fontWeight: 700,
+          left: 16,
+          position: 'fixed',
+          zIndex: 1400,
+        }}
+      >
+        Coin glow tuner
+      </Button>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        bgcolor: 'rgba(6, 20, 32, 0.94)',
+        border: '1px solid rgba(116,158,180,0.22)',
+        borderRadius: 1,
+        bottom: 16,
+        boxShadow: '0 24px 72px rgba(0,0,0,0.42)',
+        color: 'text.primary',
+        display: 'grid',
+        gap: 1.25,
+        left: 16,
+        maxHeight: '72vh',
+        maxWidth: 'calc(100vw - 32px)',
+        overflow: 'auto',
+        p: 1.5,
+        position: 'fixed',
+        width: 360,
+        zIndex: 1400,
+      }}
+    >
+      <Box
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 1,
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box>
+          <Typography sx={{ fontSize: 14, fontWeight: 800 }}>
+            Coin glow tuner
+          </Typography>
+          <Typography
+            sx={{ color: 'text.secondary', fontSize: 11, lineHeight: 1.35 }}
+          >
+            Live controls for the coin shadow, floor reflection, and anchor.
+          </Typography>
+        </Box>
+        <IconButton
+          aria-label="Collapse coin glow tuner"
+          onClick={() => setIsCollapsed(true)}
+          size="small"
+          sx={{ color: 'text.secondary' }}
+        >
+          <Close fontSize="small" />
+        </IconButton>
+      </Box>
+
+      {WALLET_GLOW_LAYERS.map((layer) => (
+        <Box
+          key={layer.key}
+          sx={{
+            border: '1px solid rgba(116,158,180,0.14)',
+            borderRadius: 1,
+            display: 'grid',
+            gap: 0.55,
+            p: 1,
+          }}
+        >
+          <Typography sx={{ fontSize: 12, fontWeight: 800 }}>
+            {layer.label}
+          </Typography>
+          {WALLET_GLOW_CONTROLS.map((control) => (
+            <Box
+              key={`${layer.key}-${control.key}`}
+              sx={{
+                alignItems: 'center',
+                display: 'grid',
+                gap: 1,
+                gridTemplateColumns: '64px minmax(0, 1fr) 42px',
+              }}
+            >
+              <Typography sx={{ color: 'text.secondary', fontSize: 11 }}>
+                {control.label}
+              </Typography>
+              <Slider
+                max={control.max}
+                min={control.min}
+                onChange={(_, value) =>
+                  updateLayer(layer.key, control.key, value as number)
+                }
+                size="small"
+                step={control.step}
+                value={settings[layer.key][control.key]}
+                sx={{ py: 0.4 }}
+              />
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 11,
+                  textAlign: 'right',
+                }}
+              >
+                {settings[layer.key][control.key]}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      ))}
+
+      <TextField
+        error={Boolean(jsonError)}
+        helperText={jsonError || 'Paste a saved coin-glow JSON preset here.'}
+        minRows={5}
+        multiline
+        size="small"
+        value={jsonDraft}
+        onChange={(event) => {
+          setJsonDraft(event.target.value);
+          setJsonError('');
+        }}
+        sx={{
+          '& .MuiInputBase-input': {
+            fontFamily:
+              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            fontSize: 11,
+          },
+        }}
+      />
+
+      <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr 1fr' }}>
+        <Button onClick={applyJson} size="small" variant="outlined">
+          Apply
+        </Button>
+        <Button
+          onClick={() => copyToClipboard(settingsJson)}
+          size="small"
+          variant="outlined"
+        >
+          Copy
+        </Button>
+        <Button onClick={onReset} size="small" variant="outlined">
+          Reset
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
 const walletOuterSurfaceSx = {
   backgroundColor: (t: Theme) =>
-    t.palette.mode === 'dark' ? '#0E2431' : t.palette.background.paper,
-  backgroundImage: 'none',
+    t.palette.mode === 'dark'
+      ? 'rgba(8, 32, 50, 0.66)'
+      : t.palette.background.paper,
+  backgroundImage: (t: Theme) =>
+    t.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(13, 48, 72, 0.54) 0%, rgba(7, 28, 45, 0.58) 100%)'
+      : 'none',
 } as const;
 
 const walletInnerSurfaceSx = {
   bgcolor: (t: Theme) =>
-    t.palette.mode === 'dark' ? '#112C38' : 'background.paper',
+    t.palette.mode === 'dark'
+      ? 'rgba(17, 60, 86, 0.34)'
+      : 'background.paper',
 } as const;
 
 export const formatWalletAmount = (
@@ -354,7 +687,7 @@ export function WalletSummaryCard({
         borderColor: 'transparent',
         borderRadius: 0,
         boxShadow: 'none',
-        minHeight: { md: 224 },
+        minHeight: { md: 250 },
         overflow: 'visible',
         position: 'relative',
         width: '100%',
@@ -367,13 +700,14 @@ export function WalletSummaryCard({
           gap: { xs: 2.25, md: 2.5 },
           gridTemplateColumns: {
             xs: '1fr',
-            md: 'minmax(150px, 0.55fr) minmax(210px, 0.78fr) minmax(300px, 1fr)',
+            md: 'minmax(150px, 0.46fr) minmax(220px, 0.68fr) minmax(280px, 0.86fr)',
+            xl: 'minmax(250px, 0.55fr) minmax(285px, 0.72fr) minmax(380px, 0.95fr)',
           },
-          minHeight: { md: 224 },
-          pb: { xs: 2.25, md: 2.7 },
-          pl: { xs: 2.25, md: 2.7 },
-          pr: { xs: 2.25, md: 3.45 },
-          pt: { xs: 2.25, md: 2.7 },
+          minHeight: { md: 250 },
+          pb: { xs: 2.25, md: 2.45 },
+          pl: { xs: 2.25, md: 2.5, lg: 3.4 },
+          pr: { xs: 2.25, md: 4.1 },
+          pt: { xs: 2.25, md: 2.45 },
           position: 'relative',
           zIndex: 1,
         }}
@@ -383,11 +717,50 @@ export function WalletSummaryCard({
           sx={{
             alignItems: 'center',
             display: 'flex',
+            isolation: 'isolate',
             justifyContent: { xs: 'center', md: 'flex-start' },
-            minHeight: { xs: 178, md: 170 },
+            minHeight: { xs: 188, md: 210 },
             minWidth: 0,
             overflow: 'visible',
             position: 'relative',
+            '&::before': {
+              background:
+                'radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.25) 35%, transparent 72%)',
+              bottom: { xs: 16, md: 21 },
+              content: '""',
+              filter: 'blur(var(--wallet-floor-shadow-blur, 7px))',
+              height: { xs: 20, md: 24 },
+              left: { xs: '21%', md: '7%' },
+              opacity:
+                'calc(0.62 * var(--wallet-floor-shadow-intensity, 1))',
+              pointerEvents: 'none',
+              position: 'absolute',
+              transform:
+                'translate(var(--wallet-floor-shadow-x, 0px), var(--wallet-floor-shadow-y, 0px)) perspective(180px) rotateX(64deg) scale(var(--wallet-floor-shadow-spread, 1))',
+              width: { xs: '58%', md: '78%' },
+              zIndex: 0,
+            },
+            '&::after': {
+              background: `
+                radial-gradient(ellipse at 48% 54%, color-mix(in srgb, var(--wallet-accent) 58%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 28%, transparent) 17%, transparent 50%),
+                radial-gradient(ellipse at 50% 66%, rgba(255,255,255,0.18) 0%, color-mix(in srgb, var(--wallet-accent) 18%, transparent) 12%, transparent 36%),
+                linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--wallet-accent) 22%, transparent) 26%, color-mix(in srgb, var(--wallet-accent) 11%, transparent) 55%, transparent 86%)
+              `,
+              bottom: { xs: 13, md: 17 },
+              borderRadius: '50%',
+              content: '""',
+              filter: 'blur(var(--wallet-floor-reflection-blur, 8px))',
+              height: { xs: 28, md: 38 },
+              left: { xs: '12%', md: '-3%' },
+              opacity:
+                'calc(0.78 * var(--wallet-floor-reflection-intensity, 1))',
+              pointerEvents: 'none',
+              position: 'absolute',
+              transform:
+                'translate(var(--wallet-floor-reflection-x, 0px), var(--wallet-floor-reflection-y, 0px)) perspective(190px) rotateX(66deg) scale(var(--wallet-floor-reflection-spread, 1))',
+              width: { xs: '82%', md: '126%' },
+              zIndex: 0,
+            },
           }}
         >
           <Box
@@ -397,32 +770,8 @@ export function WalletSummaryCard({
               display: 'flex',
               justifyContent: 'center',
               position: 'relative',
-              width: 'clamp(154px, 17vw, 212px)',
-              '&::before': {
-                background: `
-                  radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--wallet-accent) 58%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 28%, transparent) 30%, rgba(4, 15, 26, 0) 54%)
-                `,
-                borderRadius: '50%',
-                content: '""',
-                filter: 'blur(16px)',
-                inset: '-8% -6% -6% -18%',
-                opacity: 0.9,
-                position: 'absolute',
-                transform: 'scale(1.02)',
-              },
-              '&::after': {
-                background:
-                  'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 26%, transparent) 0%, color-mix(in srgb, var(--wallet-accent) 12%, transparent) 42%, transparent 100%)',
-                content: '""',
-                filter: 'blur(16px)',
-                inset: '18% -48% 20% 48%',
-                mixBlendMode: 'screen',
-                opacity: 0.42,
-                pointerEvents: 'none',
-                position: 'absolute',
-                transform: 'skewX(-8deg)',
-                zIndex: 2,
-              },
+              width: 'clamp(154px, 15.4vw, 236px)',
+              zIndex: 1,
             }}
           >
             <Box
@@ -431,9 +780,9 @@ export function WalletSummaryCard({
               src={visual.coinImage}
               sx={{
                 filter:
-                  'drop-shadow(0 24px 22px rgba(0,0,0,0.48)) drop-shadow(0 0 9px color-mix(in srgb, var(--wallet-accent) 62%, transparent)) drop-shadow(18px 0 22px color-mix(in srgb, var(--wallet-accent) 22%, transparent))',
-                maxHeight: 'clamp(150px, 18vw, 224px)',
-                maxWidth: 'clamp(150px, 18vw, 224px)',
+                  'drop-shadow(var(--wallet-coin-shadow-x-effective, 0px) var(--wallet-coin-shadow-y-effective, 28px) var(--wallet-coin-shadow-blur-effective, 24px) rgba(0,0,0,calc(0.52 * var(--wallet-coin-shadow-intensity, 1)))) drop-shadow(0 0 11px color-mix(in srgb, var(--wallet-accent) 76%, transparent)) drop-shadow(22px 0 30px color-mix(in srgb, var(--wallet-accent) 28%, transparent))',
+                maxHeight: 'clamp(150px, 16.2vw, 250px)',
+                maxWidth: 'clamp(150px, 16.2vw, 250px)',
                 objectFit: 'contain',
                 opacity: 0.96,
                 position: 'relative',
@@ -563,7 +912,7 @@ export function WalletSummaryCard({
             alignContent: 'center',
             display: 'grid',
             gap: 1.35,
-            minHeight: { md: 170 },
+            minHeight: { md: 190 },
           }}
         >
           <Typography
@@ -589,7 +938,7 @@ export function WalletSummaryCard({
                 'inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 18%, transparent), inset 0 1px 0 rgba(255,255,255,0.035)',
               display: 'flex',
               gap: 1,
-              minHeight: 50,
+              minHeight: 54,
               minWidth: 0,
               px: 1.35,
               py: 0.9,
@@ -627,7 +976,7 @@ export function WalletSummaryCard({
           <Box
             sx={{
               display: 'grid',
-              gap: 1.25,
+              gap: 1.4,
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             }}
           >
@@ -646,7 +995,7 @@ export function WalletSummaryCard({
                 color: 'text.primary',
                 fontSize: 15,
                 fontWeight: 700,
-                minHeight: 46,
+                minHeight: 52,
                 '&:hover': {
                   background:
                     'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 46%, rgba(24,45,60,0.98)) 0%, color-mix(in srgb, var(--wallet-accent) 30%, rgba(7,18,30,0.98)) 100%)',
@@ -671,7 +1020,7 @@ export function WalletSummaryCard({
                 color: 'var(--wallet-accent)',
                 fontSize: 15,
                 fontWeight: 700,
-                minHeight: 46,
+                minHeight: 52,
                 '&:hover': {
                   bgcolor:
                     'color-mix(in srgb, var(--wallet-accent) 8%, transparent)',
@@ -845,10 +1194,15 @@ export function WalletAddressBookPanel({
   const visual = WALLET_VISUALS[coin];
   const [entries, setEntries] = useState<AddressBookEntry[]>([]);
   const [search, setSearch] = useState('');
+  const [showAllContacts, setShowAllContacts] = useState(false);
 
   useEffect(() => {
     setEntries(getAddressBook(visual.coinType));
   }, [refreshKey, visual.coinType]);
+
+  useEffect(() => {
+    setShowAllContacts(false);
+  }, [search, visual.coinType]);
 
   const visibleEntries = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -861,17 +1215,27 @@ export function WalletAddressBookPanel({
     );
   }, [entries, search]);
 
+  const maxVisibleContacts = 13;
+  const displayedEntries = showAllContacts
+    ? visibleEntries
+    : visibleEntries.slice(0, maxVisibleContacts);
+  const hasMoreContacts = visibleEntries.length > maxVisibleContacts;
+
   return (
     <WalletCard
       sx={{
         ...getWalletVars(visual),
-        ...walletOuterSurfaceSx,
+        background:
+          'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
+        borderColor: 'rgba(116,158,180,0.14)',
+        boxShadow:
+          '0 24px 72px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
         overflow: 'hidden',
         width: '100%',
       }}
     >
-      <Box sx={{ p: { xs: 2, md: 2.25 }, pb: 1.5 }}>
-        <Typography sx={{ fontWeight: 600, mb: 2 }}>
+      <Box sx={{ p: { xs: 2, md: 2.25 }, pb: 2 }}>
+        <Typography sx={{ fontWeight: 700, mb: 1.7 }}>
           Address book ({visual.symbol})
         </Typography>
         <TextField
@@ -891,7 +1255,7 @@ export function WalletAddressBookPanel({
             mb: 1.5,
             '& .MuiInputBase-input': { fontSize: 13 },
             '& .MuiOutlinedInput-root': {
-              ...walletInnerSurfaceSx,
+              bgcolor: 'rgba(1, 12, 24, 0.34)',
               '& fieldset': {
                 borderColor: (t) =>
                   t.palette.mode === 'dark'
@@ -908,17 +1272,16 @@ export function WalletAddressBookPanel({
           variant="outlined"
           onClick={onAddContact}
           sx={{
-            ...walletInnerSurfaceSx,
-            borderColor: (t) =>
-              t.palette.mode === 'dark'
-                ? 'rgba(116,158,180,0.2)'
-                : 'rgba(17,24,39,0.1)',
+            bgcolor: 'rgba(13, 48, 72, 0.32)',
+            borderColor: 'rgba(116,158,180,0.16)',
             color: 'text.secondary',
             fontWeight: 600,
-            mb: 1.25,
+            mb: 1.45,
             '&:hover': {
               bgcolor: (t) =>
-                t.palette.mode === 'dark' ? '#143342' : 'rgba(17,24,39,0.04)',
+                t.palette.mode === 'dark'
+                  ? 'rgba(18, 64, 94, 0.42)'
+                  : 'rgba(17,24,39,0.04)',
               borderColor:
                 'color-mix(in srgb, var(--wallet-accent, #18bdf2) 28%, transparent)',
               color: 'text.primary',
@@ -930,15 +1293,13 @@ export function WalletAddressBookPanel({
 
         <Box
           sx={{
-            ...walletInnerSurfaceSx,
-            border: (t) => `1px solid ${t.palette.divider}`,
-            borderRadius: 1,
             display: 'grid',
-            overflow: 'hidden',
+            gap: 0.55,
+            overflow: 'visible',
           }}
         >
-          {visibleEntries.length > 0 ? (
-            visibleEntries.map((entry, index) => {
+          {displayedEntries.length > 0 ? (
+            displayedEntries.map((entry, index) => {
               const initials =
                 entry.name
                   .split(' ')
@@ -957,15 +1318,20 @@ export function WalletAddressBookPanel({
                   key={entry.id}
                   sx={{
                     alignItems: 'center',
-                    borderBottom:
-                      index === visibleEntries.length - 1
-                        ? 'none'
-                        : (t) => `1px solid ${t.palette.divider}`,
+                    bgcolor: 'rgba(6, 25, 40, 0.22)',
+                    border: '1px solid rgba(116,158,180,0.075)',
+                    borderRadius: 1,
                     display: 'grid',
                     gap: 1,
                     gridTemplateColumns: '44px minmax(0, 1fr) auto auto',
                     px: 1.25,
-                    py: 1.5,
+                    py: 0.66,
+                    transition:
+                      'background-color 150ms ease, border-color 150ms ease',
+                    '&:hover': {
+                      bgcolor: 'rgba(14, 49, 72, 0.3)',
+                      borderColor: 'rgba(116,158,180,0.13)',
+                    },
                   }}
                 >
                   <Avatar
@@ -1018,11 +1384,24 @@ export function WalletAddressBookPanel({
                   </Box>
                   <CustomWidthTooltip placement="top" title="Copy address">
                     <IconButton
+                      disableFocusRipple
+                      disableRipple
                       size="small"
                       onClick={() => copyToClipboard(entry.address)}
                       sx={{
-                        border: (t) => `1px solid ${t.palette.divider}`,
+                        bgcolor: 'transparent',
+                        border: '1px solid rgba(116,158,180,0.16)',
                         borderRadius: 1,
+                        boxShadow: 'none',
+                        color: 'text.secondary',
+                        overflow: 'hidden',
+                        '& .MuiTouchRipple-root': { display: 'none' },
+                        '&:hover': {
+                          bgcolor: 'rgba(116,158,180,0.08)',
+                          borderColor: 'rgba(116,158,180,0.26)',
+                          boxShadow: 'none',
+                          color: 'text.primary',
+                        },
                       }}
                     >
                       <CopyAllTwoTone fontSize="small" />
@@ -1033,11 +1412,24 @@ export function WalletAddressBookPanel({
                     title={`Send ${visual.symbol}`}
                   >
                     <IconButton
+                      disableFocusRipple
+                      disableRipple
                       size="small"
                       onClick={() => onSelectAddress(entry.address, entry.name)}
                       sx={{
-                        border: (t) => `1px solid ${t.palette.divider}`,
+                        bgcolor: 'transparent',
+                        border: '1px solid rgba(116,158,180,0.16)',
                         borderRadius: 1,
+                        boxShadow: 'none',
+                        color: 'text.primary',
+                        overflow: 'hidden',
+                        '& .MuiTouchRipple-root': { display: 'none' },
+                        '&:hover': {
+                          bgcolor: 'rgba(116,158,180,0.08)',
+                          borderColor: 'rgba(116,158,180,0.26)',
+                          boxShadow: 'none',
+                          color: 'text.primary',
+                        },
                       }}
                     >
                       <Send fontSize="small" />
@@ -1049,7 +1441,8 @@ export function WalletAddressBookPanel({
           ) : (
             <Box
               sx={{
-                bgcolor: 'transparent',
+                bgcolor: 'rgba(6, 25, 40, 0.18)',
+                border: '1px solid rgba(116,158,180,0.075)',
                 borderRadius: 1,
                 color: 'text.secondary',
                 px: 2,
@@ -1093,6 +1486,27 @@ export function WalletAddressBookPanel({
             </Box>
           )}
         </Box>
+        {hasMoreContacts && (
+          <Button
+            variant="text"
+            onClick={() => setShowAllContacts((prev) => !prev)}
+            sx={{
+              color: 'primary.main',
+              fontSize: 13,
+              fontWeight: 700,
+              justifyContent: 'flex-start',
+              minHeight: 32,
+              mt: 1,
+              px: 0,
+              '&:hover': {
+                bgcolor: 'transparent',
+                color: '#37d0ff',
+              },
+            }}
+          >
+            {showAllContacts ? 'Show fewer contacts' : 'View all contacts'}
+          </Button>
+        )}
       </Box>
     </WalletCard>
   );
@@ -1597,7 +2011,12 @@ export function WalletTransactionsCard({
   return (
     <WalletCard
       sx={{
-        ...walletOuterSurfaceSx,
+        background:
+          'linear-gradient(180deg, rgba(10, 36, 56, 0.74) 0%, rgba(7, 29, 47, 0.68) 100%)',
+        borderColor: 'rgba(116,158,180,0.15)',
+        boxShadow:
+          '0 24px 72px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.045)',
+        minHeight: { md: 560 },
         overflow: 'hidden',
         width: '100%',
         '& .MuiTableContainer-root': {
@@ -1710,7 +2129,13 @@ export function WalletTransactionsCard({
           },
       }}
     >
-      <Box sx={{ px: { xs: 1.5, md: 2 }, pt: { xs: 1.5, md: 2 }, pb: 1.1 }}>
+      <Box
+        sx={{
+          px: { xs: 1.5, md: 2.25, lg: 2.75 },
+          pt: { xs: 1.5, md: 2.05 },
+          pb: 1.15,
+        }}
+      >
         <Box
           sx={{
             alignItems: { xs: 'flex-start', sm: 'center' },
@@ -1768,12 +2193,12 @@ export function WalletTransactionsCard({
       </Box>
       <Box
         sx={{
-          ...walletInnerSurfaceSx,
-          borderTop: (t) => `1px solid ${t.palette.divider}`,
-          boxShadow: (t) =>
-            t.palette.mode === 'dark'
-              ? 'inset 0 1px 0 rgba(255,255,255,0.018)'
-              : '0 1px 2px rgba(16,24,40,0.04)',
+          background:
+            'linear-gradient(180deg, rgba(18, 62, 89, 0.36) 0%, rgba(12, 47, 72, 0.32) 100%)',
+          borderTop: '1px solid rgba(116,158,180,0.11)',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.028), inset 0 18px 54px rgba(24,189,242,0.025)',
+          minHeight: { md: 480 },
           overflow: 'hidden',
         }}
       >
@@ -1803,7 +2228,17 @@ export function WalletSyncCard({
     'Encrypted QDN backup for this wallet address book. It keeps your local contacts recoverable and in sync through your Qortal account.';
 
   return (
-    <WalletCard sx={{ overflow: 'hidden', width: '100%' }}>
+    <WalletCard
+      sx={{
+        background:
+          'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
+        borderColor: 'rgba(116,158,180,0.14)',
+        boxShadow:
+          '0 24px 72px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
+        overflow: 'hidden',
+        width: '100%',
+      }}
+    >
       <Box sx={{ display: 'grid', gap: 1.35, px: { xs: 2, md: 2.25 }, py: 2 }}>
         <Box
           sx={{
@@ -1826,7 +2261,7 @@ export function WalletSyncCard({
                 alignItems: 'center',
                 bgcolor: isError
                   ? 'rgba(246, 167, 11, 0.08)'
-                  : 'rgba(116,158,180,0.06)',
+                  : 'rgba(1, 12, 24, 0.34)',
                 border: '1px solid rgba(116,158,180,0.16)',
                 borderRadius: 1,
                 color: isError
@@ -1916,13 +2351,14 @@ export function WalletSyncCard({
           startIcon={<CloudSync />}
           variant="outlined"
           sx={{
-            bgcolor: 'transparent',
-            borderColor: 'rgba(116,158,180,0.18)',
+            bgcolor: 'rgba(13, 48, 72, 0.32)',
+            borderColor: 'rgba(116,158,180,0.16)',
             color: 'text.secondary',
+            fontWeight: 600,
             minHeight: 42,
             '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.025)',
-              borderColor: 'rgba(116,158,180,0.34)',
+              bgcolor: 'rgba(18, 64, 94, 0.42)',
+              borderColor: 'rgba(116,158,180,0.28)',
               color: 'text.primary',
             },
           }}
@@ -1974,18 +2410,46 @@ export function WalletWorkspace({
   transactions,
 }: WalletWorkspaceProps) {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const visual = WALLET_VISUALS[coin];
+  const [coinGlowSettings, setCoinGlowSettings] = useState(
+    loadWalletGlowSettings
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      WALLET_GLOW_STORAGE_KEY,
+      JSON.stringify(coinGlowSettings)
+    );
+  }, [coinGlowSettings]);
 
   return (
     <Box
       sx={{
+        ...getWalletVars(visual),
+        ...createWalletGlowCssVars(coinGlowSettings),
         alignItems: 'start',
         display: 'grid',
-        gap: 1.5,
-        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 360px' },
+        gap: { xs: 1.8, lg: 2, xl: 3 },
+        gridTemplateColumns: {
+          xs: '1fr',
+          lg: 'minmax(0, 1fr) minmax(320px, 360px)',
+          xl: 'minmax(0, 1fr) minmax(410px, 430px)',
+        },
+        isolation: 'isolate',
+        position: 'relative',
         width: '100%',
       }}
     >
-      <Box sx={{ display: 'grid', gap: 1.5, minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: { xs: 1.8, md: 2 },
+          minWidth: 0,
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <WalletSummaryCard
           address={address}
           balance={balance}
@@ -2002,7 +2466,15 @@ export function WalletWorkspace({
         {transactions}
       </Box>
 
-      <Box sx={{ display: 'grid', gap: 1.5, minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: { xs: 1.6, md: 2 },
+          minWidth: 0,
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <Collapse
           in={receiveOpen}
           timeout={reduceMotion ? 0 : 440}
@@ -2030,6 +2502,16 @@ export function WalletWorkspace({
         />
         {rightColumnAfter}
       </Box>
+
+      <CoinGlowTuner
+        settings={coinGlowSettings}
+        onChange={setCoinGlowSettings}
+        onReset={() =>
+          setCoinGlowSettings(
+            cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS)
+          )
+        }
+      />
     </Box>
   );
 }

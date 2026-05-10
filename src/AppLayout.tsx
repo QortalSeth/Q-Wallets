@@ -42,6 +42,122 @@ import { syncAllAddressBooksOnStartup } from './utils/addressBookQDN';
 import changelogContent from '../CHANGELOG.md?raw';
 import Markdown from 'react-markdown';
 
+type SceneGlowLayerKey =
+  | 'primaryCyan'
+  | 'topBlue'
+  | 'stars'
+  | 'vignette';
+
+type SceneGlowLayerSettings = {
+  blur: number;
+  intensity: number;
+  spread: number;
+  x: number;
+  y: number;
+};
+
+type SceneGlowSettings = Record<SceneGlowLayerKey, SceneGlowLayerSettings>;
+
+const DEFAULT_SCENE_GLOW_SETTINGS: SceneGlowSettings = {
+  primaryCyan: { blur: 0, intensity: 99, spread: 81, x: 90, y: -61 },
+  topBlue: { blur: 0, intensity: 100, spread: 100, x: 0, y: 0 },
+  stars: { blur: 0, intensity: 96, spread: 85, x: 12, y: -11 },
+  vignette: { blur: 0, intensity: 100, spread: 100, x: 0, y: 0 },
+};
+
+const sceneLayerTransform = (layer: SceneGlowLayerSettings) =>
+  `translate(${layer.x}px, ${layer.y}px) scale(${layer.spread / 100})`;
+
+const sceneGlowLayerSx = (
+  layer: SceneGlowLayerSettings,
+  sx: {
+    background: string;
+    height: string;
+    left: string;
+    opacity: number;
+    top: string;
+    width: string;
+  }
+) => ({
+  background: sx.background,
+  filter: `blur(${layer.blur}px)`,
+  height: sx.height,
+  left: sx.left,
+  opacity: sx.opacity * (layer.intensity / 100),
+  pointerEvents: 'none',
+  position: 'absolute' as const,
+  top: sx.top,
+  transform: sceneLayerTransform(layer),
+  transformOrigin: 'center',
+  width: sx.width,
+});
+
+function SceneAtmosphere({ settings }: { settings: SceneGlowSettings }) {
+  return (
+    <Box
+      aria-hidden="true"
+      sx={{
+        inset: 0,
+        minHeight: '100%',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        position: 'absolute',
+        width: '100%',
+        zIndex: 0,
+      }}
+    >
+      <Box
+        sx={sceneGlowLayerSx(settings.primaryCyan, {
+          background:
+            'radial-gradient(ellipse at center, rgba(24,189,242,0.18) 0%, rgba(24,189,242,0.065) 42%, transparent 76%)',
+          height: '55vh',
+          left: '-10vw',
+          opacity: 1,
+          top: '-4vh',
+          width: '62vw',
+        })}
+      />
+      <Box
+        sx={sceneGlowLayerSx(settings.topBlue, {
+          background:
+            'radial-gradient(ellipse at center, rgba(42,117,217,0.12) 0%, rgba(42,117,217,0.045) 42%, transparent 72%)',
+          height: '34vh',
+          left: '20vw',
+          opacity: 1,
+          top: '-10vh',
+          width: '58vw',
+        })}
+      />
+      <Box
+        sx={{
+          backgroundImage:
+            'radial-gradient(circle at 12% 20%, rgba(24,189,242,0.36) 0 1px, transparent 1.7px), radial-gradient(circle at 62% 8%, rgba(74,179,255,0.26) 0 1px, transparent 1.8px), radial-gradient(circle at 39% 34%, rgba(180,226,255,0.18) 0 1px, transparent 1.6px)',
+          backgroundPosition: '0 0, 80px 30px, 140px 70px',
+          backgroundSize: '310px 220px, 420px 280px, 520px 360px',
+          filter: `blur(${settings.stars.blur}px)`,
+          inset: 0,
+          opacity: 0.28 * (settings.stars.intensity / 100),
+          pointerEvents: 'none',
+          position: 'absolute',
+          transform: sceneLayerTransform(settings.stars),
+          transformOrigin: 'center',
+        }}
+      />
+      <Box
+        sx={sceneGlowLayerSx(settings.vignette, {
+          background:
+            'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.16) 100%)',
+          height: '100%',
+          left: '0',
+          opacity: 1,
+          top: '0',
+          width: '100%',
+        })}
+      />
+    </Box>
+  );
+}
+
 export default function AppLayout() {
   useIframe();
 
@@ -344,7 +460,7 @@ export default function AppLayout() {
       sx={{
         alignItems: 'center',
         display: { xs: 'none', md: 'block' },
-        mb: 2,
+        mb: 0.75,
       }}
     >
       <Box
@@ -353,7 +469,7 @@ export default function AppLayout() {
           display: 'flex',
           gap: 1.5,
           justifyContent: 'space-between',
-          minHeight: 60,
+          minHeight: 50,
           px: 1.5,
         }}
       >
@@ -362,7 +478,8 @@ export default function AppLayout() {
             alignItems: 'center',
             display: 'flex',
             gap: 1,
-            minWidth: 184,
+            flex: { md: '0 1 96px', lg: '0 0 184px' },
+            minWidth: 0,
           }}
         >
           <Box
@@ -375,7 +492,15 @@ export default function AppLayout() {
               width: 32,
             }}
           />
-          <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
+          <Typography
+            sx={{
+              display: { md: 'none', lg: 'block' },
+              fontSize: 18,
+              fontWeight: 700,
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
             Q-Wallets
           </Typography>
           <Link
@@ -435,9 +560,9 @@ export default function AppLayout() {
                     display: 'inline-flex',
                     gap: 0.75,
                     minHeight: 42,
-                    minWidth: 74,
+                    minWidth: { md: 44, lg: 74 },
                     overflow: 'hidden',
-                    px: 1.2,
+                    px: { md: 0.8, lg: 1.2 },
                     py: 0.75,
                     position: 'relative',
                     bgcolor: isSelected
@@ -456,7 +581,12 @@ export default function AppLayout() {
                   </Box>
                   <Typography
                     variant="caption"
-                    sx={{ fontWeight: isSelected ? 700 : 600, lineHeight: 1 }}
+                    sx={{
+                      display: { md: 'none', lg: 'block' },
+                      fontWeight: isSelected ? 700 : 600,
+                      lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     {coinLabels[item.segment] ?? item.title}
                   </Typography>
@@ -466,7 +596,7 @@ export default function AppLayout() {
                     sx={{
                       borderLeft: '1px solid rgba(116,158,180,0.22)',
                       height: 28,
-                      mx: 0.7,
+                      mx: { md: 0.45, lg: 0.7 },
                     }}
                   />
                 )}
@@ -513,12 +643,17 @@ export default function AppLayout() {
   return (
     <Box
       sx={{
-        bgcolor: 'background.default',
-        backgroundImage: 'none',
+        bgcolor: '#030b14',
+        backgroundImage:
+          'linear-gradient(180deg, #020917 0%, #061421 48%, #030b14 100%)',
+        isolation: 'isolate',
         minHeight: '100dvh',
+        overflowX: 'hidden',
+        position: 'relative',
         width: '100%',
       }}
     >
+      <SceneAtmosphere settings={DEFAULT_SCENE_GLOW_SETTINGS} />
       {isMobile && (
         <AppBar
           position="sticky"
@@ -578,15 +713,17 @@ export default function AppLayout() {
         component="main"
         sx={{
           overflowX: 'hidden',
-          px: { xs: 1.5, sm: 2, md: 3 },
-          py: { xs: 2, md: 3 },
+          px: { xs: 1.5, sm: 2, md: 3, lg: 4 },
+          py: { xs: 2, md: 1.5 },
+          position: 'relative',
           width: '100%',
+          zIndex: 1,
         }}
       >
         <Container
           maxWidth={false}
           disableGutters
-          sx={{ maxWidth: 1340, mx: 'auto' }}
+          sx={{ maxWidth: 1660, mx: 'auto' }}
         >
           {desktopNavigation}
           <Outlet />

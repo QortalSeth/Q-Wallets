@@ -16,6 +16,7 @@ import {
 import {
   ExternalFeeSlider,
   ExternalSendForm,
+  sendCoinDialogPaperSx,
 } from '../../components/ExternalSendForm';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -168,11 +169,13 @@ export default function DigibyteWallet() {
     null
   );
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyDgbTxHash, setCopyDgbTxHash] = useState(EMPTY_STRING);
   const [openDgbSend, setOpenDgbSend] = useState(false);
   const [dgbAmount, setDgbAmount] = useState<number>(0);
   const [dgbRecipient, setDgbRecipient] = useState(EMPTY_STRING);
+  const [dgbRecipientDisplayName, setDgbRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [dgbFee, setDgbFee] = useState<number>(0);
   const [loadingRefreshDgb, setLoadingRefreshDgb] = useState(false);
@@ -205,8 +208,9 @@ export default function DigibyteWallet() {
     setOpenDgbAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setDgbRecipient(address);
+    setDgbRecipientDisplayName(name || EMPTY_STRING);
     setDgbAmount(0);
     setDgbFee(DGB_FEE);
     setOpenDgbAddressBook(false);
@@ -218,6 +222,7 @@ export default function DigibyteWallet() {
   const handleOpenDgbSend = () => {
     setDgbAmount(0);
     setDgbRecipient(EMPTY_STRING);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setDgbFee(DGB_FEE);
     setOpenDgbSend(true);
     setAddressFormatError(false);
@@ -232,6 +237,7 @@ export default function DigibyteWallet() {
   ) => {
     const value = e.target.value.trim();
     setDgbRecipient(value);
+    setDgbRecipientDisplayName(EMPTY_STRING);
 
     if (validateDgbAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -243,7 +249,15 @@ export default function DigibyteWallet() {
   const handleCloseDgbSend = () => {
     setDgbAmount(0);
     setDgbFee(0);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setOpenDgbSend(false);
+    setAddressFormatError(false);
+    setOpenSendDgbError(false);
+  };
+
+  const handleClearDgbRecipient = () => {
+    setDgbRecipient(EMPTY_STRING);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setOpenSendDgbError(false);
   };
@@ -420,6 +434,7 @@ export default function DigibyteWallet() {
       if (!sendRequest?.error) {
         setDgbAmount(0);
         setDgbRecipient(EMPTY_STRING);
+        setDgbRecipientDisplayName(EMPTY_STRING);
         setDgbFee(DGB_FEE);
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
@@ -430,6 +445,7 @@ export default function DigibyteWallet() {
     } catch (error) {
       setDgbAmount(0);
       setDgbRecipient(EMPTY_STRING);
+      setDgbRecipientDisplayName(EMPTY_STRING);
       setDgbFee(DGB_FEE);
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
@@ -456,7 +472,6 @@ export default function DigibyteWallet() {
       coin="DGB"
       copyHashLabel={copyDgbTxHash || undefined}
       labels={{
-        allRows: 'All',
         copyHash: (hash) =>
           t('core:action.copy_hash', {
             hash,
@@ -511,9 +526,7 @@ export default function DigibyteWallet() {
         disableScrollLock
         slotProps={{
           paper: {
-            sx: {
-              width: 'min(687px, calc(100vw - 32px))',
-            },
+            sx: sendCoinDialogPaperSx,
           },
         }}
       >
@@ -631,12 +644,15 @@ export default function DigibyteWallet() {
           isBalanceLoading={isLoadingWalletBalanceDgb}
           maxSendable={maxSendableDbgCoin()}
           onAmountChange={setDgbAmount}
+          onClearRecipient={handleClearDgbRecipient}
           onClose={handleCloseDgbSend}
           onOpenAddressBook={handleOpenAddressBook}
           onRecipientChange={handleRecipientChange}
           onSend={sendDgbRequest}
           onSendMax={handleSendMaxDgb}
           recipient={dgbRecipient}
+          recipientDisplayName={dgbRecipientDisplayName}
+          recipientSubtitle="DGB address book contact"
           sendDisabled={disableCanSendDgb()}
           showAddressBookButton
           showBalanceMeter

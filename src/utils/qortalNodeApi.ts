@@ -8,6 +8,11 @@ export type QortalNameSearchResult = {
   owner: string;
 };
 
+export type QortalNameData = {
+  name: string;
+  owner: string;
+};
+
 const stripTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
 const getQortalNodeApiCandidates = () => {
@@ -74,6 +79,63 @@ const toNameSearchResults = (payload: unknown): QortalNameSearchResult[] => {
       };
     })
     .filter((item): item is QortalNameSearchResult => Boolean(item));
+};
+
+const toNameData = (payload: unknown): QortalNameData | null => {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const record = payload as { name?: unknown; owner?: unknown };
+  if (typeof record.name !== 'string' || typeof record.owner !== 'string') {
+    return null;
+  }
+
+  return {
+    name: record.name,
+    owner: record.owner,
+  };
+};
+
+export const getQortalNameData = async (
+  name: string,
+  signal?: AbortSignal
+): Promise<QortalNameData | null> => {
+  const trimmedName = name.trim();
+  if (!trimmedName) return null;
+
+  let lastError: unknown = null;
+
+  for (const baseApi of getQortalNodeApiCandidates()) {
+    if (signal?.aborted) return null;
+
+    try {
+      const payload = await fetchJsonWithTimeout(
+        `${baseApi}/names/${encodeURIComponent(trimmedName)}`,
+        signal
+      );
+      const result = toNameData(payload);
+
+      if (result) {
+        return result;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const searchResults = await searchQortalNames(trimmedName, 10, signal);
+  const exactMatch = searchResults.find(
+    (result) => result.name.toLowerCase() === trimmedName.toLowerCase()
+  );
+
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  if (lastError) {
+    console.warn('QORT name lookup failed:', lastError);
+  }
+
+  return null;
 };
 
 export const searchQortalNames = async (

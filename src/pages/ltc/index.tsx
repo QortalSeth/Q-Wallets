@@ -51,7 +51,10 @@ import {
   WalletTransactionsLoader,
   WalletWorkspace,
 } from '../../components/WalletWorkspace';
-import { ExternalSendForm } from '../../components/ExternalSendForm';
+import {
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -143,11 +146,13 @@ export default function LitecoinWallet() {
   const [isLoadingLtcTransactions, setIsLoadingLtcTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyLtcTxHash, setCopyLtcTxHash] = useState(EMPTY_STRING);
   const [openLtcSend, setOpenLtcSend] = useState(false);
   const [ltcAmount, setLtcAmount] = useState<number>(0);
   const [ltcRecipient, setLtcRecipient] = useState(EMPTY_STRING);
+  const [ltcRecipientDisplayName, setLtcRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshLtc, setLoadingRefreshLtc] = useState(false);
   const [openTxLtcSubmit, setOpenTxLtcSubmit] = useState(false);
@@ -185,8 +190,9 @@ export default function LitecoinWallet() {
     setOpenLtcAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setLtcRecipient(address);
+    setLtcRecipientDisplayName(name || EMPTY_STRING);
     setLtcAmount(0);
     setOpenLtcAddressBook(false);
     setOpenLtcSend(true);
@@ -199,6 +205,7 @@ export default function LitecoinWallet() {
   const handleOpenLtcSend = () => {
     setLtcAmount(0);
     setLtcRecipient(EMPTY_STRING);
+    setLtcRecipientDisplayName(EMPTY_STRING);
     setOpenLtcSend(true);
     setAddressFormatError(false);
     setOpenSendLtcError(false);
@@ -214,6 +221,7 @@ export default function LitecoinWallet() {
   ) => {
     const value: string = e.target.value.trim();
     setLtcRecipient(value);
+    setLtcRecipientDisplayName(EMPTY_STRING);
 
     if (validateLtcAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -224,11 +232,19 @@ export default function LitecoinWallet() {
 
   const handleCloseLtcSend = () => {
     setLtcAmount(0);
+    setLtcRecipientDisplayName(EMPTY_STRING);
     setOpenLtcSend(false);
     setAddressFormatError(false);
     setOpenSendLtcError(false);
     setWalletInfoError(null);
     setWalletBalanceError(null);
+  };
+
+  const handleClearLtcRecipient = () => {
+    setLtcRecipient(EMPTY_STRING);
+    setLtcRecipientDisplayName(EMPTY_STRING);
+    setAddressFormatError(false);
+    setOpenSendLtcError(false);
   };
 
   const changeCopyLtcTxHash = async () => {
@@ -400,6 +416,7 @@ export default function LitecoinWallet() {
       if (!sendRequest?.error) {
         setLtcAmount(0);
         setLtcRecipient(EMPTY_STRING);
+        setLtcRecipientDisplayName(EMPTY_STRING);
         setOpenTxLtcSubmit(false);
         setOpenSendLtcSuccess(true);
         setIsLoadingWalletBalanceLtc(true);
@@ -409,6 +426,7 @@ export default function LitecoinWallet() {
     } catch (error) {
       setLtcAmount(0);
       setLtcRecipient(EMPTY_STRING);
+      setLtcRecipientDisplayName(EMPTY_STRING);
       setOpenTxLtcSubmit(false);
       setOpenSendLtcError(true);
       setIsLoadingWalletBalanceLtc(true);
@@ -434,7 +452,6 @@ export default function LitecoinWallet() {
       coin="LTC"
       copyHashLabel={copyLtcTxHash || undefined}
       labels={{
-        allRows: 'All',
         copyHash: (hash) =>
           t('core:action.copy_hash', {
             hash,
@@ -489,9 +506,7 @@ export default function LitecoinWallet() {
         disableScrollLock
         slotProps={{
           paper: {
-            sx: {
-              width: 'min(653px, calc(100vw - 32px))',
-            },
+            sx: sendCoinDialogPaperSx,
           },
         }}
       >
@@ -597,13 +612,17 @@ export default function LitecoinWallet() {
           isBalanceLoading={isLoadingWalletBalanceLtc}
           maxSendable={maxSendableLtcCoin()}
           onAmountChange={setLtcAmount}
+          onClearRecipient={handleClearLtcRecipient}
           onClose={handleCloseLtcSend}
           onOpenAddressBook={handleOpenAddressBook}
           onRecipientChange={handleRecipientChange}
           onSend={sendLtcRequest}
           onSendMax={handleSendMaxLtc}
           recipient={ltcRecipient}
+          recipientDisplayName={ltcRecipientDisplayName}
+          recipientSubtitle="LTC address book contact"
           sendDisabled={disableCanSendLtc()}
+          showAddressBookButton
           symbol="LTC"
         />
       </WalletSendDialog>

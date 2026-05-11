@@ -2,6 +2,28 @@
 
 All notable changes to Q-Wallets will be documented in this file.
 
+## [1.3.3] - 2026-05-11
+
+### Changed
+
+- Redesigned the wallet hub as a full visual and UX overhaul, replacing the older boxed layout with a cinematic coin-led workspace, atmospheric backgrounds, refreshed wallet tabs, and a cleaner right-side Address Book panel.
+- Unified the QORT, BTC, LTC, DOGE, DGB, RVN, and ARRR wallet pages around the same shared workspace structure.
+- Reworked send dialogs so transfers are easier to understand and harder to misread, with recipient-first layouts, cleaner amount fields, better Max/fee placement, clearer loading states while recipient data is being confirmed, and a smoother send-to-contact flow.
+- Modernized the Address Book into a more usable wallet companion, with easier add/edit/delete flows, QORT name search when creating contacts, duplicate-contact warnings, explicit address confirmation before saving, softer row styling, lighter table text, pastel avatars, improved search styling, and better sync feedback.
+- Refined transaction tables with lighter headers, improved pagination options, exact dates after 24 hours, smoother row hover feedback, and fewer layout jumps.
+- Stabilized Receive QR layout inside Qortal Hub so the right rail can open naturally without making the background atmosphere shift.
+- Reduced unnecessary automatic QORT balance refreshes from every 1 minute to every 2.5 minutes while keeping manual refresh available.
+
+### Added
+
+- Receive QR dialogs now work consistently for every wallet, not only QORT.
+- QORT Address Book name search now marks results that are already saved with an "already in list" label.
+- Save protection now warns users when they try to add a contact before confirming the address.
+- Address Book sync now recognizes when local contacts are returned to the last synced state.
+- Before and after screenshots for the redesign preview. Click either thumbnail to enlarge.
+
+[![Q-Wallets before redesign](/changelog/q-wallets-before-redesign.png)](/changelog/q-wallets-before-redesign.png) [![Q-Wallets after redesign](/changelog/q-wallets-after-redesign-1-3-3.png)](/changelog/q-wallets-after-redesign-1-3-3.png)
+
 ## [1.3.2] - 2026-03-06
 
 ### Fixed

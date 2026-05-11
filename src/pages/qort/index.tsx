@@ -1,19 +1,17 @@
 import {
-  AccountBalanceWalletOutlined,
   CheckCircleOutline,
   Close,
-  ContactsOutlined,
-  CopyAllTwoTone,
   ExpandMore,
-  FileUploadOutlined,
   FirstPage,
   HistoryToggleOff,
   InfoOutlined,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
+  LockOutlined,
+  NorthEast,
   PersonOutline,
-  Send,
+  ShieldOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -22,9 +20,7 @@ import {
   Box,
   Button,
   Checkbox,
-  Dialog,
   DialogContent,
-  DialogTitle,
   IconButton,
   InputAdornment,
   Menu,
@@ -43,7 +39,6 @@ import {
   Typography,
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import { useTheme } from '@mui/material/styles';
@@ -64,7 +59,6 @@ import { NumericFormat as _NumericFormat } from 'react-number-format';
 const NumericFormat = _NumericFormat as React.FC<
   React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>
 >;
-import QRCode from 'react-qr-code';
 import coinLogoQORT from '../../assets/qort.png';
 import {
   DECIMAL_ROUND_UP,
@@ -75,7 +69,6 @@ import {
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
-  copyToClipboard,
   cropString,
   epochToAgo,
   humanFileSize,
@@ -102,8 +95,16 @@ import {
   AddressBookEntry,
   SearchTransactionsResponse,
 } from '../../utils/Types';
-import { getAddressBook } from '../../utils/addressBookStorage';
+import {
+  getAddressBook,
+  sortAddressBookEntries,
+} from '../../utils/addressBookStorage';
 import { publishToQDN } from '../../utils/addressBookQDN';
+import {
+  getAddressBookAvatarColor,
+  getAddressBookAvatarSx,
+} from '../../components/AddressBook/avatarPalette';
+import { getQortalNameData } from '../../utils/qortalNodeApi';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -111,6 +112,15 @@ interface TablePaginationActionsProps {
   rowsPerPage: number;
   onPageChange: (event: MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
+
+type QortAddressBookSyncStatus = 'idle' | 'success' | 'dirty' | 'error';
+
+const QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY =
+  'q-wallets-addressbook-sync-required-QORT';
+const QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY =
+  'q-wallets-addressbook-sync-baseline-QORT';
+const QORT_ADDRESS_PATTERN = /^Q[1-9A-HJ-NP-Za-km-z]{33}$/;
+const QORT_BALANCE_REFRESH_INTERVAL_MS = 2.5 * TIME_MINUTES_1;
 
 const addressToPrimaryName: any = {};
 const requestQueueGetPrimaryName = new RequestQueueWithPromise(10);
@@ -171,6 +181,26 @@ export const replaceAddressesWithNames = async (
       recipientOriginal: d.recipient,
     } as SearchTransactionsResponse;
   });
+};
+
+const createQortAddressBookSyncSignature = (entries: AddressBookEntry[]) =>
+  JSON.stringify(
+    sortAddressBookEntries(entries)
+      .map((entry) => ({
+        address: entry.address.trim(),
+        coinType: entry.coinType,
+        favorite: Boolean(entry.favorite),
+        name: entry.name.trim(),
+        note: (entry.note || EMPTY_STRING).trim(),
+        sortKey: entry.id,
+      }))
+  );
+
+const saveQortAddressBookSyncBaseline = (entries: AddressBookEntry[]) => {
+  localStorage.setItem(
+    QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY,
+    createQortAddressBookSyncSignature(entries)
+  );
 };
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
@@ -273,14 +303,13 @@ export default function QortalWallet() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
-  const [openQortReceive, setOpenQortReceive] = useState(false);
   const [receivePanelOpen, setReceivePanelOpen] = useState(false);
   const [qortAddressBookEntries, setQortAddressBookEntries] = useState<
     AddressBookEntry[]
   >([]);
   const [qortAddressBookSyncing, setQortAddressBookSyncing] = useState(false);
   const [qortAddressBookSyncStatus, setQortAddressBookSyncStatus] = useState<
-    'idle' | 'success' | 'error'
+    QortAddressBookSyncStatus
   >('idle');
   const [qortAddressBookLastSync, setQortAddressBookLastSync] = useState<
     number | null
@@ -296,6 +325,8 @@ export default function QortalWallet() {
   const [openSendQortError, setOpenSendQortError] = useState(false);
   const [qortAmount, setQortAmount] = useState<number | undefined>(undefined);
   const [qortRecipient, setQortRecipient] = useState<string>(EMPTY_STRING);
+  const [qortRecipientDisplayName, setQortRecipientDisplayName] =
+    useState<string>(EMPTY_STRING);
   const [sendDisabled, setSendDisabled] = useState<boolean>(true);
   const [amountError, setAmountError] = useState<string | null>(null);
   const [recipientError, setRecipientError] = useState<string | null>(null);
@@ -378,19 +409,34 @@ export default function QortalWallet() {
   };
 
   const loadQortAddressBookEntries = useCallback(() => {
-    setQortAddressBookEntries(getAddressBook(Coin.QORT));
+    const entries = getAddressBook(Coin.QORT);
+    setQortAddressBookEntries(entries);
+    return entries;
   }, []);
 
-  const handleOpenQortReceive = () => {
-    setOpenQortReceive(true);
-  };
+  const refreshQortAddressBookSyncState = useCallback(
+    (entries: AddressBookEntry[]) => {
+      const cleanBaseline = localStorage.getItem(
+        QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY
+      );
+
+      if (
+        cleanBaseline &&
+        createQortAddressBookSyncSignature(entries) === cleanBaseline
+      ) {
+        localStorage.removeItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY);
+        setQortAddressBookSyncStatus('success');
+        return;
+      }
+
+      localStorage.setItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY, 'true');
+      setQortAddressBookSyncStatus('dirty');
+    },
+    []
+  );
 
   const handleToggleReceivePanel = () => {
     setReceivePanelOpen((prev) => !prev);
-  };
-
-  const handleCloseQortReceive = () => {
-    setOpenQortReceive(false);
   };
 
   const handleOpenAddressBookWithData = (
@@ -407,9 +453,17 @@ export default function QortalWallet() {
     loadQortAddressBookEntries();
   };
 
+  const handleQortAddressBookChange = useCallback(() => {
+    const entries = loadQortAddressBookEntries();
+    refreshQortAddressBookSyncState(entries);
+  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+
   const handleSyncQortAddressBook = async () => {
+    const hadRequiredSync =
+      qortAddressBookSyncStatus === 'dirty' ||
+      localStorage.getItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY) === 'true';
+
     setQortAddressBookSyncing(true);
-    setQortAddressBookSyncStatus('idle');
     try {
       const entries = getAddressBook(Coin.QORT);
       const publishedAt = await publishToQDN(
@@ -418,14 +472,16 @@ export default function QortalWallet() {
         userName || undefined
       );
       if (publishedAt) {
+        saveQortAddressBookSyncBaseline(entries);
+        localStorage.removeItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY);
         setQortAddressBookLastSync(publishedAt);
         setQortAddressBookSyncStatus('success');
       } else {
-        setQortAddressBookSyncStatus('error');
+        setQortAddressBookSyncStatus(hadRequiredSync ? 'dirty' : 'error');
       }
     } catch (error) {
       console.error('Failed to sync QORT address book:', error);
-      setQortAddressBookSyncStatus('error');
+      setQortAddressBookSyncStatus(hadRequiredSync ? 'dirty' : 'error');
     } finally {
       setQortAddressBookSyncing(false);
       loadQortAddressBookEntries();
@@ -436,12 +492,30 @@ export default function QortalWallet() {
     loadQortAddressBookEntries();
   }, [loadQortAddressBookEntries, openQortAddressBook]);
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  useEffect(() => {
+    const entries = loadQortAddressBookEntries();
+    if (localStorage.getItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY) === 'true') {
+      refreshQortAddressBookSyncState(entries);
+      return;
+    }
+
+    saveQortAddressBookSyncBaseline(entries);
+  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+
+  const handleSelectAddress = (address: string, name: string) => {
     setQortRecipient(address);
+    setQortRecipientDisplayName(name || EMPTY_STRING);
     setOpenQortAddressBook(false);
     setOpenQortSend(true);
     setRecipientError(null);
     setRecipientTouched(true); // Trigger validation for QORT addresses
+  };
+
+  const handleClearQortRecipient = () => {
+    setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
+    setRecipientError(null);
+    setRecipientTouched(false);
   };
 
   const openUserLookup = (addressOrName: string) => {
@@ -522,6 +596,7 @@ export default function QortalWallet() {
   const handleOpenQortSend = () => {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
     setOpenQortSend(true);
     setAmountError(null);
     setAmountTouched(false);
@@ -532,6 +607,7 @@ export default function QortalWallet() {
   const handleCloseQortSend = () => {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
     setOpenQortSend(false);
     setAmountError(null);
     setAmountTouched(false);
@@ -597,6 +673,8 @@ export default function QortalWallet() {
 
   // address lookup with debounce + cancel
   useEffect(() => {
+    const recipientValue = qortRecipient.trim();
+
     // Early exit: if recipient not touched, no validation needed
     if (!recipientTouched) {
       setRecipientError(null);
@@ -605,47 +683,39 @@ export default function QortalWallet() {
     }
 
     // Synchronous validations
-    if (qortRecipient === EMPTY_STRING) {
+    if (recipientValue === EMPTY_STRING) {
       setRecipientError(t('core:message.error.recipient_required'));
       setAddressValidating(false);
       return;
     }
 
-    if (qortRecipient.length < ADDRESS_MIN_LENGTH) {
+    if (recipientValue.length < ADDRESS_MIN_LENGTH) {
       setRecipientError(t('core:message.error.recipient_too_short'));
       setAddressValidating(false);
       return;
     }
 
-    // Perform debounced network lookup
+    if (QORT_ADDRESS_PATTERN.test(recipientValue)) {
+      setRecipientError(null);
+      setAddressValidating(false);
+      return;
+    }
+
+    // Perform debounced registered-name lookup and resolve it to its owner address.
     setAddressValidating(true);
     setRecipientError(null);
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
-        const [addrRes, nameRes] = await Promise.all([
-          fetch(`/addresses/validate/${encodeURIComponent(qortRecipient)}`, {
-            signal: controller.signal,
-          }).then(async (r) => {
-            const json = await r.json();
-            if (!json) {
-              console.warn(`Invalid address format: ${qortRecipient}`);
-              return { error: 'Invalid address' };
-            }
-            return json;
-          }),
-          fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
-            signal: controller.signal,
-          }).then(async (r) => {
-            if (!r.ok) {
-              console.warn(`No name found: ${qortRecipient}`);
-              return { error: 'Name not found' };
-            }
-            return r.json();
-          }),
-        ]);
-        if (!addrRes?.error || !nameRes?.error) {
+        const nameData = await getQortalNameData(
+          recipientValue,
+          controller.signal
+        );
+
+        if (nameData?.owner && QORT_ADDRESS_PATTERN.test(nameData.owner)) {
+          setQortRecipient(nameData.owner);
+          setQortRecipientDisplayName(nameData.name || recipientValue);
           setRecipientError(null);
         } else {
           setRecipientError(t('core:message.error.recipient_not_found'));
@@ -937,7 +1007,7 @@ export default function QortalWallet() {
     const controller = new AbortController();
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
-    }, TIME_MINUTES_1);
+    }, QORT_BALANCE_REFRESH_INTERVAL_MS);
     getWalletBalanceQort(controller.signal);
 
     return () => {
@@ -996,6 +1066,7 @@ export default function QortalWallet() {
 
         setQortAmount(0);
         setQortRecipient(EMPTY_STRING);
+        setQortRecipientDisplayName(EMPTY_STRING);
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
 
@@ -1006,6 +1077,7 @@ export default function QortalWallet() {
     } catch (error) {
       setQortAmount(0);
       setQortRecipient(EMPTY_STRING);
+      setQortRecipientDisplayName(EMPTY_STRING);
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
       await timeoutDelay(TIME_SECONDS_3);
@@ -1231,7 +1303,7 @@ export default function QortalWallet() {
             labelRowsPerPage={t('core:rows_per_page', {
               postProcess: 'capitalizeFirstChar',
             })}
-            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            rowsPerPageOptions={[5, 10, 25]}
             count={paymentInfo.length}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -1435,7 +1507,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={arbitraryInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -1700,7 +1772,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={atInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2015,7 +2087,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={groupInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2233,7 +2305,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={nameInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2446,7 +2518,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={assetInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2631,7 +2703,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={pollInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2894,7 +2966,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={rewardshareInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -3263,7 +3335,7 @@ export default function QortalWallet() {
             labelRowsPerPage={t('core:rows_per_page', {
               postProcess: 'capitalizeFirstChar',
             })}
-            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            rowsPerPageOptions={[5, 10, 25]}
             count={allInfo.length}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -3339,12 +3411,43 @@ export default function QortalWallet() {
       xs: '42px minmax(82px, 0.55fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(95px, 0.72fr) minmax(76px, 0.55fr) minmax(88px, 0.58fr)',
       xl: '54px minmax(110px, 0.7fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(118px, 0.78fr) minmax(92px, 0.62fr) minmax(112px, 0.66fr)',
     } as const;
+    const transactionAmountFeeShiftSx = {
+      transform: { xs: 'translateX(-34px)', xl: 'translateX(-44px)' },
+    } as const;
     const transactionHeaderSx = {
       color: 'text.secondary',
       fontSize: 11,
-      fontWeight: 500,
+      fontWeight: 700,
       letterSpacing: 0,
       lineHeight: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      textTransform: 'uppercase',
+      whiteSpace: 'nowrap',
+    } as const;
+    const transactionRowHoverSx = {
+      overflow: 'hidden',
+      position: 'relative',
+      '&::before': {
+        background:
+          'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))',
+        content: '""',
+        inset: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        transition: 'opacity 520ms ease-out',
+        zIndex: 0,
+      },
+      '&:hover::before': {
+        opacity: 1,
+        transitionDuration: '90ms',
+      },
+      '& > *': {
+        position: 'relative',
+        zIndex: 1,
+      },
     } as const;
 
     const formatTransactionType = (type?: string) => {
@@ -3542,8 +3645,8 @@ export default function QortalWallet() {
 
       return (
         <>
-          <Box sx={{ overflowX: 'auto' }}>
-            <Box sx={{ minWidth: { xs: 680, lg: 720, xl: 900 } }}>
+          <Box sx={{ overflowX: { xs: 'auto', lg: 'hidden' } }}>
+            <Box sx={{ minWidth: { xs: 680, lg: 0 }, width: '100%' }}>
               <Box
                 aria-hidden
                 sx={{
@@ -3569,20 +3672,33 @@ export default function QortalWallet() {
                 <Typography sx={transactionHeaderSx}>Type</Typography>
                 <Typography sx={transactionHeaderSx}>Creator</Typography>
                 <Typography sx={transactionHeaderSx}>Recipient</Typography>
-                <Typography sx={{ ...transactionHeaderSx, textAlign: 'right' }}>
+                <Typography
+                  sx={{
+                    ...transactionHeaderSx,
+                    ...transactionAmountFeeShiftSx,
+                    textAlign: 'right',
+                  }}
+                >
                   Amount
                 </Typography>
-                <Typography sx={{ ...transactionHeaderSx, textAlign: 'right' }}>
+                <Typography
+                  sx={{
+                    ...transactionHeaderSx,
+                    ...transactionAmountFeeShiftSx,
+                    textAlign: 'right',
+                  }}
+                >
                   Fee
                 </Typography>
                 <Typography sx={transactionHeaderSx}>Time</Typography>
               </Box>
 
-              <Box sx={{ display: 'grid', gap: 0.15, px: { md: 0.4 }, py: 0.35 }}>
+              <Box sx={{ display: 'grid', gap: 0, px: { md: 0.4 }, py: 0.35 }}>
                 {pagedRows.map((row: any, index: Key) => (
                   <Box
                     key={row?.signature || index}
                     sx={{
+                      ...transactionRowHoverSx,
                       alignItems: 'center',
                       bgcolor: 'rgba(4, 22, 38, 0.16)',
                       borderBottom: (t) =>
@@ -3600,12 +3716,6 @@ export default function QortalWallet() {
                       py: 0.85,
                       transition:
                         'background-color 150ms ease, border-color 150ms ease',
-                      '&:hover': {
-                        bgcolor: (t) =>
-                          t.palette.mode === 'dark'
-                            ? 'rgba(24,189,242,0.06)'
-                            : 'rgba(5,127,168,0.05)',
-                      },
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -3625,11 +3735,17 @@ export default function QortalWallet() {
                     </Typography>
                     {renderAddressCell(row, 'creator')}
                     {renderAddressCell(row, 'recipient')}
-                    <Box sx={{ textAlign: 'right' }}>
+                    <Box
+                      sx={{
+                        ...transactionAmountFeeShiftSx,
+                        textAlign: 'right',
+                      }}
+                    >
                       {renderAmountCell(row)}
                     </Box>
                     <Typography
                       sx={{
+                        ...transactionAmountFeeShiftSx,
                         color: 'text.secondary',
                         fontSize: 13,
                         fontWeight: 400,
@@ -3666,7 +3782,7 @@ export default function QortalWallet() {
             labelRowsPerPage={t('core:rows_per_page', {
               postProcess: 'capitalizeFirstChar',
             })}
-            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            rowsPerPageOptions={[5, 10, 25]}
             count={rows.length}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -3793,14 +3909,23 @@ export default function QortalWallet() {
   };
 
   const qortAddress = address ?? EMPTY_STRING;
+  const qortAddressBookNeedsSync = qortAddressBookSyncStatus === 'dirty';
+  const qortAddressBookNeedsAttention =
+    qortAddressBookNeedsSync || qortAddressBookSyncStatus === 'error';
   const syncStatusLabel =
-    qortAddressBookSyncStatus === 'error'
-      ? 'Sync required'
-      : qortAddressBookSyncing
-        ? 'Syncing...'
-        : 'Up to date';
+    qortAddressBookSyncing
+      ? 'Syncing...'
+      : qortAddressBookNeedsSync
+        ? 'Sync required'
+        : qortAddressBookSyncStatus === 'error'
+          ? 'Sync failed'
+          : 'Up to date';
   const syncStatusTooltip =
-    qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
+    qortAddressBookNeedsSync
+      ? 'Local contacts changed. Sync to publish the latest encrypted address book backup.'
+      : qortAddressBookSyncStatus === 'error'
+        ? 'The last sync did not complete.'
+        : qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
       ? `Last sync: ${new Intl.DateTimeFormat(undefined, {
           day: 'numeric',
           hour: '2-digit',
@@ -3811,15 +3936,10 @@ export default function QortalWallet() {
       : syncStatusLabel;
   const qortalTableView = qortalTables();
   const qortSendLabelSx = {
-    color: 'text.secondary',
-    fontSize: { xs: 13, md: 13.5 },
-    fontWeight: 600,
-    lineHeight: 1.3,
-  } as const;
-  const qortSendMutedLabelSx = {
-    color: 'text.secondary',
-    fontSize: { xs: 12.5, md: 13 },
-    fontWeight: 500,
+    color: 'rgba(228,238,248,0.9)',
+    fontSize: { xs: 14.5, md: 15 },
+    fontWeight: 700,
+    lineHeight: 1.2,
   } as const;
   const qortSendHelperSx = {
     color: 'text.secondary',
@@ -3832,13 +3952,13 @@ export default function QortalWallet() {
   const qortSendFieldSx = {
     '& .MuiFormHelperText-root': qortSendHelperSx,
     '& .MuiOutlinedInput-root': {
-      bgcolor: 'rgba(0,8,16,0.13)',
-      borderRadius: 1.2,
-      minHeight: { xs: 56, md: 60 },
-      px: { xs: 1.05, md: 1.25 },
+      bgcolor: 'rgba(0,8,16,0.2)',
+      borderRadius: 1.35,
+      minHeight: { xs: 54, md: 56 },
+      px: { xs: 1.2, md: 1.35 },
       transition: 'background-color 160ms ease',
       '& fieldset': {
-        borderColor: 'rgba(116,158,180,0.16)',
+        borderColor: 'rgba(116,158,180,0.15)',
       },
       '&:hover fieldset': {
         borderColor: 'rgba(116,158,180,0.3)',
@@ -3853,7 +3973,7 @@ export default function QortalWallet() {
     },
     '& .MuiOutlinedInput-input': {
       color: 'text.primary',
-      fontSize: { xs: 16, md: 16.5 },
+      fontSize: { xs: 15.5, md: 16 },
       fontWeight: 500,
       py: 0,
       '&::placeholder': {
@@ -3863,6 +3983,24 @@ export default function QortalWallet() {
       },
     },
   } as const;
+  const qortSendInfoIconSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 14.5, md: 15 },
+    opacity: 0.82,
+  } as const;
+  const qortRecipientInitials =
+    qortRecipientDisplayName
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || Coin.QORT[0];
+  const qortRecipientAvatarColor = getAddressBookAvatarColor(
+    `${qortRecipientDisplayName}-${qortRecipient}`
+  );
+  const qortSendConfirming =
+    addressValidating && recipientTouched && qortRecipient !== EMPTY_STRING;
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
@@ -3876,8 +4014,15 @@ export default function QortalWallet() {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 1.5,
-              width: 'min(672px, calc(100vw - 32px))',
+              backgroundColor: 'rgba(3, 17, 29, 0.985)',
+              backgroundImage:
+                'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
+              border: '1px solid rgba(91,132,158,0.28)',
+              borderRadius: 2,
+              boxShadow:
+                '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+              minHeight: 'min(590px, calc(100dvh - 32px))',
+              width: 'min(592px, calc(100vw - 24px))',
             },
           },
         }}
@@ -3977,8 +4122,8 @@ export default function QortalWallet() {
         >
           <Toolbar
             sx={{
-              minHeight: '60px !important',
-              px: { xs: 2.4, md: 2.75 },
+              minHeight: '78px !important',
+              px: { xs: 2.35, md: 2.55 },
             }}
           >
             <IconButton
@@ -3987,9 +4132,9 @@ export default function QortalWallet() {
               aria-label="close"
               sx={{
                 color: 'text.secondary',
-                mr: { xs: 1, md: 1.25 },
-                p: 0.55,
-                '& svg': { fontSize: 24 },
+                mr: { xs: 1.25, md: 1.45 },
+                p: 0.35,
+                '& svg': { fontSize: 28 },
                 '&:hover': {
                   bgcolor: 'rgba(116,158,180,0.08)',
                   color: 'text.primary',
@@ -4001,10 +4146,10 @@ export default function QortalWallet() {
             <Avatar
               sx={{
                 bgcolor: 'primary.main',
-                boxShadow: '0 0 16px rgba(24,189,242,0.2)',
-                height: 32,
-                mr: { xs: 1.2, md: 1.3 },
-                width: 32,
+                boxShadow: '0 0 20px rgba(24,189,242,0.24)',
+                height: { xs: 34, md: 36 },
+                mr: { xs: 1.65, md: 1.8 },
+                width: { xs: 34, md: 36 },
               }}
               alt="QORT Logo"
               src={coinLogoQORT}
@@ -4016,7 +4161,7 @@ export default function QortalWallet() {
               sx={{
                 color: 'text.primary',
                 flexGrow: 1,
-                fontSize: 17,
+                fontSize: { xs: 18, md: 19 },
                 fontWeight: 700,
                 letterSpacing: 0,
                 lineHeight: 1,
@@ -4030,20 +4175,34 @@ export default function QortalWallet() {
             <Button
               disabled={sendDisabled}
               variant="contained"
-              startIcon={<Send />}
+              startIcon={
+                qortSendConfirming ? (
+                  <CircularProgress color="inherit" size={16} thickness={4.2} />
+                ) : (
+                  <NorthEast />
+                )
+              }
               aria-label="send-qort"
               onClick={sendQortRequest}
               sx={{
-                bgcolor: 'primary.main',
-                border: '1px solid rgba(255,255,255,0.12)',
+                bgcolor: '#0a9eff',
+                backgroundImage:
+                  'linear-gradient(180deg, rgba(24,174,255,0.98), rgba(4,126,220,0.98))',
+                border: '1px solid rgba(85,205,255,0.32)',
                 borderRadius: 1.4,
-                boxShadow: '0 10px 24px rgba(24,189,242,0.2)',
+                boxShadow:
+                  '0 10px 26px rgba(3,139,236,0.34), inset 0 1px 0 rgba(255,255,255,0.18)',
                 color: 'white',
-                fontSize: { xs: 13, md: 13.5 },
+                fontSize: { xs: 14, md: 14.5 },
                 fontWeight: 700,
-                minHeight: 36,
-                minWidth: 98,
-                px: 2,
+                justifySelf: 'end',
+                minHeight: { xs: 38, md: 40 },
+                minWidth: qortSendConfirming
+                  ? { xs: 126, md: 134 }
+                  : { xs: 92, md: 98 },
+                px: { xs: 1.65, md: 1.9 },
+                transition:
+                  'min-width 180ms ease, background-color 160ms ease, box-shadow 160ms ease',
                 '& .MuiButton-startIcon svg': {
                   fontSize: 19,
                 },
@@ -4052,199 +4211,338 @@ export default function QortalWallet() {
                   boxShadow: '0 18px 44px rgba(24,189,242,0.38)',
                 },
                 '&:disabled': {
-                  bgcolor: 'rgba(116,158,180,0.18)',
-                  borderColor: 'rgba(116,158,180,0.08)',
-                  boxShadow: 'none',
-                  color: 'rgba(255,255,255,0.44)',
+                  bgcolor: qortSendConfirming
+                    ? 'rgba(24,158,255,0.56)'
+                    : 'rgba(116,158,180,0.18)',
+                  backgroundImage: qortSendConfirming
+                    ? 'linear-gradient(180deg, rgba(24,174,255,0.72), rgba(4,126,220,0.72))'
+                    : 'none',
+                  borderColor: qortSendConfirming
+                    ? 'rgba(85,205,255,0.22)'
+                    : 'rgba(116,158,180,0.1)',
+                  boxShadow: qortSendConfirming
+                    ? '0 10px 24px rgba(3,139,236,0.16), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : 'none',
+                  color: qortSendConfirming
+                    ? 'rgba(255,255,255,0.78)'
+                    : 'rgba(255,255,255,0.44)',
                 },
               }}
             >
-              {t('core:action.send', {
-                postProcess: 'capitalizeFirstChar',
-              })}
+              {qortSendConfirming
+                ? 'Confirming'
+                : t('core:action.send', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
             </Button>
           </Toolbar>
         </AppBar>
         <Box
           sx={{
             display: 'grid',
-            gap: 2.25,
-            px: { xs: 2.4, md: 2.75 },
-            pb: 2.45,
-            pt: 1.5,
+            gap: { xs: 2.85, md: 3.05 },
+            minHeight: { xs: 472, md: 484 },
+            px: { xs: 2.75, md: 3 },
+            pb: { xs: 2.85, md: 3 },
+            pt: { xs: 0.4, md: 0.55 },
           }}
         >
-          <Box
-            sx={{
-              alignItems: 'center',
-              bgcolor: 'rgba(9, 32, 49, 0.38)',
-              border: '1px solid rgba(116,158,180,0.14)',
-              borderRadius: 1.15,
-              display: 'grid',
-              gap: { xs: 1.8, md: 2.4 },
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: 'minmax(0, 0.88fr) 1px minmax(0, 1.12fr)',
-              },
-              minHeight: 92,
-              px: { xs: 1.7, md: 2.15 },
-              py: { xs: 1.6, md: 1.65 },
-            }}
-          >
-            <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.25 }}>
-              <Box
-                sx={{
-                  alignItems: 'center',
-                  bgcolor: 'rgba(24,189,242,0.08)',
-                  borderRadius: '50%',
-                  color: 'primary.main',
-                  display: 'grid',
-                  flexShrink: 0,
-                  height: 34,
-                  placeItems: 'center',
-                  width: 34,
-                }}
-              >
-                <AccountBalanceWalletOutlined sx={{ fontSize: 18 }} />
-              </Box>
-              <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
-                <Typography
+          <Box sx={{ display: 'grid', gap: 0.85 }}>
+            <Typography sx={qortSendLabelSx}>
+              To
+            </Typography>
+            {qortRecipientDisplayName ? (
+              <>
+                <Box
                   sx={{
-                    color: 'text.secondary',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    lineHeight: 1.2,
+                    bgcolor: 'rgba(0,8,16,0.18)',
+                    border: '1px solid rgba(116,158,180,0.15)',
+                    borderRadius: 1.55,
+                    display: 'grid',
+                    overflow: 'hidden',
                   }}
                 >
-                  Available balance
-                </Typography>
-                <Typography
-                  sx={{
-                    color: 'text.primary',
-                    fontSize: { xs: 17, md: 17 },
-                    fontWeight: 650,
-                    lineHeight: 1.2,
-                    overflowWrap: 'anywhere',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {isLoadingWalletBalanceQort ? (
-                    <Box sx={{ width: 150, maxWidth: '100%' }}>
-                      <LinearProgress />
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      display: 'grid',
+                      gap: 1.25,
+                      gridTemplateColumns: 'auto minmax(0, 1fr) auto auto',
+                      minHeight: { xs: 70, md: 72 },
+                      px: { xs: 1.65, md: 1.75 },
+                      py: { xs: 0.85, md: 0.95 },
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        ...getAddressBookAvatarSx(qortRecipientAvatarColor),
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 700,
+                        height: { xs: 42, md: 44 },
+                        width: { xs: 42, md: 44 },
+                      }}
+                    >
+                      {qortRecipientInitials}
+                    </Avatar>
+                    <Box sx={{ display: 'grid', gap: 0.35, minWidth: 0 }}>
+                      <Typography
+                        noWrap
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: 18, md: 18.5 },
+                          fontWeight: 700,
+                          lineHeight: 1.05,
+                        }}
+                      >
+                        {qortRecipientDisplayName}
+                      </Typography>
+                      <Typography
+                        noWrap
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: 13.2, md: 13.6 },
+                          fontWeight: 500,
+                          lineHeight: 1,
+                        }}
+                      >
+                        Qortal user
+                      </Typography>
                     </Box>
-                  ) : (
-                    formatQortAmount(walletBalanceQort) + ' QORT'
-                  )}
-                </Typography>
-              </Box>
-            </Box>
-            <Box
-              aria-hidden
-              sx={{
-                bgcolor: 'rgba(116,158,180,0.12)',
-                display: { xs: 'none', md: 'block' },
-                height: 54,
-                width: 1,
-              }}
-            />
+                    <IconButton
+                      aria-label="Clear recipient"
+                      onClick={handleClearQortRecipient}
+                      sx={{
+                        color: 'text.secondary',
+                        height: { xs: 32, md: 34 },
+                        width: { xs: 32, md: 34 },
+                        '& svg': { fontSize: { xs: 20, md: 21 } },
+                        '&:hover': {
+                          bgcolor: 'rgba(116,158,180,0.08)',
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      <Close />
+                    </IconButton>
+                    <IconButton
+                      aria-label="Open address book"
+                      onClick={handleOpenAddressBook}
+                      sx={{
+                        border: '1px solid rgba(116,158,180,0.12)',
+                        borderRadius: 1.2,
+                        color: 'primary.main',
+                        height: { xs: 34, md: 36 },
+                        width: { xs: 34, md: 36 },
+                        '&:hover': {
+                          bgcolor: 'rgba(24,189,242,0.08)',
+                          borderColor: 'rgba(24,189,242,0.34)',
+                          color: '#37d0ff',
+                        },
+                      }}
+                    >
+                      <PersonOutline sx={{ fontSize: { xs: 19, md: 20 } }} />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      borderTop: '1px solid rgba(116,158,180,0.115)',
+                      display: 'flex',
+                      gap: 0.85,
+                      minHeight: { xs: 40, md: 42 },
+                      minWidth: 0,
+                      px: { xs: 1.65, md: 1.75 },
+                      py: 0.65,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        flexShrink: 0,
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 600,
+                      }}
+                    >
+                      Address:
+                    </Typography>
+                    <Typography
+                      noWrap
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 500,
+                        minWidth: 0,
+                      }}
+                    >
+                      {qortRecipient}
+                    </Typography>
+                  </Box>
+                </Box>
+                {recipientTouched && recipientError ? (
+                  <Typography
+                    sx={{
+                      ...qortSendHelperSx,
+                      color: 'error.main',
+                    }}
+                  >
+                    {recipientError}
+                  </Typography>
+                ) : null}
+              </>
+            ) : (
+              <TextField
+                required
+                autoComplete="new-password"
+                id="qort-recipient-manual"
+                placeholder="QORT address or name"
+                value={qortRecipient}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const input = e.currentTarget;
+                  setQortRecipientDisplayName(EMPTY_STRING);
+                  setQortRecipient(e.target.value.trim());
+                  setRecipientTouched(true);
+                  window.requestAnimationFrame(() => {
+                    if (document.activeElement === input) {
+                      const end = input.value.length;
+                      input.setSelectionRange(end, end);
+                    }
+                  });
+                }}
+                onBlur={onRecipientBlur}
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                  const input = e.currentTarget;
+                  window.requestAnimationFrame(() => {
+                    const end = input.value.length;
+                    input.setSelectionRange(end, end);
+                  });
+                }}
+                slotProps={{
+                  htmlInput: {
+                    'aria-label': 'Receiver address or name',
+                    autoCapitalize: 'none',
+                    autoComplete: 'new-password',
+                    autoCorrect: 'off',
+                    minLength: 3,
+                    name: 'qort-recipient-manual-no-autofill',
+                    spellCheck: false,
+                  },
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="Open address book"
+                          onClick={handleOpenAddressBook}
+                          sx={{
+                            border: '1px solid rgba(116,158,180,0.12)',
+                            borderRadius: 1,
+                            color: 'primary.main',
+                            height: { xs: 31, md: 32 },
+                            ml: { xs: 0.8, md: 1 },
+                            width: { xs: 31, md: 32 },
+                            '&:hover': {
+                              bgcolor: 'rgba(24,189,242,0.08)',
+                              borderColor: 'rgba(24,189,242,0.34)',
+                              color: '#37d0ff',
+                            },
+                          }}
+                        >
+                          <PersonOutline
+                            sx={{ fontSize: { xs: 18, md: 19 } }}
+                          />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                fullWidth
+                helperText={
+                  recipientTouched && recipientError
+                    ? recipientError
+                    : undefined
+                }
+                error={recipientTouched && !!recipientError}
+                sx={{
+                  ...qortSendFieldSx,
+                  '& .MuiFormHelperText-root': {
+                    ...qortSendHelperSx,
+                    color:
+                      recipientTouched && recipientError
+                        ? 'error.main'
+                        : 'text.secondary',
+                  },
+                }}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: 1.05 }}>
             <Box
               sx={{
                 alignItems: 'center',
-                display: 'grid',
-                gap: 1.2,
-                gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-                minWidth: 0,
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 0.9,
+                justifyContent: 'space-between',
               }}
             >
+              <Typography sx={qortSendLabelSx}>
+                Amount
+              </Typography>
               <Box
                 sx={{
                   alignItems: 'center',
-                  bgcolor: 'rgba(24,189,242,0.08)',
-                  borderRadius: '50%',
-                  color: 'primary.main',
-                  display: 'grid',
-                  flexShrink: 0,
-                  height: 34,
-                  placeItems: 'center',
-                  width: 34,
+                  display: 'inline-flex',
+                  gap: 0.75,
+                  minHeight: 26,
                 }}
               >
-                <FileUploadOutlined sx={{ fontSize: 18 }} />
-              </Box>
-              <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
-                <Box sx={{ alignItems: 'center', display: 'flex', gap: 0.65 }}>
-                  <Typography
+                <Tooltip title="Maximum amount available after network fee">
+                  <Box
                     sx={{
+                      alignItems: 'center',
                       color: 'text.secondary',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      lineHeight: 1.2,
+                      display: 'inline-flex',
+                      gap: 0.45,
                     }}
                   >
-                    Max sendable
-                  </Typography>
-                  <Tooltip title="Maximum amount available after reserving the sending fee">
-                    <InfoOutlined
+                    <InfoOutlined sx={qortSendInfoIconSx} />
+                    <Typography
                       sx={{
                         color: 'text.secondary',
-                        fontSize: 15,
-                        opacity: 0.8,
+                        fontSize: { xs: 13.2, md: 13.6 },
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                        whiteSpace: 'nowrap',
                       }}
-                    />
-                  </Tooltip>
-                </Box>
-                <Typography
+                    >
+                      {isLoadingWalletBalanceQort
+                        ? 'Max sendable loading'
+                        : `Max sendable ${formatQortAmount(maxSendableQortCoin())} QORT`}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+                <Button
+                  variant="text"
+                  onClick={handleSendMaxQort}
                   sx={{
-                    color: 'text.primary',
-                    fontSize: { xs: 17, md: 17 },
-                    fontWeight: 650,
-                    lineHeight: 1.2,
+                    color: 'primary.main',
+                    fontSize: { xs: 13.8, md: 14.2 },
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    minHeight: 24,
                     minWidth: 0,
-                    overflowWrap: 'anywhere',
-                    whiteSpace: 'nowrap',
+                    px: 0.35,
+                    py: 0,
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      color: '#37d0ff',
+                    },
                   }}
                 >
-                  {formatQortAmount(maxSendableQortCoin()) + ' QORT'}
-                </Typography>
+                  Max
+                </Button>
               </Box>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleSendMaxQort}
-                sx={{
-                  borderColor: 'rgba(24,189,242,0.28)',
-                  borderRadius: 999,
-                  color: 'text.primary',
-                  flexShrink: 0,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  minHeight: 32,
-                  minWidth: 82,
-                  px: 1.8,
-                  '&:hover': {
-                    bgcolor: 'rgba(24,189,242,0.08)',
-                    borderColor: 'rgba(24,189,242,0.44)',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {t('core:action.send_max', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </Button>
             </Box>
-          </Box>
-
-          <Box sx={{ display: 'grid', gap: 0.85 }}>
-            <Typography sx={qortSendLabelSx}>
-              Amount{' '}
-              <Box component="span" sx={qortSendMutedLabelSx}>
-                (QORT)
-              </Box>{' '}
-              <Box component="span" sx={{ color: 'primary.main' }}>
-                *
-              </Box>
-            </Typography>
             <NumericFormat
               decimalScale={8}
               defaultValue={0}
@@ -4275,62 +4573,19 @@ export default function QortalWallet() {
                   'aria-label': 'QORT amount',
                 },
                 input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          alignItems: 'center',
-                          bgcolor: 'rgba(24,189,242,0.07)',
-                          borderRadius: '50%',
-                          display: 'grid',
-                          height: { xs: 28, md: 30 },
-                          placeItems: 'center',
-                          width: { xs: 28, md: 30 },
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          alt=""
-                          src={coinLogoQORT}
-                          sx={{ height: '68%', width: '68%' }}
-                        />
-                      </Box>
-                    </InputAdornment>
-                  ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Box sx={{ display: 'grid', justifyItems: 'end' }}>
-                        <Typography
-                          sx={{
-                            color: 'text.secondary',
-                            fontSize: { xs: 13, md: 13.5 },
-                            fontWeight: 600,
-                            lineHeight: 1.1,
-                          }}
-                        >
-                          QORT
-                        </Typography>
-                        <Button
-                          variant="text"
-                          onClick={handleSendMaxQort}
-                          sx={{
-                            color: 'primary.main',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            lineHeight: 1.1,
-                            minHeight: 0,
-                            minWidth: 0,
-                            mt: 0.35,
-                            p: 0,
-                            '&:hover': {
-                              bgcolor: 'transparent',
-                              color: '#37d0ff',
-                            },
-                          }}
-                        >
-                          Max
-                        </Button>
-                      </Box>
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: 14.5, md: 15 },
+                          fontWeight: 700,
+                          letterSpacing: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        QORT
+                      </Typography>
                     </InputAdornment>
                   ),
                 },
@@ -4344,130 +4599,74 @@ export default function QortalWallet() {
                       ? 'error.main'
                       : 'text.secondary',
                 },
+                '& .MuiOutlinedInput-root': {
+                  ...qortSendFieldSx['& .MuiOutlinedInput-root'],
+                  bgcolor: 'rgba(0,8,16,0.2)',
+                  borderRadius: 1.55,
+                  minHeight: { xs: 54, md: 56 },
+                  px: { xs: 1.45, md: 1.6 },
+                  '& fieldset': {
+                    borderColor:
+                      amountTouched && amountError
+                        ? 'error.main'
+                        : 'rgba(24,158,255,0.9)',
+                    boxShadow:
+                      amountTouched && amountError
+                        ? 'none'
+                        : '0 0 18px rgba(24,158,255,0.18)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor:
+                      amountTouched && amountError
+                        ? 'error.main'
+                        : 'rgba(24,174,255,0.96)',
+                  },
+                },
                 '& .MuiOutlinedInput-input': {
                   color: 'text.primary',
-                  fontSize: { xs: 17.5, md: 18 },
-                  fontWeight: 500,
+                  fontSize: { xs: 23, md: 24 },
+                  fontWeight: 400,
                   py: 0,
+                  textAlign: 'left',
+                  '&::placeholder': {
+                    color: 'text.secondary',
+                    fontWeight: 400,
+                    opacity: 0.86,
+                  },
                 },
               }}
             />
           </Box>
 
-          <Box sx={{ display: 'grid', gap: 0.85 }}>
-            <Typography sx={qortSendLabelSx}>
-              Receiver address or name{' '}
-              <Box component="span" sx={{ color: 'primary.main' }}>
-                *
-              </Box>
-            </Typography>
-            <TextField
-              required
-              id="qort-address"
-              placeholder="Enter a QORT address or contact name"
-              value={qortRecipient}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setQortRecipient(e.target.value.trim());
-                setRecipientTouched(true);
-              }}
-              onBlur={onRecipientBlur}
-              slotProps={{
-                htmlInput: {
-                  'aria-label': 'Receiver address or name',
-                  maxLength: 34,
-                  minLength: 3,
-                },
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          alignItems: 'center',
-                          bgcolor: 'rgba(24,189,242,0.07)',
-                          borderRadius: '50%',
-                          color: 'text.secondary',
-                          display: 'grid',
-                          height: { xs: 28, md: 30 },
-                          placeItems: 'center',
-                          width: { xs: 28, md: 30 },
-                        }}
-                      >
-                        <PersonOutline sx={{ fontSize: { xs: 16, md: 17 } }} />
-                      </Box>
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="Open address book"
-                        onClick={handleOpenAddressBook}
-                        sx={{
-                          border: '1px solid rgba(116,158,180,0.12)',
-                          borderRadius: 1,
-                          color: 'primary.main',
-                          height: { xs: 32, md: 34 },
-                          ml: { xs: 0.8, md: 1 },
-                          width: { xs: 32, md: 34 },
-                          '&:hover': {
-                            bgcolor: 'rgba(24,189,242,0.08)',
-                            borderColor: 'rgba(24,189,242,0.34)',
-                            color: '#37d0ff',
-                          },
-                        }}
-                      >
-                        <ContactsOutlined
-                          sx={{ fontSize: { xs: 17, md: 18 } }}
-                        />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              fullWidth
-              helperText={
-                recipientTouched && recipientError ? recipientError : undefined
-              }
-              error={recipientTouched && !!recipientError}
-              sx={{
-                ...qortSendFieldSx,
-                '& .MuiFormHelperText-root': {
-                  ...qortSendHelperSx,
-                  color:
-                    recipientTouched && recipientError
-                      ? 'error.main'
-                      : 'text.secondary',
-                },
-              }}
-            />
-          </Box>
-
-          <Tooltip title="Current network sending fee. This amount is reserved from the maximum sendable balance.">
+          <Tooltip title="Network fee deducted from the maximum sendable amount">
             <Box
               sx={{
                 alignItems: 'center',
                 color: 'text.secondary',
-                display: 'inline-flex',
+                display: 'grid',
                 gap: 0.75,
+                gridTemplateColumns: 'auto auto minmax(80px, auto)',
                 justifySelf: 'end',
-                mt: -0.55,
+                mt: -0.3,
                 opacity: 0.78,
                 px: 0.4,
               }}
             >
-              <InfoOutlined sx={{ color: 'primary.main', fontSize: 16 }} />
+              <InfoOutlined sx={qortSendInfoIconSx} />
               <Typography
                 sx={{
                   fontSize: { xs: 12.5, md: 13 },
                   fontWeight: 500,
                 }}
               >
-                Fee
+                Network fee
               </Typography>
               <Typography
                 sx={{
                   color: 'text.primary',
-                  fontSize: { xs: 12.5, md: 13 },
-                  fontWeight: 600,
+                  fontSize: { xs: 14, md: 14.5 },
+                  fontWeight: 700,
+                  textAlign: 'right',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -4479,25 +4678,25 @@ export default function QortalWallet() {
           <Box
             sx={{
               alignItems: 'flex-start',
-              bgcolor: 'rgba(34, 227, 138, 0.045)',
-              border: '1px solid rgba(34, 227, 138, 0.1)',
-              borderRadius: 1.2,
+              bgcolor: 'rgba(8, 57, 52, 0.34)',
+              border: '1px solid rgba(34, 227, 138, 0.11)',
+              borderRadius: 1.55,
               display: 'flex',
-              gap: 1.15,
-              mt: -0.35,
-              px: 1.5,
-              py: 1.25,
+              gap: 1.6,
+              mt: 0.1,
+              px: { xs: 1.7, md: 1.85 },
+              py: { xs: 2.05, md: 2.2 },
             }}
           >
-            <CheckCircleOutline
-              sx={{ color: 'success.main', fontSize: 19, mt: 0.1 }}
+            <ShieldOutlined
+              sx={{ color: 'success.main', fontSize: { xs: 29, md: 31 } }}
             />
             <Box sx={{ display: 'grid', gap: 0.35 }}>
               <Typography
                 sx={{
                   color: 'text.primary',
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: { xs: 13.5, md: 14 },
+                  fontWeight: 700,
                   lineHeight: 1.25,
                 }}
               >
@@ -4506,7 +4705,7 @@ export default function QortalWallet() {
               <Typography
                 sx={{
                   color: 'text.secondary',
-                  fontSize: 12.5,
+                  fontSize: { xs: 12.8, md: 13.2 },
                   fontWeight: 400,
                   lineHeight: 1.35,
                 }}
@@ -4515,134 +4714,44 @@ export default function QortalWallet() {
               </Typography>
             </Box>
           </Box>
-        </Box>
-      </WalletSendDialog>
 
-      <Dialog
-        open={openQortReceive}
-        onClose={handleCloseQortReceive}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{ alignItems: 'center', display: 'flex', gap: 1.5, pr: 6 }}
-        >
-          <Box
-            component="img"
-            alt="QORT Logo"
-            src={coinLogoQORT}
-            sx={{ height: 32, width: 32 }}
-          />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 700, lineHeight: 1.15 }}
-            >
-              {t('core:message.generic.qortal_wallet', {
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', fontWeight: 600 }}
-            >
-              {t('core:action.show_qrcode', {
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-          </Box>
-          <IconButton
-            aria-label="Close receive dialog"
-            onClick={handleCloseQortReceive}
-            size="small"
-            sx={{ position: 'absolute', right: 12, top: 12 }}
-          >
-            <Close fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 0 }}>
           <Box
             sx={{
               alignItems: 'center',
+              bgcolor: 'rgba(0,8,16,0.12)',
+              border: '1px solid rgba(116,158,180,0.09)',
+              borderRadius: 1.35,
+              color: 'text.secondary',
               display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              pb: 2,
+              gap: 0.75,
+              justifyContent: 'center',
+              minHeight: { xs: 40, md: 42 },
+              mt: -0.1,
+              px: 1.4,
             }}
           >
-            <Box
+            <LockOutlined sx={{ fontSize: { xs: 14, md: 15 } }} />
+            <Typography
               sx={{
-                alignItems: 'center',
-                aspectRatio: '1 / 1',
-                bgcolor: '#fff',
-                border: (t) => `1px solid ${t.palette.divider}`,
-                borderRadius: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                maxWidth: 240,
-                p: 1,
-                width: '100%',
+                color: 'text.secondary',
+                fontSize: { xs: 12.5, md: 13 },
+                fontWeight: 600,
+                lineHeight: 1,
+                textAlign: 'center',
               }}
             >
-              <QRCode
-                value={address ?? EMPTY_STRING}
-                size={220}
-                fgColor="#000000"
-                bgColor="#ffffff"
-                level="H"
-                style={{ width: '100%', height: '100%' }}
-              />
-            </Box>
-            <Box
-              sx={{
-                alignItems: 'center',
-                bgcolor: 'action.hover',
-                border: (t) => `1px solid ${t.palette.divider}`,
-                borderRadius: 1,
-                display: 'flex',
-                gap: 1,
-                maxWidth: '100%',
-                px: 1.25,
-                py: 1,
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 700,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {address ||
-                  t('core:message.generic.no_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-              </Typography>
-              <CustomWidthTooltip
-                placement="top"
-                title={t('core:action.copy_address', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              >
-                <IconButton
-                  size="small"
-                  onClick={() => copyToClipboard(address ?? EMPTY_STRING)}
-                >
-                  <CopyAllTwoTone fontSize="small" />
-                </IconButton>
-              </CustomWidthTooltip>
-            </Box>
+              Secure &bull; Decentralized
+            </Typography>
           </Box>
-        </DialogContent>
-      </Dialog>
+        </Box>
+      </WalletSendDialog>
 
       <AddressBookDialog
         open={openQortAddressBook}
         onClose={handleCloseAddressBook}
         coinType={Coin.QORT}
         onSelectAddress={handleSelectAddress}
+        onAddressBookChange={handleQortAddressBookChange}
         prefillData={addressBookPrefill}
       />
 
@@ -4657,7 +4766,7 @@ export default function QortalWallet() {
           postProcess: 'capitalizeFirstChar',
         })}
         onAddContact={handleOpenAddressBook}
-        onQrClick={handleOpenQortReceive}
+        onAddressBookChange={handleQortAddressBookChange}
         onSelectAddress={handleSelectAddress}
         onSend={handleOpenQortSend}
         onToggleReceive={handleToggleReceivePanel}
@@ -4667,9 +4776,7 @@ export default function QortalWallet() {
             isSyncing={qortAddressBookSyncing}
             onSync={handleSyncQortAddressBook}
             statusLabel={syncStatusLabel}
-            statusTone={
-              qortAddressBookSyncStatus === 'error' ? 'error' : 'success'
-            }
+            statusTone={qortAddressBookNeedsAttention ? 'error' : 'success'}
             statusTooltip={syncStatusTooltip}
           />
         }
@@ -4679,7 +4786,15 @@ export default function QortalWallet() {
             isRefreshing={loadingRefreshQort}
             onRefresh={handleLoadingRefreshQort}
           >
-            {loadingRefreshQort ? tableLoader() : qortalTableView.content}
+            <Box
+              sx={{
+                alignItems: loadingRefreshQort ? 'center' : undefined,
+                display: loadingRefreshQort ? 'grid' : 'block',
+                minHeight: rowsPerPage === 10 ? { md: 548 } : undefined,
+              }}
+            >
+              {loadingRefreshQort ? tableLoader() : qortalTableView.content}
+            </Box>
           </WalletTransactionsCard>
         }
       />

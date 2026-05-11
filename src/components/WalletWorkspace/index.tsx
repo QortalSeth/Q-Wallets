@@ -1,17 +1,20 @@
 import {
   Add,
-  AccountTreeOutlined,
   CheckCircleOutline,
   Close,
-  CloudSync,
   CopyAllTwoTone,
+  Edit,
   ErrorOutline,
   FileDownloadOutlined,
   InfoOutlined,
   LockOutlined,
+  NorthEast,
   Refresh,
   Search,
-  Send,
+  SouthWest,
+  Star,
+  StarBorder,
+  Sync,
   VerifiedRounded,
 } from '@mui/icons-material';
 import {
@@ -19,19 +22,22 @@ import {
   Box,
   Button,
   Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputAdornment,
   LinearProgress,
-  Slider,
   TablePagination,
   TextField,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { Coin } from 'qapp-core';
 import {
   ChangeEvent,
+  DragEvent,
+  KeyboardEvent,
   MouseEvent,
   ReactNode,
   useEffect,
@@ -41,12 +47,19 @@ import {
 } from 'react';
 import QRCode from 'react-qr-code';
 import arrrCoinRender from '../../assets/wallet-renders/arrr-coin-render.png';
+import arrrCoinIcon from '../../assets/arrr.png';
 import btcCoinRender from '../../assets/wallet-renders/btc-coin-render.png';
+import btcCoinIcon from '../../assets/btc.png';
 import dgbCoinRender from '../../assets/wallet-renders/dgb-coin-render.png';
+import dgbCoinIcon from '../../assets/dgb.png';
 import dogeCoinRender from '../../assets/wallet-renders/doge-coin-render.png';
+import dogeCoinIcon from '../../assets/doge.png';
 import ltcCoinRender from '../../assets/wallet-renders/ltc-coin-render.png';
+import ltcCoinIcon from '../../assets/ltc.png';
 import qortCoinRender from '../../assets/wallet-renders/qort-coin-render.png';
+import qortCoinIcon from '../../assets/qort.png';
 import rvnCoinRender from '../../assets/wallet-renders/rvn-coin-render.png';
+import rvnCoinIcon from '../../assets/rvn.png';
 import {
   copyToClipboard,
   cropString,
@@ -58,7 +71,13 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
-import { getAddressBook } from '../../utils/addressBookStorage';
+import {
+  getAddressBook,
+  moveAddressBookEntry,
+  toggleAddressBookFavorite,
+  updateAddress,
+} from '../../utils/addressBookStorage';
+import { AddressFormDialog } from '../AddressBook/AddressFormDialog';
 import {
   getAddressBookAvatarColor,
   getAddressBookAvatarSx,
@@ -75,6 +94,7 @@ export type WalletCoinSymbol =
 
 type WalletVisual = {
   accent: string;
+  coinIcon: string;
   coinImage: string;
   coinType: Coin;
   decimals: number;
@@ -87,6 +107,7 @@ type WalletVisual = {
 export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   QORT: {
     accent: '#18bdf2',
+    coinIcon: qortCoinIcon,
     coinImage: qortCoinRender,
     coinType: Coin.QORT,
     decimals: 2,
@@ -97,6 +118,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   BTC: {
     accent: '#f6a70b',
+    coinIcon: btcCoinIcon,
     coinImage: btcCoinRender,
     coinType: Coin.BTC,
     decimals: 8,
@@ -107,6 +129,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   LTC: {
     accent: '#b9c4d4',
+    coinIcon: ltcCoinIcon,
     coinImage: ltcCoinRender,
     coinType: Coin.LTC,
     decimals: 8,
@@ -117,6 +140,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   DOGE: {
     accent: '#d7aa36',
+    coinIcon: dogeCoinIcon,
     coinImage: dogeCoinRender,
     coinType: Coin.DOGE,
     decimals: 8,
@@ -127,6 +151,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   DGB: {
     accent: '#2a75d9',
+    coinIcon: dgbCoinIcon,
     coinImage: dgbCoinRender,
     coinType: Coin.DGB,
     decimals: 8,
@@ -137,6 +162,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   RVN: {
     accent: '#f09a38',
+    coinIcon: rvnCoinIcon,
     coinImage: rvnCoinRender,
     coinType: Coin.RVN,
     decimals: 8,
@@ -147,6 +173,7 @@ export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   },
   ARRR: {
     accent: '#e0b64a',
+    coinIcon: arrrCoinIcon,
     coinImage: arrrCoinRender,
     coinType: Coin.ARRR,
     decimals: 8,
@@ -165,10 +192,7 @@ const getWalletVars = (visual: WalletVisual) =>
     '--wallet-glow-soft': visual.glowSoft,
   }) as Record<string, string>;
 
-type WalletGlowLayerKey =
-  | 'coinShadow'
-  | 'floorReflection'
-  | 'floorShadow';
+type WalletGlowLayerKey = 'coinShadow' | 'floorReflection' | 'floorShadow';
 
 type WalletGlowLayerSettings = {
   blur: number;
@@ -187,74 +211,6 @@ const DEFAULT_WALLET_GLOW_SETTINGS: WalletGlowDevSettings = {
   coinShadow: { blur: 57, intensity: 75, spread: 75, x: -7, y: 2 },
   floorReflection: { blur: 8, intensity: 220, spread: 109, x: -16, y: 14 },
   floorShadow: { blur: 7, intensity: 220, spread: 100, x: -7, y: 0 },
-};
-
-const WALLET_GLOW_STORAGE_KEY = 'q-wallets.coinGlowSettings.v1';
-
-const WALLET_GLOW_LAYERS: Array<{
-  key: WalletGlowLayerKey;
-  label: string;
-}> = [
-  { key: 'coinShadow', label: 'Coin shadow' },
-  { key: 'floorReflection', label: 'Floor reflection' },
-  { key: 'floorShadow', label: 'Floor shadow' },
-];
-
-const WALLET_GLOW_CONTROLS: Array<{
-  key: keyof WalletGlowLayerSettings;
-  label: string;
-  max: number;
-  min: number;
-  step: number;
-}> = [
-  { key: 'x', label: 'X', min: -220, max: 220, step: 1 },
-  { key: 'y', label: 'Y', min: -220, max: 220, step: 1 },
-  { key: 'blur', label: 'Blur', min: 0, max: 100, step: 1 },
-  { key: 'spread', label: 'Spread', min: 10, max: 260, step: 1 },
-  { key: 'intensity', label: 'Intensity', min: 0, max: 220, step: 1 },
-];
-
-const cloneWalletGlowSettings = (settings: WalletGlowDevSettings) =>
-  Object.fromEntries(
-    Object.entries(settings).map(([key, value]) => [key, { ...value }])
-  ) as WalletGlowDevSettings;
-
-const normalizeWalletGlowSettings = (value: unknown): WalletGlowDevSettings => {
-  const fallback = cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
-  if (!value || typeof value !== 'object') return fallback;
-
-  const source = value as Partial<
-    Record<WalletGlowLayerKey, Partial<WalletGlowLayerSettings>>
-  >;
-
-  WALLET_GLOW_LAYERS.forEach(({ key }) => {
-    const layer = source[key];
-    if (!layer || typeof layer !== 'object') return;
-
-    WALLET_GLOW_CONTROLS.forEach((control) => {
-      const nextValue = layer[control.key];
-      if (typeof nextValue === 'number' && Number.isFinite(nextValue)) {
-        fallback[key][control.key] = nextValue;
-      }
-    });
-  });
-
-  return fallback;
-};
-
-const loadWalletGlowSettings = () => {
-  if (typeof window === 'undefined') {
-    return cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
-  }
-
-  try {
-    const savedSettings = window.localStorage.getItem(WALLET_GLOW_STORAGE_KEY);
-    return savedSettings
-      ? normalizeWalletGlowSettings(JSON.parse(savedSettings))
-      : cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
-  } catch {
-    return cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS);
-  }
 };
 
 const createWalletGlowCssVars = (settings: WalletGlowDevSettings) => {
@@ -282,213 +238,11 @@ const createWalletGlowCssVars = (settings: WalletGlowDevSettings) => {
   } as Record<string, string>;
 };
 
-type CoinGlowTunerProps = {
-  onChange: (settings: WalletGlowDevSettings) => void;
-  onReset: () => void;
-  settings: WalletGlowDevSettings;
-};
+const WALLET_GLOW_CSS_VARS = createWalletGlowCssVars(
+  DEFAULT_WALLET_GLOW_SETTINGS
+);
 
-function CoinGlowTuner({ onChange, onReset, settings }: CoinGlowTunerProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [jsonDraft, setJsonDraft] = useState(() =>
-    JSON.stringify(settings, null, 2)
-  );
-  const [jsonError, setJsonError] = useState('');
-  const settingsJson = useMemo(() => JSON.stringify(settings, null, 2), [
-    settings,
-  ]);
-
-  useEffect(() => {
-    setJsonDraft(settingsJson);
-    setJsonError('');
-  }, [settingsJson]);
-
-  const updateLayer = (
-    layerKey: WalletGlowLayerKey,
-    controlKey: keyof WalletGlowLayerSettings,
-    value: number
-  ) => {
-    onChange({
-      ...settings,
-      [layerKey]: {
-        ...settings[layerKey],
-        [controlKey]: value,
-      },
-    });
-  };
-
-  const applyJson = () => {
-    try {
-      onChange(normalizeWalletGlowSettings(JSON.parse(jsonDraft)));
-      setJsonError('');
-    } catch {
-      setJsonError('Invalid JSON');
-    }
-  };
-
-  if (isCollapsed) {
-    return (
-      <Button
-        onClick={() => setIsCollapsed(false)}
-        size="small"
-        variant="outlined"
-        sx={{
-          bgcolor: 'rgba(6, 20, 32, 0.88)',
-          borderColor: 'rgba(24,189,242,0.34)',
-          borderRadius: 1,
-          bottom: 16,
-          boxShadow: '0 16px 40px rgba(0,0,0,0.32)',
-          color: 'primary.main',
-          fontWeight: 700,
-          left: 16,
-          position: 'fixed',
-          zIndex: 1400,
-        }}
-      >
-        Coin glow tuner
-      </Button>
-    );
-  }
-
-  return (
-    <Box
-      sx={{
-        bgcolor: 'rgba(6, 20, 32, 0.94)',
-        border: '1px solid rgba(116,158,180,0.22)',
-        borderRadius: 1,
-        bottom: 16,
-        boxShadow: '0 24px 72px rgba(0,0,0,0.42)',
-        color: 'text.primary',
-        display: 'grid',
-        gap: 1.25,
-        left: 16,
-        maxHeight: '72vh',
-        maxWidth: 'calc(100vw - 32px)',
-        overflow: 'auto',
-        p: 1.5,
-        position: 'fixed',
-        width: 360,
-        zIndex: 1400,
-      }}
-    >
-      <Box
-        sx={{
-          alignItems: 'center',
-          display: 'flex',
-          gap: 1,
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box>
-          <Typography sx={{ fontSize: 14, fontWeight: 800 }}>
-            Coin glow tuner
-          </Typography>
-          <Typography
-            sx={{ color: 'text.secondary', fontSize: 11, lineHeight: 1.35 }}
-          >
-            Live controls for the coin shadow, floor reflection, and anchor.
-          </Typography>
-        </Box>
-        <IconButton
-          aria-label="Collapse coin glow tuner"
-          onClick={() => setIsCollapsed(true)}
-          size="small"
-          sx={{ color: 'text.secondary' }}
-        >
-          <Close fontSize="small" />
-        </IconButton>
-      </Box>
-
-      {WALLET_GLOW_LAYERS.map((layer) => (
-        <Box
-          key={layer.key}
-          sx={{
-            border: '1px solid rgba(116,158,180,0.14)',
-            borderRadius: 1,
-            display: 'grid',
-            gap: 0.55,
-            p: 1,
-          }}
-        >
-          <Typography sx={{ fontSize: 12, fontWeight: 800 }}>
-            {layer.label}
-          </Typography>
-          {WALLET_GLOW_CONTROLS.map((control) => (
-            <Box
-              key={`${layer.key}-${control.key}`}
-              sx={{
-                alignItems: 'center',
-                display: 'grid',
-                gap: 1,
-                gridTemplateColumns: '64px minmax(0, 1fr) 42px',
-              }}
-            >
-              <Typography sx={{ color: 'text.secondary', fontSize: 11 }}>
-                {control.label}
-              </Typography>
-              <Slider
-                max={control.max}
-                min={control.min}
-                onChange={(_, value) =>
-                  updateLayer(layer.key, control.key, value as number)
-                }
-                size="small"
-                step={control.step}
-                value={settings[layer.key][control.key]}
-                sx={{ py: 0.4 }}
-              />
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: 11,
-                  textAlign: 'right',
-                }}
-              >
-                {settings[layer.key][control.key]}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      ))}
-
-      <TextField
-        error={Boolean(jsonError)}
-        helperText={jsonError || 'Paste a saved coin-glow JSON preset here.'}
-        minRows={5}
-        multiline
-        size="small"
-        value={jsonDraft}
-        onChange={(event) => {
-          setJsonDraft(event.target.value);
-          setJsonError('');
-        }}
-        sx={{
-          '& .MuiInputBase-input': {
-            fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-            fontSize: 11,
-          },
-        }}
-      />
-
-      <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr 1fr' }}>
-        <Button onClick={applyJson} size="small" variant="outlined">
-          Apply
-        </Button>
-        <Button
-          onClick={() => copyToClipboard(settingsJson)}
-          size="small"
-          variant="outlined"
-        >
-          Copy
-        </Button>
-        <Button onClick={onReset} size="small" variant="outlined">
-          Reset
-        </Button>
-      </Box>
-    </Box>
-  );
-}
+const RECEIVE_QR_SLOT_HEIGHT = 404;
 
 const walletOuterSurfaceSx = {
   backgroundColor: (t: Theme) =>
@@ -503,9 +257,7 @@ const walletOuterSurfaceSx = {
 
 const walletInnerSurfaceSx = {
   bgcolor: (t: Theme) =>
-    t.palette.mode === 'dark'
-      ? 'rgba(17, 60, 86, 0.34)'
-      : 'background.paper',
+    t.palette.mode === 'dark' ? 'rgba(17, 60, 86, 0.34)' : 'background.paper',
 } as const;
 
 export const formatWalletAmount = (
@@ -557,6 +309,311 @@ const formatWalletDisplayAmount = (
 
   return `${formatted} ${symbol}`;
 };
+
+function ReceiveActionIcon({ open }: { open: boolean }) {
+  const transition =
+    'opacity 260ms ease, transform 520ms cubic-bezier(0.16, 1, 0.3, 1)';
+
+  return (
+    <Box
+      aria-hidden="true"
+      component="span"
+      sx={{
+        alignItems: 'center',
+        display: 'inline-grid',
+        height: 20,
+        justifyItems: 'center',
+        position: 'relative',
+        width: 20,
+        '& svg': {
+          fontSize: 20,
+          gridArea: '1 / 1',
+          position: 'absolute',
+          transformOrigin: 'center',
+          transition,
+        },
+      }}
+    >
+      <SouthWest
+        sx={{
+          opacity: open ? 0 : 1,
+          transform: open
+            ? 'rotate(225deg) scale(0.42)'
+            : 'rotate(0deg) scale(1)',
+        }}
+      />
+      <Close
+        sx={{
+          opacity: open ? 1 : 0,
+          transform: open
+            ? 'rotate(0deg) scale(1)'
+            : 'rotate(-225deg) scale(0.42)',
+        }}
+      />
+    </Box>
+  );
+}
+
+function ReceiveActionLabel({
+  hideReceiveLabel,
+  open,
+  receiveLabel,
+}: {
+  hideReceiveLabel: string;
+  open: boolean;
+  receiveLabel: string;
+}) {
+  const labelSx = (visible: boolean, direction: number) =>
+    ({
+      gridArea: '1 / 1',
+      opacity: visible ? 1 : 0,
+      transform: visible
+        ? 'translateY(0) scale(1)'
+        : `translateY(${direction * 8}px) scale(0.94)`,
+      transition:
+        'opacity 240ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1)',
+      whiteSpace: 'nowrap',
+    }) as const;
+
+  return (
+    <Box
+      aria-hidden="true"
+      component="span"
+      sx={{
+        alignItems: 'center',
+        display: 'inline-grid',
+        justifyItems: 'center',
+        minWidth: '7ch',
+      }}
+    >
+      <Box component="span" sx={labelSx(!open, -1)}>
+        {receiveLabel}
+      </Box>
+      <Box component="span" sx={labelSx(open, 1)}>
+        {hideReceiveLabel}
+      </Box>
+    </Box>
+  );
+}
+
+function ReceiveQrMotionContent({
+  address,
+  coin,
+  onQrClick,
+  open,
+}: ReceiveQrPanelProps & { open: boolean }) {
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setEntered(false);
+      return undefined;
+    }
+
+    const frameId = requestAnimationFrame(() => setEntered(true));
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [open]);
+
+  const visible = open && entered;
+
+  return (
+    <Box
+      sx={{
+        opacity: visible ? 1 : 0,
+        transformOrigin: 'top center',
+        transition: open ? 'opacity 260ms ease-out' : 'opacity 320ms ease-in',
+        willChange: 'opacity',
+      }}
+    >
+      <ReceiveQrPanel address={address} coin={coin} onQrClick={onQrClick} />
+    </Box>
+  );
+}
+
+type ReceiveQrDialogProps = {
+  address?: string | null;
+  coin: WalletCoinSymbol;
+  onClose: () => void;
+  open: boolean;
+};
+
+function ReceiveQrDialog({
+  address,
+  coin,
+  onClose,
+  open,
+}: ReceiveQrDialogProps) {
+  const visual = WALLET_VISUALS[coin];
+  const value = address ?? '';
+
+  return (
+    <Dialog
+      disableScrollLock
+      fullWidth
+      maxWidth={false}
+      onClose={onClose}
+      open={open}
+      slotProps={{
+        paper: {
+          sx: {
+            ...getWalletVars(visual),
+            backgroundColor: 'rgba(3, 17, 29, 0.985)',
+            backgroundImage:
+              'radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--wallet-accent) 16%, transparent), transparent 34%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
+            border: '1px solid rgba(91,132,158,0.28)',
+            borderRadius: 2,
+            boxShadow:
+              '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+            color: 'text.primary',
+            overflow: 'hidden',
+            width: 'min(386px, calc(100vw - 28px))',
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 1.35,
+          minHeight: 74,
+          pb: 1.3,
+          pl: 2.4,
+          pr: 6,
+          pt: 2,
+        }}
+      >
+        <Box
+          component="img"
+          alt={`${visual.symbol} coin`}
+          src={visual.coinImage}
+          sx={{
+            filter: 'drop-shadow(0 0 18px var(--wallet-glow-soft))',
+            height: 38,
+            objectFit: 'contain',
+            width: 38,
+          }}
+        />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontSize: 19,
+              fontWeight: 800,
+              letterSpacing: 0,
+              lineHeight: 1.1,
+            }}
+          >
+            Receive {visual.symbol}
+          </Typography>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: 12.5,
+              fontWeight: 600,
+              lineHeight: 1.3,
+              mt: 0.35,
+            }}
+          >
+            {visual.name} address
+          </Typography>
+        </Box>
+        <IconButton
+          aria-label="Close receive QR dialog"
+          onClick={onClose}
+          size="small"
+          sx={{
+            color: 'text.secondary',
+            position: 'absolute',
+            right: 14,
+            top: 14,
+            '&:hover': {
+              bgcolor: 'rgba(116,158,180,0.08)',
+              color: 'text.primary',
+            },
+          }}
+        >
+          <Close fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          display: 'grid',
+          gap: 1.55,
+          justifyItems: 'center',
+          px: 2.4,
+          pb: 2.4,
+          pt: 0,
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: '#fff',
+            borderRadius: 1.25,
+            boxShadow:
+              '0 0 0 1px rgba(255,255,255,0.08), 0 18px 42px rgba(0,0,0,0.22)',
+            p: 1.1,
+            width: 'min(246px, 100%)',
+          }}
+        >
+          <QRCode
+            value={value}
+            size={224}
+            fgColor="#000000"
+            bgColor="#ffffff"
+            level="H"
+            style={{ display: 'block', height: '100%', width: '100%' }}
+          />
+        </Box>
+        <Box
+          sx={{
+            alignItems: 'center',
+            bgcolor: 'rgba(3, 16, 27, 0.64)',
+            border: '1px solid rgba(116,158,180,0.16)',
+            borderRadius: 1,
+            display: 'flex',
+            gap: 1,
+            minHeight: 46,
+            px: 1.2,
+            width: '100%',
+          }}
+        >
+          <Typography
+            sx={{
+              color: value ? 'text.primary' : 'text.secondary',
+              flex: 1,
+              fontSize: 13.5,
+              fontWeight: 700,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {value || 'No address available'}
+          </Typography>
+          <CustomWidthTooltip placement="top" title="Copy address">
+            <span style={{ display: 'inline-flex' }}>
+              <IconButton
+                disabled={!value}
+                onClick={() => copyToClipboard(value)}
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  ml: 'auto',
+                  '&:hover': { color: 'var(--wallet-accent)' },
+                }}
+              >
+                <CopyAllTwoTone fontSize="small" />
+              </IconButton>
+            </span>
+          </CustomWidthTooltip>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 const toFiniteWalletNumber = (value: unknown) => {
   const parsed =
@@ -731,8 +788,7 @@ export function WalletSummaryCard({
               filter: 'blur(var(--wallet-floor-shadow-blur, 7px))',
               height: { xs: 20, md: 24 },
               left: { xs: '21%', md: '7%' },
-              opacity:
-                'calc(0.62 * var(--wallet-floor-shadow-intensity, 1))',
+              opacity: 'calc(0.62 * var(--wallet-floor-shadow-intensity, 1))',
               pointerEvents: 'none',
               position: 'absolute',
               transform:
@@ -786,9 +842,17 @@ export function WalletSummaryCard({
                 objectFit: 'contain',
                 opacity: 0.96,
                 position: 'relative',
-                transform: 'rotate(-4deg)',
+                animation: 'walletCoinFloat 5200ms ease-in-out infinite',
                 width: '112%',
                 zIndex: 1,
+                '@keyframes walletCoinFloat': {
+                  '0%, 100%': {
+                    transform: 'translateY(0) rotate(-4deg)',
+                  },
+                  '50%': {
+                    transform: 'translateY(-5px) rotate(-3.2deg)',
+                  },
+                },
               }}
             />
           </Box>
@@ -982,7 +1046,7 @@ export function WalletSummaryCard({
           >
             <WalletButtons
               variant="contained"
-              startIcon={<Send />}
+              startIcon={<NorthEast />}
               aria-label={`Send ${visual.symbol}`}
               onClick={onSend}
               sx={{
@@ -1008,8 +1072,11 @@ export function WalletSummaryCard({
               {sendLabel}
             </WalletButtons>
             <Button
+              aria-label={receiveOpen ? hideReceiveLabel : receiveLabel}
+              disableFocusRipple
+              disableRipple
               onClick={onToggleReceive}
-              startIcon={receiveOpen ? <Close /> : <FileDownloadOutlined />}
+              startIcon={<ReceiveActionIcon open={receiveOpen} />}
               variant="outlined"
               sx={{
                 bgcolor: 'rgba(0, 8, 16, 0.28)',
@@ -1021,6 +1088,16 @@ export function WalletSummaryCard({
                 fontSize: 15,
                 fontWeight: 700,
                 minHeight: 52,
+                transition:
+                  'background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease',
+                '& .MuiButton-startIcon': {
+                  alignItems: 'center',
+                  display: 'inline-flex',
+                  height: 20,
+                  justifyContent: 'center',
+                  mr: 0.9,
+                  width: 20,
+                },
                 '&:hover': {
                   bgcolor:
                     'color-mix(in srgb, var(--wallet-accent) 8%, transparent)',
@@ -1028,7 +1105,11 @@ export function WalletSummaryCard({
                 },
               }}
             >
-              {receiveOpen ? hideReceiveLabel : receiveLabel}
+              <ReceiveActionLabel
+                hideReceiveLabel={hideReceiveLabel}
+                open={receiveOpen}
+                receiveLabel={receiveLabel}
+              />
             </Button>
           </Box>
         </Box>
@@ -1048,7 +1129,6 @@ type ReceiveQrPanelProps = {
 export function ReceiveQrPanel({
   address,
   coin,
-  copyLabel = 'Copy',
   downloadLabel = 'Download',
   onQrClick,
 }: ReceiveQrPanelProps) {
@@ -1080,11 +1160,13 @@ export function ReceiveQrPanel({
         ...getWalletVars(visual),
         ...walletOuterSurfaceSx,
         alignItems: 'center',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.025)',
         display: 'grid',
+        filter: 'none',
         justifyItems: 'center',
-        minHeight: { md: 288 },
+        minHeight: { md: 342 },
         overflow: 'hidden',
-        p: 2,
+        p: { xs: 2, md: 2.25 },
         width: '100%',
       }}
     >
@@ -1105,7 +1187,7 @@ export function ReceiveQrPanel({
             cursor: onQrClick ? 'pointer' : 'default',
             display: 'inline-grid',
             font: 'inherit',
-            p: 0.75,
+            p: 0.35,
             position: 'relative',
             '&:hover .qr-target-frame': {
               borderColor: 'var(--wallet-accent)',
@@ -1116,10 +1198,9 @@ export function ReceiveQrPanel({
             className="qr-target-frame"
             sx={{
               ...walletInnerSurfaceSx,
-              border:
-                '1px solid rgba(116,158,180,0.16)',
+              border: '1px solid rgba(116,158,180,0.16)',
               borderRadius: 1.5,
-              p: 1.25,
+              p: 0.95,
               position: 'relative',
               transition: 'border-color 160ms ease',
             }}
@@ -1130,13 +1211,13 @@ export function ReceiveQrPanel({
                 aspectRatio: '1 / 1',
                 bgcolor: '#fff',
                 borderRadius: 1,
-                p: 1,
-                width: 150,
+                p: 1.05,
+                width: { xs: 190, md: 212 },
               }}
             >
               <QRCode
                 value={value}
-                size={142}
+                size={204}
                 fgColor="#000000"
                 bgColor="#ffffff"
                 level="H"
@@ -1150,20 +1231,11 @@ export function ReceiveQrPanel({
         </Typography>
         <Box
           sx={{
-            display: 'grid',
-            gap: 1,
-            gridTemplateColumns: '1fr 1fr',
+            display: 'flex',
+            justifyContent: 'center',
             mt: 1.5,
           }}
         >
-          <Button
-            onClick={() => copyToClipboard(value)}
-            size="small"
-            startIcon={<CopyAllTwoTone />}
-            variant="outlined"
-          >
-            {copyLabel}
-          </Button>
           <Button
             onClick={handleDownload}
             size="small"
@@ -1181,6 +1253,7 @@ export function ReceiveQrPanel({
 type WalletAddressBookPanelProps = {
   coin: WalletCoinSymbol;
   onAddContact: () => void;
+  onAddressBookChange?: () => void;
   onSelectAddress: (address: string, name: string) => void;
   refreshKey?: unknown;
 };
@@ -1188,12 +1261,20 @@ type WalletAddressBookPanelProps = {
 export function WalletAddressBookPanel({
   coin,
   onAddContact,
+  onAddressBookChange,
   onSelectAddress,
   refreshKey,
 }: WalletAddressBookPanelProps) {
   const visual = WALLET_VISUALS[coin];
   const [entries, setEntries] = useState<AddressBookEntry[]>([]);
   const [search, setSearch] = useState('');
+  const [draggedEntryId, setDraggedEntryId] = useState<string | null>(null);
+  const [dragOverEntryId, setDragOverEntryId] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<
+    AddressBookEntry | undefined
+  >(undefined);
+  const [editSaveError, setEditSaveError] = useState('');
+  const [suppressSelect, setSuppressSelect] = useState(false);
 
   useEffect(() => {
     setEntries(getAddressBook(visual.coinType));
@@ -1210,23 +1291,137 @@ export function WalletAddressBookPanel({
     );
   }, [entries, search]);
 
-  const maxVisibleContacts = 13;
+  const maxVisibleContacts = 12;
   const displayedEntries = visibleEntries.slice(0, maxVisibleContacts);
   const hasMoreContacts = visibleEntries.length > maxVisibleContacts;
 
+  const reloadEntries = () => {
+    const nextEntries = getAddressBook(visual.coinType);
+    setEntries(nextEntries);
+    return nextEntries;
+  };
+
+  const handleToggleFavorite = (
+    event: MouseEvent<HTMLButtonElement>,
+    entry: AddressBookEntry
+  ) => {
+    event.stopPropagation();
+    event.currentTarget.blur();
+    const updatedEntries = toggleAddressBookFavorite(entry.id, visual.coinType);
+    if (updatedEntries) {
+      reloadEntries();
+      onAddressBookChange?.();
+    }
+  };
+
+  const handleEditContact = (
+    event: MouseEvent<HTMLButtonElement>,
+    entry: AddressBookEntry
+  ) => {
+    event.stopPropagation();
+    event.currentTarget.blur();
+    setEditSaveError('');
+    setEditingEntry(entry);
+  };
+
+  const handleEditFormClose = () => {
+    setEditingEntry(undefined);
+    setEditSaveError('');
+  };
+
+  const handleEditSave = (
+    entry: Omit<AddressBookEntry, 'id' | 'createdAt'>
+  ) => {
+    if (!editingEntry) return;
+
+    try {
+      const savedEntry = updateAddress(editingEntry.id, visual.coinType, {
+        name: entry.name,
+        address: entry.address,
+        note: entry.note,
+      });
+
+      if (!savedEntry) {
+        throw new Error('Could not save contact.');
+      }
+
+      reloadEntries();
+      setEditingEntry(undefined);
+      setEditSaveError('');
+      onAddressBookChange?.();
+    } catch (error: any) {
+      console.error('Error saving address:', error);
+      setEditSaveError(
+        error?.message || 'Could not save contact. Please try again.'
+      );
+    }
+  };
+
+  const handleReorder = (sourceId: string, targetId: string) => {
+    const updatedEntries = moveAddressBookEntry(
+      visual.coinType,
+      sourceId,
+      targetId
+    );
+    if (updatedEntries) {
+      reloadEntries();
+      onAddressBookChange?.();
+    }
+  };
+
+  const handleDragStart = (
+    event: DragEvent<HTMLDivElement>,
+    entry: AddressBookEntry
+  ) => {
+    setDraggedEntryId(entry.id);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', entry.id);
+  };
+
+  const handleDragOver = (
+    event: DragEvent<HTMLDivElement>,
+    entry: AddressBookEntry
+  ) => {
+    if (!draggedEntryId || draggedEntryId === entry.id) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDragOverEntryId(entry.id);
+  };
+
+  const handleDrop = (
+    event: DragEvent<HTMLDivElement>,
+    entry: AddressBookEntry
+  ) => {
+    event.preventDefault();
+    const sourceId = draggedEntryId || event.dataTransfer.getData('text/plain');
+    setDraggedEntryId(null);
+    setDragOverEntryId(null);
+
+    if (!sourceId || sourceId === entry.id) return;
+
+    setSuppressSelect(true);
+    handleReorder(sourceId, entry.id);
+    window.setTimeout(() => setSuppressSelect(false), 0);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedEntryId(null);
+    setDragOverEntryId(null);
+  };
+
   return (
-    <WalletCard
-      sx={{
-        ...getWalletVars(visual),
-        background:
-          'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
-        borderColor: 'rgba(116,158,180,0.14)',
-        boxShadow:
-          '0 24px 72px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
-        overflow: 'hidden',
-        width: '100%',
-      }}
-    >
+    <>
+      <WalletCard
+        sx={{
+          ...getWalletVars(visual),
+          background:
+            'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
+          borderColor: 'rgba(116,158,180,0.14)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+          overflow: 'hidden',
+          width: '100%',
+        }}
+      >
       <Box sx={{ px: { xs: 1.75, md: 2.1 }, py: { xs: 1.75, md: 2 } }}>
         <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1.2 }}>
           Address book ({visual.symbol})
@@ -1316,22 +1511,60 @@ export function WalletAddressBookPanel({
               return (
                 <Box
                   key={entry.id}
+                  draggable
+                  role="button"
+                  tabIndex={0}
+                  onClick={(event: MouseEvent<HTMLDivElement>) => {
+                    if (suppressSelect) return;
+                    event.currentTarget.blur();
+                    onSelectAddress(entry.address, entry.name);
+                  }}
+                  onDragStart={(event) => handleDragStart(event, entry)}
+                  onDragOver={(event) => handleDragOver(event, entry)}
+                  onDrop={(event) => handleDrop(event, entry)}
+                  onDragEnd={handleDragEnd}
+                  onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectAddress(entry.address, entry.name);
+                    }
+                  }}
                   sx={{
                     alignItems: 'center',
                     bgcolor: 'rgba(6, 25, 40, 0.22)',
                     border: '1px solid rgba(116,158,180,0.075)',
                     borderRadius: 1,
+                    cursor: 'grab',
                     display: 'grid',
                     gap: 0.85,
-                    gridTemplateColumns: '38px minmax(0, 1fr) 32px 32px',
+                    gridTemplateColumns: '38px minmax(0, 1fr) 104px',
                     minHeight: 46,
+                    opacity: draggedEntryId === entry.id ? 0.52 : 1,
                     px: 1,
                     py: 0.55,
                     transition:
-                      'background-color 150ms ease, border-color 150ms ease',
+                      'background-color 150ms ease, border-color 150ms ease, opacity 150ms ease',
+                    ...(dragOverEntryId === entry.id && {
+                      bgcolor: 'rgba(24,189,242,0.08)',
+                      borderColor: 'rgba(24,189,242,0.28)',
+                    }),
                     '&:hover': {
                       bgcolor: 'rgba(14, 49, 72, 0.3)',
                       borderColor: 'rgba(116,158,180,0.13)',
+                    },
+                    '&:hover .contact-action, &:focus-within .contact-action': {
+                      opacity: 1,
+                      pointerEvents: 'auto',
+                      transform: 'translateX(0)',
+                    },
+                    '&:hover .contact-action-star, &:focus-within .contact-action-star':
+                      {
+                        right: 72,
+                      },
+                    '&:focus-visible': {
+                      borderColor:
+                        'color-mix(in srgb, var(--wallet-accent, #18bdf2) 44%, transparent)',
+                      outline: 'none',
                     },
                   }}
                 >
@@ -1346,7 +1579,15 @@ export function WalletAddressBookPanel({
                   >
                     {initials}
                   </Avatar>
-                  <Box sx={{ minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      alignContent: 'center',
+                      display: 'grid',
+                      gap: entry.note ? 0.2 : 0,
+                      minHeight: 32,
+                      minWidth: 0,
+                    }}
+                  >
                     <Typography
                       sx={{
                         fontSize: 14,
@@ -1359,27 +1600,14 @@ export function WalletAddressBookPanel({
                     >
                       {entry.name}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 12.5,
-                        lineHeight: 1.2,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {cropString(entry.address, 18)}
-                    </Typography>
                     {entry.note && (
                       <Typography
                         variant="caption"
                         sx={{
                           color: 'text.secondary',
                           display: 'block',
-                          fontSize: 11.5,
-                          lineHeight: 1.15,
+                          fontSize: 12.5,
+                          lineHeight: 1.2,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -1389,111 +1617,262 @@ export function WalletAddressBookPanel({
                       </Typography>
                     )}
                   </Box>
-                  <CustomWidthTooltip placement="top" title="Copy address">
-                    <IconButton
-                      disableFocusRipple
-                      disableRipple
-                      size="small"
-                      onClick={() => copyToClipboard(entry.address)}
-                      sx={{
-                        bgcolor: 'transparent',
-                        border: '1px solid rgba(116,158,180,0.16)',
-                        borderRadius: 1,
-                        boxShadow: 'none',
-                        color: 'text.secondary',
-                        height: 32,
-                        overflow: 'hidden',
-                        width: 32,
-                        '& .MuiTouchRipple-root': { display: 'none' },
-                        '&:hover': {
-                          bgcolor: 'rgba(116,158,180,0.08)',
-                          borderColor: 'rgba(116,158,180,0.26)',
-                          boxShadow: 'none',
-                          color: 'text.primary',
-                        },
-                      }}
-                    >
-                      <CopyAllTwoTone fontSize="small" />
-                    </IconButton>
-                  </CustomWidthTooltip>
-                  <CustomWidthTooltip
-                    placement="top"
-                    title={`Send ${visual.symbol}`}
+                  <Box
+                    className="contact-actions"
+                    sx={{
+                      height: 32,
+                      justifySelf: 'end',
+                      position: 'relative',
+                      width: 104,
+                    }}
                   >
-                    <IconButton
-                      disableFocusRipple
-                      disableRipple
-                      size="small"
-                      onClick={() => onSelectAddress(entry.address, entry.name)}
-                      sx={{
-                        bgcolor: 'transparent',
-                        border: '1px solid rgba(116,158,180,0.16)',
-                        borderRadius: 1,
-                        boxShadow: 'none',
-                        color: 'text.primary',
-                        height: 32,
-                        overflow: 'hidden',
-                        width: 32,
-                        '& .MuiTouchRipple-root': { display: 'none' },
-                        '&:hover': {
-                          bgcolor: 'rgba(116,158,180,0.08)',
-                          borderColor: 'rgba(116,158,180,0.26)',
+                    <CustomWidthTooltip placement="top" title="Copy address">
+                      <IconButton
+                        className="contact-action contact-action-copy"
+                        disableFocusRipple
+                        disableRipple
+                        size="small"
+                        onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                          event.stopPropagation();
+                          event.currentTarget.blur();
+                          copyToClipboard(entry.address);
+                        }}
+                        sx={{
+                          bgcolor: 'transparent',
+                          border: '1px solid rgba(116,158,180,0.16)',
+                          borderRadius: 1,
                           boxShadow: 'none',
-                          color: 'text.primary',
-                        },
-                      }}
+                          color: 'text.secondary',
+                          height: 32,
+                          opacity: 0,
+                          overflow: 'hidden',
+                          pointerEvents: 'none',
+                          position: 'absolute',
+                          right: 36,
+                          transform: 'translateX(10px)',
+                          transition:
+                            'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                          width: 32,
+                          '& .MuiTouchRipple-root': { display: 'none' },
+                          '&:hover': {
+                            bgcolor: 'rgba(116,158,180,0.08)',
+                            borderColor: 'rgba(116,158,180,0.26)',
+                            boxShadow: 'none',
+                            color: 'text.primary',
+                          },
+                        }}
+                      >
+                        <CopyAllTwoTone fontSize="small" />
+                      </IconButton>
+                    </CustomWidthTooltip>
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={entry.favorite ? 'Remove favorite' : 'Favorite'}
                     >
-                      <Send fontSize="small" />
-                    </IconButton>
-                  </CustomWidthTooltip>
+                      <IconButton
+                        className="contact-action contact-action-star"
+                        disableFocusRipple
+                        disableRipple
+                        size="small"
+                        onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                          handleToggleFavorite(event, entry)
+                        }
+                        sx={{
+                          bgcolor: 'transparent',
+                          border: entry.favorite
+                            ? 0
+                            : '1px solid rgba(116,158,180,0.16)',
+                          borderRadius: 1,
+                          boxShadow: 'none',
+                          color: entry.favorite ? '#f6c84c' : 'text.secondary',
+                          height: 32,
+                          opacity: entry.favorite ? 1 : 0,
+                          overflow: 'hidden',
+                          pointerEvents: entry.favorite ? 'auto' : 'none',
+                          position: 'absolute',
+                          right: entry.favorite ? 0 : 72,
+                          transform: entry.favorite
+                            ? 'translateX(0)'
+                            : 'translateX(10px)',
+                          transition:
+                            'opacity 180ms ease, transform 260ms cubic-bezier(0.16, 1, 0.3, 1), right 260ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                          width: 32,
+                          '& .MuiTouchRipple-root': { display: 'none' },
+                          '&:hover': {
+                            bgcolor: 'rgba(246,200,76,0.08)',
+                            borderColor: 'rgba(246,200,76,0.28)',
+                            boxShadow: 'none',
+                            color: '#ffd76a',
+                          },
+                        }}
+                      >
+                        {entry.favorite ? (
+                          <Star sx={{ fontSize: 19 }} />
+                        ) : (
+                          <StarBorder sx={{ fontSize: 19 }} />
+                        )}
+                      </IconButton>
+                    </CustomWidthTooltip>
+                    <CustomWidthTooltip placement="top" title="Edit contact">
+                      <IconButton
+                        className="contact-action contact-action-edit"
+                        disableFocusRipple
+                        disableRipple
+                        size="small"
+                        onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                          handleEditContact(event, entry)
+                        }
+                        sx={{
+                          bgcolor: 'transparent',
+                          border: '1px solid rgba(116,158,180,0.16)',
+                          borderRadius: 1,
+                          boxShadow: 'none',
+                          color: 'text.secondary',
+                          height: 32,
+                          opacity: 0,
+                          overflow: 'hidden',
+                          pointerEvents: 'none',
+                          position: 'absolute',
+                          right: 0,
+                          transform: 'translateX(10px)',
+                          transition:
+                            'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                          width: 32,
+                          '& .MuiTouchRipple-root': { display: 'none' },
+                          '&:hover': {
+                            bgcolor: 'rgba(116,158,180,0.08)',
+                            borderColor: 'rgba(116,158,180,0.26)',
+                            boxShadow: 'none',
+                            color: 'text.primary',
+                          },
+                        }}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </CustomWidthTooltip>
+                  </Box>
                 </Box>
               );
             })
           ) : (
             <Box
               sx={{
-                bgcolor: 'rgba(6, 25, 40, 0.18)',
+                alignItems: 'center',
+                background:
+                  'linear-gradient(180deg, rgba(6, 30, 48, 0.2) 0%, rgba(4, 18, 31, 0.2) 100%)',
                 border: '1px solid rgba(116,158,180,0.075)',
                 borderRadius: 1,
                 color: 'text.secondary',
-                px: 2,
-                py: 2.25,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                minHeight: { xs: 270, md: 300 },
+                px: { xs: 2.4, md: 2.7 },
+                py: { xs: 3.8, md: 4.35 },
                 textAlign: 'center',
               }}
             >
-              <AccountTreeOutlined
+              <Box
                 sx={{
-                  color: 'text.secondary',
-                  fontSize: 30,
-                  mb: 0.5,
-                  opacity: 0.3,
+                  alignItems: 'center',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mb: 2.1,
+                  position: 'relative',
                 }}
-              />
+              >
+                <Box
+                  sx={{
+                    alignItems: 'center',
+                    bgcolor: 'rgba(116,158,180,0.09)',
+                    border: '1px solid rgba(116,158,180,0.18)',
+                    borderRadius: 1.4,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.035)',
+                    color: 'rgba(148,177,204,0.74)',
+                    display: 'grid',
+                    height: 62,
+                    justifyItems: 'center',
+                    width: 62,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={visual.coinIcon}
+                    alt=""
+                    sx={{
+                      filter:
+                        'drop-shadow(0 0 12px color-mix(in srgb, var(--wallet-accent, #18bdf2) 36%, transparent))',
+                      height: 36,
+                      opacity: 0.92,
+                      width: 36,
+                    }}
+                  />
+                </Box>
+              </Box>
               <Typography
                 sx={{
-                  color: 'text.secondary',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  opacity: 0.82,
+                  color: 'text.primary',
+                  fontSize: { xs: 16, md: 17 },
+                  fontWeight: 700,
+                  lineHeight: 1.2,
                 }}
               >
                 {search.trim()
                   ? 'No matching contacts found'
-                  : `No ${visual.symbol} contacts found`}
+                  : `No ${visual.symbol} contacts yet`}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{
                   color: 'text.secondary',
-                  fontSize: 12,
-                  mt: 0.35,
-                  opacity: 0.7,
+                  fontSize: { xs: 13, md: 13.5 },
+                  lineHeight: 1.45,
+                  maxWidth: 310,
+                  mt: 1.15,
+                  opacity: 0.86,
                 }}
               >
-                {search.trim()
-                  ? 'Try a different name, address or note.'
-                  : 'Add a contact to make sends faster.'}
+                {search.trim() ? (
+                  'Try a different name, address or note.'
+                ) : (
+                  `Add contacts to your address book to send ${visual.symbol} faster and avoid mistakes.`
+                )}
               </Typography>
+              {!search.trim() && (
+                <Button
+                  startIcon={<Add />}
+                  variant="contained"
+                  onClick={onAddContact}
+                  sx={{
+                    bgcolor: 'rgba(6,126,208,0.94)',
+                    backgroundImage:
+                      'linear-gradient(180deg, rgba(18,158,238,0.96), rgba(4,111,198,0.96))',
+                    border: '1px solid rgba(85,205,255,0.4)',
+                    borderRadius: 1.35,
+                    boxShadow:
+                      '0 14px 32px rgba(3,139,236,0.2), inset 0 1px 0 rgba(255,255,255,0.16)',
+                    color: 'rgba(255,255,255,0.96)',
+                    fontSize: { xs: 13.5, md: 14 },
+                    fontWeight: 700,
+                    mt: 2.7,
+                    minHeight: 44,
+                    px: 2.25,
+                    whiteSpace: 'nowrap',
+                    '& .MuiButton-startIcon': {
+                      mr: 0.8,
+                      '& svg': { fontSize: 20 },
+                    },
+                    '&:hover': {
+                      bgcolor: '#1399e8',
+                      borderColor: 'rgba(107,216,255,0.55)',
+                      boxShadow:
+                        '0 16px 36px rgba(24,189,242,0.25), inset 0 1px 0 rgba(255,255,255,0.18)',
+                    },
+                  }}
+                >
+                  Add your first contact
+                </Button>
+              )}
             </Box>
           )}
         </Box>
@@ -1503,13 +1882,15 @@ export function WalletAddressBookPanel({
             onClick={onAddContact}
             sx={{
               color: 'primary.main',
-              fontSize: 13,
-              fontWeight: 700,
+              fontSize: 12,
+              fontWeight: 400,
               justifyContent: 'flex-start',
-              minHeight: 28,
-              mt: 0.8,
+              lineHeight: 1,
+              minHeight: 16,
+              mt: 0.25,
               px: 0,
               py: 0,
+              textTransform: 'none',
               '&:hover': {
                 bgcolor: 'transparent',
                 color: '#37d0ff',
@@ -1520,7 +1901,17 @@ export function WalletAddressBookPanel({
           </Button>
         )}
       </Box>
-    </WalletCard>
+      </WalletCard>
+      <AddressFormDialog
+        coinType={visual.coinType}
+        disableRestoreFocus
+        entry={editingEntry}
+        onClose={handleEditFormClose}
+        onSave={handleEditSave}
+        open={Boolean(editingEntry)}
+        saveError={editSaveError}
+      />
+    </>
   );
 }
 
@@ -1623,7 +2014,6 @@ export type WalletExternalTransactionRow = {
 };
 
 type WalletExternalTransactionsListLabels = {
-  allRows?: string;
   copyHash: (hash: string) => string;
   fee: string;
   memo?: string;
@@ -1667,6 +2057,30 @@ const externalTransactionHeaderSx = {
   textTransform: 'uppercase',
   whiteSpace: 'nowrap',
 };
+
+const walletTableRowHoverSx = {
+  overflow: 'hidden',
+  position: 'relative',
+  '&::before': {
+    background:
+      'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))',
+    content: '""',
+    inset: 0,
+    opacity: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    transition: 'opacity 520ms ease-out',
+    zIndex: 0,
+  },
+  '&:hover::before': {
+    opacity: 1,
+    transitionDuration: '90ms',
+  },
+  '& > *': {
+    position: 'relative',
+    zIndex: 1,
+  },
+} as const;
 
 const formatExternalTransactionAmount = (value: unknown) => {
   const numeric = Number(value);
@@ -1864,6 +2278,7 @@ export function WalletExternalTransactionsList({
                 <Box
                   key={hash || index}
                   sx={{
+                    ...walletTableRowHoverSx,
                     alignItems: 'center',
                     bgcolor: 'transparent',
                     borderBottom: (t) =>
@@ -1880,12 +2295,6 @@ export function WalletExternalTransactionsList({
                     py: 0.85,
                     transition:
                       'background-color 150ms ease, border-color 150ms ease',
-                    '&:hover': {
-                      bgcolor: (t) =>
-                        t.palette.mode === 'dark'
-                          ? 'rgba(24,189,242,0.055)'
-                          : 'rgba(5,127,168,0.05)',
-                    },
                   }}
                 >
                   {renderEndpoint(row.inputs)}
@@ -1975,12 +2384,7 @@ export function WalletExternalTransactionsList({
       <TablePagination
         component="div"
         labelRowsPerPage={labels.rowsPerPage}
-        rowsPerPageOptions={[
-          5,
-          10,
-          25,
-          { label: labels.allRows || 'All', value: -1 },
-        ]}
+        rowsPerPageOptions={[5, 10, 25]}
         count={rows.length}
         rowsPerPage={rowsPerPage}
         page={page}
@@ -2029,8 +2433,7 @@ export function WalletTransactionsCard({
         background:
           'linear-gradient(180deg, rgba(10, 36, 56, 0.74) 0%, rgba(7, 29, 47, 0.68) 100%)',
         borderColor: 'rgba(116,158,180,0.15)',
-        boxShadow:
-          '0 24px 72px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.045)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.045)',
         overflow: 'hidden',
         width: '100%',
         '& .MuiTableContainer-root': {
@@ -2198,7 +2601,7 @@ export function WalletTransactionsCard({
                     },
                   }}
                 >
-                Refresh
+                  Refresh
                 </Button>
               )}
             </Box>
@@ -2210,8 +2613,7 @@ export function WalletTransactionsCard({
           background:
             'linear-gradient(180deg, rgba(18, 62, 89, 0.36) 0%, rgba(12, 47, 72, 0.32) 100%)',
           borderTop: '1px solid rgba(116,158,180,0.11)',
-          boxShadow:
-            'inset 0 1px 0 rgba(255,255,255,0.028), inset 0 18px 54px rgba(24,189,242,0.025)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.028)',
           overflow: 'hidden',
         }}
       >
@@ -2238,7 +2640,7 @@ export function WalletSyncCard({
 }: WalletSyncCardProps) {
   const isError = statusTone === 'error';
   const syncDescription =
-    'Encrypted QDN backup for this wallet address book. It keeps your local contacts recoverable and in sync through your Qortal account.';
+    'Keeps your contacts backed up and synced across your Qortal account.';
 
   return (
     <WalletCard
@@ -2246,8 +2648,7 @@ export function WalletSyncCard({
         background:
           'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
         borderColor: 'rgba(116,158,180,0.14)',
-        boxShadow:
-          '0 24px 72px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
         overflow: 'hidden',
         width: '100%',
       }}
@@ -2361,7 +2762,7 @@ export function WalletSyncCard({
           loading={isSyncing}
           loadingPosition="start"
           onClick={onSync}
-          startIcon={<CloudSync />}
+          startIcon={<Sync />}
           variant="outlined"
           sx={{
             bgcolor: 'rgba(13, 48, 72, 0.32)',
@@ -2394,7 +2795,7 @@ type WalletWorkspaceProps = {
   isBalanceLoading?: boolean;
   noAddressLabel?: string;
   onAddContact: () => void;
-  onQrClick?: () => void;
+  onAddressBookChange?: () => void;
   onSelectAddress: (address: string, name: string) => void;
   onSend: () => void;
   onToggleReceive: () => void;
@@ -2414,7 +2815,7 @@ export function WalletWorkspace({
   isBalanceLoading,
   noAddressLabel,
   onAddContact,
-  onQrClick,
+  onAddressBookChange,
   onSelectAddress,
   onSend,
   onToggleReceive,
@@ -2422,25 +2823,20 @@ export function WalletWorkspace({
   rightColumnAfter,
   transactions,
 }: WalletWorkspaceProps) {
-  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const visual = WALLET_VISUALS[coin];
-  const [coinGlowSettings, setCoinGlowSettings] = useState(
-    loadWalletGlowSettings
-  );
+  const [receiveQrDialogOpen, setReceiveQrDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      WALLET_GLOW_STORAGE_KEY,
-      JSON.stringify(coinGlowSettings)
-    );
-  }, [coinGlowSettings]);
+    if (!receiveOpen) {
+      setReceiveQrDialogOpen(false);
+    }
+  }, [receiveOpen]);
 
   return (
     <Box
       sx={{
         ...getWalletVars(visual),
-        ...createWalletGlowCssVars(coinGlowSettings),
+        ...WALLET_GLOW_CSS_VARS,
         alignItems: 'start',
         display: 'grid',
         gap: { xs: 1.8, lg: 2, xl: 3 },
@@ -2476,54 +2872,88 @@ export function WalletWorkspace({
           receiveOpen={receiveOpen}
         />
         {children}
-        {transactions}
+        <Box sx={{ mt: { xs: 0, md: -0.85 } }}>{transactions}</Box>
       </Box>
 
       <Box
         sx={{
           display: 'grid',
-          gap: { xs: 1.6, md: 2 },
+          gap: 0,
           minWidth: 0,
           position: 'relative',
           zIndex: 1,
         }}
       >
-        <Collapse
-          in={receiveOpen}
-          timeout={reduceMotion ? 0 : 440}
-          unmountOnExit
+        <Box
           sx={{
-            '& .MuiCollapse-wrapperInner': {
-              opacity: receiveOpen ? 1 : 0,
-              transform: receiveOpen ? 'translateY(0)' : 'translateY(-14px)',
-              transformOrigin: 'top center',
-              transition: reduceMotion
-                ? 'none'
-                : 'opacity 340ms ease-out, transform 440ms cubic-bezier(0.2, 0, 0, 1)',
-              willChange: 'opacity, transform',
+            height: { xs: 'auto', lg: RECEIVE_QR_SLOT_HEIGHT },
+            mb: { xs: receiveOpen ? 1.6 : 0, lg: 0 },
+            overflow: 'visible',
+            pointerEvents: receiveOpen ? 'auto' : 'none',
+            transition: {
+              xs: 'margin-bottom 620ms cubic-bezier(0.4, 0, 0.2, 1)',
+              lg: 'none',
             },
           }}
         >
-          <ReceiveQrPanel address={address} coin={coin} onQrClick={onQrClick} />
-        </Collapse>
+          <Collapse
+            in={receiveOpen}
+            timeout={620}
+            unmountOnExit
+            easing={{
+              enter: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              exit: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            sx={{
+              '& .MuiCollapse-wrapper': {
+                overflow: 'hidden',
+              },
+              '& .MuiCollapse-wrapperInner': {
+                overflow: 'hidden',
+              },
+            }}
+          >
+            <ReceiveQrMotionContent
+              address={address}
+              coin={coin}
+              onQrClick={() => setReceiveQrDialogOpen(true)}
+              open={receiveOpen}
+            />
+          </Collapse>
+        </Box>
 
-        <WalletAddressBookPanel
-          coin={coin}
-          onAddContact={onAddContact}
-          onSelectAddress={onSelectAddress}
-          refreshKey={addressBookRefreshKey}
-        />
-        {rightColumnAfter}
+        <Box
+          sx={{
+            position: 'relative',
+            transform: {
+              xs: 'none',
+              lg: receiveOpen
+                ? 'translateY(0)'
+                : `translateY(-${RECEIVE_QR_SLOT_HEIGHT}px)`,
+            },
+            transition:
+              'transform 620ms cubic-bezier(0.4, 0, 0.2, 1)',
+            willChange: 'transform',
+            zIndex: 1,
+          }}
+        >
+          <WalletAddressBookPanel
+            coin={coin}
+            onAddContact={onAddContact}
+            onAddressBookChange={onAddressBookChange}
+            onSelectAddress={onSelectAddress}
+            refreshKey={addressBookRefreshKey}
+          />
+          {rightColumnAfter ? (
+            <Box sx={{ mt: { xs: 1.6, md: 3 } }}>{rightColumnAfter}</Box>
+          ) : null}
+        </Box>
       </Box>
-
-      <CoinGlowTuner
-        settings={coinGlowSettings}
-        onChange={setCoinGlowSettings}
-        onReset={() =>
-          setCoinGlowSettings(
-            cloneWalletGlowSettings(DEFAULT_WALLET_GLOW_SETTINGS)
-          )
-        }
+      <ReceiveQrDialog
+        address={address}
+        coin={coin}
+        onClose={() => setReceiveQrDialogOpen(false)}
+        open={receiveQrDialogOpen}
       />
     </Box>
   );

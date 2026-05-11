@@ -20,9 +20,69 @@ const getStorageKey = (coinType: Coin): string => {
   return `${STORAGE_KEY_PREFIX}-${coinType}`;
 };
 
+const hasNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const compareByName = (a: AddressBookEntry, b: AddressBookEntry) =>
+  a.name.toLowerCase().localeCompare(b.name.toLowerCase()) ||
+  a.address.localeCompare(b.address);
+
+const compareByManualOrder = (a: AddressBookEntry, b: AddressBookEntry) => {
+  const aHasOrder = hasNumber(a.sortOrder);
+  const bHasOrder = hasNumber(b.sortOrder);
+
+  if (aHasOrder || bHasOrder) {
+    const aOrder = aHasOrder
+      ? a.sortOrder ?? Number.MAX_SAFE_INTEGER
+      : Number.MAX_SAFE_INTEGER;
+    const bOrder = bHasOrder
+      ? b.sortOrder ?? Number.MAX_SAFE_INTEGER
+      : Number.MAX_SAFE_INTEGER;
+    return (
+      aOrder - bOrder || compareByName(a, b)
+    );
+  }
+
+  return compareByName(a, b);
+};
+
+export const sortAddressBookEntries = (
+  entries: AddressBookEntry[]
+): AddressBookEntry[] =>
+  [...entries].sort((a, b) => {
+    const favoriteDelta = Number(Boolean(b.favorite)) - Number(Boolean(a.favorite));
+    if (favoriteDelta !== 0) return favoriteDelta;
+
+    if (a.favorite && b.favorite) {
+      const favoriteOrder =
+        (b.favoriteAt ?? 0) - (a.favoriteAt ?? 0) || compareByManualOrder(a, b);
+      return favoriteOrder;
+    }
+
+    return compareByManualOrder(a, b);
+  });
+
+const saveAddressBookEntries = (
+  coinType: Coin,
+  entries: AddressBookEntry[],
+  shouldPublish = true
+) => {
+  const key = getStorageKey(coinType);
+  const storageData: AddressBookLocalStorage = {
+    entries,
+    lastUpdated: Date.now(),
+  };
+
+  localStorage.setItem(key, JSON.stringify(storageData));
+
+  if (shouldPublish) {
+    debouncedPublishToQDN(coinType, entries);
+  }
+};
+
 /**
  * Retrieve all addresses for a specific coin type
- * Returns addresses sorted alphabetically by name
+ * Returns addresses sorted by favorite state, manual order, then name
  * Handles both old format (array) and new format (object with metadata)
  */
 export const getAddressBook = (coinType: Coin): AddressBookEntry[] => {
@@ -53,10 +113,7 @@ export const getAddressBook = (coinType: Coin): AddressBookEntry[] => {
       entries = parsed.entries || [];
     }
 
-    // Sort by name alphabetically (case-insensitive)
-    return entries.sort((a, b) =>
-      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    );
+    return sortAddressBookEntries(entries);
   } catch (error) {
     console.error(`Address Book: Error loading addresses for ${coinType}`, error);
     return [];
@@ -101,20 +158,10 @@ export const addAddress = (
     };
 
     // Add new entry
-    const updatedAddresses = [...existingAddresses, newEntry];
-
-    // Save to localStorage with metadata
-    const key = getStorageKey(entry.coinType);
-    const storageData: AddressBookLocalStorage = {
-      entries: updatedAddresses,
-      lastUpdated: Date.now(),
-    };
-    localStorage.setItem(key, JSON.stringify(storageData));
+    const updatedAddresses = sortAddressBookEntries([...existingAddresses, newEntry]);
+    saveAddressBookEntries(entry.coinType, updatedAddresses);
 
     console.log(`Address Book: Added ${entry.name} for ${entry.coinType}`);
-
-    // Trigger QDN sync (debounced, async, don't wait)
-    debouncedPublishToQDN(entry.coinType, updatedAddresses);
 
     return newEntry;
   } catch (error) {
@@ -164,18 +211,10 @@ export const updateAddress = (
 
     addresses[index] = updatedEntry;
 
-    // Save to localStorage with metadata
-    const key = getStorageKey(coinType);
-    const storageData: AddressBookLocalStorage = {
-      entries: addresses,
-      lastUpdated: Date.now(),
-    };
-    localStorage.setItem(key, JSON.stringify(storageData));
+    const updatedAddresses = sortAddressBookEntries(addresses);
+    saveAddressBookEntries(coinType, updatedAddresses);
 
     console.log(`Address Book: Updated ${updatedEntry.name} for ${coinType}`);
-
-    // Trigger QDN sync (debounced, async, don't wait)
-    debouncedPublishToQDN(coinType, addresses);
 
     return updatedEntry;
   } catch (error) {
@@ -205,19 +244,9 @@ export const deleteAddress = (id: string, coinType: Coin): boolean => {
     // Remove the entry
     addresses.splice(index, 1);
 
-    // Save to localStorage with metadata
-    const key = getStorageKey(coinType);
-    const storageData: AddressBookLocalStorage = {
-      entries: addresses,
-      lastUpdated: Date.now(),
-    };
-
-    localStorage.setItem(key, JSON.stringify(storageData));
+    saveAddressBookEntries(coinType, addresses);
 
     console.log(`Address Book: Deleted entry for ${coinType}`);
-
-    // Trigger QDN sync (debounced, async, don't wait)
-    debouncedPublishToQDN(coinType, addresses);
 
     return true;
   } catch (error) {
@@ -254,5 +283,72 @@ export const searchAddresses = (
   } catch (error) {
     console.error('Address Book: Error searching addresses', error);
     return [];
+  }
+};
+
+export const toggleAddressBookFavorite = (
+  id: string,
+  coinType: Coin
+): AddressBookEntry[] | null => {
+  try {
+    const addresses = getAddressBook(coinType);
+    const index = addresses.findIndex((entry) => entry.id === id);
+
+    if (index === -1) {
+      console.warn(`Address Book: Entry with ID ${id} not found for ${coinType}`);
+      return null;
+    }
+
+    const entry = addresses[index];
+    addresses[index] = {
+      ...entry,
+      favorite: !entry.favorite,
+      favoriteAt: entry.favorite ? undefined : Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const updatedAddresses = sortAddressBookEntries(addresses);
+    saveAddressBookEntries(coinType, updatedAddresses);
+    return updatedAddresses;
+  } catch (error) {
+    console.error('Address Book: Error toggling favorite', error);
+    throw error;
+  }
+};
+
+export const moveAddressBookEntry = (
+  coinType: Coin,
+  sourceId: string,
+  targetId: string
+): AddressBookEntry[] | null => {
+  try {
+    if (sourceId === targetId) return getAddressBook(coinType);
+
+    const addresses = getAddressBook(coinType);
+    const sourceIndex = addresses.findIndex((entry) => entry.id === sourceId);
+    const targetIndex = addresses.findIndex((entry) => entry.id === targetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) {
+      console.warn(`Address Book: Unable to reorder entries for ${coinType}`);
+      return null;
+    }
+
+    const reordered = [...addresses];
+    const [movedEntry] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, movedEntry);
+
+    const favoriteTimestampBase = Date.now() + reordered.length;
+    const updatedAddresses = reordered.map((entry, index) => ({
+      ...entry,
+      favoriteAt: entry.favorite ? favoriteTimestampBase - index : undefined,
+      sortOrder: index,
+      updatedAt: Date.now(),
+    }));
+
+    saveAddressBookEntries(coinType, updatedAddresses);
+    return sortAddressBookEntries(updatedAddresses);
+  } catch (error) {
+    console.error('Address Book: Error reordering entries', error);
+    throw error;
   }
 };

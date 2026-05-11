@@ -42,11 +42,7 @@ import { syncAllAddressBooksOnStartup } from './utils/addressBookQDN';
 import changelogContent from '../CHANGELOG.md?raw';
 import Markdown from 'react-markdown';
 
-type SceneGlowLayerKey =
-  | 'primaryCyan'
-  | 'topBlue'
-  | 'stars'
-  | 'vignette';
+type SceneGlowLayerKey = 'primaryCyan' | 'topBlue' | 'stars' | 'vignette';
 
 type SceneGlowLayerSettings = {
   blur: number;
@@ -173,6 +169,10 @@ export default function AppLayout() {
   const [nodeInfo, setNodeInfo] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [changelogPreviewImage, setChangelogPreviewImage] = useState<{
+    alt: string;
+    src: string;
+  } | null>(null);
 
   // derive selected from the URL
   const selectedSegment = useMemo(() => {
@@ -769,6 +769,13 @@ export default function AppLayout() {
               '& ul': { pl: 2, mb: 1 },
               '& li': { mb: 0.5, fontSize: 14 },
               '& p': { mb: 1, fontSize: 14 },
+              '& p:has(img)': {
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1.25,
+                mb: 1.5,
+                mt: 1,
+              },
               '& code': {
                 backgroundColor: 'action.hover',
                 px: 0.5,
@@ -778,8 +785,118 @@ export default function AppLayout() {
               },
             }}
           >
-            <Markdown>{changelogContent}</Markdown>
+            <Markdown
+              components={{
+                a: ({ href, children }: any) => {
+                  const isChangelogImage =
+                    typeof href === 'string' && href.startsWith('/changelog/');
+
+                  if (!isChangelogImage) {
+                    return (
+                      <Link href={href} target="_blank" rel="noreferrer">
+                        {children}
+                      </Link>
+                    );
+                  }
+
+                  const alt = href.includes('before')
+                    ? 'Q-Wallets before redesign'
+                    : 'Q-Wallets after redesign';
+
+                  return (
+                    <ButtonBase
+                      aria-label={`Open ${alt}`}
+                      onClick={() =>
+                        setChangelogPreviewImage({
+                          alt,
+                          src: href,
+                        })
+                      }
+                      sx={{
+                        borderRadius: 1,
+                        display: 'block',
+                        overflow: 'hidden',
+                        width: { xs: 'calc(50% - 5px)', sm: 168 },
+                        '&:focus-visible': {
+                          outline: '1px solid rgba(24,189,242,0.65)',
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      {children}
+                    </ButtonBase>
+                  );
+                },
+                img: ({ src, alt }: any) => (
+                  <Box
+                    component="img"
+                    alt={alt || ''}
+                    src={src}
+                    sx={{
+                      border: (t) => `1px solid ${t.palette.divider}`,
+                      borderRadius: 1,
+                      display: 'block',
+                      height: { xs: 74, sm: 90 },
+                      objectFit: 'cover',
+                      width: '100%',
+                    }}
+                  />
+                ),
+              }}
+            >
+              {changelogContent}
+            </Markdown>
           </Box>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        disableScrollLock
+        maxWidth="lg"
+        fullWidth
+        open={Boolean(changelogPreviewImage)}
+        onClose={() => setChangelogPreviewImage(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: 'rgba(3, 17, 29, 0.985)',
+              border: '1px solid rgba(91,132,158,0.28)',
+              borderRadius: 2,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ pr: 6 }}>
+          {changelogPreviewImage?.alt}
+          <IconButton
+            aria-label="Close image preview"
+            onClick={() => setChangelogPreviewImage(null)}
+            size="small"
+            sx={{
+              position: 'absolute',
+              right: 12,
+              top: 12,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: '0 !important' }}>
+          {changelogPreviewImage ? (
+            <Box
+              component="img"
+              alt={changelogPreviewImage.alt}
+              src={changelogPreviewImage.src}
+              sx={{
+                borderRadius: 1,
+                display: 'block',
+                maxHeight: '72vh',
+                objectFit: 'contain',
+                width: '100%',
+              }}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
     </Box>

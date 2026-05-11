@@ -68,9 +68,9 @@ export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
           gap: { xs: 1, sm: 1.15 },
           gridTemplateColumns: {
             xs: '1fr',
-            sm: '116px 180px 112px 144px',
+            sm: 'minmax(88px, 0.75fr) minmax(132px, 1.25fr) auto minmax(92px, 0.8fr)',
           },
-          px: 1.7,
+          px: { xs: 1.45, sm: 1.55 },
           py: 1.05,
         }}
       >
@@ -172,7 +172,9 @@ export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
               whiteSpace: 'nowrap',
             }}
           >
-            <InfoOutlined sx={{ color: 'primary.main', fontSize: 15 }} />
+            <InfoOutlined
+              sx={{ color: 'text.secondary', fontSize: 15, opacity: 0.82 }}
+            />
             <Typography
               sx={{
                 fontSize: 12.5,
@@ -288,7 +290,9 @@ export const FeeManager = ({ coin, onChange }: FeeManagerProps) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              <InfoOutlined sx={{ color: 'primary.main', fontSize: 15 }} />
+              <InfoOutlined
+                sx={{ color: 'text.secondary', fontSize: 15, opacity: 0.82 }}
+              />
               <Typography sx={{ fontSize: 12.5, fontWeight: 500 }}>
                 {feeText}
               </Typography>

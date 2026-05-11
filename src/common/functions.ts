@@ -1,37 +1,34 @@
 import { EMPTY_STRING, ONE_SPACE } from './constants';
 
-let timeSegments = [
-  3.154e10,
-  2.628e9,
-  6.048e8,
-  8.64e7,
-  3.6e6,
-  60000,
-  -Infinity,
-];
-
-let makeTimeString =
-  (unit: string, singularString: string) =>
-  (timeSegment: number, time: number) =>
-    time >= 2 * timeSegment
-      ? `${Math.floor(time / timeSegment)} ${unit}s ago`
-      : singularString;
-
-let timeFunctions = [
-  makeTimeString('year', '1 year ago'),
-  makeTimeString('month', '1 month ago'),
-  makeTimeString('week', '1 week ago'),
-  makeTimeString('day', '1 day ago'),
-  makeTimeString('hour', 'an hour ago'),
-  makeTimeString('minute', 'a minute ago'),
-  (_: any) => 'just now',
-];
-
 export function epochToAgo(epoch: number) {
-  let timeDifference = Date.now() - epoch;
-  let index = timeSegments.findIndex((time) => timeDifference >= time);
-  let timeAgo = timeFunctions[index](timeSegments[index], timeDifference);
-  return timeAgo;
+  const date = new Date(epoch);
+  if (!Number.isFinite(epoch) || Number.isNaN(date.getTime())) {
+    return '-';
+  }
+
+  const minute = 60000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const timeDifference = Math.max(0, Date.now() - epoch);
+
+  if (timeDifference < minute) {
+    return 'just now';
+  }
+
+  if (timeDifference < hour) {
+    const minutes = Math.floor(timeDifference / minute);
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
+
+  if (timeDifference < day) {
+    const hours = Math.floor(timeDifference / hour);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+
+  const dayOfMonth = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${dayOfMonth}/${month}/${year}`;
 }
 
 export function secondsToDhms(seconds: number) {

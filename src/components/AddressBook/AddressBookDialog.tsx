@@ -12,11 +12,9 @@ import {
   InputAdornment,
   useTheme,
   useMediaQuery,
-  Snackbar,
-  Alert,
 } from '@mui/material';
-import { Add, Close, Save, Search } from '@mui/icons-material';
-import { Coin, useGlobal } from 'qapp-core';
+import { Add, Close, Search } from '@mui/icons-material';
+import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
 import { Transition } from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
@@ -26,8 +24,9 @@ import {
   deleteAddress,
   addAddress,
   updateAddress,
+  moveAddressBookEntry,
+  toggleAddressBookFavorite,
 } from '../../utils/addressBookStorage';
-import { publishToQDN } from '../../utils/addressBookQDN';
 import { AddressBookTable } from './AddressBookTable';
 import { AddressFormDialog } from './AddressFormDialog';
 import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
@@ -58,6 +57,7 @@ interface AddressBookDialogProps {
   onClose: () => void;
   coinType: Coin;
   onSelectAddress?: (address: string, name: string) => void;
+  onAddressBookChange?: () => void;
   prefillData?: { name: string; address: string } | null;
 }
 
@@ -66,6 +66,7 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
   onClose,
   coinType,
   onSelectAddress,
+  onAddressBookChange,
   prefillData,
 }) => {
   const { t } = useTranslation(['core']);
@@ -86,20 +87,12 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(ADDRESSBOOK_ROWS_PER_PAGE);
   const [saveError, setSaveError] = useState<string>(EMPTY_STRING);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [hasUnsyncedChanges, setHasUnsyncedChanges] = useState(false);
-  const [showSyncSuccess, setShowSyncSuccess] = useState(false);
-
-  // Get authenticated username for QDN sync
-  const userName = useGlobal().auth.name;
 
   // Load entries when dialog opens or coinType changes
   useEffect(() => {
     if (open) {
       setPage(0);
       loadEntries();
-      // Reset unsynced changes flag when dialog opens
-      setHasUnsyncedChanges(false);
     }
   }, [open, coinType]);
 
@@ -125,9 +118,12 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
     setPage(0);
   }, [searchQuery, coinType]);
 
-  const loadEntries = () => {
-    const allEntries = getAddressBook(coinType);
+  const loadEntries = (query = searchQuery) => {
+    const allEntries = query.trim()
+      ? searchAddresses(coinType, query)
+      : getAddressBook(coinType);
     setEntries(allEntries);
+    return allEntries;
   };
 
   const handleAddNew = () => {
@@ -149,17 +145,24 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
 
   const handleDeleteConfirm = () => {
     if (deletingEntry) {
-      deleteAddress(deletingEntry.id, coinType);
-      loadEntries();
+      const deleted = deleteAddress(deletingEntry.id, coinType);
+      if (deleted) {
+        loadEntries();
+        onAddressBookChange?.();
+      }
       setOpenDeleteConfirm(false);
       setDeletingEntry(undefined);
-      setHasUnsyncedChanges(true);
 
       // Adjust page if we deleted the last item on the current page
-      const newTotalEntries = entries.length - 1;
-      const maxPage = Math.max(0, Math.ceil(newTotalEntries / rowsPerPage) - 1);
-      if (page > maxPage) {
-        setPage(maxPage);
+      if (deleted) {
+        const newTotalEntries = entries.length - 1;
+        const maxPage = Math.max(
+          0,
+          Math.ceil(newTotalEntries / rowsPerPage) - 1
+        );
+        if (page > maxPage) {
+          setPage(maxPage);
+        }
       }
     }
   };
@@ -171,22 +174,28 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
 
   const handleSave = (entry: Omit<AddressBookEntry, 'id' | 'createdAt'>) => {
     try {
+      let savedEntry: AddressBookEntry | null;
       if (editingEntry) {
         // Update existing entry
-        updateAddress(editingEntry.id, coinType, {
+        savedEntry = updateAddress(editingEntry.id, coinType, {
           name: entry.name,
           address: entry.address,
           note: entry.note,
         });
       } else {
         // Add new entry
-        addAddress(entry);
+        savedEntry = addAddress(entry);
       }
+
+      if (!savedEntry) {
+        throw new Error(t('core:message.error.something_went_wrong'));
+      }
+
       loadEntries();
       setOpenForm(false);
       setEditingEntry(undefined);
       setSaveError(EMPTY_STRING);
-      setHasUnsyncedChanges(true);
+      onAddressBookChange?.();
     } catch (error: any) {
       console.error('Error saving address:', error);
       // Set the error message to display in the form
@@ -228,29 +237,21 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
     setPage(0);
   };
 
-  const handleSyncToQDN = async () => {
-    setIsSyncing(true);
-
-    try {
-      const currentEntries = getAddressBook(coinType);
-      await publishToQDN(coinType, currentEntries, userName || undefined);
-
-      // Show success notification
-      console.log(`Address Book: Successfully synced ${coinType} to QDN`);
-      // Reset unsynced changes flag after successful sync
-      setHasUnsyncedChanges(false);
-      // Show success snackbar
-      setShowSyncSuccess(true);
-    } catch (error) {
-      console.error('Failed to sync to QDN:', error);
-      // Optional: Show error notification to user
-    } finally {
-      setIsSyncing(false);
+  const handleToggleFavorite = (entry: AddressBookEntry) => {
+    const updatedEntries = toggleAddressBookFavorite(entry.id, coinType);
+    if (updatedEntries) {
+      loadEntries();
+      onAddressBookChange?.();
+      setPage(0);
     }
   };
 
-  const handleCloseSyncSuccess = () => {
-    setShowSyncSuccess(false);
+  const handleReorder = (sourceId: string, targetId: string) => {
+    const updatedEntries = moveAddressBookEntry(coinType, sourceId, targetId);
+    if (updatedEntries) {
+      loadEntries();
+      onAddressBookChange?.();
+    }
   };
 
   return (
@@ -265,16 +266,16 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         slotProps={{
           paper: {
             sx: {
-              bgcolor: 'rgba(4, 18, 31, 0.98)',
+              bgcolor: 'rgba(3, 17, 29, 0.985)',
               backgroundImage:
-                'radial-gradient(circle at 11% 0%, rgba(24,189,242,0.14), transparent 30%), radial-gradient(circle at 86% 100%, rgba(24,189,242,0.06), transparent 28%), linear-gradient(180deg, rgba(8, 29, 45, 0.98) 0%, rgba(4, 15, 25, 0.99) 100%)',
-              border: (t) => `1px solid ${t.palette.divider}`,
-              borderRadius: fullScreen ? 0 : 1.5,
+                'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
+              border: '1px solid rgba(91,132,158,0.28)',
+              borderRadius: fullScreen ? 0 : 2,
               boxShadow:
-                '0 32px 90px rgba(0,0,0,0.55), 0 0 42px rgba(24,189,242,0.07), inset 0 1px 0 rgba(255,255,255,0.04)',
+                '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
               maxHeight: fullScreen ? '100dvh' : 'calc(100dvh - 48px)',
               overflowX: 'hidden',
-              width: fullScreen ? '100%' : 'min(900px, calc(100vw - 32px))',
+              width: fullScreen ? '100%' : 'min(900px, calc(100vw - 24px))',
             },
           },
         }}
@@ -292,19 +293,17 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         >
           <Toolbar
             sx={{
-              minHeight: { xs: 62, sm: 64, md: 66 },
-              px: { xs: 1.6, md: 2 },
-              position: 'relative',
+              minHeight: { xs: 72, md: 76 },
+              px: { xs: 2.35, md: 2.75 },
             }}
           >
             <Box
               sx={{
                 alignItems: 'center',
                 display: 'flex',
-                gap: { xs: 1, md: 1.1 },
-                justifyContent: 'center',
+                flexGrow: 1,
+                gap: { xs: 1.35, md: 1.55 },
                 minWidth: 0,
-                width: '100%',
               }}
             >
               <Box
@@ -313,20 +312,19 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 alt=""
                 sx={{
                   filter: 'drop-shadow(0 0 16px rgba(24,189,242,0.45))',
-                  height: { xs: 32, md: 34 },
-                  width: { xs: 32, md: 34 },
+                  height: { xs: 34, md: 36 },
+                  width: { xs: 34, md: 36 },
                 }}
               />
               <Typography
                 sx={{
                   color: 'text.primary',
-                  fontSize: { xs: 19, sm: 20, md: 21 },
-                  fontWeight: 800,
+                  fontSize: { xs: 19, md: 20 },
+                  fontWeight: 700,
                   letterSpacing: 0,
                   lineHeight: 1.05,
                   minWidth: 0,
                   overflow: 'hidden',
-                  textAlign: 'center',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
@@ -345,12 +343,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 postProcess: 'capitalizeFirstChar',
               })}
               sx={{
-                position: 'absolute',
-                right: { xs: 1.2, md: 1.6 },
-                top: '50%',
-                transform: 'translateY(-50%)',
                 color: 'text.secondary',
-                p: { xs: 0.7, md: 1 },
+                ml: 1.2,
+                p: 0.35,
                 '&:hover': {
                   bgcolor: 'rgba(116,158,180,0.08)',
                   color: 'text.primary',
@@ -368,7 +363,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         <DialogContent
           sx={{
             overflowX: 'hidden',
-            p: { xs: 1.5, sm: 1.8, md: 2 },
+            px: { xs: 2.15, sm: 2.45, md: 2.75 },
+            pb: { xs: 2.2, sm: 2.45, md: 2.75 },
+            pt: { xs: 0.2, md: 0.3 },
             scrollbarGutter: 'stable',
           }}
         >
@@ -380,9 +377,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 gap: { xs: 1, md: 1 },
                 gridTemplateColumns: {
                   xs: '1fr',
-                  md: 'minmax(0, 1fr) 150px 190px',
+                  md: 'minmax(0, 1fr) 190px',
                 },
-                mb: { xs: 1.3, md: 1.4 },
+                mb: { xs: 1.35, md: 1.5 },
               }}
             >
               <TextField
@@ -403,7 +400,7 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                         <Search
                           sx={{
                             color: 'text.secondary',
-                            fontSize: { xs: 24, md: 32 },
+                            fontSize: 20,
                           }}
                         />
                       </InputAdornment>
@@ -412,46 +409,51 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(0, 8, 16, 0.2)',
-                    borderRadius: 1.2,
+                    bgcolor: 'rgba(0,8,16,0.2)',
+                    borderRadius: 1.35,
                     minHeight: { xs: 44, md: 44 },
                     '& fieldset': {
-                      borderColor: 'rgba(116,158,180,0.24)',
+                      borderColor: 'rgba(116,158,180,0.16)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(116,158,180,0.42)',
+                      borderColor: 'rgba(116,158,180,0.3)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: 'rgba(24,189,242,0.75)',
+                      borderColor: 'rgba(24,189,242,0.62)',
                     },
                   },
                   '& .MuiOutlinedInput-input': {
                     color: 'text.secondary',
                     fontSize: { xs: 13, md: 13 },
-                    fontWeight: 600,
+                    fontWeight: 400,
                     py: { xs: 1.1, md: 1.1 },
                     '&::placeholder': {
                       color: 'text.secondary',
+                      fontWeight: 400,
                       opacity: 0.88,
                     },
                   },
                   '& .MuiInputAdornment-root svg': {
-                    fontSize: { xs: 20, md: 22 },
+                    fontSize: 20,
                   },
                 }}
               />
               <Button
-                startIcon={<Save />}
-                onClick={handleSyncToQDN}
-                disabled={isSyncing || !hasUnsyncedChanges}
-                variant="outlined"
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAddNew}
                 size="small"
                 sx={{
-                  bgcolor: 'rgba(116,158,180,0.055)',
-                  borderColor: 'rgba(116,158,180,0.18)',
-                  color: 'text.secondary',
+                  bgcolor: 'rgba(6,126,208,0.94)',
+                  backgroundImage:
+                    'linear-gradient(180deg, rgba(18,158,238,0.94), rgba(4,111,198,0.94))',
+                  border: '1px solid rgba(85,205,255,0.38)',
+                  borderRadius: 1.35,
+                  boxShadow:
+                    '0 8px 20px rgba(3,139,236,0.18), inset 0 1px 0 rgba(255,255,255,0.16)',
+                  color: 'rgba(255,255,255,0.96)',
                   fontSize: { xs: 12.5, md: 13 },
-                  fontWeight: 700,
+                  fontWeight: 650,
                   minHeight: { xs: 42, md: 44 },
                   px: { xs: 1.2, md: 1.3 },
                   whiteSpace: 'nowrap',
@@ -462,44 +464,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                     },
                   },
                   '&:hover': {
-                    bgcolor: 'rgba(116,158,180,0.09)',
-                    borderColor: 'rgba(116,158,180,0.34)',
-                    color: 'text.primary',
-                  },
-                  '&:disabled': {
-                    bgcolor: 'rgba(116,158,180,0.035)',
-                    borderColor: 'rgba(116,158,180,0.1)',
-                  },
-                }}
-              >
-                {t('core:address_book_sync_qdn', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-                {isSyncing && '...'}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Add />}
-                onClick={handleAddNew}
-                size="small"
-                sx={{
-                  bgcolor: 'rgba(24,189,242,0.08)',
-                  borderColor: 'rgba(24,189,242,0.82)',
-                  color: 'primary.main',
-                  fontSize: { xs: 12.5, md: 13 },
-                  fontWeight: 700,
-                  minHeight: { xs: 42, md: 44 },
-                  px: { xs: 1.2, md: 1.3 },
-                  whiteSpace: 'nowrap',
-                  '& .MuiButton-startIcon': {
-                    mr: { xs: 0.65, md: 1 },
-                    '& svg': {
-                      fontSize: { xs: 18, md: 19 },
-                    },
-                  },
-                  '&:hover': {
-                    bgcolor: 'rgba(24,189,242,0.13)',
-                    borderColor: 'primary.main',
+                    bgcolor: '#1399e8',
+                    borderColor: 'rgba(107,216,255,0.52)',
+                    boxShadow: '0 12px 26px rgba(24,189,242,0.24)',
                   },
                 }}
               >
@@ -513,9 +480,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
               <Box
                 sx={{
                   alignItems: 'center',
-                  bgcolor: 'rgba(255,255,255,0.018)',
-                  border: (t) => `1px solid ${t.palette.divider}`,
-                  borderRadius: 1.2,
+                  bgcolor: 'rgba(0,8,16,0.12)',
+                  border: '1px solid rgba(116,158,180,0.08)',
+                  borderRadius: 1.35,
                   display: 'flex',
                   justifyContent: 'center',
                   minHeight: { xs: 156, md: 170 },
@@ -539,6 +506,8 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
                 onUse={onSelectAddress ? handleUse : undefined}
+                onToggleFavorite={handleToggleFavorite}
+                onReorder={handleReorder}
                 page={page}
                 rowsPerPage={rowsPerPage}
                 onPageChange={handlePageChange}
@@ -568,26 +537,6 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         onConfirm={handleDeleteConfirm}
         entryName={deletingEntry?.name || EMPTY_STRING}
       />
-
-      {/* QDN Sync Success Notification */}
-      <Snackbar
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        open={showSyncSuccess}
-        autoHideDuration={4000}
-        onClose={handleCloseSyncSuccess}
-      >
-        <Alert
-          onClose={handleCloseSyncSuccess}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {t('core:message.success.qdn_sync', {
-            coinType: coinType,
-            defaultValue: `Successfully synced ${coinType} address book to QDN`,
-            postProcess: 'capitalizeFirstChar',
-          })}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

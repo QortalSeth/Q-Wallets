@@ -13,7 +13,10 @@ import {
   WalletTransactionsLoader,
   WalletWorkspace,
 } from '../../components/WalletWorkspace';
-import { ExternalSendForm } from '../../components/ExternalSendForm';
+import {
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
@@ -143,11 +146,13 @@ export default function DogecoinWallet() {
   const [isLoadingDogeTransactions, setIsLoadingDogeTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyDogeTxHash, setCopyDogeTxHash] = useState(EMPTY_STRING);
   const [openDogeSend, setOpenDogeSend] = useState(false);
   const [dogeAmount, setDogeAmount] = useState<number>(0);
   const [dogeRecipient, setDogeRecipient] = useState(EMPTY_STRING);
+  const [dogeRecipientDisplayName, setDogeRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshDoge, setLoadingRefreshDoge] = useState(false);
   const [openTxDogeSubmit, setOpenTxDogeSubmit] = useState(false);
@@ -186,8 +191,9 @@ export default function DogecoinWallet() {
     setOpenDogeAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setDogeRecipient(address);
+    setDogeRecipientDisplayName(name || EMPTY_STRING);
     setDogeAmount(0);
     setOpenDogeAddressBook(false);
     setOpenDogeSend(true);
@@ -198,6 +204,7 @@ export default function DogecoinWallet() {
   const handleOpenDogeSend = () => {
     setDogeAmount(0);
     setDogeRecipient(EMPTY_STRING);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setOpenDogeSend(true);
     setAddressFormatError(false);
     setOpenSendDogeError(false);
@@ -211,6 +218,7 @@ export default function DogecoinWallet() {
   ) => {
     const value = e.target.value.trim();
     setDogeRecipient(value);
+    setDogeRecipientDisplayName(EMPTY_STRING);
 
     if (validateDogeAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -221,7 +229,15 @@ export default function DogecoinWallet() {
 
   const handleCloseDogeSend = () => {
     setDogeAmount(0);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setOpenDogeSend(false);
+    setAddressFormatError(false);
+    setOpenSendDogeError(false);
+  };
+
+  const handleClearDogeRecipient = () => {
+    setDogeRecipient(EMPTY_STRING);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setOpenSendDogeError(false);
   };
@@ -395,6 +411,7 @@ export default function DogecoinWallet() {
       if (!sendRequest?.error) {
         setDogeAmount(0);
         setDogeRecipient(EMPTY_STRING);
+        setDogeRecipientDisplayName(EMPTY_STRING);
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
@@ -404,6 +421,7 @@ export default function DogecoinWallet() {
     } catch (error) {
       setDogeAmount(0);
       setDogeRecipient(EMPTY_STRING);
+      setDogeRecipientDisplayName(EMPTY_STRING);
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
@@ -429,7 +447,6 @@ export default function DogecoinWallet() {
       coin="DOGE"
       copyHashLabel={copyDogeTxHash || undefined}
       labels={{
-        allRows: 'All',
         copyHash: (hash) =>
           t('core:action.copy_hash', {
             hash,
@@ -484,9 +501,7 @@ export default function DogecoinWallet() {
         disableScrollLock
         slotProps={{
           paper: {
-            sx: {
-              width: 'min(653px, calc(100vw - 32px))',
-            },
+            sx: sendCoinDialogPaperSx,
           },
         }}
       >
@@ -592,13 +607,17 @@ export default function DogecoinWallet() {
           isBalanceLoading={isLoadingWalletBalanceDoge}
           maxSendable={maxSendableDogeCoin()}
           onAmountChange={setDogeAmount}
+          onClearRecipient={handleClearDogeRecipient}
           onClose={handleCloseDogeSend}
           onOpenAddressBook={handleOpenAddressBook}
           onRecipientChange={handleRecipientChange}
           onSend={sendDogeRequest}
           onSendMax={handleSendMaxDoge}
           recipient={dogeRecipient}
+          recipientDisplayName={dogeRecipientDisplayName}
+          recipientSubtitle="DOGE address book contact"
           sendDisabled={disableCanSendDoge()}
+          showAddressBookButton
           symbol="DOGE"
         />
       </WalletSendDialog>

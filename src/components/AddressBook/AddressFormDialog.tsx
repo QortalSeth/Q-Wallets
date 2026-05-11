@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Box,
   Button,
   CircularProgress,
+  ClickAwayListener,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -12,17 +13,16 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  AccountBalanceWalletOutlined,
-  CenterFocusWeak,
+  Check,
   CheckCircleOutline,
   Close,
-  DescriptionOutlined,
   PersonOutline,
 } from '@mui/icons-material';
 import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
 import { DialogGeneral } from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
+import { getAddressBook } from '../../utils/addressBookStorage';
 import { validateAddress } from '../../utils/addressValidation';
 import {
   ADDRESSBOOK_NAME_LENGTH,
@@ -55,40 +55,40 @@ const coinLogos: Partial<Record<Coin, string>> = {
 };
 
 const fieldLabelSx = {
-  color: 'text.secondary',
-  fontSize: 12,
-  fontWeight: 800,
+  color: 'rgba(228,238,248,0.9)',
+  fontSize: { xs: 14.5, sm: 15 },
+  fontWeight: 700,
   letterSpacing: 0,
-  lineHeight: 1,
-  mb: 0.9,
-  textTransform: 'uppercase',
+  lineHeight: 1.2,
+  mb: 0.85,
 } as const;
 
 const formFieldSx = {
   '& .MuiOutlinedInput-root': {
-    bgcolor: 'rgba(0, 8, 16, 0.2)',
-    borderRadius: 1.1,
-    minHeight: 48,
-    px: 1.2,
+    bgcolor: 'rgba(0,8,16,0.2)',
+    borderRadius: 1.35,
+    minHeight: { xs: 54, sm: 56 },
+    px: { xs: 1.2, sm: 1.35 },
     '& fieldset': {
-      borderColor: 'rgba(116,158,180,0.3)',
+      borderColor: 'rgba(116,158,180,0.16)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(116,158,180,0.48)',
+      borderColor: 'rgba(116,158,180,0.3)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: 'rgba(24,189,242,0.72)',
+      borderColor: 'rgba(24,189,242,0.62)',
       borderWidth: 1,
     },
   },
   '& .MuiOutlinedInput-input': {
     color: 'text.primary',
-    fontSize: 15,
-    fontWeight: 600,
+    fontSize: { xs: 15.5, sm: 16 },
+    fontWeight: 500,
     py: 0,
     '&::placeholder': {
       color: 'text.secondary',
-      opacity: 0.72,
+      fontWeight: 400,
+      opacity: 0.58,
     },
   },
   '& .MuiFormHelperText-root': {
@@ -110,6 +110,7 @@ interface AddressFormDialogProps {
   prefillName?: string;
   prefillAddress?: string;
   saveError?: string;
+  disableRestoreFocus?: boolean;
 }
 
 export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
@@ -121,6 +122,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   prefillName,
   prefillAddress,
   saveError,
+  disableRestoreFocus,
 }) => {
   const { t } = useTranslation(['core']);
   const coinLogo = coinLogos[coinType] || coinLogoQORT;
@@ -136,12 +138,33 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   // QORT-specific state for username resolution
   const [addressValidating, setAddressValidating] = useState(false);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [saveConfirmPromptActive, setSaveConfirmPromptActive] = useState(false);
+  const [nameLookupEnabled, setNameLookupEnabled] = useState(false);
   const [nameSearchOpen, setNameSearchOpen] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState<
     QortalNameSearchResult[]
   >([]);
 
   const isEditMode = !!entry;
+  const existingQortContacts = useMemo(() => {
+    if (coinType !== Coin.QORT || !open) return [];
+    return getAddressBook(Coin.QORT).filter(
+      (contact) => contact.id !== entry?.id
+    );
+  }, [coinType, entry?.id, open]);
+
+  const isNameSuggestionAlreadySaved = (
+    suggestion: QortalNameSearchResult
+  ) => {
+    const suggestionName = suggestion.name.trim().toLowerCase();
+    const suggestionOwner = (suggestion.owner || EMPTY_STRING).trim();
+
+    return existingQortContacts.some(
+      (contact) =>
+        contact.address.trim() === suggestionOwner ||
+        contact.name.trim().toLowerCase() === suggestionName
+    );
+  };
 
   // Load entry data when editing
   useEffect(() => {
@@ -162,6 +185,8 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       setNoteError(EMPTY_STRING);
       setAddressValidating(false);
       setAddressConfirmed(!!entry);
+      setSaveConfirmPromptActive(false);
+      setNameLookupEnabled(false);
       setNameSearchOpen(false);
       setNameSuggestions([]);
     }
@@ -171,7 +196,12 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   useEffect(() => {
     const query = name.trim();
 
-    if (coinType !== Coin.QORT || !query || query.length < ADDRESS_MIN_LENGTH) {
+    if (
+      coinType !== Coin.QORT ||
+      !nameLookupEnabled ||
+      !query ||
+      query.length < ADDRESS_MIN_LENGTH
+    ) {
       setNameSuggestions([]);
       setNameSearchOpen(false);
       setAddressValidating(false);
@@ -207,7 +237,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [name, coinType, t]);
+  }, [name, coinType, nameLookupEnabled, t]);
 
   const validateName = (value: string): boolean => {
     if (!value.trim()) {
@@ -268,6 +298,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setNameLookupEnabled(true);
     setName(value);
     validateName(value);
   };
@@ -302,6 +333,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   };
 
   const handleSelectNameSuggestion = (suggestion: QortalNameSearchResult) => {
+    setNameLookupEnabled(false);
     setName(suggestion.name);
     setAddress(suggestion.owner ?? EMPTY_STRING);
     setAddressConfirmed(false);
@@ -314,6 +346,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   const handleConfirmAddress = () => {
     if (validateAddressField(address)) {
       setAddressConfirmed(true);
+      setSaveConfirmPromptActive(false);
     }
   };
 
@@ -324,6 +357,11 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
     !addressError &&
     !noteError &&
     (coinType === Coin.QORT ? !addressValidating && addressConfirmed : true);
+  const shouldGlowAddressConfirmText =
+    coinType === Coin.QORT &&
+    !addressConfirmed &&
+    !addressError &&
+    saveConfirmPromptActive;
 
   return (
     <DialogGeneral
@@ -332,17 +370,19 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       maxWidth={false}
       fullWidth
       disableScrollLock
+      disableRestoreFocus={disableRestoreFocus}
       slotProps={{
         paper: {
           sx: {
-            bgcolor: 'rgba(4, 18, 31, 0.98)',
+            bgcolor: 'rgba(3, 17, 29, 0.985)',
             backgroundImage:
-              'radial-gradient(circle at 16% 0%, rgba(24,189,242,0.1), transparent 34%), linear-gradient(180deg, rgba(7, 27, 42, 0.98) 0%, rgba(4, 13, 23, 0.99) 100%)',
-            border: (theme) => `1px solid ${theme.palette.divider}`,
+              'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
+            border: '1px solid rgba(91,132,158,0.28)',
+            borderRadius: 2,
             boxShadow:
-              '0 28px 72px rgba(0,0,0,0.46), inset 0 1px 0 rgba(255,255,255,0.04)',
+              '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
             overflow: 'hidden',
-            width: 'min(675px, calc(100vw - 32px))',
+            width: 'min(592px, calc(100vw - 24px))',
           },
         },
       }}
@@ -355,31 +395,42 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
           backgroundImage: 'none',
           borderBottom: 'none',
           display: 'flex',
-          justifyContent: 'center',
-          minHeight: 68,
-          px: 6,
+          minHeight: { xs: 76, sm: 78 },
+          px: { xs: 2.35, sm: 2.55 },
           py: 0,
           position: 'relative',
         }}
       >
-        <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.35 }}>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            flexGrow: 1,
+            gap: { xs: 1.45, sm: 1.65 },
+            minWidth: 0,
+          }}
+        >
           <Box
             component="img"
             src={coinLogo}
             alt=""
             sx={{
-              filter: 'drop-shadow(0 0 15px rgba(24,189,242,0.38))',
-              height: 30,
-              width: 30,
+              filter: 'drop-shadow(0 0 16px rgba(24,189,242,0.45))',
+              height: { xs: 34, sm: 36 },
+              width: { xs: 34, sm: 36 },
             }}
           />
           <Typography
             sx={{
               color: 'text.primary',
-              fontSize: 20,
-              fontWeight: 800,
+              fontSize: { xs: 18, sm: 19 },
+              fontWeight: 700,
               letterSpacing: 0,
               lineHeight: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {isEditMode
@@ -398,10 +449,8 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
           onClick={onClose}
           sx={{
             color: 'text.secondary',
-            position: 'absolute',
-            right: 14,
-            top: '50%',
-            transform: 'translateY(-50%)',
+            ml: 1.2,
+            p: 0.35,
             '&:hover': {
               bgcolor: 'rgba(116,158,180,0.08)',
               color: 'text.primary',
@@ -418,18 +467,17 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       <DialogContent
         sx={{
           overflow: 'visible',
-          px: '28px !important',
-          pb: '18px !important',
-          pt: '23px !important',
+          px: { xs: '20px !important', sm: '28px !important' },
+          pb: { xs: '20px !important', sm: '22px !important' },
+          pt: { xs: '0px !important', sm: '2px !important' },
         }}
       >
-        <Box sx={{ display: 'grid', gap: 2 }}>
+        <Box sx={{ display: 'grid', gap: { xs: 2.25, sm: 2.45 } }}>
           <Box sx={{ position: 'relative' }}>
             <Typography sx={fieldLabelSx}>
               {t('core:address_book_name', {
                 postProcess: 'capitalizeFirstChar',
-              })}{' '}
-              *
+              })}
             </Typography>
             <TextField
               required
@@ -454,91 +502,98 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                       />
                     </InputAdornment>
                   ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Box
-                        sx={{ alignItems: 'center', display: 'flex', gap: 1 }}
-                      >
-                        {coinType === Coin.QORT && addressValidating && (
-                          <CircularProgress size={16} />
-                        )}
-                        <Typography
-                          sx={{
-                            color: 'text.secondary',
-                            fontSize: 14,
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {name.length}/{ADDRESSBOOK_NAME_LENGTH}
-                        </Typography>
-                      </Box>
-                    </InputAdornment>
-                  ),
+                  endAdornment:
+                    coinType === Coin.QORT && addressValidating ? (
+                      <InputAdornment position="end">
+                        <CircularProgress size={16} />
+                      </InputAdornment>
+                    ) : undefined,
                 },
               }}
               sx={formFieldSx}
             />
             {coinType === Coin.QORT && nameSearchOpen && (
-              <Box
-                sx={{
-                  bgcolor: 'rgba(5, 16, 27, 0.98)',
-                  border: '1px solid rgba(116,158,180,0.2)',
-                  borderRadius: 1,
-                  boxShadow: '0 18px 40px rgba(0,0,0,0.32)',
-                  left: 0,
-                  maxHeight: 216,
-                  overflowY: 'auto',
-                  position: 'absolute',
-                  right: 0,
-                  top: 'calc(100% + 6px)',
-                  zIndex: 1500,
-                }}
+              <ClickAwayListener
+                onClickAway={() => setNameSearchOpen(false)}
               >
-                {nameSuggestions.map((suggestion) => (
-                  <Box
-                    component="button"
-                    type="button"
-                    key={`${suggestion.name}-${suggestion.owner}`}
-                    onClick={() => handleSelectNameSuggestion(suggestion)}
-                    sx={{
-                      alignItems: 'center',
-                      appearance: 'none',
-                      bgcolor: 'transparent',
-                      border: 0,
-                      color: 'text.primary',
-                      cursor: 'pointer',
-                      display: 'grid',
-                      font: 'inherit',
-                      gap: 0.35,
-                      justifyItems: 'start',
-                      px: 2,
-                      py: 1.1,
-                      textAlign: 'left',
-                      width: '100%',
-                      '&:hover': {
-                        bgcolor: 'rgba(24,189,242,0.08)',
-                      },
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                      {suggestion.name}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 12,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
-                      }}
-                    >
-                      {suggestion.owner}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+                <Box
+                  sx={{
+                    bgcolor: 'rgba(5, 16, 27, 0.98)',
+                    border: '1px solid rgba(116,158,180,0.2)',
+                    borderRadius: 1,
+                    boxShadow: '0 18px 40px rgba(0,0,0,0.32)',
+                    left: 0,
+                    maxHeight: 216,
+                    overflowY: 'auto',
+                    position: 'absolute',
+                    right: 0,
+                    top: 'calc(100% + 6px)',
+                    zIndex: 1500,
+                  }}
+                >
+                  {nameSuggestions.map((suggestion) => {
+                    const alreadySaved =
+                      isNameSuggestionAlreadySaved(suggestion);
+
+                    return (
+                      <Box
+                        component="button"
+                        type="button"
+                        key={`${suggestion.name}-${suggestion.owner}`}
+                        onClick={() => handleSelectNameSuggestion(suggestion)}
+                        sx={{
+                          alignItems: 'center',
+                          appearance: 'none',
+                          bgcolor: 'transparent',
+                          border: 0,
+                          color: 'text.primary',
+                          cursor: 'pointer',
+                          display: 'grid',
+                          font: 'inherit',
+                          gap: 0.35,
+                          justifyItems: 'start',
+                          px: 2,
+                          py: 1.1,
+                          textAlign: 'left',
+                          width: '100%',
+                          '&:hover': {
+                            bgcolor: 'rgba(24,189,242,0.08)',
+                          },
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                          {suggestion.name}
+                          {alreadySaved ? (
+                            <Box
+                              component="span"
+                              sx={{
+                                color: 'error.main',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                ml: 0.75,
+                              }}
+                            >
+                              (already in list)
+                            </Box>
+                          ) : null}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: 12,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: '100%',
+                          }}
+                        >
+                          {suggestion.owner}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </ClickAwayListener>
             )}
           </Box>
 
@@ -546,7 +601,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <Box sx={{ alignItems: 'center', display: 'flex', gap: 2 }}>
               <Box
                 sx={{
-                  bgcolor: 'rgba(116,158,180,0.18)',
+                  bgcolor: 'rgba(116,158,180,0.1)',
                   flex: 1,
                   height: '1px',
                 }}
@@ -555,7 +610,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                 sx={{
                   color: 'text.secondary',
                   fontSize: 12,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   letterSpacing: 0,
                 }}
               >
@@ -563,7 +618,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               </Typography>
               <Box
                 sx={{
-                  bgcolor: 'rgba(116,158,180,0.18)',
+                  bgcolor: 'rgba(116,158,180,0.1)',
                   flex: 1,
                   height: '1px',
                 }}
@@ -575,8 +630,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <Typography sx={fieldLabelSx}>
               {t('core:address_book_address', {
                 postProcess: 'capitalizeFirstChar',
-              })}{' '}
-              *
+              })}
             </Typography>
             <TextField
               required
@@ -598,25 +652,25 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               }
               slotProps={{
                 input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AccountBalanceWalletOutlined
-                        sx={{ color: 'text.secondary', fontSize: 21 }}
-                      />
-                    </InputAdornment>
-                  ),
                   endAdornment:
                     coinType === Coin.QORT ? (
-                      <InputAdornment position="end">
+                      <InputAdornment
+                        position="end"
+                        sx={{
+                          ml: 1,
+                          mr: 0,
+                        }}
+                      >
                         <IconButton
                           aria-label="Confirm address"
                           disabled={!address.trim() || !!addressError}
                           onClick={handleConfirmAddress}
-                          edge="end"
                           sx={{
                             color: addressConfirmed
                               ? 'success.main'
                               : 'primary.main',
+                            height: { xs: 38, sm: 40 },
+                            width: { xs: 38, sm: 40 },
                             '&:disabled': {
                               color: 'text.disabled',
                             },
@@ -625,7 +679,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                           {addressConfirmed ? (
                             <CheckCircleOutline sx={{ fontSize: 22 }} />
                           ) : (
-                            <CenterFocusWeak sx={{ fontSize: 22 }} />
+                            <Check sx={{ fontSize: 22 }} />
                           )}
                         </IconButton>
                       </InputAdornment>
@@ -636,7 +690,30 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                 ...formFieldSx,
                 '& .MuiFormHelperText-root': {
                   ...formFieldSx['& .MuiFormHelperText-root'],
-                  color: addressConfirmed ? 'success.main' : 'text.secondary',
+                  animation: shouldGlowAddressConfirmText
+                    ? 'addressConfirmWarningPulse 900ms ease-in-out infinite'
+                    : 'none',
+                  color: addressError
+                    ? 'error.main'
+                    : addressConfirmed
+                      ? 'success.main'
+                      : coinType === Coin.QORT
+                        ? 'error.main'
+                        : 'text.secondary',
+                  textShadow: shouldGlowAddressConfirmText
+                    ? '0 0 10px rgba(255,90,104,0.42)'
+                    : 'none',
+                  '@keyframes addressConfirmWarningPulse': {
+                    '0%, 100%': {
+                      color: '#ff4d5e',
+                      textShadow: '0 0 0 rgba(255,90,104,0)',
+                    },
+                    '50%': {
+                      color: '#ffffff',
+                      textShadow:
+                        '0 0 12px rgba(255,90,104,0.7), 0 0 22px rgba(255,90,104,0.34)',
+                    },
+                  },
                 },
               }}
             />
@@ -666,18 +743,6 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                   htmlInput: {
                     maxLength: ADDRESSBOOK_NOTE_LENGTH,
                   },
-                  input: {
-                    startAdornment: (
-                      <InputAdornment
-                        position="start"
-                        sx={{ alignSelf: 'flex-start', mt: 0.9 }}
-                      >
-                        <DescriptionOutlined
-                          sx={{ color: 'text.secondary', fontSize: 21 }}
-                        />
-                      </InputAdornment>
-                    ),
-                  },
                 }}
                 sx={{
                   ...formFieldSx,
@@ -690,8 +755,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                   },
                   '& .MuiOutlinedInput-input': {
                     ...formFieldSx['& .MuiOutlinedInput-input'],
+                    fontSize: { xs: 14.5, sm: 15 },
+                    fontWeight: 400,
                     lineHeight: 1.45,
                     pr: 7,
+                    '&::placeholder': {
+                      color: 'text.secondary',
+                      fontWeight: 400,
+                      opacity: 0.48,
+                    },
                   },
                 }}
               />
@@ -714,11 +786,13 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
       <DialogActions
         sx={{
-          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          borderTop: '1px solid rgba(116,158,180,0.12)',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1.1, sm: 1.4 },
           justifyContent: 'space-between',
-          pb: '12px !important',
+          pb: { xs: '14px !important', sm: '12px !important' },
           pt: '12px !important',
-          px: '28px !important',
+          px: { xs: '20px !important', sm: '28px !important' },
         }}
       >
         <Box
@@ -726,24 +800,34 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             color: 'error.main',
             fontSize: 13,
             fontWeight: 600,
-            maxWidth: '48%',
+            maxWidth: { xs: '100%', sm: '48%' },
+            minHeight: { xs: saveError ? 'auto' : 0, sm: 'auto' },
+            width: { xs: '100%', sm: 'auto' },
           }}
         >
           {saveError}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1.2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1.2,
+            justifyContent: { xs: 'stretch', sm: 'flex-end' },
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
           <Button
             onClick={onClose}
             variant="outlined"
             sx={{
               borderColor: 'rgba(116,158,180,0.22)',
-              borderRadius: 1.2,
+              borderRadius: 1.35,
               color: 'primary.main',
-              fontSize: 15,
-              fontWeight: 800,
-              minHeight: 38,
-              minWidth: 86,
+              fontSize: { xs: 14, sm: 14.5 },
+              fontWeight: 700,
+              minHeight: { xs: 38, sm: 40 },
+              minWidth: { xs: 0, sm: 86 },
               px: 2,
+              width: { xs: '100%', sm: 'auto' },
               '&:hover': {
                 bgcolor: 'rgba(116,158,180,0.08)',
                 borderColor: 'rgba(116,158,180,0.38)',
@@ -754,37 +838,56 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               postProcess: 'capitalizeFirstChar',
             })}
           </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            disabled={!isFormValid}
+          <Box
+            component="span"
+            onMouseEnter={() => {
+              if (coinType === Coin.QORT && !addressConfirmed) {
+                setSaveConfirmPromptActive(true);
+              }
+            }}
+            onMouseLeave={() => setSaveConfirmPromptActive(false)}
             sx={{
-              bgcolor: 'primary.main',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 1.2,
-              boxShadow: '0 12px 28px rgba(24,189,242,0.24)',
-              color: 'white',
-              fontSize: 15,
-              fontWeight: 800,
-              minHeight: 38,
-              minWidth: 86,
-              px: 2,
-              '&:hover': {
-                bgcolor: '#16baf2',
-                boxShadow: '0 14px 32px rgba(24,189,242,0.32)',
-              },
-              '&:disabled': {
-                bgcolor: 'rgba(116,158,180,0.16)',
-                borderColor: 'rgba(116,158,180,0.08)',
-                boxShadow: 'none',
-                color: 'rgba(255,255,255,0.34)',
-              },
+              display: 'inline-flex',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
-            {t('core:address_book_save', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              disabled={!isFormValid}
+              sx={{
+                bgcolor: '#0a9eff',
+                backgroundImage:
+                  'linear-gradient(180deg, rgba(24,174,255,0.98), rgba(4,126,220,0.98))',
+                border: '1px solid rgba(85,205,255,0.32)',
+                borderRadius: 1.35,
+                boxShadow:
+                  '0 10px 26px rgba(3,139,236,0.28), inset 0 1px 0 rgba(255,255,255,0.18)',
+                color: 'white',
+                fontSize: { xs: 14, sm: 14.5 },
+                fontWeight: 700,
+                minHeight: { xs: 38, sm: 40 },
+                minWidth: { xs: 0, sm: 86 },
+                px: 2,
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': {
+                  bgcolor: '#16baf2',
+                  boxShadow: '0 14px 32px rgba(24,189,242,0.32)',
+                },
+                '&:disabled': {
+                  bgcolor: 'rgba(116,158,180,0.16)',
+                  backgroundImage: 'none',
+                  borderColor: 'rgba(116,158,180,0.08)',
+                  boxShadow: 'none',
+                  color: 'rgba(255,255,255,0.34)',
+                },
+              }}
+            >
+              {t('core:address_book_save', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Button>
+          </Box>
         </Box>
       </DialogActions>
     </DialogGeneral>

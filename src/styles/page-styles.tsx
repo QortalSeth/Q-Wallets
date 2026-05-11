@@ -77,7 +77,7 @@ export const WalletSendDialog = styled(Dialog)(
     },
     '& .MuiToolbar-root': {
       gap: theme.spacing(1),
-      minHeight: 60,
+      minHeight: 56,
     },
     '& .MuiButton-outlined': {
       backgroundColor: 'rgba(116, 158, 180, 0.055)',
@@ -130,9 +130,7 @@ export const CustomWidthTooltip = styled(
 
 export const WalletCard = styled(Card)(({ theme }: { theme: Theme }) => ({
   backgroundColor:
-    theme.palette.mode === 'dark'
-      ? '#0E2431'
-      : 'rgba(255,255,255,0.96)',
+    theme.palette.mode === 'dark' ? '#0E2431' : 'rgba(255,255,255,0.96)',
   backgroundImage:
     theme.palette.mode === 'dark'
       ? 'none'
@@ -145,7 +143,7 @@ export const WalletCard = styled(Card)(({ theme }: { theme: Theme }) => ({
   borderRadius: 8,
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 18px 48px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.025)'
+      ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
       : '0 14px 38px rgba(16, 24, 40, 0.06)',
   margin: '0 auto',
   maxWidth: '100%',

@@ -50,11 +50,11 @@ interface AddressBookLocalStorage {
 let publishTimeouts: { [coinType: string]: NodeJS.Timeout } = {};
 
 /**
- * Generates a hash of the entries for quick comparison
- * Sorts entries by ID before hashing to ensure order-independence
+ * Generates a hash of the entries for quick comparison.
+ * Sorts entries by ID for stable hashing; manual order is stored on entries.
  */
 function generateHash(entries: AddressBookEntry[]): string {
-  // Sort entries by ID to ensure consistent hash regardless of order
+  // Sort entries by ID so hashes are stable when the same entries are loaded.
   const sortedEntries = [...entries].sort((a, b) => a.id.localeCompare(b.id));
   const dataString = JSON.stringify(sortedEntries);
 

@@ -52,6 +52,7 @@ import {
 import {
   ExternalFeeSlider,
   ExternalSendForm,
+  sendCoinDialogPaperSx,
 } from '../../components/ExternalSendForm';
 
 interface TablePaginationActionsProps {
@@ -163,11 +164,13 @@ export default function RavencoinWallet() {
   const [isLoadingRvnTransactions, setIsLoadingRvnTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyRvnTxHash, setCopyRvnTxHash] = useState(EMPTY_STRING);
   const [openRvnSend, setOpenRvnSend] = useState(false);
   const [rvnAmount, setRvnAmount] = useState<number>(0);
   const [rvnRecipient, setRvnRecipient] = useState(EMPTY_STRING);
+  const [rvnRecipientDisplayName, setRvnRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [rvnFee, setRvnFee] = useState<number>(0);
   const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
@@ -204,8 +207,9 @@ export default function RavencoinWallet() {
     setOpenRvnAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setRvnRecipient(address);
+    setRvnRecipientDisplayName(name || EMPTY_STRING);
     setRvnAmount(0);
     setRvnFee(RVN_FEE);
     setOpenRvnAddressBook(false);
@@ -219,6 +223,7 @@ export default function RavencoinWallet() {
   const handleOpenRvnSend = () => {
     setRvnAmount(0);
     setRvnRecipient(EMPTY_STRING);
+    setRvnRecipientDisplayName(EMPTY_STRING);
     setRvnFee(RVN_FEE);
     setOpenRvnSend(true);
     setAddressFormatError(false);
@@ -237,6 +242,7 @@ export default function RavencoinWallet() {
     const pattern = /^(R[1-9A-HJ-NP-Za-km-z]{33})$/;
 
     setRvnRecipient(value);
+    setRvnRecipientDisplayName(EMPTY_STRING);
 
     if (pattern.test(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -248,7 +254,17 @@ export default function RavencoinWallet() {
   const handleCloseRvnSend = () => {
     setRvnAmount(0);
     setRvnFee(0);
+    setRvnRecipientDisplayName(EMPTY_STRING);
     setOpenRvnSend(false);
+    setAddressFormatError(false);
+    setWalletInfoError(null);
+    setWalletBalanceError(null);
+    setOpenSendRvnError(false);
+  };
+
+  const handleClearRvnRecipient = () => {
+    setRvnRecipient(EMPTY_STRING);
+    setRvnRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setWalletInfoError(null);
     setWalletBalanceError(null);
@@ -427,6 +443,7 @@ export default function RavencoinWallet() {
       if (!sendRequest?.error) {
         setRvnAmount(0);
         setRvnRecipient(EMPTY_STRING);
+        setRvnRecipientDisplayName(EMPTY_STRING);
         setRvnFee(RVN_FEE);
         setOpenTxRvnSubmit(false);
         setOpenSendRvnSuccess(true);
@@ -437,6 +454,7 @@ export default function RavencoinWallet() {
     } catch (error) {
       setRvnAmount(0);
       setRvnRecipient(EMPTY_STRING);
+      setRvnRecipientDisplayName(EMPTY_STRING);
       setRvnFee(RVN_FEE);
       setOpenTxRvnSubmit(false);
       setOpenSendRvnError(true);
@@ -463,7 +481,6 @@ export default function RavencoinWallet() {
       coin="RVN"
       copyHashLabel={copyRvnTxHash || undefined}
       labels={{
-        allRows: 'All',
         copyHash: (hash) =>
           t('core:action.copy_hash', {
             hash,
@@ -518,9 +535,7 @@ export default function RavencoinWallet() {
         disableScrollLock
         slotProps={{
           paper: {
-            sx: {
-              width: 'min(687px, calc(100vw - 32px))',
-            },
+            sx: sendCoinDialogPaperSx,
           },
         }}
       >
@@ -638,12 +653,15 @@ export default function RavencoinWallet() {
           isBalanceLoading={isLoadingWalletBalanceRvn}
           maxSendable={maxSendableRvnCoin()}
           onAmountChange={setRvnAmount}
+          onClearRecipient={handleClearRvnRecipient}
           onClose={handleCloseRvnSend}
           onOpenAddressBook={handleOpenAddressBook}
           onRecipientChange={handleRecipientChange}
           onSend={sendRvnRequest}
           onSendMax={handleSendMaxRvn}
           recipient={rvnRecipient}
+          recipientDisplayName={rvnRecipientDisplayName}
+          recipientSubtitle="RVN address book contact"
           sendDisabled={disableCanSendRvn()}
           showAddressBookButton
           showBalanceMeter

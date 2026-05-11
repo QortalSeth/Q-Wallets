@@ -51,7 +51,10 @@ import {
   WalletTransactionsLoader,
   WalletWorkspace,
 } from '../../components/WalletWorkspace';
-import { ExternalSendForm } from '../../components/ExternalSendForm';
+import {
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -143,11 +146,13 @@ export default function BitcoinWallet() {
   const [_isLoadingBtcTransactions, setIsLoadingBtcTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyBtcTxHash, setCopyBtcTxHash] = useState(EMPTY_STRING);
   const [openBtcSend, setOpenBtcSend] = useState(false);
   const [btcAmount, setBtcAmount] = useState<number>(0);
   const [btcRecipient, setBtcRecipient] = useState(EMPTY_STRING);
+  const [btcRecipientDisplayName, setBtcRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshBtc, setLoadingRefreshBtc] = useState(false);
   const [openTxBtcSubmit, setOpenTxBtcSubmit] = useState(false);
@@ -184,8 +189,9 @@ export default function BitcoinWallet() {
     setOpenBtcAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setBtcRecipient(address);
+    setBtcRecipientDisplayName(name || EMPTY_STRING);
     setBtcAmount(0);
     setOpenBtcAddressBook(false);
     setOpenBtcSend(true);
@@ -197,6 +203,7 @@ export default function BitcoinWallet() {
   const handleOpenBtcSend = () => {
     setBtcAmount(0);
     setBtcRecipient(EMPTY_STRING);
+    setBtcRecipientDisplayName(EMPTY_STRING);
     setOpenBtcSend(true);
     setAddressFormatError(false);
     setOpenSendBtcError(false);
@@ -211,6 +218,7 @@ export default function BitcoinWallet() {
   ) => {
     const value = e.target.value.trim();
     setBtcRecipient(value);
+    setBtcRecipientDisplayName(EMPTY_STRING);
 
     if (validateBtcAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -221,10 +229,18 @@ export default function BitcoinWallet() {
 
   const handleCloseBtcSend = () => {
     setBtcAmount(0);
+    setBtcRecipientDisplayName(EMPTY_STRING);
     setOpenBtcSend(false);
     setAddressFormatError(false);
     setOpenSendBtcError(false);
     setWalletBalanceError(null);
+  };
+
+  const handleClearBtcRecipient = () => {
+    setBtcRecipient(EMPTY_STRING);
+    setBtcRecipientDisplayName(EMPTY_STRING);
+    setAddressFormatError(false);
+    setOpenSendBtcError(false);
   };
 
   const changeCopyBtcTxHash = async () => {
@@ -395,6 +411,7 @@ export default function BitcoinWallet() {
       if (!sendRequest?.error) {
         setBtcAmount(0);
         setBtcRecipient(EMPTY_STRING);
+        setBtcRecipientDisplayName(EMPTY_STRING);
         setOpenTxBtcSubmit(false);
         setOpenSendBtcSuccess(true);
         setIsLoadingWalletBalanceBtc(true);
@@ -404,6 +421,7 @@ export default function BitcoinWallet() {
     } catch (error) {
       setBtcAmount(0);
       setBtcRecipient(EMPTY_STRING);
+      setBtcRecipientDisplayName(EMPTY_STRING);
       setOpenTxBtcSubmit(false);
       setOpenSendBtcError(true);
       setIsLoadingWalletBalanceBtc(true);
@@ -429,7 +447,6 @@ export default function BitcoinWallet() {
       coin="BTC"
       copyHashLabel={copyBtcTxHash || undefined}
       labels={{
-        allRows: 'All',
         copyHash: (hash) =>
           t('core:action.copy_hash', {
             hash,
@@ -484,9 +501,7 @@ export default function BitcoinWallet() {
         disableScrollLock
         slotProps={{
           paper: {
-            sx: {
-              width: 'min(653px, calc(100vw - 32px))',
-            },
+            sx: sendCoinDialogPaperSx,
           },
         }}
       >
@@ -592,13 +607,17 @@ export default function BitcoinWallet() {
           isBalanceLoading={isLoadingWalletBalanceBtc}
           maxSendable={maxSendableBtcCoin()}
           onAmountChange={setBtcAmount}
+          onClearRecipient={handleClearBtcRecipient}
           onClose={handleCloseBtcSend}
           onOpenAddressBook={handleOpenAddressBook}
           onRecipientChange={handleRecipientChange}
           onSend={sendBtcRequest}
           onSendMax={handleSendMaxBtc}
           recipient={btcRecipient}
+          recipientDisplayName={btcRecipientDisplayName}
+          recipientSubtitle="BTC address book contact"
           sendDisabled={disableCanSendBtc()}
+          showAddressBookButton
           symbol="BTC"
         />
       </WalletSendDialog>

@@ -68,4 +68,7 @@ export interface AddressBookEntry {
     coinType: Coin;                // e.g., 'BTC', 'DOGE', 'LTC'
     createdAt: number;             // Unix timestamp
     updatedAt?: number;            // Unix timestamp (optional)
+    favorite?: boolean;
+    favoriteAt?: number;
+    sortOrder?: number;
 }

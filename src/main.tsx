@@ -1,4 +1,4 @@
-import { StrictMode, useState, type ReactNode } from 'react';
+import { StrictMode, useEffect, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import ThemeProviderWrapper from './styles/theme/theme-provider.tsx';
 import './index.css';
@@ -20,12 +20,44 @@ function WalletProvider({ children }: WalletProviderProps) {
   );
 }
 
+function AppInteractionGuards({ children }: WalletProviderProps) {
+  useEffect(() => {
+    const preventImageContextMenu = (event: MouseEvent) => {
+      const target = event.target;
+
+      if (target instanceof HTMLElement && target.closest('img')) {
+        event.preventDefault();
+      }
+    };
+
+    const preventImageDrag = (event: DragEvent) => {
+      const target = event.target;
+
+      if (target instanceof HTMLElement && target.closest('img')) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener('contextmenu', preventImageContextMenu);
+    document.addEventListener('dragstart', preventImageDrag);
+
+    return () => {
+      document.removeEventListener('contextmenu', preventImageContextMenu);
+      document.removeEventListener('dragstart', preventImageDrag);
+    };
+  }, []);
+
+  return children;
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProviderWrapper>
-      <WalletProvider>
-        <Routes />
-      </WalletProvider>
+      <AppInteractionGuards>
+        <WalletProvider>
+          <Routes />
+        </WalletProvider>
+      </AppInteractionGuards>
     </ThemeProviderWrapper>
   </StrictMode>
 );

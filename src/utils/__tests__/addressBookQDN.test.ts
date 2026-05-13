@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { syncAllAddressBooksOnStartup } from '../addressBookQDN';
+import { publishToQDN, syncAllAddressBooksOnStartup } from '../addressBookQDN';
+import {
+  createAddressBookSyncSignature,
+  setAddressBookAccountScope,
+} from '../addressBookStorage';
 import type { AddressBookEntry } from '../Types';
 
 // Override the global qapp-core mock (from setup.ts) to include the functions
@@ -56,6 +60,9 @@ const ENTRY_DGB: AddressBookEntry = {
 // ---------------------------------------------------------------------------
 
 const STORAGE_KEY = 'q-wallets-addressbook-QORT';
+const SYNC_REQUIRED_KEY = 'q-wallets-addressbook-sync-required-QORT';
+const SYNC_BASELINE_KEY = 'q-wallets-addressbook-sync-baseline-QORT';
+const PUBLISHED_HASH_KEY = 'q-wallets-addressbook-published-QORT';
 
 function setLocalStorage(
   entries: AddressBookEntry[],
@@ -73,6 +80,8 @@ function getStoredData(coinType = 'QORT') {
   return raw ? JSON.parse(raw) : null;
 }
 
+const isSyncRequired = () => localStorage.getItem(SYNC_REQUIRED_KEY) === 'true';
+
 // ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------
@@ -85,6 +94,7 @@ describe('syncAllAddressBooksOnStartup', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    setAddressBookAccountScope(null);
     vi.clearAllMocks();
     qdnDataForQort = null;
 
@@ -96,10 +106,7 @@ describe('syncAllAddressBooksOnStartup', () => {
 
         case 'FETCH_QDN_RESOURCE':
           // Return mock encrypted data only when QDN data has been set for QORT.
-          if (
-            request.identifier === STORAGE_KEY &&
-            qdnDataForQort !== null
-          ) {
+          if (request.identifier === STORAGE_KEY && qdnDataForQort !== null) {
             return 'mock-encrypted-data';
           }
           // Simulate "resource not found" for every other coin / unset QORT.
@@ -132,9 +139,26 @@ describe('syncAllAddressBooksOnStartup', () => {
   const wasQortPublished = () =>
     mockQortalRequest.mock.calls.some(
       ([req]) =>
-        req.action === 'PUBLISH_QDN_RESOURCE' &&
-        req.identifier === STORAGE_KEY
+        req.action === 'PUBLISH_QDN_RESOURCE' && req.identifier === STORAGE_KEY
     );
+
+  describe('publishToQDN', () => {
+    it('publishes only when explicitly called', async () => {
+      const publishedAt = await publishToQDN('QORT', [ENTRY_ALICE], 'TestUser');
+
+      expect(publishedAt).toEqual(expect.any(Number));
+      expect(wasQortPublished()).toBe(true);
+    });
+
+    it('records the published hash and clears the sync-required marker', async () => {
+      localStorage.setItem(SYNC_REQUIRED_KEY, 'true');
+
+      await publishToQDN('QORT', [ENTRY_ALICE], 'TestUser');
+
+      expect(localStorage.getItem(PUBLISHED_HASH_KEY)).toBeTruthy();
+      expect(isSyncRequired()).toBe(false);
+    });
+  });
 
   // -------------------------------------------------------------------------
   // BUG FIX: skip publish when timestamps diverge but content is unchanged
@@ -186,32 +210,47 @@ describe('syncAllAddressBooksOnStartup', () => {
   });
 
   // -------------------------------------------------------------------------
-  // BUG FIX: publish AND sync local timestamp when content genuinely differs
+  // BUG FIX: startup never publishes when content genuinely differs
   // -------------------------------------------------------------------------
 
-  describe('BUG FIX — local timestamp newer than QDN, different content → publish', () => {
-    it('publishes when local has entries that are not present in QDN', async () => {
+  describe('BUG FIX — local timestamp newer than QDN, different content → manual sync required', () => {
+    it('does not publish when local has entries that are not present in QDN', async () => {
       setLocalStorage([ENTRY_BOB], 3000);
       qdnDataForQort = { entries: [ENTRY_ALICE], lastUpdated: 1000 };
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      expect(wasQortPublished()).toBe(true);
+      expect(wasQortPublished()).toBe(false);
     });
 
-    it('updates the local timestamp after a startup-triggered publish', async () => {
+    it('keeps the newer local snapshot and marks sync-required state', async () => {
       setLocalStorage([ENTRY_BOB], 3000);
+      localStorage.setItem(SYNC_BASELINE_KEY, 'stale-clean-baseline');
       qdnDataForQort = { entries: [ENTRY_ALICE], lastUpdated: 1000 };
 
-      const before = Date.now();
       await syncAllAddressBooksOnStartup('TestUser');
-      const after = Date.now();
 
-      // The local timestamp must be advanced to ~publishedAt so the next login
-      // sees equal timestamps and goes straight to the hash-comparison path.
-      const newTimestamp = getStoredData().lastUpdated;
-      expect(newTimestamp).toBeGreaterThanOrEqual(before);
-      expect(newTimestamp).toBeLessThanOrEqual(after);
+      const stored = getStoredData();
+      expect(isSyncRequired()).toBe(true);
+      expect(localStorage.getItem(SYNC_BASELINE_KEY)).toBe(
+        createAddressBookSyncSignature([ENTRY_ALICE])
+      );
+      expect(stored.lastUpdated).toBe(3000);
+      expect(stored.entries[0].id).toBe(ENTRY_BOB.id);
+    });
+
+    it('keeps a just-published local snapshot while QDN is still propagating', async () => {
+      const publishedAt = await publishToQDN('QORT', [ENTRY_BOB], 'TestUser');
+      setLocalStorage([ENTRY_BOB], publishedAt!);
+      qdnDataForQort = { entries: [ENTRY_ALICE], lastUpdated: 1000 };
+      mockQortalRequest.mockClear();
+
+      await syncAllAddressBooksOnStartup('TestUser');
+
+      const stored = getStoredData();
+      expect(wasQortPublished()).toBe(false);
+      expect(isSyncRequired()).toBe(false);
+      expect(stored.entries[0].id).toBe(ENTRY_BOB.id);
     });
   });
 
@@ -288,13 +327,13 @@ describe('syncAllAddressBooksOnStartup', () => {
   // -------------------------------------------------------------------------
 
   describe('No QDN data exists', () => {
-    it('publishes local entries so they are backed up to QDN', async () => {
+    it('does not publish local entries on startup', async () => {
       setLocalStorage([ENTRY_ALICE], 1000);
       // qdnDataForQort stays null → FETCH_QDN_RESOURCE throws 404.
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      expect(wasQortPublished()).toBe(true);
+      expect(wasQortPublished()).toBe(false);
     });
 
     it('does not publish when there are no local entries either', async () => {
@@ -304,29 +343,21 @@ describe('syncAllAddressBooksOnStartup', () => {
       expect(wasQortPublished()).toBe(false);
     });
 
-    it('aligns the local timestamp with QDN after publishing', async () => {
-      // Root cause 1 fix: the timestamp stored locally must equal the timestamp
-      // that was written into QDN so the next startup sees equal timestamps.
+    it('marks local entries as requiring manual sync', async () => {
       setLocalStorage([ENTRY_ALICE], 1000);
 
-      const before = Date.now();
       await syncAllAddressBooksOnStartup('TestUser');
-      const after = Date.now();
 
-      const stored = getStoredData();
-      expect(stored.lastUpdated).toBeGreaterThanOrEqual(before);
-      expect(stored.lastUpdated).toBeLessThanOrEqual(after);
+      expect(isSyncRequired()).toBe(true);
+      expect(getStoredData().lastUpdated).toBe(1000);
     });
 
-    it('records the published hash after a successful publish', async () => {
-      // Root cause 2 fix: publishToQDN must write the published-hash sentinel
-      // so future startups can detect a propagation-delay scenario.
+    it('does not record a published hash from startup sync', async () => {
       setLocalStorage([ENTRY_ALICE], 1000);
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      const hash = localStorage.getItem('q-wallets-addressbook-published-QORT');
-      expect(hash).toBeTruthy();
+      expect(localStorage.getItem(PUBLISHED_HASH_KEY)).toBeNull();
     });
   });
 
@@ -336,14 +367,15 @@ describe('syncAllAddressBooksOnStartup', () => {
 
   describe('Steady-state — QDN and local are already in sync', () => {
     it('does not publish when QDN carries the exact same entries and equal timestamp (hash field present)', async () => {
-      // Run a first startup to capture the real hash that publishToQDN generates.
-      setLocalStorage([ENTRY_ALICE], 1000);
-      await syncAllAddressBooksOnStartup('TestUser');
+      // Run an explicit publish to capture the real hash that publishToQDN generates.
+      const alignedTimestamp = await publishToQDN(
+        'QORT',
+        [ENTRY_ALICE],
+        'TestUser'
+      );
+      setLocalStorage([ENTRY_ALICE], alignedTimestamp!);
 
-      const publishedHash = localStorage.getItem(
-        'q-wallets-addressbook-published-QORT'
-      )!;
-      const alignedTimestamp = getStoredData().lastUpdated;
+      const publishedHash = localStorage.getItem(PUBLISHED_HASH_KEY)!;
 
       // QDN now has the published data (propagation complete).
       qdnDataForQort = {
@@ -360,13 +392,14 @@ describe('syncAllAddressBooksOnStartup', () => {
     });
 
     it('does not modify localStorage when already in sync', async () => {
-      setLocalStorage([ENTRY_ALICE], 1000);
-      await syncAllAddressBooksOnStartup('TestUser');
+      const alignedTimestamp = await publishToQDN(
+        'QORT',
+        [ENTRY_ALICE],
+        'TestUser'
+      );
+      setLocalStorage([ENTRY_ALICE], alignedTimestamp!);
 
-      const publishedHash = localStorage.getItem(
-        'q-wallets-addressbook-published-QORT'
-      )!;
-      const alignedTimestamp = getStoredData().lastUpdated;
+      const publishedHash = localStorage.getItem(PUBLISHED_HASH_KEY)!;
 
       qdnDataForQort = {
         entries: [ENTRY_ALICE],
@@ -436,18 +469,18 @@ describe('syncAllAddressBooksOnStartup', () => {
   });
 
   // -------------------------------------------------------------------------
-  // BUG: optional `updatedAt` field causes hash divergence → spurious publish
-  // even though the user-visible content is unchanged.
+  // BUG FIX: optional `updatedAt` field must not cause hash divergence
+  // when the user-visible content is unchanged.
   //
   // Scenario: the user calls updateAddress (which stamps updatedAt on the
   // entry and advances localLastUpdated). QDN was published before updatedAt
   // existed, so the stored QDN hash was computed without that field.
   // At the next startup: localLastUpdated > qdnLastUpdated (Path B), hashes
-  // differ only because of updatedAt → the code publishes unnecessarily.
+  // differ only because of updatedAt → the code used to publish unnecessarily.
   // -------------------------------------------------------------------------
 
-  describe('BUG — updatedAt field in local entry causes hash mismatch with QDN', () => {
-    it('publishes even though only the internal updatedAt field differs (bug: should NOT publish)', async () => {
+  describe('BUG FIX — updatedAt field in local entry does not affect QDN hash', () => {
+    it('does not publish or require sync when only the internal updatedAt field differs', async () => {
       // Simulate updateAddress having been called: entry now has updatedAt and
       // local timestamp is newer than QDN.
       const entryWithUpdatedAt = { ...ENTRY_ALICE, updatedAt: 99999 };
@@ -458,30 +491,27 @@ describe('syncAllAddressBooksOnStartup', () => {
       // We simulate that by computing what the QDN hash *would* have been
       // (we use the sentinel approach: publish the old entry once to capture
       // its real hash, then set QDN accordingly).
-      setLocalStorage([ENTRY_ALICE], 1000);
-      await syncAllAddressBooksOnStartup('TestUser'); // publishes ENTRY_ALICE
-      const qdnHash = localStorage.getItem(
-        'q-wallets-addressbook-published-QORT'
-      )!;
-      const qdnTimestamp = getStoredData().lastUpdated;
+      const qdnTimestamp = await publishToQDN(
+        'QORT',
+        [ENTRY_ALICE],
+        'TestUser'
+      );
+      const qdnHash = localStorage.getItem(PUBLISHED_HASH_KEY)!;
       mockQortalRequest.mockClear();
       localStorage.clear();
 
       // Now restore the "post-updateAddress" local state.
-      setLocalStorage([entryWithUpdatedAt], qdnTimestamp + 1000); // local > QDN
+      setLocalStorage([entryWithUpdatedAt], qdnTimestamp! + 1000); // local > QDN
       qdnDataForQort = {
         entries: [ENTRY_ALICE],
-        lastUpdated: qdnTimestamp,
+        lastUpdated: qdnTimestamp!,
         hash: qdnHash,
       };
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      // BUG: the code currently DOES publish because generateHash(localEntries)
-      // includes updatedAt while qdnHash was computed without it.
-      // Once the bug is fixed (e.g. by excluding updatedAt from the hash),
-      // change this expectation to toBe(false).
-      expect(wasQortPublished()).toBe(true); // documents current (buggy) behaviour
+      expect(wasQortPublished()).toBe(false);
+      expect(isSyncRequired()).toBe(false);
     });
   });
 
@@ -492,9 +522,9 @@ describe('syncAllAddressBooksOnStartup', () => {
 
   describe('BUG FIX — QDN unavailable but content matches last publish → no publish', () => {
     it('does NOT publish on the second startup when content is unchanged', async () => {
-      // First startup: QDN is null, local has entries → publishes and records hash.
-      setLocalStorage([ENTRY_ALICE], 1000);
-      await syncAllAddressBooksOnStartup('TestUser');
+      // An explicit sync records the hash before the propagation-delay check.
+      const publishedAt = await publishToQDN('QORT', [ENTRY_ALICE], 'TestUser');
+      setLocalStorage([ENTRY_ALICE], publishedAt!);
       expect(wasQortPublished()).toBe(true);
 
       // Reset call recorder.
@@ -504,12 +534,12 @@ describe('syncAllAddressBooksOnStartup', () => {
       await syncAllAddressBooksOnStartup('TestUser');
 
       expect(wasQortPublished()).toBe(false);
+      expect(isSyncRequired()).toBe(false);
     });
 
-    it('DOES publish when content has changed since the last publish', async () => {
+    it('marks sync required when content has changed since the last publish', async () => {
       // Simulate a prior publish of ENTRY_ALICE.
-      setLocalStorage([ENTRY_ALICE], 1000);
-      await syncAllAddressBooksOnStartup('TestUser');
+      await publishToQDN('QORT', [ENTRY_ALICE], 'TestUser');
       mockQortalRequest.mockClear();
 
       // User adds ENTRY_BOB locally; QDN is still null.
@@ -517,17 +547,19 @@ describe('syncAllAddressBooksOnStartup', () => {
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      expect(wasQortPublished()).toBe(true);
+      expect(wasQortPublished()).toBe(false);
+      expect(isSyncRequired()).toBe(true);
     });
 
-    it('publishes on first startup when the published-hash sentinel is absent', async () => {
+    it('marks sync required on first startup when the published-hash sentinel is absent', async () => {
       // No prior publish recorded.
       setLocalStorage([ENTRY_ALICE], 1000);
       // qdnDataForQort remains null.
 
       await syncAllAddressBooksOnStartup('TestUser');
 
-      expect(wasQortPublished()).toBe(true);
+      expect(wasQortPublished()).toBe(false);
+      expect(isSyncRequired()).toBe(true);
     });
   });
 
@@ -544,7 +576,11 @@ describe('syncAllAddressBooksOnStartup', () => {
   describe('BUG FIX — QDN returns resource with mismatched coinType → discard', () => {
     it('does not store entries from a mismatched top-level coinType into local storage', async () => {
       // QORT local storage is empty. QDN returns DGB data for the QORT identifier.
-      qdnDataForQort = { coinType: 'DGB', entries: [ENTRY_DGB], lastUpdated: 5000 };
+      qdnDataForQort = {
+        coinType: 'DGB',
+        entries: [ENTRY_DGB],
+        lastUpdated: 5000,
+      };
 
       await syncAllAddressBooksOnStartup('TestUser');
 
@@ -556,7 +592,11 @@ describe('syncAllAddressBooksOnStartup', () => {
       setLocalStorage([ENTRY_ALICE], 1000);
       // QDN returns DGB data with a newer timestamp — without the fix this
       // would overwrite ENTRY_ALICE with ENTRY_DGB under the QORT key.
-      qdnDataForQort = { coinType: 'DGB', entries: [ENTRY_DGB], lastUpdated: 5000 };
+      qdnDataForQort = {
+        coinType: 'DGB',
+        entries: [ENTRY_DGB],
+        lastUpdated: 5000,
+      };
 
       await syncAllAddressBooksOnStartup('TestUser');
 

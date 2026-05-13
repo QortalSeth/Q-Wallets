@@ -13,15 +13,35 @@ import {
 import type { Theme } from '@mui/material/styles';
 import { ComponentProps, forwardRef, Ref } from 'react';
 
+export const FAST_DIALOG_TRANSITION_MS = {
+  enter: 150,
+  exit: 90,
+} as const;
+
 export const Transition = forwardRef(function Transition(
   props: ComponentProps<typeof Slide>,
   ref: Ref<unknown>
 ) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  const { timeout = FAST_DIALOG_TRANSITION_MS, ...slideProps } = props;
+  return (
+    <Slide
+      ref={ref}
+      timeout={timeout}
+      {...slideProps}
+      direction="up"
+    />
+  );
 });
 
 export function SlideTransition(props: ComponentProps<typeof Slide>) {
-  return <Slide {...props} direction="up" />;
+  const { timeout = FAST_DIALOG_TRANSITION_MS, ...slideProps } = props;
+  return (
+    <Slide
+      timeout={timeout}
+      {...slideProps}
+      direction="up"
+    />
+  );
 }
 
 export const DialogGeneral = styled(Dialog)(({ theme }: { theme: Theme }) => ({

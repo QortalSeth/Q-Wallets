@@ -193,7 +193,6 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
 
       loadEntries();
       setOpenForm(false);
-      setEditingEntry(undefined);
       setSaveError(EMPTY_STRING);
       onAddressBookChange?.();
     } catch (error: any) {
@@ -211,6 +210,10 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
 
   const handleFormClose = () => {
     setOpenForm(false);
+    setSaveError(EMPTY_STRING);
+  };
+
+  const handleFormExited = () => {
     setEditingEntry(undefined);
     setSaveError(EMPTY_STRING);
   };
@@ -384,9 +387,6 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
             >
               <TextField
                 fullWidth
-                aria-label={t('core:address_book_search', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
                 placeholder={t('core:address_book_search', {
                   postProcess: 'capitalizeFirstChar',
                 })}
@@ -394,6 +394,11 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 value={searchQuery}
                 onChange={handleSearchChange}
                 slotProps={{
+                  htmlInput: {
+                    'aria-label': t('core:address_book_search', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                  },
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
@@ -528,6 +533,7 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         prefillName={prefillData?.name}
         prefillAddress={prefillData?.address}
         saveError={saveError}
+        onExited={handleFormExited}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -12,15 +12,17 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  Check,
-  CheckCircleOutline,
-  Close,
-  PersonOutline,
-} from '@mui/icons-material';
+import Check from '@mui/icons-material/Check';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import Close from '@mui/icons-material/Close';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
-import { DialogGeneral } from '../../styles/page-styles';
+import {
+  DialogGeneral,
+  FAST_DIALOG_TRANSITION_MS,
+  Transition,
+} from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
 import { getAddressBook } from '../../utils/addressBookStorage';
 import { validateAddress } from '../../utils/addressValidation';
@@ -43,6 +45,12 @@ import coinLogoRVN from '../../assets/rvn.png';
 
 const ADDRESS_LOOKUP_DEBOUNCE_MS = 350;
 const ADDRESS_MIN_LENGTH = 3;
+const QORT_ADDRESS_PATTERN = /^Q[1-9A-HJ-NP-Za-km-z]{33}$/;
+
+type QortResolvedContact = {
+  address: string;
+  name: string;
+};
 
 const coinLogos: Partial<Record<Coin, string>> = {
   [Coin.ARRR]: coinLogoARRR,
@@ -111,6 +119,7 @@ interface AddressFormDialogProps {
   prefillAddress?: string;
   saveError?: string;
   disableRestoreFocus?: boolean;
+  onExited?: () => void;
 }
 
 export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
@@ -123,6 +132,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   prefillAddress,
   saveError,
   disableRestoreFocus,
+  onExited,
 }) => {
   const { t } = useTranslation(['core']);
   const coinLogo = coinLogos[coinType] || coinLogoQORT;
@@ -138,12 +148,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   // QORT-specific state for username resolution
   const [addressValidating, setAddressValidating] = useState(false);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [addressLookupEnabled, setAddressLookupEnabled] = useState(false);
   const [saveConfirmPromptActive, setSaveConfirmPromptActive] = useState(false);
   const [nameLookupEnabled, setNameLookupEnabled] = useState(false);
   const [nameSearchOpen, setNameSearchOpen] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState<
     QortalNameSearchResult[]
   >([]);
+  const [qortResolvedContact, setQortResolvedContact] =
+    useState<QortResolvedContact | null>(null);
 
   const isEditMode = !!entry;
   const existingQortContacts = useMemo(() => {
@@ -169,14 +182,19 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   // Load entry data when editing
   useEffect(() => {
     if (open) {
+      const nextName = entry ? entry.name : prefillName || EMPTY_STRING;
+      const nextAddress = entry
+        ? entry.address
+        : prefillAddress || EMPTY_STRING;
+
       if (entry) {
-        setName(entry.name);
-        setAddress(entry.address);
+        setName(nextName);
+        setAddress(nextAddress);
         setNote(entry.note);
       } else {
         // Reset form for new entry or use prefill data
-        setName(prefillName || EMPTY_STRING);
-        setAddress(prefillAddress || EMPTY_STRING);
+        setName(nextName);
+        setAddress(nextAddress);
         setNote(EMPTY_STRING);
       }
       // Clear errors when dialog opens
@@ -184,13 +202,22 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       setAddressError(EMPTY_STRING);
       setNoteError(EMPTY_STRING);
       setAddressValidating(false);
+      setAddressLookupEnabled(false);
       setAddressConfirmed(!!entry);
       setSaveConfirmPromptActive(false);
       setNameLookupEnabled(false);
       setNameSearchOpen(false);
       setNameSuggestions([]);
+      setQortResolvedContact(
+        coinType === Coin.QORT && nextName.trim() && nextAddress.trim()
+          ? {
+              address: nextAddress.trim(),
+              name: nextName.trim(),
+            }
+          : null
+      );
     }
-  }, [open, entry, prefillName, prefillAddress]);
+  }, [open, entry, prefillName, prefillAddress, coinType]);
 
   // QORT name search - lets users choose a registered name and then confirm its owner address.
   useEffect(() => {
@@ -219,11 +246,23 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
         if (cancelled) return;
         setNameSuggestions(results);
         setNameSearchOpen(results.length > 0);
+        setNameError(
+          results.length === 0
+            ? t('core:message.error.recipient_not_found', {
+                postProcess: 'capitalizeFirstChar',
+              })
+            : EMPTY_STRING
+        );
       } catch (err: any) {
         if (!cancelled && err.name !== 'AbortError') {
           console.error('Name lookup failed:', err.message);
           setNameSuggestions([]);
           setNameSearchOpen(false);
+          setNameError(
+            t('core:message.error.recipient_lookup_failed', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
         }
       } finally {
         if (!cancelled) {
@@ -238,6 +277,76 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       controller.abort();
     };
   }, [name, coinType, nameLookupEnabled, t]);
+
+  useEffect(() => {
+    const addressQuery = address.trim();
+
+    if (
+      coinType !== Coin.QORT ||
+      !addressLookupEnabled ||
+      !addressQuery ||
+      !QORT_ADDRESS_PATTERN.test(addressQuery)
+    ) {
+      if (addressLookupEnabled) {
+        setAddressValidating(false);
+      }
+      return;
+    }
+
+    setAddressValidating(true);
+    let cancelled = false;
+
+    const timeout = setTimeout(async () => {
+      try {
+        if (typeof qortalRequest !== 'function') return;
+
+        const primaryName = await qortalRequest({
+          action: 'GET_PRIMARY_NAME',
+          address: addressQuery,
+        });
+
+        if (cancelled) return;
+
+        if (typeof primaryName === 'string' && primaryName.trim()) {
+          const resolvedName = primaryName.trim();
+          setName(resolvedName);
+          setNameError(EMPTY_STRING);
+          setQortResolvedContact({
+            address: addressQuery,
+            name: resolvedName,
+          });
+        } else {
+          setName(EMPTY_STRING);
+          setNameError(
+            t('core:message.error.recipient_not_found', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
+          setQortResolvedContact(null);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Address owner lookup failed:', err.message);
+          setName(EMPTY_STRING);
+          setNameError(
+            t('core:message.error.recipient_lookup_failed', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
+          setQortResolvedContact(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setAddressValidating(false);
+        }
+      }
+    }, ADDRESS_LOOKUP_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [address, addressLookupEnabled, coinType, t]);
 
   const validateName = (value: string): boolean => {
     if (!value.trim()) {
@@ -278,6 +387,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       );
       return false;
     }
+    if (coinType === Coin.QORT && !QORT_ADDRESS_PATTERN.test(value.trim())) {
+      setAddressError(
+        t('core:address_book_address_invalid', {
+          coinType: coinType,
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return false;
+    }
     setAddressError(EMPTY_STRING);
     return true;
   };
@@ -300,11 +418,27 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
     const value = e.target.value;
     setNameLookupEnabled(true);
     setName(value);
+    if (coinType === Coin.QORT) {
+      setAddressLookupEnabled(false);
+      setAddress(EMPTY_STRING);
+      setAddressConfirmed(false);
+      setAddressError(EMPTY_STRING);
+      setQortResolvedContact(null);
+    }
     validateName(value);
   };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.trim();
+    if (coinType === Coin.QORT) {
+      setName(EMPTY_STRING);
+      setNameError(EMPTY_STRING);
+      setNameLookupEnabled(false);
+      setNameSearchOpen(false);
+      setNameSuggestions([]);
+      setAddressLookupEnabled(true);
+      setQortResolvedContact(null);
+    }
     setAddress(value);
     setAddressConfirmed(false);
     validateAddressField(value);
@@ -333,30 +467,58 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   };
 
   const handleSelectNameSuggestion = (suggestion: QortalNameSearchResult) => {
+    const resolvedAddress = suggestion.owner ?? EMPTY_STRING;
     setNameLookupEnabled(false);
+    setAddressLookupEnabled(false);
     setName(suggestion.name);
-    setAddress(suggestion.owner ?? EMPTY_STRING);
+    setAddress(resolvedAddress);
     setAddressConfirmed(false);
+    setQortResolvedContact({
+      address: resolvedAddress.trim(),
+      name: suggestion.name.trim(),
+    });
     setNameSearchOpen(false);
     setNameSuggestions([]);
     validateName(suggestion.name);
-    validateAddressField(suggestion.owner ?? EMPTY_STRING);
+    validateAddressField(resolvedAddress);
   };
 
   const handleConfirmAddress = () => {
+    if (
+      coinType === Coin.QORT &&
+      (!qortResolvedContact ||
+        qortResolvedContact.address !== address.trim() ||
+        qortResolvedContact.name !== name.trim())
+    ) {
+      setAddressConfirmed(false);
+      setAddressError(
+        t('core:message.error.recipient_not_found', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return;
+    }
+
     if (validateAddressField(address)) {
       setAddressConfirmed(true);
       setSaveConfirmPromptActive(false);
     }
   };
 
+  const isQortResolvedContactCurrent =
+    coinType !== Coin.QORT ||
+    (!!qortResolvedContact &&
+      qortResolvedContact.address === address.trim() &&
+      qortResolvedContact.name === name.trim());
   const isFormValid =
     name.trim() !== EMPTY_STRING &&
     address.trim() !== EMPTY_STRING &&
     !nameError &&
     !addressError &&
     !noteError &&
-    (coinType === Coin.QORT ? !addressValidating && addressConfirmed : true);
+    (coinType === Coin.QORT
+      ? !addressValidating && addressConfirmed && isQortResolvedContactCurrent
+      : true);
   const shouldGlowAddressConfirmText =
     coinType === Coin.QORT &&
     !addressConfirmed &&
@@ -371,7 +533,12 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       fullWidth
       disableScrollLock
       disableRestoreFocus={disableRestoreFocus}
+      slots={{ transition: Transition }}
       slotProps={{
+        transition: {
+          onExited,
+          timeout: FAST_DIALOG_TRANSITION_MS,
+        },
         paper: {
           sx: {
             bgcolor: 'rgba(3, 17, 29, 0.985)',

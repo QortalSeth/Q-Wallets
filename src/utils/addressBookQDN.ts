@@ -1,6 +1,15 @@
 import { base64ToObject, Coin, objectToBase64 } from 'qapp-core';
 import { AddressBookEntry } from './Types';
-import { getAddressBook } from './addressBookStorage';
+import type { AddressBookLocalStorage } from './addressBookStorage';
+import {
+  createAddressBookSyncSignature,
+  getAddressBook,
+  getAddressBookPublishedHashKey,
+  getAddressBookSyncBaselineKey,
+  getAddressBookStorageKey,
+  getAddressBookSyncRequiredKey,
+  saveAddressBookSnapshot,
+} from './addressBookStorage';
 
 /**
  * Get all available coin types from the Coin enum
@@ -37,25 +46,33 @@ export interface AddressBookQDNData {
 }
 
 /**
- * Interface for localStorage structure with metadata
- */
-interface AddressBookLocalStorage {
-  entries: AddressBookEntry[];
-  lastUpdated: number;
-}
-
-/**
  * Debounce timeouts for each coin type
  */
 let publishTimeouts: { [coinType: string]: NodeJS.Timeout } = {};
 
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const normalizeEntryForHash = (entry: AddressBookEntry) => ({
+  address: entry.address.trim(),
+  coinType: entry.coinType,
+  favorite: Boolean(entry.favorite),
+  favoriteAt: isFiniteNumber(entry.favoriteAt) ? entry.favoriteAt : undefined,
+  id: entry.id,
+  name: entry.name.trim(),
+  note: (entry.note || '').trim(),
+  sortOrder: isFiniteNumber(entry.sortOrder) ? entry.sortOrder : undefined,
+});
+
 /**
  * Generates a hash of the entries for quick comparison.
- * Sorts entries by ID for stable hashing; manual order is stored on entries.
+ * Sorts entries by ID for stable hashing and ignores internal timestamps.
  */
 function generateHash(entries: AddressBookEntry[]): string {
   // Sort entries by ID so hashes are stable when the same entries are loaded.
-  const sortedEntries = [...entries].sort((a, b) => a.id.localeCompare(b.id));
+  const sortedEntries = [...entries]
+    .map(normalizeEntryForHash)
+    .sort((a, b) => a.id.localeCompare(b.id));
   const dataString = JSON.stringify(sortedEntries);
 
   // Simple hash function (djb2 algorithm variant)
@@ -75,13 +92,24 @@ function generateHash(entries: AddressBookEntry[]): string {
  * @param entries - The address book entries to publish
  * @param userName - Optional username (if not provided, will attempt to fetch)
  */
-/**
- * Key that records the hash of the last successfully published snapshot.
- * Used to skip re-publishing when QDN is temporarily unavailable (propagation
- * delay) but the local content has not changed since the last publish.
- */
-function publishedHashKey(coinType: string): string {
-  return `q-wallets-addressbook-published-${coinType}`;
+function markSyncRequired(
+  coinType: string,
+  cleanBaselineEntries?: AddressBookEntry[]
+): void {
+  localStorage.setItem(getAddressBookSyncRequiredKey(coinType), 'true');
+  if (cleanBaselineEntries) {
+    localStorage.setItem(
+      getAddressBookSyncBaselineKey(coinType),
+      createAddressBookSyncSignature(cleanBaselineEntries)
+    );
+    return;
+  }
+
+  localStorage.removeItem(getAddressBookSyncBaselineKey(coinType));
+}
+
+function clearSyncRequired(coinType: string): void {
+  localStorage.removeItem(getAddressBookSyncRequiredKey(coinType));
 }
 
 async function publishToQDN(
@@ -131,7 +159,8 @@ async function publishToQDN(
 
     // Record the published hash so future startup syncs can detect when QDN
     // is temporarily unavailable vs genuinely missing.
-    localStorage.setItem(publishedHashKey(coinType), hash);
+    localStorage.setItem(getAddressBookPublishedHashKey(coinType), hash);
+    clearSyncRequired(coinType);
 
     console.log(
       `QDN Sync: Published ${coinType} address book for user ${actualUserName}`
@@ -282,9 +311,10 @@ async function fetchFromQDN(
 }
 
 /**
- * Syncs a single address book on startup
- * Compares timestamps to determine which version is newer
- * Uses hash comparison when timestamps are equal
+ * Syncs a single address book on startup.
+ * This startup path is read-only for QDN: it can fetch newer remote data or
+ * mark local data as needing a user-initiated sync, but it must not publish
+ * because publishing opens a fee-bearing Qortal permission dialog.
  * @param coinType - The coin type to sync
  * @param userName - Optional username (if not provided, will attempt to fetch)
  */
@@ -297,39 +327,31 @@ async function syncAddressBookOnStartup(
     const localEntries = getAddressBook(coinType as Coin);
     const qdnData = await fetchFromQDN(coinType, userName);
 
-    // If no QDN data exists, publish local data if any
+    // If no QDN data exists, leave local data alone and wait for an
+    // explicit user sync instead of opening a publish permission dialog.
     if (!qdnData) {
       if (localEntries.length > 0) {
-        // Root cause 2 fix: skip re-publishing when QDN is temporarily
-        // unavailable (propagation delay) but content hasn't changed since the
-        // last successful publish — prevents a repeated permission dialog.
+        // Last successful publish sentinel prevents a repeated permission dialog.
         const lastPublishedHash = localStorage.getItem(
-          publishedHashKey(coinType)
+          getAddressBookPublishedHashKey(coinType)
         );
         if (lastPublishedHash === generateHash(localEntries)) {
+          clearSyncRequired(coinType);
           console.log(
             `QDN Sync: ${coinType} QDN unavailable but content matches last publish, skipping`
           );
           return;
         }
-        console.log(`QDN Sync: No QDN data, publishing local ${coinType} data`);
-        const publishedAt = await publishToQDN(coinType, localEntries, userName);
-        if (publishedAt !== null) {
-          // Align local timestamp with QDN so next startup goes to the
-          // equal-timestamp path rather than re-entering the "local is newer" path.
-          const localStorageKey = `q-wallets-addressbook-${coinType}`;
-          const dataToStore: AddressBookLocalStorage = {
-            entries: localEntries,
-            lastUpdated: publishedAt,
-          };
-          localStorage.setItem(localStorageKey, JSON.stringify(dataToStore));
-        }
+        console.log(
+          `QDN Sync: No QDN data for ${coinType}; manual sync required`
+        );
+        markSyncRequired(coinType);
       }
       return;
     }
 
     // Get local last updated timestamp from localStorage metadata
-    const localStorageKey = `q-wallets-addressbook-${coinType}`;
+    const localStorageKey = getAddressBookStorageKey(coinType);
     const localData = localStorage.getItem(localStorageKey);
     let localLastUpdated = 0;
 
@@ -351,44 +373,35 @@ async function syncAddressBookOnStartup(
         `QDN Sync: QDN data is newer for ${coinType}, updating localStorage`
       );
 
-      // Save to localStorage with metadata
-      const dataToStore: AddressBookLocalStorage = {
-        entries: qdnData.entries,
-        lastUpdated: qdnData.lastUpdated,
-      };
-      localStorage.setItem(localStorageKey, JSON.stringify(dataToStore));
+      saveAddressBookSnapshot(coinType, qdnData.entries, qdnData.lastUpdated);
+      clearSyncRequired(coinType);
     } else if (localLastUpdated > qdnLastUpdated) {
-      // Local timestamp is newer, but check content before publishing to avoid
-      // unnecessary fees when timestamps diverge without actual data changes
-      // (e.g. debounce timing gap, old-format migration, clock skew)
+      // Local timestamp is newer, mirroring master's decision tree without
+      // auto-publishing. If content differs, keep local and ask the user to
+      // sync manually instead of opening a publish permission dialog.
       const localHash = generateHash(localEntries);
       const qdnHash = qdnData.hash ?? generateHash(qdnData.entries);
       if (localHash === qdnHash) {
+        clearSyncRequired(coinType);
         console.log(
           `QDN Sync: ${coinType} timestamps differ but content is identical, skipping publish`
         );
         // Re-align local timestamp to QDN so future startups go straight to the
         // hash-comparison path instead of re-evaluating timestamps
-        const dataToStore: AddressBookLocalStorage = {
-          entries: localEntries,
-          lastUpdated: qdnData.lastUpdated,
-        };
-        localStorage.setItem(localStorageKey, JSON.stringify(dataToStore));
+        saveAddressBookSnapshot(coinType, localEntries, qdnData.lastUpdated);
+      } else if (
+        localHash ===
+        localStorage.getItem(getAddressBookPublishedHashKey(coinType))
+      ) {
+        clearSyncRequired(coinType);
+        console.log(
+          `QDN Sync: ${coinType} local snapshot matches last publish; waiting for QDN propagation`
+        );
       } else {
         console.log(
-          `QDN Sync: Local data is newer for ${coinType}, publishing to QDN`
+          `QDN Sync: Local ${coinType} data is newer and differs from QDN; manual sync required`
         );
-        // Root cause 1 fix: use the timestamp actually stored inside QDN so
-        // local and QDN are identical after publish — next startup goes
-        // straight to the equal-timestamp path, no hash comparison needed.
-        const publishedAt = await publishToQDN(coinType, localEntries, userName);
-        if (publishedAt !== null) {
-          const dataToStore: AddressBookLocalStorage = {
-            entries: localEntries,
-            lastUpdated: publishedAt,
-          };
-          localStorage.setItem(localStorageKey, JSON.stringify(dataToStore));
-        }
+        markSyncRequired(coinType, qdnData.entries);
       }
     } else {
       // Same timestamp - use hash comparison if available
@@ -398,13 +411,14 @@ async function syncAddressBookOnStartup(
           console.log(
             `QDN Sync: Hash mismatch for ${coinType}, using QDN data`
           );
-          const dataToStore: AddressBookLocalStorage = {
-            entries: qdnData.entries,
-            lastUpdated: qdnData.lastUpdated,
-          };
-          localStorage.setItem(localStorageKey, JSON.stringify(dataToStore));
+          saveAddressBookSnapshot(
+            coinType,
+            qdnData.entries,
+            qdnData.lastUpdated
+          );
         }
       }
+      clearSyncRequired(coinType);
       console.log(`QDN Sync: ${coinType} data is in sync`);
     }
   } catch (error) {

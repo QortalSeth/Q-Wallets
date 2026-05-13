@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { AddressFormDialog } from '../AddressFormDialog';
 import { Coin } from 'qapp-core';
 import * as addressValidation from '../../../utils/addressValidation';
+import { searchQortalNames } from '../../../utils/qortalNodeApi';
 
 // Mock react-i18next
 vi.mock('react-i18next', () => ({
@@ -16,8 +17,9 @@ vi.mock('react-i18next', () => ({
 // Mock address validation
 vi.mock('../../../utils/addressValidation');
 
-// Mock fetch for QORT name resolution
-global.fetch = vi.fn();
+vi.mock('../../../utils/qortalNodeApi', () => ({
+  searchQortalNames: vi.fn(),
+}));
 
 describe('AddressFormDialog', () => {
   const defaultProps = {
@@ -30,6 +32,8 @@ describe('AddressFormDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(addressValidation.validateAddress).mockReturnValue(true);
+    vi.mocked(searchQortalNames).mockResolvedValue([]);
+    vi.stubGlobal('qortalRequest', vi.fn());
   });
 
   describe('basic rendering', () => {
@@ -185,22 +189,25 @@ describe('AddressFormDialog', () => {
   });
 
   describe('QORT name resolution', () => {
-    it('should show loading indicator when validating QORT name', async () => {
+    const qortAddress = `Q${'A'.repeat(33)}`;
+
+    it('should search QORT names while typing', async () => {
       const user = userEvent.setup();
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({ owner: 'QAddress123' }),
-      } as Response);
+      vi.mocked(searchQortalNames).mockResolvedValue([
+        { name: 'Alice', owner: qortAddress },
+      ]);
 
       render(<AddressFormDialog {...defaultProps} coinType={Coin.QORT} />);
 
       const nameInput = screen.getByLabelText(/core:address_book_name/);
       await user.type(nameInput, 'Alice');
 
-      // Should show validating message
-      await waitFor(() => {
-        expect(screen.getByText(/core:message.generic.validating/)).toBeInTheDocument();
-      });
+      expect(await screen.findByText(qortAddress)).toBeInTheDocument();
+      expect(searchQortalNames).toHaveBeenCalledWith(
+        'Alice',
+        10,
+        expect.any(AbortSignal)
+      );
     });
 
     it('should not resolve name for non-QORT coins', async () => {
@@ -211,7 +218,63 @@ describe('AddressFormDialog', () => {
       const nameInput = screen.getByLabelText(/core:address_book_name/);
       await user.type(nameInput, 'Alice');
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(searchQortalNames).not.toHaveBeenCalled();
+    });
+
+    it('should clear the resolved QORT address when the selected name changes', async () => {
+      const user = userEvent.setup();
+      vi.mocked(searchQortalNames).mockResolvedValue([
+        { name: 'Phill', owner: qortAddress },
+      ]);
+
+      render(<AddressFormDialog {...defaultProps} coinType={Coin.QORT} />);
+
+      const nameInput = screen.getByLabelText(
+        /core:address_book_name/
+      ) as HTMLInputElement;
+      const addressInput = screen.getByLabelText(
+        /core:address_book_address/
+      ) as HTMLInputElement;
+
+      await user.type(nameInput, 'Phill');
+      await user.click(await screen.findByText('Phill'));
+
+      expect(nameInput.value).toBe('Phill');
+      expect(addressInput.value).toBe(qortAddress);
+
+      await user.type(nameInput, 'l');
+
+      expect(nameInput.value).toBe('Philll');
+      expect(addressInput.value).toBe('');
+    });
+
+    it('should resolve a typed QORT address to its primary name and clear the name if the address changes', async () => {
+      const user = userEvent.setup();
+      const qortalRequestMock = vi.fn().mockResolvedValue('Phill');
+      vi.stubGlobal('qortalRequest', qortalRequestMock);
+
+      render(<AddressFormDialog {...defaultProps} coinType={Coin.QORT} />);
+
+      const nameInput = screen.getByLabelText(
+        /core:address_book_name/
+      ) as HTMLInputElement;
+      const addressInput = screen.getByLabelText(
+        /core:address_book_address/
+      ) as HTMLInputElement;
+
+      await user.type(addressInput, qortAddress);
+
+      await waitFor(() => {
+        expect(qortalRequestMock).toHaveBeenCalledWith({
+          action: 'GET_PRIMARY_NAME',
+          address: qortAddress,
+        });
+        expect(nameInput.value).toBe('Phill');
+      });
+
+      await user.type(addressInput, 'A');
+
+      expect(nameInput.value).toBe('');
     });
   });
 });

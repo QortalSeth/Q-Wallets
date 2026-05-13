@@ -96,8 +96,12 @@ import {
   SearchTransactionsResponse,
 } from '../../utils/Types';
 import {
+  ADDRESS_BOOK_STORAGE_EVENT,
+  createAddressBookSyncSignature,
   getAddressBook,
-  sortAddressBookEntries,
+  getAddressBookSyncBaselineKey,
+  getAddressBookSyncRequiredKey,
+  saveAddressBookSnapshot,
 } from '../../utils/addressBookStorage';
 import { publishToQDN } from '../../utils/addressBookQDN';
 import {
@@ -115,10 +119,6 @@ interface TablePaginationActionsProps {
 
 type QortAddressBookSyncStatus = 'idle' | 'success' | 'dirty' | 'error';
 
-const QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY =
-  'q-wallets-addressbook-sync-required-QORT';
-const QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY =
-  'q-wallets-addressbook-sync-baseline-QORT';
 const QORT_ADDRESS_PATTERN = /^Q[1-9A-HJ-NP-Za-km-z]{33}$/;
 const QORT_BALANCE_REFRESH_INTERVAL_MS = 2.5 * TIME_MINUTES_1;
 
@@ -183,23 +183,10 @@ export const replaceAddressesWithNames = async (
   });
 };
 
-const createQortAddressBookSyncSignature = (entries: AddressBookEntry[]) =>
-  JSON.stringify(
-    sortAddressBookEntries(entries)
-      .map((entry) => ({
-        address: entry.address.trim(),
-        coinType: entry.coinType,
-        favorite: Boolean(entry.favorite),
-        name: entry.name.trim(),
-        note: (entry.note || EMPTY_STRING).trim(),
-        sortKey: entry.id,
-      }))
-  );
-
 const saveQortAddressBookSyncBaseline = (entries: AddressBookEntry[]) => {
   localStorage.setItem(
-    QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY,
-    createQortAddressBookSyncSignature(entries)
+    getAddressBookSyncBaselineKey(Coin.QORT),
+    createAddressBookSyncSignature(entries)
   );
 };
 
@@ -308,9 +295,8 @@ export default function QortalWallet() {
     AddressBookEntry[]
   >([]);
   const [qortAddressBookSyncing, setQortAddressBookSyncing] = useState(false);
-  const [qortAddressBookSyncStatus, setQortAddressBookSyncStatus] = useState<
-    QortAddressBookSyncStatus
-  >('idle');
+  const [qortAddressBookSyncStatus, setQortAddressBookSyncStatus] =
+    useState<QortAddressBookSyncStatus>('idle');
   const [qortAddressBookLastSync, setQortAddressBookLastSync] = useState<
     number | null
   >(null);
@@ -417,19 +403,19 @@ export default function QortalWallet() {
   const refreshQortAddressBookSyncState = useCallback(
     (entries: AddressBookEntry[]) => {
       const cleanBaseline = localStorage.getItem(
-        QORT_ADDRESS_BOOK_SYNC_BASELINE_KEY
+        getAddressBookSyncBaselineKey(Coin.QORT)
       );
 
       if (
         cleanBaseline &&
-        createQortAddressBookSyncSignature(entries) === cleanBaseline
+        createAddressBookSyncSignature(entries) === cleanBaseline
       ) {
-        localStorage.removeItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY);
+        localStorage.removeItem(getAddressBookSyncRequiredKey(Coin.QORT));
         setQortAddressBookSyncStatus('success');
         return;
       }
 
-      localStorage.setItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY, 'true');
+      localStorage.setItem(getAddressBookSyncRequiredKey(Coin.QORT), 'true');
       setQortAddressBookSyncStatus('dirty');
     },
     []
@@ -458,10 +444,23 @@ export default function QortalWallet() {
     refreshQortAddressBookSyncState(entries);
   }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
 
+  const refreshQortAddressBookFromStorage = useCallback(() => {
+    const entries = loadQortAddressBookEntries();
+    if (
+      localStorage.getItem(getAddressBookSyncRequiredKey(Coin.QORT)) === 'true'
+    ) {
+      refreshQortAddressBookSyncState(entries);
+      return;
+    }
+
+    saveQortAddressBookSyncBaseline(entries);
+    setQortAddressBookSyncStatus('success');
+  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+
   const handleSyncQortAddressBook = async () => {
     const hadRequiredSync =
       qortAddressBookSyncStatus === 'dirty' ||
-      localStorage.getItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY) === 'true';
+      localStorage.getItem(getAddressBookSyncRequiredKey(Coin.QORT)) === 'true';
 
     setQortAddressBookSyncing(true);
     try {
@@ -472,8 +471,9 @@ export default function QortalWallet() {
         userName || undefined
       );
       if (publishedAt) {
+        saveAddressBookSnapshot(Coin.QORT, entries, publishedAt);
         saveQortAddressBookSyncBaseline(entries);
-        localStorage.removeItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY);
+        localStorage.removeItem(getAddressBookSyncRequiredKey(Coin.QORT));
         setQortAddressBookLastSync(publishedAt);
         setQortAddressBookSyncStatus('success');
       } else {
@@ -489,18 +489,25 @@ export default function QortalWallet() {
   };
 
   useEffect(() => {
-    loadQortAddressBookEntries();
-  }, [loadQortAddressBookEntries, openQortAddressBook]);
+    refreshQortAddressBookFromStorage();
+  }, [address, openQortAddressBook, refreshQortAddressBookFromStorage]);
 
   useEffect(() => {
-    const entries = loadQortAddressBookEntries();
-    if (localStorage.getItem(QORT_ADDRESS_BOOK_SYNC_REQUIRED_KEY) === 'true') {
-      refreshQortAddressBookSyncState(entries);
-      return;
-    }
+    const handleAddressBookStorage = () => {
+      refreshQortAddressBookFromStorage();
+    };
 
-    saveQortAddressBookSyncBaseline(entries);
-  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+    window.addEventListener(
+      ADDRESS_BOOK_STORAGE_EVENT,
+      handleAddressBookStorage
+    );
+    return () => {
+      window.removeEventListener(
+        ADDRESS_BOOK_STORAGE_EVENT,
+        handleAddressBookStorage
+      );
+    };
+  }, [refreshQortAddressBookFromStorage]);
 
   const handleSelectAddress = (address: string, name: string) => {
     setQortRecipient(address);
@@ -3912,28 +3919,26 @@ export default function QortalWallet() {
   const qortAddressBookNeedsSync = qortAddressBookSyncStatus === 'dirty';
   const qortAddressBookNeedsAttention =
     qortAddressBookNeedsSync || qortAddressBookSyncStatus === 'error';
-  const syncStatusLabel =
-    qortAddressBookSyncing
-      ? 'Syncing...'
-      : qortAddressBookNeedsSync
-        ? 'Sync required'
-        : qortAddressBookSyncStatus === 'error'
-          ? 'Sync failed'
-          : 'Up to date';
-  const syncStatusTooltip =
-    qortAddressBookNeedsSync
-      ? 'Local contacts changed. Sync to publish the latest encrypted address book backup.'
+  const syncStatusLabel = qortAddressBookSyncing
+    ? 'Syncing...'
+    : qortAddressBookNeedsSync
+      ? 'Sync required'
       : qortAddressBookSyncStatus === 'error'
-        ? 'The last sync did not complete.'
-        : qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
-      ? `Last sync: ${new Intl.DateTimeFormat(undefined, {
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }).format(new Date(qortAddressBookLastSync))}`
-      : syncStatusLabel;
+        ? 'Sync failed'
+        : 'Up to date';
+  const syncStatusTooltip = qortAddressBookNeedsSync
+    ? 'Local contacts changed. Sync to publish the latest encrypted address book backup.'
+    : qortAddressBookSyncStatus === 'error'
+      ? 'The last sync did not complete.'
+      : qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
+        ? `Last sync: ${new Intl.DateTimeFormat(undefined, {
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }).format(new Date(qortAddressBookLastSync))}`
+        : syncStatusLabel;
   const qortalTableView = qortalTables();
   const qortSendLabelSx = {
     color: 'rgba(228,238,248,0.9)',
@@ -4248,9 +4253,7 @@ export default function QortalWallet() {
           }}
         >
           <Box sx={{ display: 'grid', gap: 0.85 }}>
-            <Typography sx={qortSendLabelSx}>
-              To
-            </Typography>
+            <Typography sx={qortSendLabelSx}>To</Typography>
             {qortRecipientDisplayName ? (
               <>
                 <Box
@@ -4485,9 +4488,7 @@ export default function QortalWallet() {
                 justifyContent: 'space-between',
               }}
             >
-              <Typography sx={qortSendLabelSx}>
-                Amount
-              </Typography>
+              <Typography sx={qortSendLabelSx}>Amount</Typography>
               <Box
                 sx={{
                   alignItems: 'center',

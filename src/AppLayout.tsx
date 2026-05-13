@@ -39,6 +39,10 @@ import packageJson from '../package.json';
 import { EMPTY_STRING, TIME_MINUTES_1 } from './common/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import { syncAllAddressBooksOnStartup } from './utils/addressBookQDN';
+import {
+  ADDRESS_BOOK_STORAGE_EVENT,
+  setAddressBookAccountScope,
+} from './utils/addressBookStorage';
 import changelogContent from '../CHANGELOG.md?raw';
 import Markdown from 'react-markdown';
 
@@ -165,6 +169,7 @@ export default function AppLayout() {
 
   const { setWalletState } = useContext(walletContext);
   const { address, avatarUrl, name } = useAuth();
+  setAddressBookAccountScope(address || null);
   const [isUsingGateway, setIsUsingGateway] = useState(true);
   const [nodeInfo, setNodeInfo] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -248,14 +253,22 @@ export default function AppLayout() {
     }
   }, [address, avatarUrl, isUsingGateway, name, nodeInfo, setWalletState]);
 
+  useEffect(() => {
+    window.dispatchEvent(new Event(ADDRESS_BOOK_STORAGE_EVENT));
+  }, [address]);
+
   // Sync address books from QDN on app startup
   useEffect(() => {
     // Only sync if user is authenticated
     if (address && name) {
-      syncAllAddressBooksOnStartup(name).catch((err) => {
-        console.error('Failed to sync address books on startup:', err);
-        // App continues to work with localStorage only
-      });
+      syncAllAddressBooksOnStartup(name)
+        .catch((err) => {
+          console.error('Failed to sync address books on startup:', err);
+          // App continues to work with localStorage only
+        })
+        .finally(() => {
+          window.dispatchEvent(new Event(ADDRESS_BOOK_STORAGE_EVENT));
+        });
     }
   }, [address, name]);
 

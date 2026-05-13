@@ -72,6 +72,7 @@ import {
 } from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
 import {
+  ADDRESS_BOOK_STORAGE_EVENT,
   getAddressBook,
   moveAddressBookEntry,
   toggleAddressBookFavorite,
@@ -1273,12 +1274,30 @@ export function WalletAddressBookPanel({
   const [editingEntry, setEditingEntry] = useState<
     AddressBookEntry | undefined
   >(undefined);
+  const [editFormOpen, setEditFormOpen] = useState(false);
   const [editSaveError, setEditSaveError] = useState('');
   const [suppressSelect, setSuppressSelect] = useState(false);
 
   useEffect(() => {
     setEntries(getAddressBook(visual.coinType));
   }, [refreshKey, visual.coinType]);
+
+  useEffect(() => {
+    const handleAddressBookStorage = () => {
+      setEntries(getAddressBook(visual.coinType));
+    };
+
+    window.addEventListener(
+      ADDRESS_BOOK_STORAGE_EVENT,
+      handleAddressBookStorage
+    );
+    return () => {
+      window.removeEventListener(
+        ADDRESS_BOOK_STORAGE_EVENT,
+        handleAddressBookStorage
+      );
+    };
+  }, [visual.coinType]);
 
   const visibleEntries = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1322,9 +1341,14 @@ export function WalletAddressBookPanel({
     event.currentTarget.blur();
     setEditSaveError('');
     setEditingEntry(entry);
+    setEditFormOpen(true);
   };
 
   const handleEditFormClose = () => {
+    setEditFormOpen(false);
+  };
+
+  const handleEditFormExited = () => {
     setEditingEntry(undefined);
     setEditSaveError('');
   };
@@ -1346,7 +1370,7 @@ export function WalletAddressBookPanel({
       }
 
       reloadEntries();
-      setEditingEntry(undefined);
+      setEditFormOpen(false);
       setEditSaveError('');
       onAddressBookChange?.();
     } catch (error: any) {
@@ -1422,493 +1446,495 @@ export function WalletAddressBookPanel({
           width: '100%',
         }}
       >
-      <Box sx={{ px: { xs: 1.75, md: 2.1 }, py: { xs: 1.75, md: 2 } }}>
-        <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1.2 }}>
-          Address book ({visual.symbol})
-        </Typography>
-        <TextField
-          fullWidth
-          placeholder="Search by name, address or note"
-          size="small"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search fontSize="small" sx={{ color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            mb: 1.1,
-            '& .MuiInputBase-input': {
-              fontSize: 13,
-              lineHeight: '18px',
-              py: 0.65,
-            },
-            '& .MuiOutlinedInput-root': {
-              bgcolor: 'rgba(1, 12, 24, 0.34)',
-              minHeight: 32,
-              '& fieldset': {
-                borderColor: (t) =>
-                  t.palette.mode === 'dark'
-                    ? 'rgba(116,158,180,0.18)'
-                    : 'rgba(17,24,39,0.08)',
+        <Box sx={{ px: { xs: 1.75, md: 2.1 }, py: { xs: 1.75, md: 2 } }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1.2 }}>
+            Address book ({visual.symbol})
+          </Typography>
+          <TextField
+            fullWidth
+            placeholder="Search by name, address or note"
+            size="small"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mb: 1.1,
+              '& .MuiInputBase-input': {
+                fontSize: 13,
+                lineHeight: '18px',
+                py: 0.65,
               },
-              '&:hover fieldset': { borderColor: 'primary.main' },
-            },
-          }}
-        />
-        <Button
-          fullWidth
-          startIcon={<Add />}
-          variant="outlined"
-          onClick={onAddContact}
-          sx={{
-            bgcolor: 'rgba(13, 48, 72, 0.32)',
-            borderColor: 'rgba(116,158,180,0.16)',
-            color: 'text.secondary',
-            fontWeight: 600,
-            mb: 1.35,
-            minHeight: 32,
-            py: 0.4,
-            '&:hover': {
-              bgcolor: (t) =>
-                t.palette.mode === 'dark'
-                  ? 'rgba(18, 64, 94, 0.42)'
-                  : 'rgba(17,24,39,0.04)',
-              borderColor:
-                'color-mix(in srgb, var(--wallet-accent, #18bdf2) 28%, transparent)',
-              color: 'text.primary',
-            },
-          }}
-        >
-          Add contact
-        </Button>
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'rgba(1, 12, 24, 0.34)',
+                minHeight: 32,
+                '& fieldset': {
+                  borderColor: (t) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.18)'
+                      : 'rgba(17,24,39,0.08)',
+                },
+                '&:hover fieldset': { borderColor: 'primary.main' },
+              },
+            }}
+          />
+          <Button
+            fullWidth
+            startIcon={<Add />}
+            variant="outlined"
+            onClick={onAddContact}
+            sx={{
+              bgcolor: 'rgba(13, 48, 72, 0.32)',
+              borderColor: 'rgba(116,158,180,0.16)',
+              color: 'text.secondary',
+              fontWeight: 600,
+              mb: 1.35,
+              minHeight: 32,
+              py: 0.4,
+              '&:hover': {
+                bgcolor: (t) =>
+                  t.palette.mode === 'dark'
+                    ? 'rgba(18, 64, 94, 0.42)'
+                    : 'rgba(17,24,39,0.04)',
+                borderColor:
+                  'color-mix(in srgb, var(--wallet-accent, #18bdf2) 28%, transparent)',
+                color: 'text.primary',
+              },
+            }}
+          >
+            Add contact
+          </Button>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 0.45,
-            overflow: 'visible',
-          }}
-        >
-          {displayedEntries.length > 0 ? (
-            displayedEntries.map((entry, index) => {
-              const initials =
-                entry.name
-                  .split(' ')
-                  .filter(Boolean)
-                  .map((part) => part[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase() || visual.symbol[0];
-              const avatarColor = getAddressBookAvatarColor(
-                `${entry.name}-${entry.address}`,
-                index
-              );
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 0.45,
+              overflow: 'visible',
+            }}
+          >
+            {displayedEntries.length > 0 ? (
+              displayedEntries.map((entry, index) => {
+                const initials =
+                  entry.name
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((part) => part[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase() || visual.symbol[0];
+                const avatarColor = getAddressBookAvatarColor(
+                  `${entry.name}-${entry.address}`,
+                  index
+                );
 
-              return (
-                <Box
-                  key={entry.id}
-                  draggable
-                  role="button"
-                  tabIndex={0}
-                  onClick={(event: MouseEvent<HTMLDivElement>) => {
-                    if (suppressSelect) return;
-                    event.currentTarget.blur();
-                    onSelectAddress(entry.address, entry.name);
-                  }}
-                  onDragStart={(event) => handleDragStart(event, entry)}
-                  onDragOver={(event) => handleDragOver(event, entry)}
-                  onDrop={(event) => handleDrop(event, entry)}
-                  onDragEnd={handleDragEnd}
-                  onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelectAddress(entry.address, entry.name);
-                    }
-                  }}
-                  sx={{
-                    alignItems: 'center',
-                    bgcolor: 'rgba(6, 25, 40, 0.22)',
-                    border: '1px solid rgba(116,158,180,0.075)',
-                    borderRadius: 1,
-                    cursor: 'grab',
-                    display: 'grid',
-                    gap: 0.85,
-                    gridTemplateColumns: '38px minmax(0, 1fr) 104px',
-                    minHeight: 46,
-                    opacity: draggedEntryId === entry.id ? 0.52 : 1,
-                    px: 1,
-                    py: 0.55,
-                    transition:
-                      'background-color 150ms ease, border-color 150ms ease, opacity 150ms ease',
-                    ...(dragOverEntryId === entry.id && {
-                      bgcolor: 'rgba(24,189,242,0.08)',
-                      borderColor: 'rgba(24,189,242,0.28)',
-                    }),
-                    '&:hover': {
-                      bgcolor: 'rgba(14, 49, 72, 0.3)',
-                      borderColor: 'rgba(116,158,180,0.13)',
-                    },
-                    '&:hover .contact-action, &:focus-within .contact-action': {
-                      opacity: 1,
-                      pointerEvents: 'auto',
-                      transform: 'translateX(0)',
-                    },
-                    '&:hover .contact-action-star, &:focus-within .contact-action-star':
-                      {
-                        right: 72,
-                      },
-                    '&:focus-visible': {
-                      borderColor:
-                        'color-mix(in srgb, var(--wallet-accent, #18bdf2) 44%, transparent)',
-                      outline: 'none',
-                    },
-                  }}
-                >
-                  <Avatar
-                    sx={{
-                      ...getAddressBookAvatarSx(avatarColor),
-                      fontSize: 12,
-                      fontWeight: 600,
-                      height: 32,
-                      width: 32,
-                    }}
-                  >
-                    {initials}
-                  </Avatar>
+                return (
                   <Box
+                    key={entry.id}
+                    draggable
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event: MouseEvent<HTMLDivElement>) => {
+                      if (suppressSelect) return;
+                      event.currentTarget.blur();
+                      onSelectAddress(entry.address, entry.name);
+                    }}
+                    onDragStart={(event) => handleDragStart(event, entry)}
+                    onDragOver={(event) => handleDragOver(event, entry)}
+                    onDrop={(event) => handleDrop(event, entry)}
+                    onDragEnd={handleDragEnd}
+                    onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelectAddress(entry.address, entry.name);
+                      }
+                    }}
                     sx={{
-                      alignContent: 'center',
+                      alignItems: 'center',
+                      bgcolor: 'rgba(6, 25, 40, 0.22)',
+                      border: '1px solid rgba(116,158,180,0.075)',
+                      borderRadius: 1,
+                      cursor: 'grab',
                       display: 'grid',
-                      gap: entry.note ? 0.2 : 0,
-                      minHeight: 32,
-                      minWidth: 0,
+                      gap: 0.85,
+                      gridTemplateColumns: '38px minmax(0, 1fr) 104px',
+                      minHeight: 46,
+                      opacity: draggedEntryId === entry.id ? 0.52 : 1,
+                      px: 1,
+                      py: 0.55,
+                      transition:
+                        'background-color 150ms ease, border-color 150ms ease, opacity 150ms ease',
+                      ...(dragOverEntryId === entry.id && {
+                        bgcolor: 'rgba(24,189,242,0.08)',
+                        borderColor: 'rgba(24,189,242,0.28)',
+                      }),
+                      '&:hover': {
+                        bgcolor: 'rgba(14, 49, 72, 0.3)',
+                        borderColor: 'rgba(116,158,180,0.13)',
+                      },
+                      '&:hover .contact-action, &:focus-within .contact-action':
+                        {
+                          opacity: 1,
+                          pointerEvents: 'auto',
+                          transform: 'translateX(0)',
+                        },
+                      '&:hover .contact-action-star, &:focus-within .contact-action-star':
+                        {
+                          right: 72,
+                        },
+                      '&:focus-visible': {
+                        borderColor:
+                          'color-mix(in srgb, var(--wallet-accent, #18bdf2) 44%, transparent)',
+                        outline: 'none',
+                      },
                     }}
                   >
-                    <Typography
+                    <Avatar
                       sx={{
-                        fontSize: 14,
+                        ...getAddressBookAvatarSx(avatarColor),
+                        fontSize: 12,
                         fontWeight: 600,
-                        lineHeight: 1.15,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        height: 32,
+                        width: 32,
                       }}
                     >
-                      {entry.name}
-                    </Typography>
-                    {entry.note && (
+                      {initials}
+                    </Avatar>
+                    <Box
+                      sx={{
+                        alignContent: 'center',
+                        display: 'grid',
+                        gap: entry.note ? 0.2 : 0,
+                        minHeight: 32,
+                        minWidth: 0,
+                      }}
+                    >
                       <Typography
-                        variant="caption"
                         sx={{
-                          color: 'text.secondary',
-                          display: 'block',
-                          fontSize: 12.5,
-                          lineHeight: 1.2,
+                          fontSize: 14,
+                          fontWeight: 600,
+                          lineHeight: 1.15,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {entry.note}
+                        {entry.name}
                       </Typography>
-                    )}
-                  </Box>
-                  <Box
-                    className="contact-actions"
-                    sx={{
-                      height: 32,
-                      justifySelf: 'end',
-                      position: 'relative',
-                      width: 104,
-                    }}
-                  >
-                    <CustomWidthTooltip placement="top" title="Copy address">
-                      <IconButton
-                        className="contact-action contact-action-copy"
-                        disableFocusRipple
-                        disableRipple
-                        size="small"
-                        onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                          event.currentTarget.blur();
-                          copyToClipboard(entry.address);
-                        }}
-                        sx={{
-                          bgcolor: 'transparent',
-                          border: '1px solid rgba(116,158,180,0.16)',
-                          borderRadius: 1,
-                          boxShadow: 'none',
-                          color: 'text.secondary',
-                          height: 32,
-                          opacity: 0,
-                          overflow: 'hidden',
-                          pointerEvents: 'none',
-                          position: 'absolute',
-                          right: 36,
-                          transform: 'translateX(10px)',
-                          transition:
-                            'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
-                          width: 32,
-                          '& .MuiTouchRipple-root': { display: 'none' },
-                          '&:hover': {
-                            bgcolor: 'rgba(116,158,180,0.08)',
-                            borderColor: 'rgba(116,158,180,0.26)',
-                            boxShadow: 'none',
-                            color: 'text.primary',
-                          },
-                        }}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={entry.favorite ? 'Remove favorite' : 'Favorite'}
+                      {entry.note && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            display: 'block',
+                            fontSize: 12.5,
+                            lineHeight: 1.2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {entry.note}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Box
+                      className="contact-actions"
+                      sx={{
+                        height: 32,
+                        justifySelf: 'end',
+                        position: 'relative',
+                        width: 104,
+                      }}
                     >
-                      <IconButton
-                        className="contact-action contact-action-star"
-                        disableFocusRipple
-                        disableRipple
-                        size="small"
-                        onClick={(event: MouseEvent<HTMLButtonElement>) =>
-                          handleToggleFavorite(event, entry)
-                        }
-                        sx={{
-                          bgcolor: 'transparent',
-                          border: entry.favorite
-                            ? 0
-                            : '1px solid rgba(116,158,180,0.16)',
-                          borderRadius: 1,
-                          boxShadow: 'none',
-                          color: entry.favorite ? '#f6c84c' : 'text.secondary',
-                          height: 32,
-                          opacity: entry.favorite ? 1 : 0,
-                          overflow: 'hidden',
-                          pointerEvents: entry.favorite ? 'auto' : 'none',
-                          position: 'absolute',
-                          right: entry.favorite ? 0 : 72,
-                          transform: entry.favorite
-                            ? 'translateX(0)'
-                            : 'translateX(10px)',
-                          transition:
-                            'opacity 180ms ease, transform 260ms cubic-bezier(0.16, 1, 0.3, 1), right 260ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
-                          width: 32,
-                          '& .MuiTouchRipple-root': { display: 'none' },
-                          '&:hover': {
-                            bgcolor: 'rgba(246,200,76,0.08)',
-                            borderColor: 'rgba(246,200,76,0.28)',
+                      <CustomWidthTooltip placement="top" title="Copy address">
+                        <IconButton
+                          className="contact-action contact-action-copy"
+                          disableFocusRipple
+                          disableRipple
+                          size="small"
+                          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                            event.currentTarget.blur();
+                            copyToClipboard(entry.address);
+                          }}
+                          sx={{
+                            bgcolor: 'transparent',
+                            border: '1px solid rgba(116,158,180,0.16)',
+                            borderRadius: 1,
                             boxShadow: 'none',
-                            color: '#ffd76a',
-                          },
-                        }}
+                            color: 'text.secondary',
+                            height: 32,
+                            opacity: 0,
+                            overflow: 'hidden',
+                            pointerEvents: 'none',
+                            position: 'absolute',
+                            right: 36,
+                            transform: 'translateX(10px)',
+                            transition:
+                              'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                            width: 32,
+                            '& .MuiTouchRipple-root': { display: 'none' },
+                            '&:hover': {
+                              bgcolor: 'rgba(116,158,180,0.08)',
+                              borderColor: 'rgba(116,158,180,0.26)',
+                              boxShadow: 'none',
+                              color: 'text.primary',
+                            },
+                          }}
+                        >
+                          <CopyAllTwoTone fontSize="small" />
+                        </IconButton>
+                      </CustomWidthTooltip>
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={entry.favorite ? 'Remove favorite' : 'Favorite'}
                       >
-                        {entry.favorite ? (
-                          <Star sx={{ fontSize: 19 }} />
-                        ) : (
-                          <StarBorder sx={{ fontSize: 19 }} />
-                        )}
-                      </IconButton>
-                    </CustomWidthTooltip>
-                    <CustomWidthTooltip placement="top" title="Edit contact">
-                      <IconButton
-                        className="contact-action contact-action-edit"
-                        disableFocusRipple
-                        disableRipple
-                        size="small"
-                        onClick={(event: MouseEvent<HTMLButtonElement>) =>
-                          handleEditContact(event, entry)
-                        }
-                        sx={{
-                          bgcolor: 'transparent',
-                          border: '1px solid rgba(116,158,180,0.16)',
-                          borderRadius: 1,
-                          boxShadow: 'none',
-                          color: 'text.secondary',
-                          height: 32,
-                          opacity: 0,
-                          overflow: 'hidden',
-                          pointerEvents: 'none',
-                          position: 'absolute',
-                          right: 0,
-                          transform: 'translateX(10px)',
-                          transition:
-                            'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
-                          width: 32,
-                          '& .MuiTouchRipple-root': { display: 'none' },
-                          '&:hover': {
-                            bgcolor: 'rgba(116,158,180,0.08)',
-                            borderColor: 'rgba(116,158,180,0.26)',
+                        <IconButton
+                          className="contact-action contact-action-star"
+                          disableFocusRipple
+                          disableRipple
+                          size="small"
+                          onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                            handleToggleFavorite(event, entry)
+                          }
+                          sx={{
+                            bgcolor: 'transparent',
+                            border: entry.favorite
+                              ? 0
+                              : '1px solid rgba(116,158,180,0.16)',
+                            borderRadius: 1,
                             boxShadow: 'none',
-                            color: 'text.primary',
-                          },
-                        }}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
+                            color: entry.favorite
+                              ? '#f6c84c'
+                              : 'text.secondary',
+                            height: 32,
+                            opacity: entry.favorite ? 1 : 0,
+                            overflow: 'hidden',
+                            pointerEvents: entry.favorite ? 'auto' : 'none',
+                            position: 'absolute',
+                            right: entry.favorite ? 0 : 72,
+                            transform: entry.favorite
+                              ? 'translateX(0)'
+                              : 'translateX(10px)',
+                            transition:
+                              'opacity 180ms ease, transform 260ms cubic-bezier(0.16, 1, 0.3, 1), right 260ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                            width: 32,
+                            '& .MuiTouchRipple-root': { display: 'none' },
+                            '&:hover': {
+                              bgcolor: 'rgba(246,200,76,0.08)',
+                              borderColor: 'rgba(246,200,76,0.28)',
+                              boxShadow: 'none',
+                              color: '#ffd76a',
+                            },
+                          }}
+                        >
+                          {entry.favorite ? (
+                            <Star sx={{ fontSize: 19 }} />
+                          ) : (
+                            <StarBorder sx={{ fontSize: 19 }} />
+                          )}
+                        </IconButton>
+                      </CustomWidthTooltip>
+                      <CustomWidthTooltip placement="top" title="Edit contact">
+                        <IconButton
+                          className="contact-action contact-action-edit"
+                          disableFocusRipple
+                          disableRipple
+                          size="small"
+                          onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                            handleEditContact(event, entry)
+                          }
+                          sx={{
+                            bgcolor: 'transparent',
+                            border: '1px solid rgba(116,158,180,0.16)',
+                            borderRadius: 1,
+                            boxShadow: 'none',
+                            color: 'text.secondary',
+                            height: 32,
+                            opacity: 0,
+                            overflow: 'hidden',
+                            pointerEvents: 'none',
+                            position: 'absolute',
+                            right: 0,
+                            transform: 'translateX(10px)',
+                            transition:
+                              'opacity 180ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                            width: 32,
+                            '& .MuiTouchRipple-root': { display: 'none' },
+                            '&:hover': {
+                              bgcolor: 'rgba(116,158,180,0.08)',
+                              borderColor: 'rgba(116,158,180,0.26)',
+                              boxShadow: 'none',
+                              color: 'text.primary',
+                            },
+                          }}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </CustomWidthTooltip>
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })
-          ) : (
-            <Box
-              sx={{
-                alignItems: 'center',
-                background:
-                  'linear-gradient(180deg, rgba(6, 30, 48, 0.2) 0%, rgba(4, 18, 31, 0.2) 100%)',
-                border: '1px solid rgba(116,158,180,0.075)',
-                borderRadius: 1,
-                color: 'text.secondary',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                minHeight: { xs: 270, md: 300 },
-                px: { xs: 2.4, md: 2.7 },
-                py: { xs: 3.8, md: 4.35 },
-                textAlign: 'center',
-              }}
-            >
+                );
+              })
+            ) : (
               <Box
                 sx={{
                   alignItems: 'center',
+                  background:
+                    'linear-gradient(180deg, rgba(6, 30, 48, 0.2) 0%, rgba(4, 18, 31, 0.2) 100%)',
+                  border: '1px solid rgba(116,158,180,0.075)',
+                  borderRadius: 1,
+                  color: 'text.secondary',
                   display: 'flex',
+                  flexDirection: 'column',
                   justifyContent: 'center',
-                  mb: 2.1,
-                  position: 'relative',
+                  minHeight: { xs: 270, md: 300 },
+                  px: { xs: 2.4, md: 2.7 },
+                  py: { xs: 3.8, md: 4.35 },
+                  textAlign: 'center',
                 }}
               >
                 <Box
                   sx={{
                     alignItems: 'center',
-                    bgcolor: 'rgba(116,158,180,0.09)',
-                    border: '1px solid rgba(116,158,180,0.18)',
-                    borderRadius: 1.4,
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.035)',
-                    color: 'rgba(148,177,204,0.74)',
-                    display: 'grid',
-                    height: 62,
-                    justifyItems: 'center',
-                    width: 62,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mb: 2.1,
+                    position: 'relative',
                   }}
                 >
                   <Box
-                    component="img"
-                    src={visual.coinIcon}
-                    alt=""
                     sx={{
-                      filter:
-                        'drop-shadow(0 0 12px color-mix(in srgb, var(--wallet-accent, #18bdf2) 36%, transparent))',
-                      height: 36,
-                      opacity: 0.92,
-                      width: 36,
+                      alignItems: 'center',
+                      bgcolor: 'rgba(116,158,180,0.09)',
+                      border: '1px solid rgba(116,158,180,0.18)',
+                      borderRadius: 1.4,
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.035)',
+                      color: 'rgba(148,177,204,0.74)',
+                      display: 'grid',
+                      height: 62,
+                      justifyItems: 'center',
+                      width: 62,
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={visual.coinIcon}
+                      alt=""
+                      sx={{
+                        filter:
+                          'drop-shadow(0 0 12px color-mix(in srgb, var(--wallet-accent, #18bdf2) 36%, transparent))',
+                        height: 36,
+                        opacity: 0.92,
+                        width: 36,
+                      }}
+                    />
+                  </Box>
                 </Box>
-              </Box>
-              <Typography
-                sx={{
-                  color: 'text.primary',
-                  fontSize: { xs: 16, md: 17 },
-                  fontWeight: 700,
-                  lineHeight: 1.2,
-                }}
-              >
-                {search.trim()
-                  ? 'No matching contacts found'
-                  : `No ${visual.symbol} contacts yet`}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: 13, md: 13.5 },
-                  lineHeight: 1.45,
-                  maxWidth: 310,
-                  mt: 1.15,
-                  opacity: 0.86,
-                }}
-              >
-                {search.trim() ? (
-                  'Try a different name, address or note.'
-                ) : (
-                  `Add contacts to your address book to send ${visual.symbol} faster and avoid mistakes.`
-                )}
-              </Typography>
-              {!search.trim() && (
-                <Button
-                  startIcon={<Add />}
-                  variant="contained"
-                  onClick={onAddContact}
+                <Typography
                   sx={{
-                    bgcolor: 'rgba(6,126,208,0.94)',
-                    backgroundImage:
-                      'linear-gradient(180deg, rgba(18,158,238,0.96), rgba(4,111,198,0.96))',
-                    border: '1px solid rgba(85,205,255,0.4)',
-                    borderRadius: 1.35,
-                    boxShadow:
-                      '0 14px 32px rgba(3,139,236,0.2), inset 0 1px 0 rgba(255,255,255,0.16)',
-                    color: 'rgba(255,255,255,0.96)',
-                    fontSize: { xs: 13.5, md: 14 },
+                    color: 'text.primary',
+                    fontSize: { xs: 16, md: 17 },
                     fontWeight: 700,
-                    mt: 2.7,
-                    minHeight: 44,
-                    px: 2.25,
-                    whiteSpace: 'nowrap',
-                    '& .MuiButton-startIcon': {
-                      mr: 0.8,
-                      '& svg': { fontSize: 20 },
-                    },
-                    '&:hover': {
-                      bgcolor: '#1399e8',
-                      borderColor: 'rgba(107,216,255,0.55)',
-                      boxShadow:
-                        '0 16px 36px rgba(24,189,242,0.25), inset 0 1px 0 rgba(255,255,255,0.18)',
-                    },
+                    lineHeight: 1.2,
                   }}
                 >
-                  Add your first contact
-                </Button>
-              )}
-            </Box>
+                  {search.trim()
+                    ? 'No matching contacts found'
+                    : `No ${visual.symbol} contacts yet`}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { xs: 13, md: 13.5 },
+                    lineHeight: 1.45,
+                    maxWidth: 310,
+                    mt: 1.15,
+                    opacity: 0.86,
+                  }}
+                >
+                  {search.trim()
+                    ? 'Try a different name, address or note.'
+                    : `Add contacts to your address book to send ${visual.symbol} faster and avoid mistakes.`}
+                </Typography>
+                {!search.trim() && (
+                  <Button
+                    startIcon={<Add />}
+                    variant="contained"
+                    onClick={onAddContact}
+                    sx={{
+                      bgcolor: 'rgba(6,126,208,0.94)',
+                      backgroundImage:
+                        'linear-gradient(180deg, rgba(18,158,238,0.96), rgba(4,111,198,0.96))',
+                      border: '1px solid rgba(85,205,255,0.4)',
+                      borderRadius: 1.35,
+                      boxShadow:
+                        '0 14px 32px rgba(3,139,236,0.2), inset 0 1px 0 rgba(255,255,255,0.16)',
+                      color: 'rgba(255,255,255,0.96)',
+                      fontSize: { xs: 13.5, md: 14 },
+                      fontWeight: 700,
+                      mt: 2.7,
+                      minHeight: 44,
+                      px: 2.25,
+                      whiteSpace: 'nowrap',
+                      '& .MuiButton-startIcon': {
+                        mr: 0.8,
+                        '& svg': { fontSize: 20 },
+                      },
+                      '&:hover': {
+                        bgcolor: '#1399e8',
+                        borderColor: 'rgba(107,216,255,0.55)',
+                        boxShadow:
+                          '0 16px 36px rgba(24,189,242,0.25), inset 0 1px 0 rgba(255,255,255,0.18)',
+                      },
+                    }}
+                  >
+                    Add your first contact
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Box>
+          {hasMoreContacts && (
+            <Button
+              variant="text"
+              onClick={onAddContact}
+              sx={{
+                color: 'primary.main',
+                fontSize: 12,
+                fontWeight: 400,
+                justifyContent: 'flex-start',
+                lineHeight: 1,
+                minHeight: 16,
+                mt: 0.25,
+                px: 0,
+                py: 0,
+                textTransform: 'none',
+                '&:hover': {
+                  bgcolor: 'transparent',
+                  color: '#37d0ff',
+                },
+              }}
+            >
+              View all contacts
+            </Button>
           )}
         </Box>
-        {hasMoreContacts && (
-          <Button
-            variant="text"
-            onClick={onAddContact}
-            sx={{
-              color: 'primary.main',
-              fontSize: 12,
-              fontWeight: 400,
-              justifyContent: 'flex-start',
-              lineHeight: 1,
-              minHeight: 16,
-              mt: 0.25,
-              px: 0,
-              py: 0,
-              textTransform: 'none',
-              '&:hover': {
-                bgcolor: 'transparent',
-                color: '#37d0ff',
-              },
-            }}
-          >
-            View all contacts
-          </Button>
-        )}
-      </Box>
       </WalletCard>
       <AddressFormDialog
         coinType={visual.coinType}
         disableRestoreFocus
         entry={editingEntry}
         onClose={handleEditFormClose}
+        onExited={handleEditFormExited}
         onSave={handleEditSave}
-        open={Boolean(editingEntry)}
+        open={editFormOpen}
         saveError={editSaveError}
       />
     </>
@@ -2931,8 +2957,7 @@ export function WalletWorkspace({
                 ? 'translateY(0)'
                 : `translateY(-${RECEIVE_QR_SLOT_HEIGHT}px)`,
             },
-            transition:
-              'transform 620ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'transform 620ms cubic-bezier(0.4, 0, 0.2, 1)',
             willChange: 'transform',
             zIndex: 1,
           }}

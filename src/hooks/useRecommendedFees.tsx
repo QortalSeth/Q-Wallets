@@ -29,6 +29,11 @@ export function isValidFeeEstimate(obj: unknown): obj is FeeEstimate {
 
 export type FeeType = 'low' | 'medium' | 'high' | 'custom';
 
+const LOCAL_QORTAL_NODE_API = 'http://127.0.0.1:12391';
+const HTTPS_LOCAL_QORTAL_NODE_API = 'https://127.0.0.1:12391';
+const PUBLIC_QORTAL_NODE_API = 'https://ext-node.qortal.link';
+const FEE_REQUEST_TIMEOUT_MS = 6000;
+
 type UseRecommendedFeesArgs = {
   selectedCoin?: string | null;
 };
@@ -42,6 +47,68 @@ type UseRecommendedFeesReturn = {
   selectFeeType: FeeType;
   setCustomFee: Dispatch<SetStateAction<number>>;
   customFee: number;
+};
+
+const stripTrailingSlash = (value: string) => value.replace(/\/+$/, '');
+
+const getQortalNodeApiCandidates = () => {
+  const candidates = [''];
+
+  if (typeof window !== 'undefined') {
+    const origin = stripTrailingSlash(window.location.origin);
+    if (/^https?:\/\/(127\.0\.0\.1|localhost):12391$/i.test(origin)) {
+      candidates.push(origin);
+    }
+
+    candidates.push(
+      window.location.protocol === 'https:'
+        ? HTTPS_LOCAL_QORTAL_NODE_API
+        : LOCAL_QORTAL_NODE_API
+    );
+  }
+
+  candidates.push(LOCAL_QORTAL_NODE_API, HTTPS_LOCAL_QORTAL_NODE_API);
+  candidates.push(PUBLIC_QORTAL_NODE_API);
+
+  return [...new Set(candidates.map(stripTrailingSlash))];
+};
+
+const getUrlForPath = (baseApi: string, path: string) =>
+  baseApi ? `${baseApi}${path}` : path;
+
+const fetchJsonWithTimeout = async (url: string): Promise<unknown> => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort();
+  }, FEE_REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fee request failed: ${response.status}`);
+    }
+
+    return response.json();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
+const fetchQortalJson = async (path: string): Promise<unknown> => {
+  let lastError: unknown = null;
+
+  for (const baseApi of getQortalNodeApiCandidates()) {
+    try {
+      return await fetchJsonWithTimeout(getUrlForPath(baseApi, path));
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
 };
 
 export const useRecommendedFees = ({
@@ -62,16 +129,24 @@ export const useRecommendedFees = ({
     try {
       if (!selectedFeePublisher || !coin) return;
       const identifier = `coinInfo-${coin}`;
-      const res = await fetch(
-        `/arbitrary/resources/searchsimple?service=JSON&identifier=${identifier}&name=${selectedFeePublisher}&prefix=true&limit=1&reverse=true`
+      const searchParams = new URLSearchParams({
+        identifier,
+        limit: '1',
+        name: selectedFeePublisher,
+        prefix: 'true',
+        reverse: 'true',
+        service: 'JSON',
+      });
+      const data = await fetchQortalJson(
+        `/arbitrary/resources/searchsimple?${searchParams.toString()}`
       );
-      const data: unknown = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const location = data[0] as { name: string; identifier: string };
-        const resBridge = await fetch(
-          `/arbitrary/JSON/${location.name}/${location.identifier}`
+        const dataBridge = await fetchQortalJson(
+          `/arbitrary/JSON/${encodeURIComponent(
+            location.name
+          )}/${encodeURIComponent(location.identifier)}`
         );
-        const dataBridge: unknown = await resBridge.json();
         setFeeData(dataBridge);
       }
     } catch (error) {

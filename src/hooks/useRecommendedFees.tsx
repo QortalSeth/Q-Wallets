@@ -29,9 +29,6 @@ export function isValidFeeEstimate(obj: unknown): obj is FeeEstimate {
 
 export type FeeType = 'low' | 'medium' | 'high' | 'custom';
 
-const LOCAL_QORTAL_NODE_API = 'http://127.0.0.1:12391';
-const HTTPS_LOCAL_QORTAL_NODE_API = 'https://127.0.0.1:12391';
-const PUBLIC_QORTAL_NODE_API = 'https://ext-node.qortal.link';
 const FEE_REQUEST_TIMEOUT_MS = 6000;
 
 type UseRecommendedFeesArgs = {
@@ -48,33 +45,6 @@ type UseRecommendedFeesReturn = {
   setCustomFee: Dispatch<SetStateAction<number>>;
   customFee: number;
 };
-
-const stripTrailingSlash = (value: string) => value.replace(/\/+$/, '');
-
-const getQortalNodeApiCandidates = () => {
-  const candidates = [''];
-
-  if (typeof window !== 'undefined') {
-    const origin = stripTrailingSlash(window.location.origin);
-    if (/^https?:\/\/(127\.0\.0\.1|localhost):12391$/i.test(origin)) {
-      candidates.push(origin);
-    }
-
-    candidates.push(
-      window.location.protocol === 'https:'
-        ? HTTPS_LOCAL_QORTAL_NODE_API
-        : LOCAL_QORTAL_NODE_API
-    );
-  }
-
-  candidates.push(LOCAL_QORTAL_NODE_API, HTTPS_LOCAL_QORTAL_NODE_API);
-  candidates.push(PUBLIC_QORTAL_NODE_API);
-
-  return [...new Set(candidates.map(stripTrailingSlash))];
-};
-
-const getUrlForPath = (baseApi: string, path: string) =>
-  baseApi ? `${baseApi}${path}` : path;
 
 const fetchJsonWithTimeout = async (url: string): Promise<unknown> => {
   const controller = new AbortController();
@@ -97,19 +67,8 @@ const fetchJsonWithTimeout = async (url: string): Promise<unknown> => {
   }
 };
 
-const fetchQortalJson = async (path: string): Promise<unknown> => {
-  let lastError: unknown = null;
-
-  for (const baseApi of getQortalNodeApiCandidates()) {
-    try {
-      return await fetchJsonWithTimeout(getUrlForPath(baseApi, path));
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError;
-};
+const fetchQortalJson = (path: string): Promise<unknown> =>
+  fetchJsonWithTimeout(path);
 
 export const useRecommendedFees = ({
   selectedCoin,

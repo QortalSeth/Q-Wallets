@@ -1,6 +1,3 @@
-const LOCAL_QORTAL_NODE_API = 'http://127.0.0.1:12391';
-const HTTPS_LOCAL_QORTAL_NODE_API = 'https://127.0.0.1:12391';
-const PUBLIC_QORTAL_NODE_API = 'https://ext-node.qortal.link';
 const QORTAL_API_TIMEOUT_MS = 5000;
 
 export type QortalNameSearchResult = {
@@ -11,29 +8,6 @@ export type QortalNameSearchResult = {
 export type QortalNameData = {
   name: string;
   owner: string;
-};
-
-const stripTrailingSlash = (value: string) => value.replace(/\/+$/, '');
-
-const getQortalNodeApiCandidates = () => {
-  const candidates: string[] = [];
-
-  if (typeof window !== 'undefined') {
-    const origin = stripTrailingSlash(window.location.origin);
-    if (/^https?:\/\/(127\.0\.0\.1|localhost):12391$/i.test(origin)) {
-      candidates.push(origin);
-    }
-
-    candidates.push(
-      window.location.protocol === 'https:'
-        ? HTTPS_LOCAL_QORTAL_NODE_API
-        : LOCAL_QORTAL_NODE_API
-    );
-  }
-
-  candidates.push(LOCAL_QORTAL_NODE_API, PUBLIC_QORTAL_NODE_API);
-
-  return [...new Set(candidates.map(stripTrailingSlash))];
 };
 
 const fetchJsonWithTimeout = async (url: string, signal?: AbortSignal) => {
@@ -104,22 +78,20 @@ export const getQortalNameData = async (
 
   let lastError: unknown = null;
 
-  for (const baseApi of getQortalNodeApiCandidates()) {
-    if (signal?.aborted) return null;
+  if (signal?.aborted) return null;
 
-    try {
-      const payload = await fetchJsonWithTimeout(
-        `${baseApi}/names/${encodeURIComponent(trimmedName)}`,
-        signal
-      );
-      const result = toNameData(payload);
+  try {
+    const payload = await fetchJsonWithTimeout(
+      `/names/${encodeURIComponent(trimmedName)}`,
+      signal
+    );
+    const result = toNameData(payload);
 
-      if (result) {
-        return result;
-      }
-    } catch (error) {
-      lastError = error;
+    if (result) {
+      return result;
     }
+  } catch (error) {
+    lastError = error;
   }
 
   const searchResults = await searchQortalNames(trimmedName, 10, signal);
@@ -151,28 +123,17 @@ export const searchQortalNames = async (
     prefix: 'true',
     query: trimmedQuery,
   });
-  let lastError: unknown = null;
 
-  for (const baseApi of getQortalNodeApiCandidates()) {
-    if (signal?.aborted) return [];
+  if (signal?.aborted) return [];
 
-    try {
-      const payload = await fetchJsonWithTimeout(
-        `${baseApi}/names/search?${params.toString()}`,
-        signal
-      );
-      const results = toNameSearchResults(payload);
-
-      if (results.length > 0 || baseApi === PUBLIC_QORTAL_NODE_API) {
-        return results;
-      }
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  if (lastError) {
-    console.warn('QORT name search failed:', lastError);
+  try {
+    const payload = await fetchJsonWithTimeout(
+      `/names/search?${params.toString()}`,
+      signal
+    );
+    return toNameSearchResults(payload);
+  } catch (error) {
+    console.warn('QORT name search failed:', error);
   }
 
   return [];

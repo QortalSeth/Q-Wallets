@@ -20,7 +20,6 @@ import {
   useTheme,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import CloseIcon from '@mui/icons-material/Close';
 import { useEffect, useMemo, useContext, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import walletContext, { IContextProps } from './contexts/walletContext';
@@ -45,6 +44,7 @@ import {
 } from './utils/addressBookStorage';
 import changelogContent from '../CHANGELOG.md?raw';
 import Markdown from 'react-markdown';
+import CloseIcon from '@mui/icons-material/Close';
 
 type SceneGlowLayerKey = 'primaryCyan' | 'topBlue' | 'stars' | 'vignette';
 
@@ -626,28 +626,6 @@ export default function AppLayout() {
             minWidth: 54,
           }}
         >
-          <Box
-            sx={{
-              borderLeft: '1px solid rgba(116,158,180,0.2)',
-              height: 34,
-              mx: 0.25,
-            }}
-          />
-          <IconButton
-            aria-label="close"
-            onClick={() =>
-              window.parent?.postMessage({ action: 'CLOSE_QAPP' }, '*')
-            }
-            sx={{
-              color: 'text.secondary',
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.035)',
-                color: 'text.primary',
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
         </Box>
       </Box>
     </Box>

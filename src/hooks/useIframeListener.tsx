@@ -32,7 +32,12 @@ export const useIframe = () => {
 
   const navigate = useNavigate();
   useEffect(() => {
-    setTheme(EnumTheme.DARK);
+    const themeColorDefault = customWindow?._qdnTheme;
+    if (themeColorDefault === 'dark') {
+      setTheme(EnumTheme.DARK);
+    } else if (themeColorDefault === 'light') {
+      setTheme(EnumTheme.LIGHT);
+    }
 
     const languageDefault = customWindow?._qdnLang;
 
@@ -56,6 +61,13 @@ export const useIframe = () => {
           { action: 'NAVIGATION_SUCCESS', path: event.data.path },
           '*'
         );
+      } else if (event.data?.action === 'THEME_CHANGED' && event.data.theme) {
+        const themeColor = event.data.theme;
+        if (themeColor === 'dark') {
+          setTheme(EnumTheme.DARK);
+        } else if (themeColor === 'light') {
+          setTheme(EnumTheme.LIGHT);
+        }
       } else if (
         event.data?.action === 'LANGUAGE_CHANGED' &&
         event.data.language

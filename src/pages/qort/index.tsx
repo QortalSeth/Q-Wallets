@@ -20,6 +20,7 @@ import {
   Box,
   Button,
   Checkbox,
+  ClickAwayListener,
   DialogContent,
   IconButton,
   InputAdornment,
@@ -112,7 +113,10 @@ import {
   getAddressBookAvatarColor,
   getAddressBookAvatarSx,
 } from '../../components/AddressBook/avatarPalette';
-import { getQortalNameData } from '../../utils/qortalNodeApi';
+import {
+  searchQortalNames,
+  type QortalNameSearchResult,
+} from '../../utils/qortalNodeApi';
 import { hasInvisibleCharacters } from '../../utils/invisibleCharacters';
 
 interface TablePaginationActionsProps {
@@ -268,7 +272,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function QortalWallet() {
   const ADDRESS_MIN_LENGTH = 3;
-  const ADDRESS_LOOKUP_DEBOUNCE_MS = 1000;
+  const ADDRESS_LOOKUP_DEBOUNCE_MS = 350;
 
   const { t } = useTranslation(['core']);
   const theme = useTheme();
@@ -322,6 +326,10 @@ export default function QortalWallet() {
   const [amountError, setAmountError] = useState<string | null>(null);
   const [recipientError, setRecipientError] = useState<string | null>(null);
   const [addressValidating, setAddressValidating] = useState(false);
+  const [qortNameSearchOpen, setQortNameSearchOpen] = useState(false);
+  const [qortNameSuggestions, setQortNameSuggestions] = useState<
+    QortalNameSearchResult[]
+  >([]);
   const [amountTouched, setAmountTouched] = useState(false);
   const [recipientTouched, setRecipientTouched] = useState(false);
   const userName = useGlobal().auth.name;
@@ -520,13 +528,38 @@ export default function QortalWallet() {
     setOpenQortAddressBook(false);
     setOpenQortSend(true);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(true); // Trigger validation for QORT addresses
+  };
+
+  const handleSelectQortNameSuggestion = (
+    suggestion: QortalNameSearchResult
+  ) => {
+    if (
+      hasInvisibleCharacters(suggestion.name) ||
+      !QORT_ADDRESS_PATTERN.test(suggestion.owner)
+    ) {
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      setQortNameSearchOpen(false);
+      return;
+    }
+
+    setQortRecipient(suggestion.owner);
+    setQortRecipientDisplayName(suggestion.name);
+    setRecipientError(null);
+    setRecipientTouched(true);
+    setAddressValidating(false);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
   };
 
   const handleClearQortRecipient = () => {
     setQortRecipient(EMPTY_STRING);
     setQortRecipientDisplayName(EMPTY_STRING);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(false);
   };
 
@@ -613,6 +646,8 @@ export default function QortalWallet() {
     setAmountError(null);
     setAmountTouched(false);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(false);
   };
 
@@ -624,6 +659,8 @@ export default function QortalWallet() {
     setAmountError(null);
     setAmountTouched(false);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(false);
   };
 
@@ -683,7 +720,7 @@ export default function QortalWallet() {
     [walletBalanceQort, qortTxFee, t]
   );
 
-  // address lookup with debounce + cancel
+  // QORT recipient validation plus debounced name search.
   useEffect(() => {
     const recipientValue = qortRecipient.trim();
 
@@ -691,6 +728,8 @@ export default function QortalWallet() {
     if (!recipientTouched) {
       setRecipientError(null);
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
@@ -698,12 +737,16 @@ export default function QortalWallet() {
     if (recipientValue === EMPTY_STRING) {
       setRecipientError(t('core:message.error.recipient_required'));
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
     if (recipientValue.length < ADDRESS_MIN_LENGTH) {
       setRecipientError(t('core:message.error.recipient_too_short'));
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
@@ -713,42 +756,50 @@ export default function QortalWallet() {
     ) {
       setRecipientError(t('core:message.error.invisible_qortal_name'));
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
     if (QORT_ADDRESS_PATTERN.test(recipientValue)) {
       setRecipientError(null);
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
-    // Perform debounced registered-name lookup and resolve it to its owner address.
+    // Search registered names, but let the user choose the intended recipient.
     setAddressValidating(true);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
-        const nameData = await getQortalNameData(
+        const results = await searchQortalNames(
           recipientValue,
+          10,
           controller.signal
         );
+        const safeResults = results.filter(
+          (result) =>
+            !hasInvisibleCharacters(result.name) &&
+            QORT_ADDRESS_PATTERN.test(result.owner)
+        );
 
-        if (nameData?.owner && QORT_ADDRESS_PATTERN.test(nameData.owner)) {
-          if (hasInvisibleCharacters(nameData.name || recipientValue)) {
-            setRecipientError(t('core:message.error.invisible_qortal_name'));
-            return;
-          }
-
-          setQortRecipient(nameData.owner);
-          setQortRecipientDisplayName(nameData.name || recipientValue);
-          setRecipientError(null);
-        } else {
-          setRecipientError(t('core:message.error.recipient_not_found'));
-        }
+        setQortNameSuggestions(safeResults);
+        setQortNameSearchOpen(safeResults.length > 0);
+        setRecipientError(
+          safeResults.length === 0
+            ? t('core:message.error.recipient_not_found')
+            : null
+        );
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         console.error('Recipient lookup failed:', err.message);
+        setQortNameSuggestions([]);
+        setQortNameSearchOpen(false);
         setRecipientError(t('core:message.error.recipient_lookup_failed'));
       } finally {
         setAddressValidating(false);
@@ -764,16 +815,19 @@ export default function QortalWallet() {
   // Consolidated send button enablement - derived from all validation states
   useEffect(() => {
     const amountValid = validateAmountLocal(qortAmount);
+    const recipientValue = qortRecipient.trim();
     const recipientLocallyValid =
-      !!qortRecipient && qortRecipient.length >= ADDRESS_MIN_LENGTH;
+      !!recipientValue && recipientValue.length >= ADDRESS_MIN_LENGTH;
     const recipientNameSafe =
       !hasInvisibleCharacters(qortRecipient) &&
       !hasInvisibleCharacters(qortRecipientDisplayName);
+    const recipientAddressValid = QORT_ADDRESS_PATTERN.test(recipientValue);
     const addressFound =
       !addressValidating &&
       recipientError === null &&
       recipientTouched &&
-      recipientLocallyValid;
+      recipientLocallyValid &&
+      recipientAddressValid;
 
     const finalEnabled =
       amountValid && recipientLocallyValid && recipientNameSafe && addressFound;
@@ -1081,8 +1135,10 @@ export default function QortalWallet() {
   }, [address, getQortalTransactions]);
 
   const sendQortRequest = async () => {
+    const recipientValue = qortRecipient.trim();
+
     if (
-      hasInvisibleCharacters(qortRecipient) ||
+      hasInvisibleCharacters(recipientValue) ||
       hasInvisibleCharacters(qortRecipientDisplayName)
     ) {
       setRecipientTouched(true);
@@ -1095,7 +1151,7 @@ export default function QortalWallet() {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
         coin: Coin.QORT,
-        recipient: qortRecipient,
+        recipient: recipientValue,
         amount: qortAmount,
       });
       if (!sendRequest?.error) {
@@ -1107,6 +1163,8 @@ export default function QortalWallet() {
         setQortAmount(0);
         setQortRecipient(EMPTY_STRING);
         setQortRecipientDisplayName(EMPTY_STRING);
+        setQortNameSearchOpen(false);
+        setQortNameSuggestions([]);
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
 
@@ -1118,6 +1176,8 @@ export default function QortalWallet() {
       setQortAmount(0);
       setQortRecipient(EMPTY_STRING);
       setQortRecipientDisplayName(EMPTY_STRING);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
       await timeoutDelay(TIME_SECONDS_3);
@@ -4182,7 +4242,9 @@ export default function QortalWallet() {
             year: 'numeric',
           }).format(new Date(qortAddressBookLastSync))}`
         : syncStatusLabel;
-  const qortalTableView = qortalTables();
+  const qortalTableView = openQortSend
+    ? { actions: null, content: null }
+    : qortalTables();
   const qortSendLabelSx = {
     color: (t: Theme) =>
       t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
@@ -4689,88 +4751,172 @@ export default function QortalWallet() {
                 ) : null}
               </>
             ) : (
-              <TextField
-                required
-                autoComplete="new-password"
-                id="qort-recipient-manual"
-                placeholder={t('core:send.qort_address_or_name')}
-                value={qortRecipient}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const input = e.currentTarget;
-                  setQortRecipientDisplayName(EMPTY_STRING);
-                  setQortRecipient(e.target.value.trim());
-                  setRecipientTouched(true);
-                  window.requestAnimationFrame(() => {
-                    if (document.activeElement === input) {
-                      const end = input.value.length;
-                      input.setSelectionRange(end, end);
+              <ClickAwayListener
+                onClickAway={() => setQortNameSearchOpen(false)}
+              >
+                <Box sx={{ position: 'relative' }}>
+                  <TextField
+                    required
+                    autoComplete="new-password"
+                    id="qort-recipient-manual"
+                    placeholder={t('core:send.qort_address_or_name')}
+                    value={qortRecipient}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const input = e.currentTarget;
+                      setQortRecipientDisplayName(EMPTY_STRING);
+                      setQortRecipient(e.target.value);
+                      setQortNameSearchOpen(false);
+                      setRecipientTouched(true);
+                      window.requestAnimationFrame(() => {
+                        if (document.activeElement === input) {
+                          const end = input.value.length;
+                          input.setSelectionRange(end, end);
+                        }
+                      });
+                    }}
+                    onBlur={onRecipientBlur}
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                      const input = e.currentTarget;
+                      if (qortNameSuggestions.length > 0) {
+                        setQortNameSearchOpen(true);
+                      }
+                      window.requestAnimationFrame(() => {
+                        const end = input.value.length;
+                        input.setSelectionRange(end, end);
+                      });
+                    }}
+                    slotProps={{
+                      htmlInput: {
+                        'aria-label': t('core:send.receiver_address_or_name'),
+                        autoCapitalize: 'none',
+                        autoComplete: 'new-password',
+                        autoCorrect: 'off',
+                        minLength: 3,
+                        name: 'qort-recipient-manual-no-autofill',
+                        spellCheck: false,
+                      },
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={t('core:action.open_address_book')}
+                              onClick={handleOpenAddressBook}
+                              sx={{
+                                border: '1px solid rgba(116,158,180,0.12)',
+                                borderRadius: 1,
+                                color: 'primary.main',
+                                height: { xs: 31, md: 32 },
+                                ml: { xs: 0.8, md: 1 },
+                                width: { xs: 31, md: 32 },
+                                '&:hover': {
+                                  bgcolor: 'rgba(24,189,242,0.08)',
+                                  borderColor: 'rgba(24,189,242,0.34)',
+                                  color: '#37d0ff',
+                                },
+                              }}
+                            >
+                              <PersonOutline
+                                sx={{ fontSize: { xs: 18, md: 19 } }}
+                              />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    fullWidth
+                    helperText={
+                      recipientTouched && recipientError
+                        ? recipientError
+                        : undefined
                     }
-                  });
-                }}
-                onBlur={onRecipientBlur}
-                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                  const input = e.currentTarget;
-                  window.requestAnimationFrame(() => {
-                    const end = input.value.length;
-                    input.setSelectionRange(end, end);
-                  });
-                }}
-                slotProps={{
-                  htmlInput: {
-                    'aria-label': t('core:send.receiver_address_or_name'),
-                    autoCapitalize: 'none',
-                    autoComplete: 'new-password',
-                    autoCorrect: 'off',
-                    minLength: 3,
-                    name: 'qort-recipient-manual-no-autofill',
-                    spellCheck: false,
-                  },
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label={t('core:action.open_address_book')}
-                          onClick={handleOpenAddressBook}
+                    error={recipientTouched && !!recipientError}
+                    sx={{
+                      ...qortSendFieldSx,
+                      '& .MuiFormHelperText-root': {
+                        ...qortSendHelperSx,
+                        color:
+                          recipientTouched && recipientError
+                            ? 'error.main'
+                            : 'text.secondary',
+                      },
+                    }}
+                  />
+                  {qortNameSearchOpen && qortNameSuggestions.length > 0 ? (
+                    <Box
+                      sx={{
+                        bgcolor: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(5, 16, 27, 0.98)'
+                            : 'rgba(255,255,255,0.98)',
+                        border: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? '1px solid rgba(116,158,180,0.2)'
+                            : '1px solid rgba(11,143,211,0.18)',
+                        borderRadius: 1,
+                        boxShadow: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? '0 18px 40px rgba(0,0,0,0.32)'
+                            : '0 18px 40px rgba(15,74,106,0.16)',
+                        left: 0,
+                        maxHeight: 216,
+                        overflowY: 'auto',
+                        position: 'absolute',
+                        right: 0,
+                        top: 'calc(100% + 6px)',
+                        zIndex: 1500,
+                      }}
+                    >
+                      {qortNameSuggestions.map((suggestion) => (
+                        <Box
+                          component="button"
+                          type="button"
+                          key={`${suggestion.name}-${suggestion.owner}`}
+                          onClick={() =>
+                            handleSelectQortNameSuggestion(suggestion)
+                          }
                           sx={{
-                            border: '1px solid rgba(116,158,180,0.12)',
-                            borderRadius: 1,
-                            color: 'primary.main',
-                            height: { xs: 31, md: 32 },
-                            ml: { xs: 0.8, md: 1 },
-                            width: { xs: 31, md: 32 },
+                            alignItems: 'center',
+                            appearance: 'none',
+                            bgcolor: 'transparent',
+                            border: 0,
+                            color: 'text.primary',
+                            cursor: 'pointer',
+                            display: 'grid',
+                            font: 'inherit',
+                            gap: 0.35,
+                            justifyItems: 'start',
+                            px: 2,
+                            py: 1.1,
+                            textAlign: 'left',
+                            width: '100%',
                             '&:hover': {
                               bgcolor: 'rgba(24,189,242,0.08)',
-                              borderColor: 'rgba(24,189,242,0.34)',
-                              color: '#37d0ff',
                             },
                           }}
                         >
-                          <PersonOutline
-                            sx={{ fontSize: { xs: 18, md: 19 } }}
+                          <NameText
+                            component="span"
+                            name={suggestion.name}
+                            sx={{ fontSize: 14, fontWeight: 700 }}
                           />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                fullWidth
-                helperText={
-                  recipientTouched && recipientError
-                    ? recipientError
-                    : undefined
-                }
-                error={recipientTouched && !!recipientError}
-                sx={{
-                  ...qortSendFieldSx,
-                  '& .MuiFormHelperText-root': {
-                    ...qortSendHelperSx,
-                    color:
-                      recipientTouched && recipientError
-                        ? 'error.main'
-                        : 'text.secondary',
-                  },
-                }}
-              />
+                          <Typography
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: 12,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%',
+                            }}
+                          >
+                            {suggestion.owner}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : null}
+                </Box>
+              </ClickAwayListener>
             )}
           </Box>
 

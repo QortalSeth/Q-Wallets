@@ -22,7 +22,9 @@ import {
   Star,
   StarBorder,
 } from '@mui/icons-material';
+import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
+import { NameText } from '../NameText';
 import { AddressBookEntry } from '../../utils/Types';
 import { copyToClipboard, cropString } from '../../common/functions';
 import { EMPTY_STRING, TIME_SECONDS_2 } from '../../common/constants';
@@ -486,9 +488,11 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
                 >
                   {getInitial(entry.name)}
                 </Avatar>
-                <Typography sx={{ ...cellTextSx, color: 'text.primary' }}>
-                  {entry.name || '-'}
-                </Typography>
+                <NameText
+                  name={entry.coinType === Coin.QORT ? entry.name : undefined}
+                  fallback={entry.name || '-'}
+                  sx={{ ...cellTextSx, color: 'text.primary' }}
+                />
                 {renderActions(entry)}
               </Box>
               <Box sx={{ alignItems: 'center', display: 'flex', gap: 0.65 }}>
@@ -663,9 +667,13 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
                   {getInitial(entry.name)}
                 </Avatar>
                 <Tooltip title={entry.name || EMPTY_STRING} placement="top">
-                  <Typography sx={{ ...cellTextSx, color: 'text.primary' }}>
-                    {entry.name || '-'}
-                  </Typography>
+                  <NameText
+                    name={
+                      entry.coinType === Coin.QORT ? entry.name : undefined
+                    }
+                    fallback={entry.name || '-'}
+                    sx={{ ...cellTextSx, color: 'text.primary' }}
+                  />
                 </Tooltip>
               </Box>
 

@@ -141,7 +141,8 @@
       "recipient_not_found": "Saajat ei leitud",
       "recipient_required": "Saaja on kohustuslik",
       "recipient_too_short": "Saaja aadress on liiga lühike",
-      "something_went_wrong": "Midagi läks valesti. Palun proovi uuesti."
+      "something_went_wrong": "Midagi läks valesti. Palun proovi uuesti.",
+      "invisible_qortal_name": "Nähtamatuid marke sisaldavaid Qortali nimesid ei saa kasutada."
     },
     "success": {
       "qdn_sync": "{{coinType}} aadressiraamat edukalt sünkroonitud QDN-iga"

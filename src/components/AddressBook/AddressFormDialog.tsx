@@ -36,6 +36,8 @@ import {
   searchQortalNames,
   type QortalNameSearchResult,
 } from '../../utils/qortalNodeApi';
+import { NameText } from '../NameText';
+import { hasInvisibleCharacters } from '../../utils/invisibleCharacters';
 import coinLogoARRR from '../../assets/arrr.png';
 import coinLogoBTC from '../../assets/btc.png';
 import coinLogoDGB from '../../assets/dgb.png';
@@ -368,6 +370,14 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       );
       return false;
     }
+    if (coinType === Coin.QORT && hasInvisibleCharacters(value)) {
+      setNameError(
+        t('core:message.error.invisible_qortal_name', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return false;
+    }
     setNameError(EMPTY_STRING);
     return true;
   };
@@ -470,6 +480,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   };
 
   const handleSelectNameSuggestion = (suggestion: QortalNameSearchResult) => {
+    if (hasInvisibleCharacters(suggestion.name)) {
+      setNameError(
+        t('core:message.error.invisible_qortal_name', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return;
+    }
+
     const resolvedAddress = suggestion.owner ?? EMPTY_STRING;
     setNameLookupEnabled(false);
     setAddressLookupEnabled(false);
@@ -731,8 +750,11 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                           },
                         }}
                       >
-                        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                          {suggestion.name}
+                        <NameText
+                          component="span"
+                          name={suggestion.name}
+                          sx={{ fontSize: 14, fontWeight: 700 }}
+                        >
                           {alreadySaved ? (
                             <Box
                               component="span"
@@ -746,7 +768,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                               {t('core:address_book_ui.already_in_list')}
                             </Box>
                           ) : null}
-                        </Typography>
+                        </NameText>
                         <Typography
                           sx={{
                             color: 'text.secondary',

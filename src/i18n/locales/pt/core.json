@@ -142,7 +142,8 @@
       "recipient_not_found": "Destinatário não encontrado",
       "recipient_required": "Destinatário obrigatório",
       "recipient_too_short": "Endereço do destinatário muito curto",
-      "something_went_wrong": "Algo deu errado. Tente novamente."
+      "something_went_wrong": "Algo deu errado. Tente novamente.",
+      "invisible_qortal_name": "Nomes Qortal com caracteres invisiveis nao podem ser usados."
     },
     "success": {
       "qdn_sync": "catálogo de endereços {{coinType}} sincronizado com sucesso no QDN"

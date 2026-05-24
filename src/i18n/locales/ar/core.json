@@ -141,7 +141,8 @@
       "recipient_not_found": "لم يتم العثور على المستلم",
       "recipient_required": "المستلم مطلوب",
       "recipient_too_short": "عنوان المستلم قصير جدًا",
-      "something_went_wrong": "حدث خطأ ما. يُرجى المحاولة مرة أخرى."
+      "something_went_wrong": "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
+      "invisible_qortal_name": "لا يمكن استخدام اسماء Qortal التي تحتوي على احرف غير مرئية."
     },
     "success": {
       "qdn_sync": "تمت مزامنة دفتر العناوين {{coinType}} بنجاح مع QDN"

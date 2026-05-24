@@ -141,7 +141,8 @@
       "recipient_not_found": "Recipient not found",
       "recipient_required": "Recipient required",
       "recipient_too_short": "Recipient too short",
-      "something_went_wrong": "Something went wrong. Please try again."
+      "something_went_wrong": "Something went wrong. Please try again.",
+      "invisible_qortal_name": "Qortal names containing invisible characters cannot be used."
     },
     "success": {
       "qdn_sync": "successfully synced {{coinType}} address book to QDN"

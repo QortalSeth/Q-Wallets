@@ -81,6 +81,7 @@ import {
 } from '../../utils/addressBookStorage';
 import { DeleteConfirmationDialog } from '../AddressBook/DeleteConfirmationDialog';
 import { AddressFormDialog } from '../AddressBook/AddressFormDialog';
+import { NameText } from '../NameText';
 import {
   getAddressBookAvatarColor,
   getAddressBookAvatarSx,
@@ -1669,7 +1670,11 @@ export function WalletAddressBookPanel({
                         minWidth: 0,
                       }}
                     >
-                      <Typography
+                      <NameText
+                        name={
+                          visual.coinType === Coin.QORT ? entry.name : undefined
+                        }
+                        fallback={entry.name || '-'}
                         sx={{
                           fontSize: 14,
                           fontWeight: 600,
@@ -1678,9 +1683,7 @@ export function WalletAddressBookPanel({
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}
-                      >
-                        {entry.name}
-                      </Typography>
+                      />
                       {entry.note && (
                         <Typography
                           variant="caption"

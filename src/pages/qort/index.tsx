@@ -43,6 +43,7 @@ import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import { useTheme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
+import { useAtom } from 'jotai';
 import { Coin, RequestQueueWithPromise, useGlobal } from 'qapp-core';
 import {
   ChangeEvent,
@@ -76,6 +77,7 @@ import {
   timeoutDelay,
 } from '../../common/functions';
 import WalletContext from '../../contexts/walletContext';
+import { qortTransactionFiltersAtom } from '../../state/global/qort';
 import {
   CustomWidthTooltip,
   SlideTransition,
@@ -86,6 +88,7 @@ import {
   WalletSendDialog,
 } from '../../styles/page-styles';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import { NameText } from '../../components/NameText';
 import {
   WalletSyncCard,
   WalletTransactionsCard,
@@ -110,6 +113,7 @@ import {
   getAddressBookAvatarSx,
 } from '../../components/AddressBook/avatarPalette';
 import { getQortalNameData } from '../../utils/qortalNodeApi';
+import { hasInvisibleCharacters } from '../../utils/invisibleCharacters';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -283,9 +287,9 @@ export default function QortalWallet() {
   const [pollInfo, setPollInfo] = useState<any>([]);
   const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
   const [allInfo, setAllInfo] = useState<any>([]);
-  const [selectedTransactionFilters, setSelectedTransactionFilters] = useState<
-    string[]
-  >(['all']);
+  const [selectedTransactionFilters, setSelectedTransactionFilters] = useAtom(
+    qortTransactionFiltersAtom
+  );
   const [advancedFilterAnchor, setAdvancedFilterAnchor] =
     useState<null | HTMLElement>(null);
   const [page, setPage] = useState(0);
@@ -703,6 +707,15 @@ export default function QortalWallet() {
       return;
     }
 
+    if (
+      hasInvisibleCharacters(recipientValue) ||
+      hasInvisibleCharacters(qortRecipientDisplayName)
+    ) {
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      setAddressValidating(false);
+      return;
+    }
+
     if (QORT_ADDRESS_PATTERN.test(recipientValue)) {
       setRecipientError(null);
       setAddressValidating(false);
@@ -722,6 +735,11 @@ export default function QortalWallet() {
         );
 
         if (nameData?.owner && QORT_ADDRESS_PATTERN.test(nameData.owner)) {
+          if (hasInvisibleCharacters(nameData.name || recipientValue)) {
+            setRecipientError(t('core:message.error.invisible_qortal_name'));
+            return;
+          }
+
           setQortRecipient(nameData.owner);
           setQortRecipientDisplayName(nameData.name || recipientValue);
           setRecipientError(null);
@@ -741,24 +759,29 @@ export default function QortalWallet() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [qortRecipient, recipientTouched, t]);
+  }, [qortRecipient, qortRecipientDisplayName, recipientTouched, t]);
 
   // Consolidated send button enablement - derived from all validation states
   useEffect(() => {
     const amountValid = validateAmountLocal(qortAmount);
     const recipientLocallyValid =
       !!qortRecipient && qortRecipient.length >= ADDRESS_MIN_LENGTH;
+    const recipientNameSafe =
+      !hasInvisibleCharacters(qortRecipient) &&
+      !hasInvisibleCharacters(qortRecipientDisplayName);
     const addressFound =
       !addressValidating &&
       recipientError === null &&
       recipientTouched &&
       recipientLocallyValid;
 
-    const finalEnabled = amountValid && recipientLocallyValid && addressFound;
+    const finalEnabled =
+      amountValid && recipientLocallyValid && recipientNameSafe && addressFound;
     setSendDisabled(!finalEnabled);
   }, [
     qortAmount,
     qortRecipient,
+    qortRecipientDisplayName,
     addressValidating,
     recipientError,
     recipientTouched,
@@ -1058,6 +1081,15 @@ export default function QortalWallet() {
   }, [address, getQortalTransactions]);
 
   const sendQortRequest = async () => {
+    if (
+      hasInvisibleCharacters(qortRecipient) ||
+      hasInvisibleCharacters(qortRecipientDisplayName)
+    ) {
+      setRecipientTouched(true);
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      return;
+    }
+
     setOpenTxQortSubmit(true);
     try {
       const sendRequest = await qortalRequest({
@@ -3526,10 +3558,16 @@ export default function QortalWallet() {
         displayAddress === address ||
         displayAddress === userName ||
         rawAddress === address;
+      const isDisplayedQortalName =
+        typeof displayAddress === 'string' &&
+        displayAddress !== '-' &&
+        !QORT_ADDRESS_PATTERN.test(displayAddress);
 
       return (
-        <Typography
+        <NameText
           component="span"
+          name={isDisplayedQortalName ? displayAddress : undefined}
+          fallback={displayAddress}
           role={canLookup ? 'button' : undefined}
           tabIndex={canLookup ? 0 : undefined}
           title={canLookup ? 'Open in User Search' : undefined}
@@ -3559,9 +3597,7 @@ export default function QortalWallet() {
                 }
               : undefined,
           }}
-        >
-          {displayAddress}
-        </Typography>
+        />
       );
     };
 
@@ -4217,6 +4253,8 @@ export default function QortalWallet() {
         slots={{ transition: Transition }}
         maxWidth={false}
         fullWidth
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
         slotProps={{
           paper: {
@@ -4492,17 +4530,16 @@ export default function QortalWallet() {
                       {qortRecipientInitials}
                     </Avatar>
                     <Box sx={{ display: 'grid', gap: 0.35, minWidth: 0 }}>
-                      <Typography
+                      <NameText
                         noWrap
+                        name={qortRecipientDisplayName}
                         sx={{
                           color: 'text.primary',
                           fontSize: { xs: 18, md: 18.5 },
                           fontWeight: 700,
                           lineHeight: 1.05,
                         }}
-                      >
-                        {qortRecipientDisplayName}
-                      </Typography>
+                      />
                       <Typography
                         noWrap
                         sx={{

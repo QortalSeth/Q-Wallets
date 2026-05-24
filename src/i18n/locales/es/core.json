@@ -141,7 +141,8 @@
       "recipient_not_found": "Destinatario no encontrado",
       "recipient_required": "Destinatario requerido",
       "recipient_too_short": "La dirección del destinatario es demasiado corta",
-      "something_went_wrong": "Algo salió mal. Inténtalo de nuevo."
+      "something_went_wrong": "Algo salió mal. Inténtalo de nuevo.",
+      "invisible_qortal_name": "No se pueden usar nombres de Qortal con caracteres invisibles."
     },
     "success": {
       "qdn_sync": "libreta de direcciones {{coinType}} sincronizada con éxito en QDN"

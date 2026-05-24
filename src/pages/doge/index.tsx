@@ -498,6 +498,8 @@ export default function DogecoinWallet() {
         slots={{ transition: Transition }}
         maxWidth={false}
         fullWidth
+        disableAutoFocus
+        disableRestoreFocus
         disableScrollLock
         slotProps={{
           paper: {

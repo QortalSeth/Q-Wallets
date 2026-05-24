@@ -141,7 +141,8 @@
       "recipient_not_found": "Destinataire introuvable",
       "recipient_required": "Destinataire requis",
       "recipient_too_short": "Adresse du destinataire trop courte",
-      "something_went_wrong": "Une erreur s'est produite. Veuillez réessayer."
+      "something_went_wrong": "Une erreur s'est produite. Veuillez réessayer.",
+      "invisible_qortal_name": "Les noms Qortal contenant des caracteres invisibles ne peuvent pas etre utilises."
     },
     "success": {
       "qdn_sync": "carnet d'adresses {{coinType}} synchronisé avec succès sur QDN"

@@ -141,7 +141,8 @@
       "recipient_not_found": "Destinatario non trovato",
       "recipient_required": "Destinatario richiesto",
       "recipient_too_short": "Indirizzo del destinatario troppo breve",
-      "something_went_wrong": "Qualcosa è andato storto. Riprova."
+      "something_went_wrong": "Qualcosa è andato storto. Riprova.",
+      "invisible_qortal_name": "I nomi Qortal con caratteri invisibili non possono essere usati."
     },
     "success": {
       "qdn_sync": "rubrica {{coinType}} sincronizzata con successo su QDN"

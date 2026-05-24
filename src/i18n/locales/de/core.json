@@ -141,7 +141,8 @@
       "recipient_not_found": "Empfänger nicht gefunden",
       "recipient_required": "Empfänger erforderlich",
       "recipient_too_short": "Empfängeradresse ist zu kurz",
-      "something_went_wrong": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+      "something_went_wrong": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "invisible_qortal_name": "Qortal-Namen mit unsichtbaren Zeichen koennen nicht verwendet werden."
     },
     "success": {
       "qdn_sync": "{{coinType}} Adressbuch erfolgreich mit QDN synchronisiert"

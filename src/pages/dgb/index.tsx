@@ -652,7 +652,9 @@ export default function DigibyteWallet() {
           onSendMax={handleSendMaxDgb}
           recipient={dgbRecipient}
           recipientDisplayName={dgbRecipientDisplayName}
-          recipientSubtitle="DGB address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'DGB',
+          })}
           sendDisabled={disableCanSendDgb()}
           showAddressBookButton
           showBalanceMeter

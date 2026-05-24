@@ -730,9 +730,9 @@ export default function AppLayout() {
         slotProps={{ paper: { sx: { maxHeight: '80vh' } } }}
       >
         <DialogTitle sx={{ textAlign: 'center', position: 'relative' }}>
-          CHANGELOG
+          {t('core:app.changelog')}
           <IconButton
-            aria-label="Close changelog"
+            aria-label={t('core:app.close_changelog')}
             onClick={() => setChangelogOpen(false)}
             size="small"
             sx={{
@@ -791,12 +791,12 @@ export default function AppLayout() {
                   }
 
                   const alt = href.includes('before')
-                    ? 'Q-Wallets before redesign'
-                    : 'Q-Wallets after redesign';
+                    ? t('core:app.q_wallets_before_redesign')
+                    : t('core:app.q_wallets_after_redesign');
 
                   return (
                     <ButtonBase
-                      aria-label={`Open ${alt}`}
+                      aria-label={t('core:app.open_image_preview', { alt })}
                       onClick={() =>
                         setChangelogPreviewImage({
                           alt,
@@ -861,7 +861,7 @@ export default function AppLayout() {
         <DialogTitle sx={{ pr: 6 }}>
           {changelogPreviewImage?.alt}
           <IconButton
-            aria-label="Close image preview"
+            aria-label={t('core:app.close_image_preview')}
             onClick={() => setChangelogPreviewImage(null)}
             size="small"
             sx={{

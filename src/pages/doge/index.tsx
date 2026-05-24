@@ -615,7 +615,9 @@ export default function DogecoinWallet() {
           onSendMax={handleSendMaxDoge}
           recipient={dogeRecipient}
           recipientDisplayName={dogeRecipientDisplayName}
-          recipientSubtitle="DOGE address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'DOGE',
+          })}
           sendDisabled={disableCanSendDoge()}
           showAddressBookButton
           symbol="DOGE"

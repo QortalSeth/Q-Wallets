@@ -615,7 +615,9 @@ export default function BitcoinWallet() {
           onSendMax={handleSendMaxBtc}
           recipient={btcRecipient}
           recipientDisplayName={btcRecipientDisplayName}
-          recipientSubtitle="BTC address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'BTC',
+          })}
           sendDisabled={disableCanSendBtc()}
           showAddressBookButton
           symbol="BTC"

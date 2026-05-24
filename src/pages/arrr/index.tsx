@@ -921,15 +921,17 @@ export default function PirateWallet() {
           addressInputId="arrr-address"
           afterRecipientContent={
             <Box sx={{ display: 'grid', gap: 0.85 }}>
-              <Typography sx={arrrSendLabelSx}>Memo</Typography>
+              <Typography sx={arrrSendLabelSx}>{t('core:send.memo')}</Typography>
               <TextField
                 id="arrr-memo"
                 value={arrrMemo}
                 fullWidth
-                placeholder="Optional memo"
+                placeholder={t('core:send.optional_memo')}
                 slotProps={{
                   htmlInput: {
-                    'aria-label': 'ARRR memo',
+                    'aria-label': t('core:send.symbol_memo', {
+                      symbol: 'ARRR',
+                    }),
                     maxLength: 40,
                   },
                 }}
@@ -945,7 +947,7 @@ export default function PirateWallet() {
           balanceError={null}
           coinLogo={coinLogoARRR}
           feeContent={
-            <Tooltip title="Current network sending fee. This amount is reserved from the maximum sendable balance.">
+            <Tooltip title={t('core:send.current_network_fee_tooltip')}>
               <Box
                 sx={{
                   alignItems: 'center',
@@ -966,7 +968,7 @@ export default function PirateWallet() {
                     fontWeight: 500,
                   }}
                 >
-                  Network fee
+                  {t('core:send.network_fee')}
                 </Typography>
                 <Typography
                   sx={{
@@ -997,7 +999,9 @@ export default function PirateWallet() {
             maxLength: 78,
             minLength: 78,
           }}
-          recipientSubtitle="ARRR address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'ARRR',
+          })}
           sendDisabled={disableCanSendArrr()}
           showAddressBookButton
           symbol="ARRR"

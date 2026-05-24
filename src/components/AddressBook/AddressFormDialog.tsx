@@ -15,6 +15,7 @@ import {
 import Check from '@mui/icons-material/Check';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import Close from '@mui/icons-material/Close';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import PersonOutline from '@mui/icons-material/PersonOutline';
 import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
@@ -115,6 +116,7 @@ interface AddressFormDialogProps {
   coinType: Coin;
   entry?: AddressBookEntry;
   onSave: (entry: Omit<AddressBookEntry, 'id' | 'createdAt'>) => void;
+  onDelete?: (entry: AddressBookEntry) => void;
   prefillName?: string;
   prefillAddress?: string;
   saveError?: string;
@@ -128,6 +130,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   coinType,
   entry,
   onSave,
+  onDelete,
   prefillName,
   prefillAddress,
   saveError,
@@ -652,7 +655,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               aria-label={t('core:address_book_name', {
                 postProcess: 'capitalizeFirstChar',
               })}
-              placeholder="Enter name"
+              placeholder={t('core:address_book_ui.enter_name')}
               value={name}
               onChange={handleNameChange}
               error={!!nameError}
@@ -740,7 +743,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                                 ml: 0.75,
                               }}
                             >
-                              (already in list)
+                              {t('core:address_book_ui.already_in_list')}
                             </Box>
                           ) : null}
                         </Typography>
@@ -781,7 +784,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                   letterSpacing: 0,
                 }}
               >
-                OR
+                {t('core:common.or')}
               </Typography>
               <Box
                 sx={{
@@ -805,7 +808,9 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               aria-label={t('core:address_book_address', {
                 postProcess: 'capitalizeFirstChar',
               })}
-              placeholder={`Enter ${coinType} address`}
+              placeholder={t('core:address_book_ui.enter_symbol_address', {
+                symbol: coinType,
+              })}
               value={address}
               onChange={handleAddressChange}
               error={!!addressError}
@@ -813,8 +818,8 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                 addressError ||
                 (coinType === Coin.QORT
                   ? addressConfirmed
-                    ? 'Address confirmed'
-                    : 'Confirm this address before saving.'
+                    ? t('core:address_book_ui.address_confirmed')
+                    : t('core:address_book_ui.confirm_address_before_saving')
                   : EMPTY_STRING)
               }
               slotProps={{
@@ -829,7 +834,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                         }}
                       >
                         <IconButton
-                          aria-label="Confirm address"
+                          aria-label={t('core:address_book_ui.confirm_address')}
                           disabled={!address.trim() || !!addressError}
                           onClick={handleConfirmAddress}
                           sx={{
@@ -891,7 +896,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               {t('core:address_book_note', {
                 postProcess: 'capitalizeFirstChar',
               })}{' '}
-              (optional)
+              {t('core:common.optional_parenthetical')}
             </Typography>
             <Box sx={{ position: 'relative' }}>
               <TextField
@@ -899,7 +904,7 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                 aria-label={t('core:address_book_note', {
                   postProcess: 'capitalizeFirstChar',
                 })}
-                placeholder="Add a note (optional)"
+                placeholder={t('core:address_book_ui.add_note_optional')}
                 value={note}
                 onChange={handleNoteChange}
                 error={!!noteError}
@@ -964,15 +969,45 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       >
         <Box
           sx={{
+            alignItems: { xs: 'stretch', sm: 'center' },
             color: 'error.main',
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             fontSize: 13,
             fontWeight: 600,
+            gap: 1.2,
             maxWidth: { xs: '100%', sm: '48%' },
             minHeight: { xs: saveError ? 'auto' : 0, sm: 'auto' },
             width: { xs: '100%', sm: 'auto' },
           }}
         >
-          {saveError}
+          {entry && onDelete ? (
+            <Button
+              color="error"
+              onClick={() => onDelete(entry)}
+              startIcon={<DeleteOutline />}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(255,91,105,0.28)',
+                borderRadius: 1.35,
+                fontSize: { xs: 14, sm: 14.5 },
+                fontWeight: 700,
+                minHeight: { xs: 38, sm: 40 },
+                minWidth: { xs: 0, sm: 92 },
+                px: 2,
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': {
+                  bgcolor: 'rgba(255,91,105,0.08)',
+                  borderColor: 'rgba(255,91,105,0.48)',
+                },
+              }}
+            >
+              {t('core:address_book_delete', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Button>
+          ) : null}
+          {saveError ? <Box sx={{ minWidth: 0 }}>{saveError}</Box> : null}
         </Box>
         <Box
           sx={{

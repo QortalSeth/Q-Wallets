@@ -32,6 +32,7 @@ import {
   getAddressBookAvatarColor,
   getAddressBookAvatarSx,
 } from './AddressBook/avatarPalette';
+import { useTranslation } from 'react-i18next';
 
 const NumericFormat = _NumericFormat as FC<
   ComponentProps<typeof _NumericFormat> & Record<string, unknown>
@@ -61,7 +62,7 @@ type ExternalSendFormProps = {
   onSendMax: () => void;
   recipient: string;
   recipientDisplayName?: string;
-  recipientSubtitle?: string;
+  recipientSubtitle?: ReactNode;
   sendDisabled: boolean;
   showAddressBookButton?: boolean;
   showBalanceMeter?: boolean;
@@ -173,11 +174,14 @@ export function ExternalSendForm({
   recipient,
   recipientDisplayName = '',
   recipientInputProps,
-  recipientSubtitle = 'Address book contact',
+  recipientSubtitle,
   sendDisabled,
   showAddressBookButton = false,
   symbol,
 }: ExternalSendFormProps) {
+  const { t } = useTranslation(['core']);
+  const displayRecipientSubtitle =
+    recipientSubtitle ?? t('core:address_book_ui.contact');
   const safeMax = maxOrZero(maxSendable);
   const recipientInitials =
     recipientDisplayName
@@ -251,7 +255,7 @@ export function ExternalSendForm({
               lineHeight: 1,
             }}
           >
-            Transfer {symbol}
+            {t('core:wallet.transfer_symbol', { symbol })}
           </Typography>
           <Button
             disabled={sendDisabled}
@@ -290,7 +294,7 @@ export function ExternalSendForm({
               },
             }}
           >
-            Send
+            {t('core:action.send', { postProcess: 'capitalizeFirstChar' })}
           </Button>
         </Toolbar>
       </AppBar>
@@ -306,7 +310,7 @@ export function ExternalSendForm({
         }}
       >
         <Box sx={{ display: 'grid', gap: 0.85 }}>
-          <Typography sx={sendLabelSx}>To</Typography>
+          <Typography sx={sendLabelSx}>{t('core:send.to')}</Typography>
           {recipientDisplayName ? (
             <Box
               sx={{
@@ -360,12 +364,12 @@ export function ExternalSendForm({
                       lineHeight: 1,
                     }}
                   >
-                    {recipientSubtitle}
+                    {displayRecipientSubtitle}
                   </Typography>
                 </Box>
                 {onClearRecipient ? (
                   <IconButton
-                    aria-label="Clear recipient"
+                    aria-label={t('core:action.clear_recipient')}
                     onClick={onClearRecipient}
                     sx={{
                       color: 'text.secondary',
@@ -383,7 +387,7 @@ export function ExternalSendForm({
                 ) : null}
                 {showAddressBookButton && onOpenAddressBook ? (
                   <IconButton
-                    aria-label="Open address book"
+                    aria-label={t('core:action.open_address_book')}
                     onClick={onOpenAddressBook}
                     sx={{
                       border: '1px solid rgba(116,158,180,0.12)',
@@ -422,7 +426,7 @@ export function ExternalSendForm({
                     fontWeight: 600,
                   }}
                 >
-                  Address:
+                  {t('core:send.address_label')}
                 </Typography>
                 <Typography
                   noWrap
@@ -445,11 +449,15 @@ export function ExternalSendForm({
               onChange={onRecipientChange}
               error={addressError}
               fullWidth
-              placeholder={`${symbol} address`}
+              placeholder={t('core:send.symbol_address_placeholder', {
+                symbol,
+              })}
               helperText={addressError ? addressHelperText : undefined}
               slotProps={{
                 htmlInput: {
-                  'aria-label': `${symbol} receiver address`,
+                  'aria-label': t('core:send.symbol_receiver_address', {
+                    symbol,
+                  }),
                   autoCapitalize: 'none',
                   autoComplete: 'new-password',
                   autoCorrect: 'off',
@@ -460,9 +468,9 @@ export function ExternalSendForm({
                   endAdornment:
                     showAddressBookButton && onOpenAddressBook ? (
                       <InputAdornment position="end">
-                        <Tooltip title="Open address book">
+                        <Tooltip title={t('core:action.open_address_book')}>
                           <IconButton
-                            aria-label="Open address book"
+                            aria-label={t('core:action.open_address_book')}
                             onClick={onOpenAddressBook}
                             sx={{
                               border: '1px solid rgba(116,158,180,0.12)',
@@ -507,7 +515,9 @@ export function ExternalSendForm({
               justifyContent: 'space-between',
             }}
           >
-            <Typography sx={sendLabelSx}>Amount</Typography>
+            <Typography sx={sendLabelSx}>
+              {t('core:amount', { postProcess: 'capitalizeFirstChar' })}
+            </Typography>
             <Box
               sx={{
                 alignItems: 'center',
@@ -516,7 +526,7 @@ export function ExternalSendForm({
                 minHeight: 26,
               }}
             >
-              <Tooltip title="Maximum amount available after reserving the sending fee">
+              <Tooltip title={t('core:send.max_sendable_tooltip')}>
                 <Box
                   sx={{
                     alignItems: 'center',
@@ -535,7 +545,10 @@ export function ExternalSendForm({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {`Max sendable ${safeMax} ${symbol}`}
+                    {t('core:send.max_sendable', {
+                      amount: safeMax,
+                      symbol,
+                    })}
                   </Typography>
                 </Box>
               </Tooltip>
@@ -557,7 +570,9 @@ export function ExternalSendForm({
                   },
                 }}
               >
-                Max
+                {t('core:action.send_max', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
               </Button>
             </Box>
           </Box>
@@ -658,7 +673,7 @@ export function ExternalSendForm({
                 lineHeight: 1.25,
               }}
             >
-              Always double-check the address before sending.
+              {t('core:send.double_check_address')}
             </Typography>
             <Typography
               sx={{
@@ -668,7 +683,7 @@ export function ExternalSendForm({
                 lineHeight: 1.35,
               }}
             >
-              Transactions cannot be reversed after broadcast.
+              {t('core:send.irreversible')}
             </Typography>
           </Box>
         </Box>
@@ -698,11 +713,9 @@ export function ExternalSendForm({
               textAlign: 'center',
             }}
           >
-            {symbol === 'ARRR' ? (
-              <>Secure &bull; Private &bull; Decentralized</>
-            ) : (
-              <>Secure &bull; Decentralized</>
-            )}
+            {symbol === 'ARRR'
+              ? t('core:send.secure_private_decentralized')
+              : t('core:send.secure_decentralized')}
           </Typography>
         </Box>
       </Box>
@@ -721,6 +734,8 @@ export function ExternalFeeSlider({
   sliderId,
   step,
 }: ExternalFeeSliderProps) {
+  const { t } = useTranslation(['core']);
+
   return (
     <>
       <Box
@@ -747,7 +762,7 @@ export function ExternalFeeSlider({
               whiteSpace: 'nowrap',
             }}
           >
-            Fee per byte
+            {t('core:send.fee_per_byte')}
           </Typography>
           <Typography
             sx={{
@@ -811,9 +826,9 @@ export function ExternalFeeSlider({
         }}
       >
         <InfoOutlined sx={infoIconSx} />
-        <Tooltip title="Low fees may result in slow or unconfirmed transactions">
+        <Tooltip title={t('core:message.generic.low_fee_transation')}>
           <Typography sx={{ fontSize: { xs: 12.5, sm: 13 }, fontWeight: 500 }}>
-            Confirmation speed depends on the selected fee
+            {t('core:send.confirmation_speed')}
           </Typography>
         </Tooltip>
       </Box>

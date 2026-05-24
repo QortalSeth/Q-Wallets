@@ -149,6 +149,9 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
       if (deleted) {
         loadEntries();
         onAddressBookChange?.();
+        if (editingEntry?.id === deletingEntry.id) {
+          setOpenForm(false);
+        }
       }
       setOpenDeleteConfirm(false);
       setDeletingEntry(undefined);
@@ -529,6 +532,7 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         onClose={handleFormClose}
         coinType={coinType}
         entry={editingEntry}
+        onDelete={handleDeleteClick}
         onSave={handleSave}
         prefillName={prefillData?.name}
         prefillAddress={prefillData?.address}

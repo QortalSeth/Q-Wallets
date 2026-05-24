@@ -16,7 +16,10 @@
     "send": "send",
     "send_max": "send max",
     "show_qrcode": "show QR code",
-    "transfer_coin": "transfer {{ coin }}"
+    "transfer_coin": "transfer {{ coin }}",
+    "clear_recipient": "Clear recipient",
+    "open_address_book": "Open address book",
+    "confirming": "confirming"
   },
   "address": "address:",
   "address_book": "address book",
@@ -73,7 +76,7 @@
   "max_sendable": "max sendable:",
   "memo": "memo",
   "message": {
-    "generic": {      
+    "generic": {
       "bitcoin_address": "BTC addresses should be 34 characters long for BIP44 (1 prefix) and BIP49 (3 prefix) or 42 characters long for BIP84 (bc1 prefix)",
       "bitcoin_wallet": "Bitcoin Wallet",
       "confirmations": "{{ count }} confirmations",
@@ -101,7 +104,7 @@
       "qortal_address": "Qortal address should be 34 characters long (Name min 3 characters)",
       "qortal_wallet": "Qortal Wallet",
       "ravencoin_address": "RVN addresses should be 34 characters long for BIP44 (R prefix)",
-      "ravencoin_wallet": "Ravencoin Wallet",    
+      "ravencoin_wallet": "Ravencoin Wallet",
       "sending_fee": "Current sending fee is {{ quantity }} {{ coin }}.",
       "sent_transaction": "Sent {{ coin }} transaction was successful.",
       "unconfirmed_translaction": "Unconfirmed",
@@ -191,5 +194,96 @@
   "total_amount": "total amount",
   "transactions": "list of transactions",
   "transaction_hash": "TX Hash",
-  "wallets": "wallets"
+  "wallets": "wallets",
+  "wallet": {
+    "available_balance": "Available balance",
+    "your_address": "Your Address",
+    "no_transactions": "No transactions.",
+    "loading_transactions": "Loading transactions",
+    "transactions": "Transactions",
+    "encrypted_sync": "Encrypted sync",
+    "local_address_book": "Local address book",
+    "sync_now": "Sync now",
+    "sync_description": "Keeps your contacts backed up and synced across your Qortal account.",
+    "receive_symbol": "Receive {{symbol}}",
+    "transfer_symbol": "Transfer {{symbol}}",
+    "close_receive_qr_dialog": "Close receive QR dialog",
+    "no_address_available": "No address available",
+    "address_book_for_symbol": "Address book ({{symbol}})",
+    "qortal_user": "Qortal user",
+    "receive": "receive",
+    "hide_qr": "Hide QR"
+  },
+  "send": {
+    "to": "To",
+    "address_label": "Address:",
+    "max_sendable": "Max sendable {{ amount }} {{ symbol }}",
+    "max_sendable_tooltip": "Maximum amount available after reserving the sending fee",
+    "double_check_address": "Always double-check the address before sending.",
+    "irreversible": "Transactions cannot be reversed after broadcast.",
+    "secure_private_decentralized": "Secure • Private • Decentralized",
+    "secure_decentralized": "Secure • Decentralized",
+    "fee_per_byte": "Fee per byte",
+    "confirmation_speed": "Confirmation speed depends on the selected fee",
+    "qort_address_or_name": "QORT address or name",
+    "receiver_address_or_name": "Receiver address or name",
+    "max_sendable_loading": "Max sendable loading",
+    "symbol_amount": "{{symbol}} amount",
+    "network_fee": "Network fee",
+    "network_fee_max_tooltip": "Network fee deducted from the maximum sendable amount",
+    "current_network_fee_tooltip": "Current network sending fee. This amount is reserved from the maximum sendable balance.",
+    "memo": "Memo",
+    "optional_memo": "Optional memo",
+    "symbol_memo": "{{symbol}} memo",
+    "symbol_address_placeholder": "{{symbol}} address",
+    "symbol_receiver_address": "{{symbol}} receiver address"
+  },
+  "filters": {
+    "all": "All",
+    "payments": "Payments",
+    "rewards": "Rewards",
+    "activity": "Activity",
+    "arbitrary": "Arbitrary",
+    "at": "AT",
+    "group": "Group",
+    "name": "Name",
+    "asset": "Asset",
+    "poll": "Poll",
+    "advanced": "Advanced filters"
+  },
+  "transaction_signature": "Signature",
+  "transaction_status": {
+    "pending_confirmation": "Pending confirmation",
+    "pending_confirmations": "Pending, {{ count }} of 3 confirmations",
+    "confirmed": "Confirmed"
+  },
+  "common": {
+    "or": "OR",
+    "optional_parenthetical": "(optional)"
+  },
+  "max": "Max",
+  "address_book_ui": {
+    "search_placeholder": "Search by name, address or note",
+    "add_contact": "Add contact",
+    "edit_contact": "Edit contact",
+    "favorite": "Favorite",
+    "remove_favorite": "Remove favorite",
+    "contact": "Address book contact",
+    "symbol_contact": "{{symbol}} address book contact",
+    "enter_name": "Enter name",
+    "already_in_list": "(already in list)",
+    "enter_symbol_address": "Enter {{symbol}} address",
+    "address_confirmed": "Address confirmed",
+    "confirm_address_before_saving": "Confirm this address before saving.",
+    "confirm_address": "Confirm address",
+    "add_note_optional": "Add a note (optional)"
+  },
+  "app": {
+    "changelog": "CHANGELOG",
+    "close_changelog": "Close changelog",
+    "close_image_preview": "Close image preview",
+    "q_wallets_before_redesign": "Q-Wallets before redesign",
+    "q_wallets_after_redesign": "Q-Wallets after redesign",
+    "open_image_preview": "Open {{alt}}"
+  }
 }

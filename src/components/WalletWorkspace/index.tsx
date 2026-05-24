@@ -73,16 +73,19 @@ import {
 import { AddressBookEntry } from '../../utils/Types';
 import {
   ADDRESS_BOOK_STORAGE_EVENT,
+  deleteAddress,
   getAddressBook,
   moveAddressBookEntry,
   toggleAddressBookFavorite,
   updateAddress,
 } from '../../utils/addressBookStorage';
+import { DeleteConfirmationDialog } from '../AddressBook/DeleteConfirmationDialog';
 import { AddressFormDialog } from '../AddressBook/AddressFormDialog';
 import {
   getAddressBookAvatarColor,
   getAddressBookAvatarSx,
 } from '../AddressBook/avatarPalette';
+import { useTranslation } from 'react-i18next';
 
 export type WalletCoinSymbol =
   | 'QORT'
@@ -446,6 +449,7 @@ function ReceiveQrDialog({
   onClose,
   open,
 }: ReceiveQrDialogProps) {
+  const { t } = useTranslation(['core']);
   const visual = WALLET_VISUALS[coin];
   const value = address ?? '';
 
@@ -504,9 +508,9 @@ function ReceiveQrDialog({
               fontWeight: 800,
               letterSpacing: 0,
               lineHeight: 1.1,
-            }}
-          >
-            Receive {visual.symbol}
+          }}
+        >
+            {t('core:wallet.receive_symbol', { symbol: visual.symbol })}
           </Typography>
           <Typography
             sx={{
@@ -521,7 +525,7 @@ function ReceiveQrDialog({
           </Typography>
         </Box>
         <IconButton
-          aria-label="Close receive QR dialog"
+          aria-label={t('core:wallet.close_receive_qr_dialog')}
           onClick={onClose}
           size="small"
           sx={{
@@ -592,9 +596,14 @@ function ReceiveQrDialog({
               whiteSpace: 'nowrap',
             }}
           >
-            {value || 'No address available'}
+            {value || t('core:wallet.no_address_available')}
           </Typography>
-          <CustomWidthTooltip placement="top" title="Copy address">
+          <CustomWidthTooltip
+            placement="top"
+            title={t('core:action.copy_address', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+          >
             <span style={{ display: 'inline-flex' }}>
               <IconButton
                 disabled={!value}
@@ -700,18 +709,30 @@ export function WalletSummaryCard({
   balanceDecimals,
   balanceError,
   coin,
-  copyAddressLabel = 'Copy address',
-  hideReceiveLabel = 'Hide QR',
+  copyAddressLabel,
+  hideReceiveLabel,
   isBalanceLoading,
-  noAddressLabel = 'No address available',
+  noAddressLabel,
   onSend,
   onToggleReceive,
-  receiveLabel = 'Receive',
+  receiveLabel,
   receiveOpen,
-  sendLabel = 'Send',
+  sendLabel,
 }: WalletSummaryCardProps) {
+  const { t } = useTranslation(['core']);
   const visual = WALLET_VISUALS[coin];
-  const addressLabel = address || noAddressLabel;
+  const displayCopyAddressLabel =
+    copyAddressLabel ??
+    t('core:action.copy_address', { postProcess: 'capitalizeFirstChar' });
+  const displayHideReceiveLabel =
+    hideReceiveLabel ?? t('core:wallet.hide_qr');
+  const displayNoAddressLabel =
+    noAddressLabel ?? t('core:wallet.no_address_available');
+  const displayReceiveLabel =
+    receiveLabel ?? t('core:wallet.receive', { postProcess: 'capitalizeFirstChar' });
+  const displaySendLabel =
+    sendLabel ?? t('core:action.send', { postProcess: 'capitalizeFirstChar' });
+  const addressLabel = address || displayNoAddressLabel;
   const animatedBalance = useChargingBalance(
     balance,
     isBalanceLoading,
@@ -910,7 +931,7 @@ export function WalletSummaryCard({
               variant="body2"
               sx={{ color: 'text.secondary', fontWeight: 500 }}
             >
-              Available balance
+              {t('core:wallet.available_balance')}
             </Typography>
             <Typography
               component="div"
@@ -989,7 +1010,7 @@ export function WalletSummaryCard({
               lineHeight: 1,
             }}
           >
-            Your Address
+            {t('core:wallet.your_address')}
           </Typography>
           <Box
             sx={{
@@ -1023,7 +1044,7 @@ export function WalletSummaryCard({
             >
               {addressLabel}
             </Typography>
-            <CustomWidthTooltip placement="top" title={copyAddressLabel}>
+            <CustomWidthTooltip placement="top" title={displayCopyAddressLabel}>
               <IconButton
                 size="small"
                 onClick={() => copyToClipboard(address ?? '')}
@@ -1070,10 +1091,12 @@ export function WalletSummaryCard({
                 },
               }}
             >
-              {sendLabel}
+              {displaySendLabel}
             </WalletButtons>
             <Button
-              aria-label={receiveOpen ? hideReceiveLabel : receiveLabel}
+              aria-label={
+                receiveOpen ? displayHideReceiveLabel : displayReceiveLabel
+              }
               disableFocusRipple
               disableRipple
               onClick={onToggleReceive}
@@ -1107,9 +1130,9 @@ export function WalletSummaryCard({
               }}
             >
               <ReceiveActionLabel
-                hideReceiveLabel={hideReceiveLabel}
+                hideReceiveLabel={displayHideReceiveLabel}
                 open={receiveOpen}
-                receiveLabel={receiveLabel}
+                receiveLabel={displayReceiveLabel}
               />
             </Button>
           </Box>
@@ -1266,6 +1289,7 @@ export function WalletAddressBookPanel({
   onSelectAddress,
   refreshKey,
 }: WalletAddressBookPanelProps) {
+  const { t } = useTranslation(['core']);
   const visual = WALLET_VISUALS[coin];
   const [entries, setEntries] = useState<AddressBookEntry[]>([]);
   const [search, setSearch] = useState('');
@@ -1274,7 +1298,11 @@ export function WalletAddressBookPanel({
   const [editingEntry, setEditingEntry] = useState<
     AddressBookEntry | undefined
   >(undefined);
+  const [deletingEntry, setDeletingEntry] = useState<
+    AddressBookEntry | undefined
+  >(undefined);
   const [editFormOpen, setEditFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [editSaveError, setEditSaveError] = useState('');
   const [suppressSelect, setSuppressSelect] = useState(false);
 
@@ -1351,6 +1379,32 @@ export function WalletAddressBookPanel({
   const handleEditFormExited = () => {
     setEditingEntry(undefined);
     setEditSaveError('');
+  };
+
+  const handleDeleteClick = (entry: AddressBookEntry) => {
+    setDeletingEntry(entry);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setDeletingEntry(undefined);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingEntry) return;
+
+    const deleted = deleteAddress(deletingEntry.id, visual.coinType);
+    if (deleted) {
+      reloadEntries();
+      onAddressBookChange?.();
+      if (editingEntry?.id === deletingEntry.id) {
+        setEditFormOpen(false);
+      }
+    }
+
+    setDeleteConfirmOpen(false);
+    setDeletingEntry(undefined);
   };
 
   const handleEditSave = (
@@ -1448,11 +1502,13 @@ export function WalletAddressBookPanel({
       >
         <Box sx={{ px: { xs: 1.75, md: 2.1 }, py: { xs: 1.75, md: 2 } }}>
           <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1.2 }}>
-            Address book ({visual.symbol})
+            {t('core:wallet.address_book_for_symbol', {
+              symbol: visual.symbol,
+            })}
           </Typography>
           <TextField
             fullWidth
-            placeholder="Search by name, address or note"
+            placeholder={t('core:address_book_ui.search_placeholder')}
             size="small"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -1507,7 +1563,7 @@ export function WalletAddressBookPanel({
               },
             }}
           >
-            Add contact
+            {t('core:address_book_ui.add_contact')}
           </Button>
 
           <Box
@@ -1651,7 +1707,12 @@ export function WalletAddressBookPanel({
                         width: 104,
                       }}
                     >
-                      <CustomWidthTooltip placement="top" title="Copy address">
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={t('core:action.copy_address', {
+                          postProcess: 'capitalizeFirstChar',
+                        })}
+                      >
                         <IconButton
                           className="contact-action contact-action-copy"
                           disableFocusRipple
@@ -1692,7 +1753,11 @@ export function WalletAddressBookPanel({
                       </CustomWidthTooltip>
                       <CustomWidthTooltip
                         placement="top"
-                        title={entry.favorite ? 'Remove favorite' : 'Favorite'}
+                        title={
+                          entry.favorite
+                            ? t('core:address_book_ui.remove_favorite')
+                            : t('core:address_book_ui.favorite')
+                        }
                       >
                         <IconButton
                           className="contact-action contact-action-star"
@@ -1740,7 +1805,10 @@ export function WalletAddressBookPanel({
                           )}
                         </IconButton>
                       </CustomWidthTooltip>
-                      <CustomWidthTooltip placement="top" title="Edit contact">
+                      <CustomWidthTooltip
+                        placement="top"
+                        title={t('core:address_book_ui.edit_contact')}
+                      >
                         <IconButton
                           className="contact-action contact-action-edit"
                           disableFocusRipple
@@ -1932,10 +2000,17 @@ export function WalletAddressBookPanel({
         disableRestoreFocus
         entry={editingEntry}
         onClose={handleEditFormClose}
+        onDelete={handleDeleteClick}
         onExited={handleEditFormExited}
         onSave={handleEditSave}
         open={editFormOpen}
         saveError={editSaveError}
+      />
+      <DeleteConfirmationDialog
+        entryName={deletingEntry?.name || ''}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        open={deleteConfirmOpen}
       />
     </>
   );
@@ -1954,8 +2029,11 @@ type WalletTransactionsLoaderProps = {
 };
 
 export function WalletTransactionsLoader({
-  label = 'Loading transactions',
+  label,
 }: WalletTransactionsLoaderProps) {
+  const { t } = useTranslation(['core']);
+  const displayLabel = label ?? t('core:wallet.loading_transactions');
+
   return (
     <Box
       role="status"
@@ -2017,7 +2095,7 @@ export function WalletTransactionsLoader({
           letterSpacing: 0,
         }}
       >
-        {label}
+        {displayLabel}
       </Typography>
     </Box>
   );
@@ -2253,7 +2331,27 @@ export function WalletExternalTransactionsList({
 
   return (
     <>
-      <Box sx={{ overflowX: 'auto' }}>
+      <Box
+        sx={{
+          maxWidth: '100%',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          overscrollBehaviorX: 'contain',
+          pb: 0.75,
+          touchAction: 'pan-x pan-y',
+          WebkitOverflowScrolling: 'touch',
+          '&::-webkit-scrollbar': {
+            height: 8,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'rgba(116,158,180,0.28)',
+            borderRadius: 999,
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'rgba(116,158,180,0.08)',
+          },
+        }}
+      >
         <Box sx={{ minWidth }}>
           <Box
             aria-hidden
@@ -2432,8 +2530,19 @@ export function WalletExternalTransactionsList({
           color: 'text.secondary',
           mt: 0.5,
           '& .MuiTablePagination-toolbar': {
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
             minHeight: 44,
-            px: 0,
+            px: { xs: 1, sm: 0 },
+            rowGap: 0.5,
+          },
+          '& .MuiTablePagination-spacer': {
+            display: { xs: 'none', sm: 'block' },
+          },
+          '& .MuiTablePagination-selectLabel': {
+            display: { xs: 'none', sm: 'block' },
+          },
+          '& .MuiTablePagination-input': {
+            display: { xs: 'none', sm: 'inline-flex' },
           },
           '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
             {
@@ -2451,8 +2560,11 @@ export function WalletTransactionsCard({
   children,
   isRefreshing,
   onRefresh,
-  title = 'Transactions',
+  title,
 }: WalletTransactionsCardProps) {
+  const { t } = useTranslation(['core']);
+  const displayTitle = title ?? t('core:wallet.transactions');
+
   return (
     <WalletCard
       sx={{
@@ -2460,6 +2572,7 @@ export function WalletTransactionsCard({
           'linear-gradient(180deg, rgba(10, 36, 56, 0.74) 0%, rgba(7, 29, 47, 0.68) 100%)',
         borderColor: 'rgba(116,158,180,0.15)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.045)',
+        minWidth: 0,
         overflow: 'hidden',
         width: '100%',
         '& .MuiTableContainer-root': {
@@ -2574,6 +2687,7 @@ export function WalletTransactionsCard({
     >
       <Box
         sx={{
+          minWidth: 0,
           px: { xs: 1.5, md: 2.25, lg: 2.75 },
           pt: { xs: 1.5, md: 2.05 },
           pb: 1.15,
@@ -2593,7 +2707,7 @@ export function WalletTransactionsCard({
             variant="subtitle1"
             sx={{ fontWeight: 600, lineHeight: 1.1 }}
           >
-            {title}
+            {displayTitle}
           </Typography>
           {(actions || onRefresh) && (
             <Box
@@ -2627,7 +2741,9 @@ export function WalletTransactionsCard({
                     },
                   }}
                 >
-                  Refresh
+                  {t('core:action.refresh', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
                 </Button>
               )}
             </Box>
@@ -2640,6 +2756,7 @@ export function WalletTransactionsCard({
             'linear-gradient(180deg, rgba(18, 62, 89, 0.36) 0%, rgba(12, 47, 72, 0.32) 100%)',
           borderTop: '1px solid rgba(116,158,180,0.11)',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.028)',
+          minWidth: 0,
           overflow: 'hidden',
         }}
       >
@@ -2664,9 +2781,9 @@ export function WalletSyncCard({
   statusTone = 'success',
   statusTooltip,
 }: WalletSyncCardProps) {
+  const { t } = useTranslation(['core']);
   const isError = statusTone === 'error';
-  const syncDescription =
-    'Keeps your contacts backed up and synced across your Qortal account.';
+  const syncDescription = t('core:wallet.sync_description');
 
   return (
     <WalletCard
@@ -2725,7 +2842,7 @@ export function WalletSyncCard({
                     lineHeight: 1.15,
                   }}
                 >
-                  Encrypted sync
+                  {t('core:wallet.encrypted_sync')}
                 </Typography>
                 <CustomWidthTooltip placement="top" title={syncDescription}>
                   <InfoOutlined
@@ -2747,7 +2864,7 @@ export function WalletSyncCard({
                   opacity: 0.78,
                 }}
               >
-                Local address book
+                {t('core:wallet.local_address_book')}
               </Typography>
             </Box>
           </Box>
@@ -2803,7 +2920,7 @@ export function WalletSyncCard({
             },
           }}
         >
-          Sync now
+          {t('core:wallet.sync_now')}
         </Button>
       </Box>
     </WalletCard>

@@ -661,7 +661,9 @@ export default function RavencoinWallet() {
           onSendMax={handleSendMaxRvn}
           recipient={rvnRecipient}
           recipientDisplayName={rvnRecipientDisplayName}
-          recipientSubtitle="RVN address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'RVN',
+          })}
           sendDisabled={disableCanSendRvn()}
           showAddressBookButton
           showBalanceMeter

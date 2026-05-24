@@ -620,7 +620,9 @@ export default function LitecoinWallet() {
           onSendMax={handleSendMaxLtc}
           recipient={ltcRecipient}
           recipientDisplayName={ltcRecipientDisplayName}
-          recipientSubtitle="LTC address book contact"
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'LTC',
+          })}
           sendDisabled={disableCanSendLtc()}
           showAddressBookButton
           symbol="LTC"

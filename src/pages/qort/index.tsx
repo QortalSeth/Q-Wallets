@@ -48,6 +48,7 @@ import {
   ChangeEvent,
   Key,
   MouseEvent,
+  ReactNode,
   SyntheticEvent,
   useCallback,
   useContext,
@@ -3387,16 +3388,16 @@ export default function QortalWallet() {
         row?.type && row.type !== 'PAYMENT' && !rewardTypes.includes(row.type)
     );
     const filters = [
-      { label: 'All', rows: safeAllInfo, value: 'all' },
-      { label: 'Payments', rows: paymentInfo, value: 'payments' },
-      { label: 'Rewards', rows: rewardshareInfo, value: 'rewards' },
-      { label: 'Activity', rows: activityInfo, value: 'activity' },
-      { label: 'Arbitrary', rows: arbitraryInfo, value: 'arbitrary' },
-      { label: 'AT', rows: atInfo, value: 'at' },
-      { label: 'Group', rows: groupInfo, value: 'group' },
-      { label: 'Name', rows: nameInfo, value: 'name' },
-      { label: 'Asset', rows: assetInfo, value: 'asset' },
-      { label: 'Poll', rows: pollInfo, value: 'poll' },
+      { label: t('core:filters.all'), rows: safeAllInfo, value: 'all' },
+      { label: t('core:filters.payments'), rows: paymentInfo, value: 'payments' },
+      { label: t('core:filters.rewards'), rows: rewardshareInfo, value: 'rewards' },
+      { label: t('core:filters.activity'), rows: activityInfo, value: 'activity' },
+      { label: t('core:filters.arbitrary'), rows: arbitraryInfo, value: 'arbitrary' },
+      { label: t('core:filters.at'), rows: atInfo, value: 'at' },
+      { label: t('core:filters.group'), rows: groupInfo, value: 'group' },
+      { label: t('core:filters.name'), rows: nameInfo, value: 'name' },
+      { label: t('core:filters.asset'), rows: assetInfo, value: 'asset' },
+      { label: t('core:filters.poll'), rows: pollInfo, value: 'poll' },
     ];
     const nonAllFilters = filters.filter((filter) => filter.value !== 'all');
     const isAllFiltersSelected =
@@ -3577,10 +3578,12 @@ export default function QortalWallet() {
           placement="top"
           title={
             confirmations == null
-              ? 'Pending confirmation'
+              ? t('core:transaction_status.pending_confirmation')
               : isPending
-                ? `Pending, ${confirmations} of 3 confirmations`
-                : 'Confirmed'
+                ? t('core:transaction_status.pending_confirmations', {
+                    count: confirmations,
+                  })
+                : t('core:transaction_status.confirmed')
           }
         >
           {isPending ? (
@@ -3640,7 +3643,9 @@ export default function QortalWallet() {
               textAlign: 'center',
             }}
           >
-            <Typography sx={{ fontWeight: 600 }}>No transactions.</Typography>
+            <Typography sx={{ fontWeight: 600 }}>
+              {t('core:wallet.no_transactions')}
+            </Typography>
           </Box>
         );
       }
@@ -3650,10 +3655,184 @@ export default function QortalWallet() {
           ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
           : rows;
 
+      const renderMobileField = (label: string, content: ReactNode) => (
+        <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: 0,
+              lineHeight: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            {label}
+          </Typography>
+          <Box sx={{ minWidth: 0 }}>{content}</Box>
+        </Box>
+      );
+
       return (
         <>
-          <Box sx={{ overflowX: { xs: 'auto', lg: 'hidden' } }}>
-            <Box sx={{ minWidth: { xs: 680, lg: 0 }, width: '100%' }}>
+          <Box
+            sx={{
+              display: { xs: 'grid', sm: 'none' },
+              gap: 0.85,
+              minWidth: 0,
+              p: 1,
+            }}
+          >
+            {pagedRows.map((row: any, index: Key) => (
+              <Box
+                key={row?.signature || index}
+                sx={{
+                  bgcolor: 'rgba(4, 22, 38, 0.22)',
+                  border: (t) =>
+                    `1px solid ${
+                      t.palette.mode === 'dark'
+                        ? 'rgba(116,158,180,0.11)'
+                        : 'rgba(17,24,39,0.08)'
+                    }`,
+                  borderRadius: 1,
+                  display: 'grid',
+                  gap: 1.1,
+                  minWidth: 0,
+                  p: 1.15,
+                }}
+              >
+                <Box
+                  sx={{
+                    alignItems: 'start',
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                    minWidth: 0,
+                  }}
+                >
+                  <Box sx={{ pt: 0.15 }}>{renderStatusIcon(row)}</Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        lineHeight: 1.2,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {formatTransactionType(row?.type)}
+                    </Typography>
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        row?.timestamp
+                          ? new Date(row.timestamp).toLocaleString()
+                          : t('core:transaction_status.pending_confirmation')
+                      }
+                    >
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          mt: 0.35,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
+                      </Typography>
+                    </CustomWidthTooltip>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>{renderAmountCell(row)}</Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                    minWidth: 0,
+                  }}
+                >
+                  {renderMobileField(
+                    t('core:creator', { postProcess: 'capitalizeFirstChar' }),
+                    renderAddressCell(row, 'creator')
+                  )}
+                  {renderMobileField(
+                    t('core:recipient', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                    renderAddressCell(row, 'recipient')
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    alignItems: 'end',
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                    minWidth: 0,
+                  }}
+                >
+                  {renderMobileField(
+                    t('core:fee.fee', { postProcess: 'capitalizeFirstChar' }),
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row?.fee !== undefined && row?.fee !== null
+                        ? `${formatQortFee(row.fee)} QORT`
+                        : '-'}
+                    </Typography>
+                  )}
+                  {renderMobileField(
+                    t('core:transaction_signature', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                    <Typography
+                      title={row?.signature}
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row?.signature ? cropString(row.signature) : '-'}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              minWidth: 0,
+              width: '100%',
+              maxWidth: '100%',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              overscrollBehaviorX: 'contain',
+              pb: 0.75,
+              touchAction: 'pan-x pan-y',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            <Box sx={{ width: 'max(100%, 760px)' }}>
               <Box
                 aria-hidden
                 sx={{
@@ -3674,11 +3853,19 @@ export default function QortalWallet() {
                 <Typography
                   sx={{ ...transactionHeaderSx, textAlign: 'center' }}
                 >
-                  Status
+                  {t('core:status', { postProcess: 'capitalizeFirstChar' })}
                 </Typography>
-                <Typography sx={transactionHeaderSx}>Type</Typography>
-                <Typography sx={transactionHeaderSx}>Creator</Typography>
-                <Typography sx={transactionHeaderSx}>Recipient</Typography>
+                <Typography sx={transactionHeaderSx}>
+                  {t('core:type', { postProcess: 'capitalizeFirstChar' })}
+                </Typography>
+                <Typography sx={transactionHeaderSx}>
+                  {t('core:creator', { postProcess: 'capitalizeFirstChar' })}
+                </Typography>
+                <Typography sx={transactionHeaderSx}>
+                  {t('core:recipient', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
+                </Typography>
                 <Typography
                   sx={{
                     ...transactionHeaderSx,
@@ -3686,7 +3873,7 @@ export default function QortalWallet() {
                     textAlign: 'right',
                   }}
                 >
-                  Amount
+                  {t('core:amount', { postProcess: 'capitalizeFirstChar' })}
                 </Typography>
                 <Typography
                   sx={{
@@ -3695,9 +3882,11 @@ export default function QortalWallet() {
                     textAlign: 'right',
                   }}
                 >
-                  Fee
+                  {t('core:fee.fee', { postProcess: 'capitalizeFirstChar' })}
                 </Typography>
-                <Typography sx={transactionHeaderSx}>Time</Typography>
+                <Typography sx={transactionHeaderSx}>
+                  {t('core:time', { postProcess: 'capitalizeFirstChar' })}
+                </Typography>
               </Box>
 
               <Box sx={{ display: 'grid', gap: 0, px: { md: 0.4 }, py: 0.35 }}>
@@ -3807,8 +3996,19 @@ export default function QortalWallet() {
               color: 'text.secondary',
               mt: 0.5,
               '& .MuiTablePagination-toolbar': {
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
                 minHeight: 44,
-                px: 0,
+                px: { xs: 1, sm: 0 },
+                rowGap: 0.5,
+              },
+              '& .MuiTablePagination-spacer': {
+                display: { xs: 'none', sm: 'block' },
+              },
+              '& .MuiTablePagination-selectLabel': {
+                display: { xs: 'none', sm: 'block' },
+              },
+              '& .MuiTablePagination-input': {
+                display: { xs: 'none', sm: 'inline-flex' },
               },
               '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
                 {
@@ -3846,7 +4046,9 @@ export default function QortalWallet() {
             },
           }}
         >
-          {isAllFiltersSelected ? 'Advanced filters' : selectedFilterLabel}
+          {isAllFiltersSelected
+            ? t('core:filters.advanced')
+            : selectedFilterLabel}
         </Button>
         <Menu
           id="advanced-filter-menu"
@@ -4235,7 +4437,9 @@ export default function QortalWallet() {
               }}
             >
               {qortSendConfirming
-                ? 'Confirming'
+                ? t('core:action.confirming', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
                 : t('core:action.send', {
                     postProcess: 'capitalizeFirstChar',
                   })}
@@ -4253,7 +4457,7 @@ export default function QortalWallet() {
           }}
         >
           <Box sx={{ display: 'grid', gap: 0.85 }}>
-            <Typography sx={qortSendLabelSx}>To</Typography>
+            <Typography sx={qortSendLabelSx}>{t('core:send.to')}</Typography>
             {qortRecipientDisplayName ? (
               <>
                 <Box
@@ -4308,11 +4512,11 @@ export default function QortalWallet() {
                           lineHeight: 1,
                         }}
                       >
-                        Qortal user
+                        {t('core:wallet.qortal_user')}
                       </Typography>
                     </Box>
                     <IconButton
-                      aria-label="Clear recipient"
+                      aria-label={t('core:action.clear_recipient')}
                       onClick={handleClearQortRecipient}
                       sx={{
                         color: 'text.secondary',
@@ -4328,7 +4532,7 @@ export default function QortalWallet() {
                       <Close />
                     </IconButton>
                     <IconButton
-                      aria-label="Open address book"
+                      aria-label={t('core:action.open_address_book')}
                       onClick={handleOpenAddressBook}
                       sx={{
                         border: '1px solid rgba(116,158,180,0.12)',
@@ -4366,7 +4570,7 @@ export default function QortalWallet() {
                         fontWeight: 600,
                       }}
                     >
-                      Address:
+                      {t('core:send.address_label')}
                     </Typography>
                     <Typography
                       noWrap
@@ -4397,7 +4601,7 @@ export default function QortalWallet() {
                 required
                 autoComplete="new-password"
                 id="qort-recipient-manual"
-                placeholder="QORT address or name"
+                placeholder={t('core:send.qort_address_or_name')}
                 value={qortRecipient}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const input = e.currentTarget;
@@ -4421,7 +4625,7 @@ export default function QortalWallet() {
                 }}
                 slotProps={{
                   htmlInput: {
-                    'aria-label': 'Receiver address or name',
+                    'aria-label': t('core:send.receiver_address_or_name'),
                     autoCapitalize: 'none',
                     autoComplete: 'new-password',
                     autoCorrect: 'off',
@@ -4433,7 +4637,7 @@ export default function QortalWallet() {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
-                          aria-label="Open address book"
+                          aria-label={t('core:action.open_address_book')}
                           onClick={handleOpenAddressBook}
                           sx={{
                             border: '1px solid rgba(116,158,180,0.12)',
@@ -4488,7 +4692,7 @@ export default function QortalWallet() {
                 justifyContent: 'space-between',
               }}
             >
-              <Typography sx={qortSendLabelSx}>Amount</Typography>
+              <Typography sx={qortSendLabelSx}>{t('core:amount')}</Typography>
               <Box
                 sx={{
                   alignItems: 'center',
@@ -4497,7 +4701,7 @@ export default function QortalWallet() {
                   minHeight: 26,
                 }}
               >
-                <Tooltip title="Maximum amount available after network fee">
+                <Tooltip title={t('core:send.max_sendable_tooltip')}>
                   <Box
                     sx={{
                       alignItems: 'center',
@@ -4517,8 +4721,11 @@ export default function QortalWallet() {
                       }}
                     >
                       {isLoadingWalletBalanceQort
-                        ? 'Max sendable loading'
-                        : `Max sendable ${formatQortAmount(maxSendableQortCoin())} QORT`}
+                        ? t('core:send.max_sendable_loading')
+                        : t('core:send.max_sendable', {
+                            amount: formatQortAmount(maxSendableQortCoin()),
+                            symbol: 'QORT',
+                          })}
                     </Typography>
                   </Box>
                 </Tooltip>
@@ -4540,7 +4747,7 @@ export default function QortalWallet() {
                     },
                   }}
                 >
-                  Max
+                  {t('core:max')}
                 </Button>
               </Box>
             </Box>
@@ -4571,7 +4778,9 @@ export default function QortalWallet() {
               error={amountTouched && !!amountError}
               slotProps={{
                 htmlInput: {
-                  'aria-label': 'QORT amount',
+                  'aria-label': t('core:send.symbol_amount', {
+                    symbol: 'QORT',
+                  }),
                 },
                 input: {
                   endAdornment: (
@@ -4639,7 +4848,7 @@ export default function QortalWallet() {
             />
           </Box>
 
-          <Tooltip title="Network fee deducted from the maximum sendable amount">
+          <Tooltip title={t('core:send.network_fee_max_tooltip')}>
             <Box
               sx={{
                 alignItems: 'center',
@@ -4660,7 +4869,7 @@ export default function QortalWallet() {
                   fontWeight: 500,
                 }}
               >
-                Network fee
+                {t('core:send.network_fee')}
               </Typography>
               <Typography
                 sx={{
@@ -4792,6 +5001,8 @@ export default function QortalWallet() {
                 alignItems: loadingRefreshQort ? 'center' : undefined,
                 display: loadingRefreshQort ? 'grid' : 'block',
                 minHeight: rowsPerPage === 10 ? { md: 548 } : undefined,
+                minWidth: 0,
+                maxWidth: '100%',
               }}
             >
               {loadingRefreshQort ? tableLoader() : qortalTableView.content}

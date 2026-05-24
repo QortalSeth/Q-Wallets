@@ -14,6 +14,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Add, Close, Search } from '@mui/icons-material';
+import type { Theme } from '@mui/material/styles';
 import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
 import { Transition } from '../../styles/page-styles';
@@ -269,16 +270,28 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
         slots={{ transition: Transition }}
         maxWidth={false}
         disableScrollLock
+        disableAutoFocus
+        disableRestoreFocus
         slotProps={{
           paper: {
             sx: {
-              bgcolor: 'rgba(3, 17, 29, 0.985)',
-              backgroundImage:
-                'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
-              border: '1px solid rgba(91,132,158,0.28)',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(3, 17, 29, 0.985)'
+                  : '#ffffff',
+              backgroundImage: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                  : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.08), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(246,250,252,0.995) 100%)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(91,132,158,0.28)'
+                  : '1px solid rgba(11,143,211,0.16)',
               borderRadius: fullScreen ? 0 : 2,
-              boxShadow:
-                '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+              boxShadow: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
               maxHeight: fullScreen ? '100dvh' : 'calc(100dvh - 48px)',
               overflowX: 'hidden',
               width: fullScreen ? '100%' : 'min(900px, calc(100vw - 24px))',
@@ -417,14 +430,23 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(0,8,16,0.2)',
+                    bgcolor: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(0,8,16,0.2)'
+                        : 'rgba(255,255,255,0.76)',
                     borderRadius: 1.35,
                     minHeight: { xs: 44, md: 44 },
                     '& fieldset': {
-                      borderColor: 'rgba(116,158,180,0.16)',
+                      borderColor: (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(116,158,180,0.16)'
+                          : 'rgba(11,143,211,0.18)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(116,158,180,0.3)',
+                      borderColor: (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(116,158,180,0.3)'
+                          : 'rgba(11,143,211,0.32)',
                     },
                     '&.Mui-focused fieldset': {
                       borderColor: 'rgba(24,189,242,0.62)',
@@ -488,8 +510,14 @@ export const AddressBookDialog: React.FC<AddressBookDialogProps> = ({
               <Box
                 sx={{
                   alignItems: 'center',
-                  bgcolor: 'rgba(0,8,16,0.12)',
-                  border: '1px solid rgba(116,158,180,0.08)',
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(0,8,16,0.12)'
+                      : 'rgba(246,250,252,0.72)',
+                  border: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? '1px solid rgba(116,158,180,0.08)'
+                      : '1px solid rgba(11,143,211,0.12)',
                   borderRadius: 1.35,
                   display: 'flex',
                   justifyContent: 'center',

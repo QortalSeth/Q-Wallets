@@ -19,6 +19,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import {
   LockOutlined,
   Close,
@@ -85,10 +86,16 @@ const maxOrZero = (value: number) =>
   Number.isFinite(value) && value > 0 ? value : 0;
 
 export const sendCoinDialogPaperSx = {
-  backgroundColor: 'rgba(3, 17, 29, 0.985)',
-  backgroundImage:
-    'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
-  border: '1px solid rgba(91,132,158,0.28)',
+  backgroundColor: (t: Theme) =>
+    t.palette.mode === 'dark' ? 'rgba(3, 17, 29, 0.985)' : '#ffffff',
+  backgroundImage: (t: Theme) =>
+    t.palette.mode === 'dark'
+      ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+      : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
+  border: (t: Theme) =>
+    t.palette.mode === 'dark'
+      ? '1px solid rgba(91,132,158,0.28)'
+      : '1px solid rgba(11,143,211,0.14)',
   borderRadius: 2,
   boxShadow:
     '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
@@ -97,7 +104,8 @@ export const sendCoinDialogPaperSx = {
 } as const;
 
 const sendLabelSx = {
-  color: 'rgba(228,238,248,0.9)',
+  color: (t: Theme) =>
+    t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
   fontSize: { xs: 14.5, sm: 15 },
   fontWeight: 700,
   lineHeight: 1.2,
@@ -117,19 +125,29 @@ const fieldSx = {
     ...helperSx,
   },
   '& .MuiOutlinedInput-root': {
-    bgcolor: 'rgba(0,8,16,0.2)',
+    bgcolor: (t: Theme) =>
+      t.palette.mode === 'dark' ? 'rgba(0,8,16,0.2)' : 'rgba(255,255,255,0.72)',
     borderRadius: 1.35,
     minHeight: { xs: 54, sm: 56 },
     px: { xs: 1.2, sm: 1.35 },
     transition: 'background-color 160ms ease',
     '& fieldset': {
-      borderColor: 'rgba(116,158,180,0.16)',
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.16)'
+          : 'rgba(11,143,211,0.16)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(116,158,180,0.3)',
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.3)'
+          : 'rgba(11,143,211,0.32)',
     },
     '&.Mui-focused': {
-      bgcolor: 'rgba(0,8,16,0.2)',
+      bgcolor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(0,8,16,0.2)'
+          : 'rgba(255,255,255,0.86)',
     },
     '&.Mui-focused fieldset': {
       borderColor: 'rgba(24,189,242,0.62)',

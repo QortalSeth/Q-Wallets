@@ -47,7 +47,10 @@ export function SlideTransition(props: ComponentProps<typeof Slide>) {
 export const DialogGeneral = styled(Dialog)(({ theme }: { theme: Theme }) => ({
   '& .MuiBackdrop-root': {
     backdropFilter: 'blur(8px)',
-    backgroundColor: 'rgba(0, 7, 12, 0.68)',
+    backgroundColor:
+      theme.palette.mode === 'dark'
+        ? 'rgba(0, 7, 12, 0.68)'
+        : 'rgba(15, 23, 42, 0.32)',
   },
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
@@ -76,7 +79,10 @@ export const WalletSendDialog = styled(Dialog)(
   ({ theme }: { theme: Theme }) => ({
     '& .MuiBackdrop-root': {
       backdropFilter: 'blur(8px)',
-      backgroundColor: 'rgba(0, 7, 12, 0.68)',
+      backgroundColor:
+        theme.palette.mode === 'dark'
+          ? 'rgba(0, 7, 12, 0.68)'
+          : 'rgba(15, 23, 42, 0.32)',
     },
     '& .MuiDialog-paper': {
       backgroundColor: 'rgba(4, 18, 31, 0.98)',

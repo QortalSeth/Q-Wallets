@@ -41,7 +41,7 @@ import {
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
 import { useAtom } from 'jotai';
 import { Coin, RequestQueueWithPromise, useGlobal } from 'qapp-core';
@@ -3470,8 +3470,10 @@ export default function QortalWallet() {
       overflow: 'hidden',
       position: 'relative',
       '&::before': {
-        background:
-          'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))',
+        background: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))'
+            : 'linear-gradient(90deg, rgba(11,143,211,0.08), rgba(11,143,211,0.025))',
         content: '""',
         inset: 0,
         opacity: 0,
@@ -3932,7 +3934,10 @@ export default function QortalWallet() {
                     sx={{
                       ...transactionRowHoverSx,
                       alignItems: 'center',
-                      bgcolor: 'rgba(4, 22, 38, 0.16)',
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(4, 22, 38, 0.16)'
+                          : 'rgba(255,255,255,0.58)',
                       borderBottom: (t) =>
                         `1px solid ${
                           t.palette.mode === 'dark'
@@ -4179,7 +4184,8 @@ export default function QortalWallet() {
         : syncStatusLabel;
   const qortalTableView = qortalTables();
   const qortSendLabelSx = {
-    color: 'rgba(228,238,248,0.9)',
+    color: (t: Theme) =>
+      t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
     fontSize: { xs: 14.5, md: 15 },
     fontWeight: 700,
     lineHeight: 1.2,
@@ -4195,19 +4201,31 @@ export default function QortalWallet() {
   const qortSendFieldSx = {
     '& .MuiFormHelperText-root': qortSendHelperSx,
     '& .MuiOutlinedInput-root': {
-      bgcolor: 'rgba(0,8,16,0.2)',
+      bgcolor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(0,8,16,0.2)'
+          : 'rgba(255,255,255,0.72)',
       borderRadius: 1.35,
       minHeight: { xs: 54, md: 56 },
       px: { xs: 1.2, md: 1.35 },
       transition: 'background-color 160ms ease',
       '& fieldset': {
-        borderColor: 'rgba(116,158,180,0.15)',
+        borderColor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.15)'
+            : 'rgba(11,143,211,0.16)',
       },
       '&:hover fieldset': {
-        borderColor: 'rgba(116,158,180,0.3)',
+        borderColor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.3)'
+            : 'rgba(11,143,211,0.32)',
       },
       '&.Mui-focused': {
-        bgcolor: 'rgba(0,8,16,0.2)',
+        bgcolor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(0,8,16,0.2)'
+            : 'rgba(255,255,255,0.86)',
       },
       '&.Mui-focused fieldset': {
         borderColor: 'rgba(24,189,242,0.62)',
@@ -4259,13 +4277,41 @@ export default function QortalWallet() {
         slotProps={{
           paper: {
             sx: {
-              backgroundColor: 'rgba(3, 17, 29, 0.985)',
-              backgroundImage:
-                'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
-              border: '1px solid rgba(91,132,158,0.28)',
+              '&&': {
+                backgroundColor: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? 'rgba(3, 17, 29, 0.985)'
+                    : '#ffffff',
+                backgroundImage: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                    : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
+                border: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? '1px solid rgba(91,132,158,0.28)'
+                    : '1px solid rgba(11,143,211,0.14)',
+                boxShadow: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                    : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+              },
+              backgroundColor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(3, 17, 29, 0.985)'
+                  : '#ffffff',
+              backgroundImage: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                  : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(91,132,158,0.28)'
+                  : '1px solid rgba(11,143,211,0.14)',
               borderRadius: 2,
-              boxShadow:
-                '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+              boxShadow: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
               minHeight: 'min(590px, calc(100dvh - 32px))',
               width: 'min(592px, calc(100vw - 24px))',
             },
@@ -4500,8 +4546,14 @@ export default function QortalWallet() {
               <>
                 <Box
                   sx={{
-                    bgcolor: 'rgba(0,8,16,0.18)',
-                    border: '1px solid rgba(116,158,180,0.15)',
+                    bgcolor: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(0,8,16,0.18)'
+                        : 'rgba(255,255,255,0.76)',
+                    border: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '1px solid rgba(116,158,180,0.15)'
+                        : '1px solid rgba(11,143,211,0.16)',
                     borderRadius: 1.55,
                     display: 'grid',
                     overflow: 'hidden',
@@ -4590,7 +4642,10 @@ export default function QortalWallet() {
                   <Box
                     sx={{
                       alignItems: 'center',
-                      borderTop: '1px solid rgba(116,158,180,0.115)',
+                      borderTop: (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? '1px solid rgba(116,158,180,0.115)'
+                          : '1px solid rgba(11,143,211,0.12)',
                       display: 'flex',
                       gap: 0.85,
                       minHeight: { xs: 40, md: 42 },
@@ -4848,7 +4903,10 @@ export default function QortalWallet() {
                 },
                 '& .MuiOutlinedInput-root': {
                   ...qortSendFieldSx['& .MuiOutlinedInput-root'],
-                  bgcolor: 'rgba(0,8,16,0.2)',
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(0,8,16,0.2)'
+                      : 'rgba(255,255,255,0.86)',
                   borderRadius: 1.55,
                   minHeight: { xs: 54, md: 56 },
                   px: { xs: 1.45, md: 1.6 },
@@ -4925,8 +4983,14 @@ export default function QortalWallet() {
           <Box
             sx={{
               alignItems: 'flex-start',
-              bgcolor: 'rgba(8, 57, 52, 0.34)',
-              border: '1px solid rgba(34, 227, 138, 0.11)',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(8, 57, 52, 0.34)'
+                  : 'rgba(232, 248, 241, 0.9)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(34, 227, 138, 0.11)'
+                  : '1px solid rgba(26, 140, 86, 0.18)',
               borderRadius: 1.55,
               display: 'flex',
               gap: 1.6,
@@ -4965,8 +5029,14 @@ export default function QortalWallet() {
           <Box
             sx={{
               alignItems: 'center',
-              bgcolor: 'rgba(0,8,16,0.12)',
-              border: '1px solid rgba(116,158,180,0.09)',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(0,8,16,0.12)'
+                  : 'rgba(246,250,252,0.78)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(116,158,180,0.09)'
+                  : '1px solid rgba(11,143,211,0.12)',
               borderRadius: 1.35,
               color: 'text.secondary',
               display: 'flex',

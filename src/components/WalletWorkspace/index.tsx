@@ -457,21 +457,42 @@ function ReceiveQrDialog({
   return (
     <Dialog
       disableScrollLock
+      disableAutoFocus
+      disableRestoreFocus
       fullWidth
       maxWidth={false}
       onClose={onClose}
       open={open}
       slotProps={{
+        backdrop: {
+          sx: {
+            backdropFilter: 'blur(8px)',
+            backgroundColor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(0, 7, 12, 0.68)'
+                : 'rgba(15, 23, 42, 0.32)',
+          },
+        },
         paper: {
           sx: {
             ...getWalletVars(visual),
-            backgroundColor: 'rgba(3, 17, 29, 0.985)',
-            backgroundImage:
-              'radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--wallet-accent) 16%, transparent), transparent 34%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
-            border: '1px solid rgba(91,132,158,0.28)',
+            backgroundColor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(3, 17, 29, 0.985)'
+                : '#ffffff',
+            backgroundImage: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--wallet-accent) 16%, transparent), transparent 34%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                : 'radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--wallet-accent) 10%, transparent), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(246,250,252,0.995) 100%)',
+            border: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '1px solid rgba(91,132,158,0.28)'
+                : '1px solid rgba(11,143,211,0.16)',
             borderRadius: 2,
-            boxShadow:
-              '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+            boxShadow: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
             color: 'text.primary',
             overflow: 'hidden',
             width: 'min(386px, calc(100vw - 28px))',
@@ -575,8 +596,14 @@ function ReceiveQrDialog({
         <Box
           sx={{
             alignItems: 'center',
-            bgcolor: 'rgba(3, 16, 27, 0.64)',
-            border: '1px solid rgba(116,158,180,0.16)',
+            bgcolor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(3, 16, 27, 0.64)'
+                : 'rgba(246,250,252,0.82)',
+            border: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '1px solid rgba(116,158,180,0.16)'
+                : '1px solid rgba(11,143,211,0.16)',
             borderRadius: 1,
             display: 'flex',
             gap: 1,
@@ -1016,8 +1043,10 @@ export function WalletSummaryCard({
           <Box
             sx={{
               alignItems: 'center',
-              background:
-                'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 7%, rgba(0, 8, 16, 0.4)) 0%, rgba(0, 8, 16, 0.36) 38%, rgba(0, 8, 16, 0.44) 100%)',
+              background: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 7%, rgba(0, 8, 16, 0.4)) 0%, rgba(0, 8, 16, 0.36) 38%, rgba(0, 8, 16, 0.44) 100%)'
+                  : 'linear-gradient(90deg, color-mix(in srgb, var(--wallet-accent) 7%, rgba(255,255,255,0.96)) 0%, rgba(255,255,255,0.92) 48%, rgba(248,252,255,0.96) 100%)',
               border:
                 '1px solid color-mix(in srgb, var(--wallet-accent) 18%, rgba(116,158,180,0.24))',
               borderRadius: 1,
@@ -1073,19 +1102,24 @@ export function WalletSummaryCard({
               aria-label={`Send ${visual.symbol}`}
               onClick={onSend}
               sx={{
-                background:
-                  'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 36%, rgba(20,39,53,0.96)) 0%, color-mix(in srgb, var(--wallet-accent) 24%, rgba(7,18,30,0.98)) 100%)',
+                background: (t) =>
+                  t.palette.mode === 'dark'
+                    ? 'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 36%, rgba(20,39,53,0.96)) 0%, color-mix(in srgb, var(--wallet-accent) 24%, rgba(7,18,30,0.98)) 100%)'
+                    : 'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 86%, #ffffff) 0%, color-mix(in srgb, var(--wallet-accent) 72%, #0b5f8d) 100%)',
                 border:
                   '1px solid color-mix(in srgb, var(--wallet-accent) 52%, transparent)',
                 boxShadow:
                   '0 12px 28px color-mix(in srgb, var(--wallet-accent) 14%, transparent), inset 1px 0 0 color-mix(in srgb, var(--wallet-accent) 26%, transparent), inset 0 1px 0 rgba(255,255,255,0.1)',
-                color: 'text.primary',
+                color: (t) =>
+                  t.palette.mode === 'dark' ? 'text.primary' : '#ffffff',
                 fontSize: 15,
                 fontWeight: 700,
                 minHeight: 52,
                 '&:hover': {
-                  background:
-                    'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 46%, rgba(24,45,60,0.98)) 0%, color-mix(in srgb, var(--wallet-accent) 30%, rgba(7,18,30,0.98)) 100%)',
+                  background: (t) =>
+                    t.palette.mode === 'dark'
+                      ? 'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 46%, rgba(24,45,60,0.98)) 0%, color-mix(in srgb, var(--wallet-accent) 30%, rgba(7,18,30,0.98)) 100%)'
+                      : 'linear-gradient(180deg, color-mix(in srgb, var(--wallet-accent) 92%, #ffffff) 0%, color-mix(in srgb, var(--wallet-accent) 76%, #0b5f8d) 100%)',
                   borderColor: 'var(--wallet-accent)',
                   boxShadow:
                     '0 14px 32px color-mix(in srgb, var(--wallet-accent) 24%, transparent), inset 0 1px 0 rgba(255,255,255,0.12)',
@@ -1104,7 +1138,10 @@ export function WalletSummaryCard({
               startIcon={<ReceiveActionIcon open={receiveOpen} />}
               variant="outlined"
               sx={{
-                bgcolor: 'rgba(0, 8, 16, 0.28)',
+                bgcolor: (t) =>
+                  t.palette.mode === 'dark'
+                    ? 'rgba(0, 8, 16, 0.28)'
+                    : 'rgba(255,255,255,0.76)',
                 borderColor:
                   'color-mix(in srgb, var(--wallet-accent) 16%, rgba(116,158,180,0.24))',
                 boxShadow:
@@ -1493,10 +1530,18 @@ export function WalletAddressBookPanel({
       <WalletCard
         sx={{
           ...getWalletVars(visual),
-          background:
-            'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
-          borderColor: 'rgba(116,158,180,0.14)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+          background: (t) =>
+            t.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)'
+              : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(247,251,253,0.9) 100%)',
+          borderColor: (t) =>
+            t.palette.mode === 'dark'
+              ? 'rgba(116,158,180,0.14)'
+              : 'rgba(11,143,211,0.14)',
+          boxShadow: (t) =>
+            t.palette.mode === 'dark'
+              ? 'inset 0 1px 0 rgba(255,255,255,0.04)'
+              : '0 18px 48px rgba(15, 74, 106, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
           overflow: 'hidden',
           width: '100%',
         }}
@@ -1528,7 +1573,10 @@ export function WalletAddressBookPanel({
                 py: 0.65,
               },
               '& .MuiOutlinedInput-root': {
-                bgcolor: 'rgba(1, 12, 24, 0.34)',
+                bgcolor: (t) =>
+                  t.palette.mode === 'dark'
+                    ? 'rgba(1, 12, 24, 0.34)'
+                    : 'rgba(255,255,255,0.78)',
                 minHeight: 32,
                 '& fieldset': {
                   borderColor: (t) =>
@@ -1546,8 +1594,14 @@ export function WalletAddressBookPanel({
             variant="outlined"
             onClick={onAddContact}
             sx={{
-              bgcolor: 'rgba(13, 48, 72, 0.32)',
-              borderColor: 'rgba(116,158,180,0.16)',
+              bgcolor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(13, 48, 72, 0.32)'
+                  : 'rgba(255,255,255,0.62)',
+              borderColor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(116,158,180,0.16)'
+                  : 'rgba(11,143,211,0.22)',
               color: 'text.secondary',
               fontWeight: 600,
               mb: 1.35,
@@ -1612,8 +1666,14 @@ export function WalletAddressBookPanel({
                     }}
                     sx={{
                       alignItems: 'center',
-                      bgcolor: 'rgba(6, 25, 40, 0.22)',
-                      border: '1px solid rgba(116,158,180,0.075)',
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(6, 25, 40, 0.22)'
+                          : 'rgba(255,255,255,0.62)',
+                      border: (t) =>
+                        t.palette.mode === 'dark'
+                          ? '1px solid rgba(116,158,180,0.075)'
+                          : '1px solid rgba(11,143,211,0.1)',
                       borderRadius: 1,
                       cursor: 'grab',
                       display: 'grid',
@@ -1630,8 +1690,14 @@ export function WalletAddressBookPanel({
                         borderColor: 'rgba(24,189,242,0.28)',
                       }),
                       '&:hover': {
-                        bgcolor: 'rgba(14, 49, 72, 0.3)',
-                        borderColor: 'rgba(116,158,180,0.13)',
+                        bgcolor: (t) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(14, 49, 72, 0.3)'
+                            : 'rgba(239,248,252,0.95)',
+                        borderColor: (t) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(116,158,180,0.13)'
+                            : 'rgba(11,143,211,0.18)',
                       },
                       '&:hover .contact-action, &:focus-within .contact-action':
                         {
@@ -2571,10 +2637,18 @@ export function WalletTransactionsCard({
   return (
     <WalletCard
       sx={{
-        background:
-          'linear-gradient(180deg, rgba(10, 36, 56, 0.74) 0%, rgba(7, 29, 47, 0.68) 100%)',
-        borderColor: 'rgba(116,158,180,0.15)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.045)',
+        background: (t) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(10, 36, 56, 0.74) 0%, rgba(7, 29, 47, 0.68) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(247,251,253,0.92) 100%)',
+        borderColor: (t) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.15)'
+            : 'rgba(11,143,211,0.13)',
+        boxShadow: (t) =>
+          t.palette.mode === 'dark'
+            ? 'inset 0 1px 0 rgba(255,255,255,0.045)'
+            : '0 18px 54px rgba(15, 74, 106, 0.08), inset 0 1px 0 rgba(255,255,255,0.84)',
         minWidth: 0,
         overflow: 'hidden',
         width: '100%',
@@ -2755,10 +2829,18 @@ export function WalletTransactionsCard({
       </Box>
       <Box
         sx={{
-          background:
-            'linear-gradient(180deg, rgba(18, 62, 89, 0.36) 0%, rgba(12, 47, 72, 0.32) 100%)',
-          borderTop: '1px solid rgba(116,158,180,0.11)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.028)',
+          background: (t) =>
+            t.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(18, 62, 89, 0.36) 0%, rgba(12, 47, 72, 0.32) 100%)'
+              : 'linear-gradient(180deg, rgba(242,248,251,0.72) 0%, rgba(255,255,255,0.5) 100%)',
+          borderTop: (t) =>
+            t.palette.mode === 'dark'
+              ? '1px solid rgba(116,158,180,0.11)'
+              : '1px solid rgba(11,143,211,0.1)',
+          boxShadow: (t) =>
+            t.palette.mode === 'dark'
+              ? 'inset 0 1px 0 rgba(255,255,255,0.028)'
+              : 'inset 0 1px 0 rgba(255,255,255,0.72)',
           minWidth: 0,
           overflow: 'hidden',
         }}
@@ -2791,10 +2873,18 @@ export function WalletSyncCard({
   return (
     <WalletCard
       sx={{
-        background:
-          'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)',
-        borderColor: 'rgba(116,158,180,0.14)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+        background: (t) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(10, 34, 52, 0.82) 0%, rgba(7, 27, 43, 0.76) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(247,251,253,0.9) 100%)',
+        borderColor: (t) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.14)'
+            : 'rgba(11,143,211,0.14)',
+        boxShadow: (t) =>
+          t.palette.mode === 'dark'
+            ? 'inset 0 1px 0 rgba(255,255,255,0.04)'
+            : '0 18px 48px rgba(15, 74, 106, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
         overflow: 'hidden',
         width: '100%',
       }}
@@ -2821,7 +2911,10 @@ export function WalletSyncCard({
                 alignItems: 'center',
                 bgcolor: isError
                   ? 'rgba(246, 167, 11, 0.08)'
-                  : 'rgba(1, 12, 24, 0.34)',
+                  : (t) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(1, 12, 24, 0.34)'
+                        : 'rgba(239,248,252,0.88)',
                 border: '1px solid rgba(116,158,180,0.16)',
                 borderRadius: 1,
                 color: isError
@@ -2911,14 +3004,26 @@ export function WalletSyncCard({
           startIcon={<Sync />}
           variant="outlined"
           sx={{
-            bgcolor: 'rgba(13, 48, 72, 0.32)',
-            borderColor: 'rgba(116,158,180,0.16)',
+            bgcolor: (t) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(13, 48, 72, 0.32)'
+                : 'rgba(255,255,255,0.62)',
+            borderColor: (t) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(116,158,180,0.16)'
+                : 'rgba(11,143,211,0.22)',
             color: 'text.secondary',
             fontWeight: 600,
             minHeight: 42,
             '&:hover': {
-              bgcolor: 'rgba(18, 64, 94, 0.42)',
-              borderColor: 'rgba(116,158,180,0.28)',
+              bgcolor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(18, 64, 94, 0.42)'
+                  : 'rgba(239,248,252,0.95)',
+              borderColor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(116,158,180,0.28)'
+                  : 'rgba(11,143,211,0.32)',
               color: 'text.primary',
             },
           }}

@@ -634,9 +634,11 @@ export default function AppLayout() {
   return (
     <Box
       sx={{
-        bgcolor: '#030b14',
-        backgroundImage:
-          'linear-gradient(180deg, #020917 0%, #061421 48%, #030b14 100%)',
+        bgcolor: (t) => (t.palette.mode === 'dark' ? '#030b14' : '#f4f8fb'),
+        backgroundImage: (t) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, #020917 0%, #061421 48%, #030b14 100%)'
+            : 'radial-gradient(circle at 12% 0%, rgba(11,143,211,0.13), transparent 30%), radial-gradient(circle at 84% 8%, rgba(242,184,75,0.1), transparent 28%), linear-gradient(180deg, #f8fbfd 0%, #eef5f8 52%, #f7fafc 100%)',
         isolation: 'isolate',
         minHeight: '100dvh',
         overflowX: 'hidden',
@@ -644,7 +646,14 @@ export default function AppLayout() {
         width: '100%',
       }}
     >
-      <SceneAtmosphere settings={DEFAULT_SCENE_GLOW_SETTINGS} />
+      <Box
+        sx={{
+          opacity: (t) => (t.palette.mode === 'dark' ? 1 : 0.28),
+          pointerEvents: 'none',
+        }}
+      >
+        <SceneAtmosphere settings={DEFAULT_SCENE_GLOW_SETTINGS} />
+      </Box>
       {isMobile && (
         <AppBar
           position="sticky"

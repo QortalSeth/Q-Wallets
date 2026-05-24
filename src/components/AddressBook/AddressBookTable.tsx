@@ -11,6 +11,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   ContentCopy,
@@ -80,8 +81,10 @@ const tableRowHoverSx = {
   overflow: 'hidden',
   position: 'relative',
   '&::before': {
-    background:
-      'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))',
+    background: (t: Theme) =>
+      t.palette.mode === 'dark'
+        ? 'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))'
+        : 'linear-gradient(90deg, rgba(11,143,211,0.07), rgba(11,143,211,0.025))',
     content: '""',
     inset: 0,
     opacity: 0,
@@ -295,8 +298,14 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
     <Box
       sx={{
         alignItems: { xs: 'stretch', sm: 'center' },
-        bgcolor: 'rgba(0,8,16,0.1)',
-        borderTop: '1px solid rgba(116,158,180,0.075)',
+        bgcolor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(0,8,16,0.1)'
+            : 'rgba(245,250,252,0.82)',
+        borderTop: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? '1px solid rgba(116,158,180,0.075)'
+            : '1px solid rgba(11,143,211,0.12)',
         display: 'grid',
         gap: { xs: 1.5, md: 1.2 },
         gridTemplateColumns: { xs: '1fr', md: '1fr auto auto' },
@@ -344,7 +353,10 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
           value={String(rowsPerPage)}
           onChange={handleRowsPerPageSelect}
           sx={{
-            bgcolor: 'rgba(0,8,16,0.24)',
+            bgcolor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(0,8,16,0.24)'
+                : 'rgba(255,255,255,0.78)',
             borderRadius: 1,
             color: 'text.primary',
             fontSize: { xs: 15, md: 13 },
@@ -352,7 +364,10 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
             height: { xs: 44, md: 34 },
             minWidth: { xs: 86, md: 62 },
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(116,158,180,0.2)',
+              borderColor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(116,158,180,0.2)'
+                  : 'rgba(11,143,211,0.2)',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
               borderColor: 'rgba(24,189,242,0.5)',
@@ -427,10 +442,18 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
       <Paper
         elevation={0}
         sx={{
-          bgcolor: 'rgba(2,16,27,0.54)',
-          backgroundImage:
-            'linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006))',
-          border: '1px solid rgba(116,158,180,0.085)',
+          bgcolor: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? 'rgba(2,16,27,0.54)'
+              : 'rgba(255,255,255,0.86)',
+          backgroundImage: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006))'
+              : 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(246,250,252,0.88))',
+          border: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? '1px solid rgba(116,158,180,0.085)'
+              : '1px solid rgba(11,143,211,0.14)',
           borderRadius: 1.35,
           overflow: 'hidden',
         }}
@@ -455,7 +478,10 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
                 borderBottom:
                   index === paginatedEntries.length - 1
                     ? 'none'
-                    : '1px solid rgba(116,158,180,0.075)',
+                    : (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? '1px solid rgba(116,158,180,0.075)'
+                          : '1px solid rgba(11,143,211,0.11)',
                 cursor: onReorder ? 'grab' : onUse ? 'pointer' : 'default',
                 display: 'grid',
                 gap: 1.1,
@@ -556,10 +582,18 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
     <Paper
       elevation={0}
       sx={{
-        bgcolor: 'rgba(2,16,27,0.54)',
-        backgroundImage:
-          'linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006))',
-        border: '1px solid rgba(116,158,180,0.085)',
+        bgcolor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(2,16,27,0.54)'
+            : 'rgba(255,255,255,0.86)',
+        backgroundImage: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.006))'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(246,250,252,0.88))',
+        border: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? '1px solid rgba(116,158,180,0.085)'
+            : '1px solid rgba(11,143,211,0.14)',
         borderRadius: 1.35,
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.018)',
         overflow: 'hidden',
@@ -571,8 +605,14 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
             aria-hidden
             sx={{
               alignItems: 'center',
-              bgcolor: 'rgba(0,8,16,0.08)',
-              borderBottom: '1px solid rgba(116,158,180,0.075)',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(0,8,16,0.08)'
+                  : 'rgba(238,247,251,0.9)',
+              borderBottom: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(116,158,180,0.075)'
+                  : '1px solid rgba(11,143,211,0.12)',
               display: 'grid',
               gap: 1.2,
               gridTemplateColumns:
@@ -623,7 +663,10 @@ export const AddressBookTable: React.FC<AddressBookTableProps> = ({
                 borderBottom:
                   index === paginatedEntries.length - 1
                     ? 'none'
-                    : '1px solid rgba(116,158,180,0.065)',
+                    : (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? '1px solid rgba(116,158,180,0.065)'
+                          : '1px solid rgba(11,143,211,0.1)',
                 cursor: onReorder ? 'grab' : onUse ? 'pointer' : 'default',
                 display: 'grid',
                 gap: 1.2,

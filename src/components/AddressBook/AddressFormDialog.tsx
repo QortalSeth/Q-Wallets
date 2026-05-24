@@ -12,6 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import Check from '@mui/icons-material/Check';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import Close from '@mui/icons-material/Close';
@@ -66,7 +67,8 @@ const coinLogos: Partial<Record<Coin, string>> = {
 };
 
 const fieldLabelSx = {
-  color: 'rgba(228,238,248,0.9)',
+  color: (t: Theme) =>
+    t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
   fontSize: { xs: 14.5, sm: 15 },
   fontWeight: 700,
   letterSpacing: 0,
@@ -76,15 +78,24 @@ const fieldLabelSx = {
 
 const formFieldSx = {
   '& .MuiOutlinedInput-root': {
-    bgcolor: 'rgba(0,8,16,0.2)',
+    bgcolor: (t: Theme) =>
+      t.palette.mode === 'dark'
+        ? 'rgba(0,8,16,0.2)'
+        : 'rgba(255,255,255,0.76)',
     borderRadius: 1.35,
     minHeight: { xs: 54, sm: 56 },
     px: { xs: 1.2, sm: 1.35 },
     '& fieldset': {
-      borderColor: 'rgba(116,158,180,0.16)',
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.16)'
+          : 'rgba(11,143,211,0.18)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(116,158,180,0.3)',
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.3)'
+          : 'rgba(11,143,211,0.32)',
     },
     '&.Mui-focused fieldset': {
       borderColor: 'rgba(24,189,242,0.62)',
@@ -563,13 +574,23 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
         },
         paper: {
           sx: {
-            bgcolor: 'rgba(3, 17, 29, 0.985)',
-            backgroundImage:
-              'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)',
-            border: '1px solid rgba(91,132,158,0.28)',
+            bgcolor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(3, 17, 29, 0.985)'
+                : '#ffffff',
+            backgroundImage: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.08), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(246,250,252,0.995) 100%)',
+            border: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '1px solid rgba(91,132,158,0.28)'
+                : '1px solid rgba(11,143,211,0.16)',
             borderRadius: 2,
-            boxShadow:
-              '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+            boxShadow: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
             overflow: 'hidden',
             width: 'min(592px, calc(100vw - 24px))',
           },
@@ -707,10 +728,19 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               >
                 <Box
                   sx={{
-                    bgcolor: 'rgba(5, 16, 27, 0.98)',
-                    border: '1px solid rgba(116,158,180,0.2)',
+                    bgcolor: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(5, 16, 27, 0.98)'
+                        : 'rgba(255,255,255,0.98)',
+                    border: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '1px solid rgba(116,158,180,0.2)'
+                        : '1px solid rgba(11,143,211,0.18)',
                     borderRadius: 1,
-                    boxShadow: '0 18px 40px rgba(0,0,0,0.32)',
+                    boxShadow: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '0 18px 40px rgba(0,0,0,0.32)'
+                        : '0 18px 40px rgba(15,74,106,0.16)',
                     left: 0,
                     maxHeight: 216,
                     overflowY: 'auto',
@@ -793,7 +823,10 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <Box sx={{ alignItems: 'center', display: 'flex', gap: 2 }}>
               <Box
                 sx={{
-                  bgcolor: 'rgba(116,158,180,0.1)',
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.1)'
+                      : 'rgba(11,143,211,0.14)',
                   flex: 1,
                   height: '1px',
                 }}
@@ -810,7 +843,10 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               </Typography>
               <Box
                 sx={{
-                  bgcolor: 'rgba(116,158,180,0.1)',
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.1)'
+                      : 'rgba(11,143,211,0.14)',
                   flex: 1,
                   height: '1px',
                 }}
@@ -980,7 +1016,10 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
       <DialogActions
         sx={{
-          borderTop: '1px solid rgba(116,158,180,0.12)',
+          borderTop: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? '1px solid rgba(116,158,180,0.12)'
+              : '1px solid rgba(11,143,211,0.12)',
           flexDirection: { xs: 'column', sm: 'row' },
           gap: { xs: 1.1, sm: 1.4 },
           justifyContent: 'space-between',

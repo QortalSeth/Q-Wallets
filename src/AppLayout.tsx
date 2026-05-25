@@ -58,6 +58,24 @@ type SceneGlowLayerSettings = {
 
 type SceneGlowSettings = Record<SceneGlowLayerKey, SceneGlowLayerSettings>;
 
+const isChangelogAssetPath = (path?: string) =>
+  typeof path === 'string' &&
+  (path.startsWith('/changelog/') || path.startsWith('changelog/'));
+
+const getRuntimeBasePath = () => {
+  const basePath = window._qdnBase || import.meta.env.BASE_URL || '';
+
+  if (!basePath || basePath === '/') return '';
+  return basePath.endsWith('/') ? basePath : `${basePath}/`;
+};
+
+const toChangelogAssetSrc = (path?: string) => {
+  if (!path) return '';
+  if (!isChangelogAssetPath(path)) return path;
+
+  return `${getRuntimeBasePath()}${path.replace(/^\/+/, '')}`;
+};
+
 const DEFAULT_SCENE_GLOW_SETTINGS: SceneGlowSettings = {
   primaryCyan: { blur: 0, intensity: 99, spread: 81, x: 90, y: -61 },
   topBlue: { blur: 0, intensity: 100, spread: 100, x: 0, y: 0 },
@@ -788,8 +806,7 @@ export default function AppLayout() {
             <Markdown
               components={{
                 a: ({ href, children }: any) => {
-                  const isChangelogImage =
-                    typeof href === 'string' && href.startsWith('/changelog/');
+                  const isChangelogImage = isChangelogAssetPath(href);
 
                   if (!isChangelogImage) {
                     return (
@@ -802,6 +819,7 @@ export default function AppLayout() {
                   const alt = href.includes('before')
                     ? t('core:app.q_wallets_before_redesign')
                     : t('core:app.q_wallets_after_redesign');
+                  const src = toChangelogAssetSrc(href);
 
                   return (
                     <ButtonBase
@@ -809,7 +827,7 @@ export default function AppLayout() {
                       onClick={() =>
                         setChangelogPreviewImage({
                           alt,
-                          src: href,
+                          src,
                         })
                       }
                       sx={{
@@ -831,7 +849,7 @@ export default function AppLayout() {
                   <Box
                     component="img"
                     alt={alt || ''}
-                    src={src}
+                    src={toChangelogAssetSrc(src)}
                     sx={{
                       border: (t) => `1px solid ${t.palette.divider}`,
                       borderRadius: 1,

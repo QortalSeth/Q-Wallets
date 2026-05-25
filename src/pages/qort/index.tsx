@@ -563,17 +563,14 @@ export default function QortalWallet() {
     setRecipientTouched(false);
   };
 
-  const openUserLookup = (addressOrName: string) => {
+  const openUserLookup = async (addressOrName: string) => {
     const value = addressOrName?.trim();
     if (!value || value === '-') return;
 
-    window.parent?.postMessage(
-      {
-        action: 'OPEN_USER_LOOKUP',
-        addressOrName: value,
-      },
-      '*'
-    );
+    qortalRequest({
+      action: 'OPEN_USER_LOOKUP',
+      user: value,
+    }).catch((error) => console.error(error));
   };
 
   const handleTransactionFiltersChange = (newValues: string[]) => {
@@ -3481,10 +3478,26 @@ export default function QortalWallet() {
     );
     const filters = [
       { label: t('core:filters.all'), rows: safeAllInfo, value: 'all' },
-      { label: t('core:filters.payments'), rows: paymentInfo, value: 'payments' },
-      { label: t('core:filters.rewards'), rows: rewardshareInfo, value: 'rewards' },
-      { label: t('core:filters.activity'), rows: activityInfo, value: 'activity' },
-      { label: t('core:filters.arbitrary'), rows: arbitraryInfo, value: 'arbitrary' },
+      {
+        label: t('core:filters.payments'),
+        rows: paymentInfo,
+        value: 'payments',
+      },
+      {
+        label: t('core:filters.rewards'),
+        rows: rewardshareInfo,
+        value: 'rewards',
+      },
+      {
+        label: t('core:filters.activity'),
+        rows: activityInfo,
+        value: 'activity',
+      },
+      {
+        label: t('core:filters.arbitrary'),
+        rows: arbitraryInfo,
+        value: 'arbitrary',
+      },
       { label: t('core:filters.at'), rows: atInfo, value: 'at' },
       { label: t('core:filters.group'), rows: groupInfo, value: 'group' },
       { label: t('core:filters.name'), rows: nameInfo, value: 'name' },
@@ -3574,23 +3587,19 @@ export default function QortalWallet() {
     const getFilterRows = (rows: unknown) => (Array.isArray(rows) ? rows : []);
 
     const selectedRowKeys = new Set<string>();
-    const inactiveRowKeys = new Set<string>();
 
     filters.forEach((filter) => {
       if (filter.value === 'all') return;
-      const targetSet = activeFilterValues.includes(filter.value)
-        ? selectedRowKeys
-        : inactiveRowKeys;
+      if (!activeFilterValues.includes(filter.value)) return;
       getFilterRows(filter.rows).forEach((row: any) =>
-        targetSet.add(getTransactionKey(row))
+        selectedRowKeys.add(getTransactionKey(row))
       );
     });
-
     const selectedRows = isAllFiltersSelected
       ? safeAllInfo
       : safeAllInfo.filter((row: any) => {
           const key = getTransactionKey(row);
-          return selectedRowKeys.has(key) && !inactiveRowKeys.has(key);
+          return selectedRowKeys.has(key);
         });
 
     const getDisplayAddress = (row: any, field: 'creator' | 'recipient') => {

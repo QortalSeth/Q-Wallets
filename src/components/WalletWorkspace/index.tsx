@@ -2274,6 +2274,7 @@ export function WalletExternalTransactionsList({
   rowsPerPage,
   showMemo,
 }: WalletExternalTransactionsListProps) {
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const gridColumns = showMemo
     ? 'minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 0.9fr) minmax(88px, 0.7fr) minmax(118px, 0.8fr) minmax(78px, 0.55fr) minmax(92px, 0.65fr)'
     : 'minmax(130px, 1fr) minmax(130px, 1fr) minmax(128px, 0.9fr) minmax(118px, 0.78fr) minmax(78px, 0.55fr) minmax(92px, 0.65fr)';
@@ -2283,9 +2284,20 @@ export function WalletExternalTransactionsList({
       ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
       : rows;
 
+  const handleCopyAddress = (address: string) => {
+    copyToClipboard(address);
+    setCopiedAddress(address);
+    window.setTimeout(() => {
+      setCopiedAddress((currentAddress) =>
+        currentAddress === address ? null : currentAddress
+      );
+    }, 1200);
+  };
+
   const renderEndpoint = (entries?: WalletExternalTransactionEntry[]) => {
-    const firstEntry = entries?.[0];
-    if (!firstEntry?.address) {
+    const addressEntries = entries?.filter((entry) => entry.address) ?? [];
+
+    if (!addressEntries.length) {
       return (
         <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
           -
@@ -2293,47 +2305,62 @@ export function WalletExternalTransactionsList({
       );
     }
 
-    const remainingCount = Math.max((entries?.length ?? 0) - 1, 0);
-
     return (
       <Box
-        sx={{ alignItems: 'center', display: 'flex', gap: 0.65, minWidth: 0 }}
+        sx={{
+          display: 'grid',
+          gap: 0.45,
+          minWidth: 0,
+        }}
       >
-        <Typography
-          component="span"
-          title={firstEntry.address}
-          sx={{
-            color: firstEntry.addressInWallet ? 'text.primary' : 'info.main',
-            display: 'block',
-            fontSize: 13,
-            fontWeight: firstEntry.addressInWallet ? 500 : 600,
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {firstEntry.address}
-        </Typography>
-        {remainingCount > 0 && (
-          <Typography
-            component="span"
+        {addressEntries.map((entry, index) => (
+          <Box
+            key={`${entry.address}-${index}`}
             sx={{
-              bgcolor: 'rgba(116,158,180,0.08)',
-              border: '1px solid rgba(116,158,180,0.14)',
-              borderRadius: 999,
-              color: 'text.secondary',
-              flexShrink: 0,
-              fontSize: 11,
-              fontWeight: 700,
-              lineHeight: 1,
-              px: 0.65,
-              py: 0.35,
+              alignItems: 'start',
+              display: 'grid',
+              gap: 0.45,
+              gridTemplateColumns: 'minmax(0, 1fr) auto',
+              minWidth: 0,
             }}
           >
-            +{remainingCount}
-          </Typography>
-        )}
+            <Typography
+              component="span"
+              title={entry.address}
+              sx={{
+                color: entry.addressInWallet ? 'text.primary' : 'info.main',
+                display: 'block',
+                fontSize: 13,
+                fontWeight: entry.addressInWallet ? 500 : 600,
+                lineHeight: 1.25,
+                minWidth: 0,
+                overflowWrap: 'anywhere',
+                wordBreak: 'break-word',
+              }}
+            >
+              {entry.address}
+            </Typography>
+            <CustomWidthTooltip
+              placement="top"
+              title={
+                copiedAddress === entry.address ? 'Copied' : 'Copy address'
+              }
+            >
+              <IconButton
+                aria-label="copy address"
+                onClick={() => handleCopyAddress(entry.address ?? '')}
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  mt: -0.45,
+                  p: 0.25,
+                }}
+              >
+                <CopyAllTwoTone sx={{ fontSize: 15 }} />
+              </IconButton>
+            </CustomWidthTooltip>
+          </Box>
+        ))}
       </Box>
     );
   };
@@ -2378,6 +2405,67 @@ export function WalletExternalTransactionsList({
     );
   };
 
+  const renderHash = (hash: string) => (
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        gap: 0.35,
+        minWidth: 0,
+      }}
+    >
+      <Typography
+        component="span"
+        title={hash}
+        sx={{
+          color: 'text.primary',
+          display: 'block',
+          fontSize: 13,
+          fontWeight: 600,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {hash ? cropString(hash) : '-'}
+      </Typography>
+      {hash && (
+        <CustomWidthTooltip
+          placement="top"
+          title={copyHashLabel || labels.copyHash(hash)}
+        >
+          <IconButton
+            aria-label="copy"
+            size="small"
+            onClick={() => onCopyHash(hash)}
+            sx={{ color: 'text.secondary', p: 0.25 }}
+          >
+            <CopyAllTwoTone sx={{ fontSize: 16 }} />
+          </IconButton>
+        </CustomWidthTooltip>
+      )}
+    </Box>
+  );
+
+  const renderMobileField = (label: string, content: ReactNode) => (
+    <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          fontSize: 10.5,
+          fontWeight: 700,
+          letterSpacing: 0,
+          lineHeight: 1,
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </Typography>
+      <Box sx={{ minWidth: 0 }}>{content}</Box>
+    </Box>
+  );
+
   if (!rows.length) {
     return (
       <Box
@@ -2402,6 +2490,122 @@ export function WalletExternalTransactionsList({
     <>
       <Box
         sx={{
+          display: { xs: 'grid', sm: 'none' },
+          gap: 0.85,
+          minWidth: 0,
+          p: 1,
+        }}
+      >
+        {pagedRows.map((row, index) => {
+          const hash = row.txHash ?? '';
+
+          return (
+            <Box
+              key={hash || index}
+              sx={{
+                bgcolor: 'rgba(4, 22, 38, 0.22)',
+                border: (t) =>
+                  `1px solid ${
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.11)'
+                      : 'rgba(17,24,39,0.08)'
+                  }`,
+                borderRadius: 1,
+                display: 'grid',
+                gap: 1.1,
+                minWidth: 0,
+                p: 1.15,
+              }}
+            >
+              <Box
+                sx={{
+                  alignItems: 'start',
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
+                  minWidth: 0,
+                }}
+              >
+                {renderMobileField(labels.transactionHash, renderHash(hash))}
+                <Box sx={{ textAlign: 'right' }}>{renderAmount(row)}</Box>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: 'minmax(0, 1fr)',
+                  minWidth: 0,
+                }}
+              >
+                {renderMobileField(labels.sender, renderEndpoint(row.inputs))}
+                {renderMobileField(
+                  labels.receiver,
+                  renderEndpoint(row.outputs)
+                )}
+              </Box>
+
+              {showMemo && (
+                <Box sx={{ minWidth: 0 }}>
+                  {renderMobileField(
+                    labels.memo ?? 'Memo',
+                    <Typography
+                      title={row.memo}
+                      sx={{
+                        color: row.memo ? 'text.primary' : 'text.secondary',
+                        fontSize: 13,
+                        minWidth: 0,
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {row.memo || '-'}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              <Box
+                sx={{
+                  alignItems: 'end',
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                  minWidth: 0,
+                }}
+              >
+                {renderMobileField(labels.fee, renderFee(row))}
+                {renderMobileField(
+                  labels.time,
+                  <CustomWidthTooltip
+                    placement="top"
+                    title={
+                      row.timestamp
+                        ? new Date(row.timestamp).toLocaleString()
+                        : labels.waitingConfirmation
+                    }
+                  >
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row.timestamp ? epochToAgo(row.timestamp) : '-'}
+                    </Typography>
+                  </CustomWidthTooltip>
+                )}
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+
+      <Box
+        sx={{
+          display: { xs: 'none', sm: 'block' },
           maxWidth: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
@@ -2492,46 +2696,7 @@ export function WalletExternalTransactionsList({
                 >
                   {renderEndpoint(row.inputs)}
                   {renderEndpoint(row.outputs)}
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      display: 'flex',
-                      gap: 0.35,
-                      minWidth: 0,
-                    }}
-                  >
-                    <Typography
-                      component="span"
-                      title={hash}
-                      sx={{
-                        color: 'text.primary',
-                        display: 'block',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {hash ? cropString(hash) : '-'}
-                    </Typography>
-                    {hash && (
-                      <CustomWidthTooltip
-                        placement="top"
-                        title={copyHashLabel || labels.copyHash(hash)}
-                      >
-                        <IconButton
-                          aria-label="copy"
-                          size="small"
-                          onClick={() => onCopyHash(hash)}
-                          sx={{ color: 'text.secondary', p: 0.25 }}
-                        >
-                          <CopyAllTwoTone sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </CustomWidthTooltip>
-                    )}
-                  </Box>
+                  {renderHash(hash)}
                   {showMemo && (
                     <Typography
                       title={row.memo}
@@ -3137,13 +3302,16 @@ export function WalletWorkspace({
       >
         <Box
           sx={{
-            height: { xs: 'auto', lg: RECEIVE_QR_SLOT_HEIGHT },
+            height: {
+              xs: 'auto',
+              lg: receiveOpen ? RECEIVE_QR_SLOT_HEIGHT : 0,
+            },
             mb: { xs: receiveOpen ? 1.6 : 0, lg: 0 },
             overflow: 'visible',
             pointerEvents: receiveOpen ? 'auto' : 'none',
             transition: {
               xs: 'margin-bottom 620ms cubic-bezier(0.4, 0, 0.2, 1)',
-              lg: 'none',
+              lg: 'height 620ms cubic-bezier(0.4, 0, 0.2, 1)',
             },
           }}
         >
@@ -3176,14 +3344,6 @@ export function WalletWorkspace({
         <Box
           sx={{
             position: 'relative',
-            transform: {
-              xs: 'none',
-              lg: receiveOpen
-                ? 'translateY(0)'
-                : `translateY(-${RECEIVE_QR_SLOT_HEIGHT}px)`,
-            },
-            transition: 'transform 620ms cubic-bezier(0.4, 0, 0.2, 1)',
-            willChange: 'transform',
             zIndex: 1,
           }}
         >

@@ -2,7 +2,7 @@
 
 All notable changes to Q-Wallets will be documented in this file.
 
-## [Unreleased]
+## [1.3.3]
 
 ### Added
 

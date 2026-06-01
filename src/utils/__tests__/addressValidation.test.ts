@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { validateLtcAddress } from '../addressValidation';
+import {
+  validateBtcAddress,
+  validateDgbAddress,
+  validateLtcAddress,
+} from '../addressValidation';
 
 describe('addressValidation', () => {
   describe('validateLtcAddress', () => {
@@ -77,6 +81,93 @@ describe('addressValidation', () => {
       it('should reject random strings', () => {
         expect(validateLtcAddress('notanaddress')).toBe(false);
         expect(validateLtcAddress('12345678901234567890123456789012345')).toBe(false);
+      });
+    });
+  });
+
+  describe('validateBtcAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept P2PKH addresses starting with 1', () => {
+        expect(validateBtcAddress('1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2')).toBe(true);
+      });
+
+      it('should accept P2SH addresses starting with 3', () => {
+        expect(validateBtcAddress('3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy')).toBe(true);
+      });
+
+      it('should accept Bech32 P2WPKH addresses (bc1q...)', () => {
+        expect(validateBtcAddress('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq')).toBe(true);
+      });
+
+      it('should accept Bech32 addresses containing 0 and l (valid Bech32 charset)', () => {
+        // '0' and 'l' are valid Bech32 characters and must not be rejected
+        expect(validateBtcAddress('bc1q9kk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(true);
+      });
+
+      it('should accept Bech32 P2WSH addresses (bc1q... longer)', () => {
+        expect(
+          validateBtcAddress('bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3')
+        ).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateBtcAddress('')).toBe(false);
+        expect(validateBtcAddress('   ')).toBe(false);
+      });
+
+      it('should reject Bech32 addresses with invalid characters (1, b, i, o)', () => {
+        expect(validateBtcAddress('bc1q9kk1zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // '1'
+        expect(validateBtcAddress('bc1qbkk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // 'b'
+        expect(validateBtcAddress('bc1qikk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // 'i'
+        expect(validateBtcAddress('bc1qokk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // 'o'
+      });
+
+      it('should reject addresses with uppercase in Bech32 part', () => {
+        expect(validateBtcAddress('bc1Qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq')).toBe(false);
+      });
+
+      it('should reject LTC Bech32 addresses', () => {
+        expect(validateBtcAddress('ltc1q9kk0zvwglnw6twj7xj2j5qt94afc42l5pm7aj9')).toBe(false);
+      });
+    });
+  });
+
+  describe('validateDgbAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept P2PKH addresses starting with D', () => {
+        expect(validateDgbAddress('DMguqG5busEUvCg85sQBxUqUBmE7huM6xy')).toBe(true);
+      });
+
+      it('should accept P2SH addresses starting with S', () => {
+        expect(validateDgbAddress('SUngTA1vaC2E62mbnc81Mdos3TcKXMHkcy')).toBe(true);
+      });
+
+      it('should accept Bech32 P2WPKH addresses (dgb1q...)', () => {
+        expect(validateDgbAddress('dgb1qar0srrr7xfkvy5l643lydnw9re59gtzz9zw2cf')).toBe(true);
+      });
+
+      it('should accept Bech32 addresses containing 0 and l (regression)', () => {
+        // Regression: '0' was previously excluded from the dgb1 charset, rejecting valid addresses
+        expect(validateDgbAddress('dgb1q9kk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateDgbAddress('')).toBe(false);
+        expect(validateDgbAddress('   ')).toBe(false);
+      });
+
+      it('should reject Bech32 addresses with invalid characters (1, b, i, o)', () => {
+        expect(validateDgbAddress('dgb1q9kk1zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // '1'
+        expect(validateDgbAddress('dgb1qbkk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // 'b'
+        expect(validateDgbAddress('dgb1qokk0zvwglnw6twj7xj2j5qt94afc42l5h6kdsm')).toBe(false); // 'o'
+      });
+
+      it('should reject addresses with uppercase in Bech32 part', () => {
+        expect(validateDgbAddress('dgb1Qar0srrr7xfkvy5l643lydnw9re59gtzz9zw2cf')).toBe(false);
       });
     });
   });

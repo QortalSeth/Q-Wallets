@@ -2,6 +2,27 @@
 
 All notable changes to Q-Wallets will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- `calculateMaxSendable` utility that computes the "SEND MAX" amount in integer satoshi math and holds back a small safety buffer, avoiding floating-point boundary errors that triggered false "Insufficient funds" rejections from the host
+- `SEND_MAX_SAFETY_BUFFER_SATS` constant (1000 sats) used as the SEND MAX safety margin
+
+### Fixed
+
+- BTC and DGB Bech32 address validation: corrected the regex charset to the bech32 alphabet (excludes `1`, `b`, `i`, `o`) and allowed variable address length (39–59 chars) so longer Bech32 addresses (e.g. P2WSH) validate correctly
+- SEND MAX no longer prefills an amount that lands on or just above the spendable cutoff
+
+### Changed
+
+- All coin send pages (ARRR, BTC, DGB, DOGE, LTC, QORT, RVN) refactored to use the shared `calculateMaxSendable` utility
+
+### Tests
+
+- Added tests for `calculateMaxSendable`
+- Expanded address validation tests covering BTC/DGB Bech32 charset and length cases
+
 ## [1.3.2] - 2026-03-06
 
 ### Fixed

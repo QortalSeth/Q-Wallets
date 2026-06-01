@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+  validateArrrAddress,
   validateBtcAddress,
   validateDgbAddress,
+  validateDogeAddress,
   validateLtcAddress,
+  validateQortAddress,
+  validateRvnAddress,
 } from '../addressValidation';
 
 describe('addressValidation', () => {
@@ -168,6 +172,141 @@ describe('addressValidation', () => {
 
       it('should reject addresses with uppercase in Bech32 part', () => {
         expect(validateDgbAddress('dgb1Qar0srrr7xfkvy5l643lydnw9re59gtzz9zw2cf')).toBe(false);
+      });
+    });
+  });
+
+  describe('validateDogeAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept P2PKH addresses starting with D', () => {
+        expect(validateDogeAddress('DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L')).toBe(true);
+        expect(validateDogeAddress('DBXu2kgc3xtvCUWFcxFE3r9hEYgmuaaCyD')).toBe(true);
+      });
+
+      it('should accept addresses with leading/trailing whitespace', () => {
+        expect(validateDogeAddress('  DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L  ')).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateDogeAddress('')).toBe(false);
+        expect(validateDogeAddress('   ')).toBe(false);
+      });
+
+      it('should reject addresses with an invalid prefix', () => {
+        expect(validateDogeAddress('AH5yaieqoZN36fDVciNyRueRGvGLR3mr7L')).toBe(false);
+        expect(validateDogeAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enQ8')).toBe(false); // RVN
+      });
+
+      it('should reject base58-ambiguous characters (0, O, I, l)', () => {
+        expect(validateDogeAddress('DH5yaieqoZN36fDVciNyRueRGvGLR3mr0L')).toBe(false); // '0'
+        expect(validateDogeAddress('DH5yaieqoZN36fDVciNyRueRGvGLR3mrlL')).toBe(false); // 'l'
+      });
+
+      it('should reject addresses that are too short or too long', () => {
+        expect(validateDogeAddress('DH5yaieqoZN36fDVciNyRueRGvGLR3mr')).toBe(false);
+        expect(validateDogeAddress('DH5yaieqoZN36fDVciNyRueRGvGLR3mr7Lextra')).toBe(false);
+      });
+    });
+  });
+
+  describe('validateRvnAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept P2PKH addresses starting with R', () => {
+        expect(validateRvnAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enQ8')).toBe(true);
+      });
+
+      it('should accept addresses with leading/trailing whitespace', () => {
+        expect(validateRvnAddress('\tRXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enQ8\n')).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateRvnAddress('')).toBe(false);
+        expect(validateRvnAddress('   ')).toBe(false);
+      });
+
+      it('should reject addresses with an invalid prefix', () => {
+        expect(validateRvnAddress('DXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enQ8')).toBe(false); // DOGE/DGB
+      });
+
+      it('should reject base58-ambiguous characters (0, O, I, l)', () => {
+        expect(validateRvnAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87en0Q')).toBe(false); // '0'
+        expect(validateRvnAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enlQ')).toBe(false); // 'l'
+      });
+
+      it('should reject addresses that are too short or too long', () => {
+        expect(validateRvnAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87en')).toBe(false);
+        expect(validateRvnAddress('RXissCG2jZTNd6Mp8x3Jpvw8Gqgj87enQ8extra')).toBe(false);
+      });
+    });
+  });
+
+  describe('validateArrrAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept Sapling shielded addresses (zs1...)', () => {
+        expect(
+          validateArrrAddress('zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sla5')
+        ).toBe(true);
+      });
+
+      it('should accept addresses with leading/trailing whitespace', () => {
+        expect(
+          validateArrrAddress('  zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sla5  ')
+        ).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateArrrAddress('')).toBe(false);
+        expect(validateArrrAddress('   ')).toBe(false);
+      });
+
+      it('should reject addresses with an invalid prefix', () => {
+        expect(
+          validateArrrAddress('zt1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sla5')
+        ).toBe(false);
+      });
+
+      it('should reject addresses that are too short or too long', () => {
+        expect(
+          validateArrrAddress('zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sla')
+        ).toBe(false);
+        expect(
+          validateArrrAddress('zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sla5gg')
+        ).toBe(false);
+      });
+    });
+  });
+
+  describe('validateQortAddress', () => {
+    describe('valid addresses', () => {
+      it('should accept base58 addresses', () => {
+        expect(validateQortAddress('QgV4s3xnzLhVBEJxcYui4u4q11yhUHsd9v')).toBe(true);
+      });
+
+      it('should accept names (minimum 3 characters)', () => {
+        expect(validateQortAddress('Bob')).toBe(true);
+        expect(validateQortAddress('alice')).toBe(true);
+      });
+
+      it('should accept addresses with leading/trailing whitespace', () => {
+        expect(validateQortAddress('  Bob  ')).toBe(true);
+      });
+    });
+
+    describe('invalid addresses', () => {
+      it('should reject empty strings', () => {
+        expect(validateQortAddress('')).toBe(false);
+        expect(validateQortAddress('   ')).toBe(false);
+      });
+
+      it('should reject values shorter than 3 characters', () => {
+        expect(validateQortAddress('ab')).toBe(false);
+        expect(validateQortAddress(' a ')).toBe(false);
       });
     });
   });

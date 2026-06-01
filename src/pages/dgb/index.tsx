@@ -57,6 +57,7 @@ import {
   DECIMAL_ROUND_UP,
   DGB_FEE,
   EMPTY_STRING,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -75,6 +76,7 @@ import {
 } from '../../styles/page-styles';
 import { Coin } from 'qapp-core';
 import { validateDgbAddress } from '../../utils/addressValidation';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -204,19 +206,17 @@ export default function DigibyteWallet() {
   const [openSendDgbError, setOpenSendDgbError] = useState(false);
   const [openDgbAddressBook, setOpenDgbAddressBook] = useState(false);
 
-  const maxSendableDbgCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceDgb - (dgbFee * 1000) / 1e8)
-      .toFixed(DECIMAL_ROUND_UP);
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableDgbCoin: number = parseFloat(
-      `${integer}.${truncated}`
+  // Estimated fee in whole coins (fee rate applied to a ~1000-byte tx).
+  const estimatedDgbFee = (dgbFee * 1000) / 1e8;
+
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableDbgCoin = () =>
+    calculateMaxSendable(
+      walletBalanceDgb,
+      estimatedDgbFee,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    return truncatedMaxSendableDgbCoin;
-  };
 
   const emptyRows =
     page > 0
@@ -251,7 +251,10 @@ export default function DigibyteWallet() {
   };
 
   const disableCanSendDgb = () =>
-    dgbAmount <= 0 || dgbRecipient === EMPTY_STRING || addressFormatError;
+    dgbAmount <= 0 ||
+    dgbRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    dgbAmount > maxSendableDbgCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -433,6 +436,12 @@ export default function DigibyteWallet() {
   };
 
   const sendDgbRequest = async () => {
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (dgbAmount <= 0 || dgbAmount > maxSendableDbgCoin()) {
+      setOpenSendDgbError(true);
+      return;
+    }
     setOpenTxDgbSubmit(true);
     const dgbFeeCalculated = Number(dgbFee / 1e8).toFixed(DECIMAL_ROUND_UP);
     try {
@@ -915,16 +924,7 @@ export default function DigibyteWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(() => {
-              const newMaxDgbAmount = parseFloat(
-                (walletBalanceDgb - (dgbFee * 1000) / 1e8).toFixed(DECIMAL_ROUND_UP)
-              );
-              if (newMaxDgbAmount < 0) {
-                return Number(0.0) + ' DGB';
-              } else {
-                return newMaxDgbAmount + ' DGB';
-              }
-            })()}
+            {maxSendableDbgCoin() + ' DGB'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -963,7 +963,7 @@ export default function DigibyteWallet() {
             label="Amount (DGB)"
             fullWidth
             isAllowed={(values) => {
-              const maxDgbCoin = walletBalanceDgb - (dgbFee * 1000) / 1e8;
+              const maxDgbCoin = maxSendableDbgCoin();
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||

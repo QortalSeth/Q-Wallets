@@ -29,6 +29,7 @@ import {
   DECIMAL_ROUND_UP,
   EMPTY_STRING,
   LTC_FEE,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -44,6 +45,7 @@ import {
 import { FeeManager } from '../../components/FeeManager';
 import { Coin } from 'qapp-core';
 import { validateLtcAddress } from '../../utils/addressValidation';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 import {
   WalletExternalTransactionsList,
@@ -169,18 +171,14 @@ export default function LitecoinWallet() {
   const ltcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(DECIMAL_ROUND_UP);
   const estimatedFeeCalculated = +ltcFeeCalculated * LTC_FEE;
 
-  const maxSendableLtcCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceLtc - estimatedFeeCalculated).toString();
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableLtcCoin: number = parseFloat(
-      `${integer}.${truncated}`
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableLtcCoin = () =>
+    calculateMaxSendable(
+      walletBalanceLtc,
+      estimatedFeeCalculated,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    return truncatedMaxSendableLtcCoin;
-  };
 
   const handleOpenAddressBook = () => {
     setOpenLtcAddressBook(true);
@@ -214,7 +212,10 @@ export default function LitecoinWallet() {
   };
 
   const disableCanSendLtc = () =>
-    ltcAmount <= 0 || ltcRecipient === EMPTY_STRING || addressFormatError;
+    ltcAmount <= 0 ||
+    ltcRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    ltcAmount > maxSendableLtcCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -403,6 +404,12 @@ export default function LitecoinWallet() {
 
   const sendLtcRequest = async () => {
     if (!ltcFeeCalculated) return;
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (ltcAmount <= 0 || ltcAmount > maxSendableLtcCoin()) {
+      setOpenSendLtcError(true);
+      return;
+    }
     setOpenTxLtcSubmit(true);
 
     try {

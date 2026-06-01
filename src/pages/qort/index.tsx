@@ -64,7 +64,6 @@ const NumericFormat = _NumericFormat as React.FC<
 >;
 import coinLogoQORT from '../../assets/qort.png';
 import {
-  DECIMAL_ROUND_UP,
   EMPTY_STRING,
   QORT_1_UNIT,
   TIME_MINUTES_1,
@@ -88,6 +87,7 @@ import {
   Transition,
   WalletSendDialog,
 } from '../../styles/page-styles';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 import { NameText } from '../../components/NameText';
 import {
@@ -334,22 +334,6 @@ export default function QortalWallet() {
   const [recipientTouched, setRecipientTouched] = useState(false);
   const userName = useGlobal().auth.name;
 
-  const maxSendableQortCoin = () => {
-    // manage the correct round up
-    const value = Math.max(
-      0,
-      toFiniteNumber(walletBalanceQort) - toFiniteNumber(qortTxFee)
-    ).toString();
-    const [integer, decimal = EMPTY_STRING] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableQortCoin: number = parseFloat(
-      `${integer}.${truncated}`
-    );
-    return truncatedMaxSendableQortCoin;
-  };
-
   const toFiniteNumber = (value: unknown) => {
     const parsed =
       typeof value === 'number' ? value : Number.parseFloat(String(value ?? 0));
@@ -370,6 +354,13 @@ export default function QortalWallet() {
   const formatQortAmount = (value: unknown) => formatDecimal(value, 2, 2);
   const formatQortFee = (value: unknown) => formatDecimal(value, 2, 4);
 
+  
+  // Safely-spendable max via integer-satoshi math (avoids the floating-point
+  // boundary error). QORT has a deterministic on-chain fee and an account
+  // model, so no extra safety buffer is needed.
+  const maxSendableQortCoin = () =>
+    calculateMaxSendable(walletBalanceQort, qortTxFee);
+  
   const emptyRowsPayment =
     page > 0
       ? Math.max(0, (1 + page) * rowsPerPage - paymentInfo?.length || 0)

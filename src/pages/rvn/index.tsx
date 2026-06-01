@@ -29,6 +29,7 @@ import {
   DECIMAL_ROUND_UP,
   EMPTY_STRING,
   RVN_FEE,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -54,6 +55,7 @@ import {
   ExternalSendForm,
   sendCoinDialogPaperSx,
 } from '../../components/ExternalSendForm';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -184,20 +186,17 @@ export default function RavencoinWallet() {
   const [openRvnAddressBook, setOpenRvnAddressBook] = useState(false);
   const [receivePanelOpen, setReceivePanelOpen] = useState(false);
 
-  const maxSendableRvnCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceRvn - (rvnFee * 1000) / 1e8).toFixed(
-      DECIMAL_ROUND_UP
+  // Estimated fee in whole coins (fee rate applied to a ~1000-byte tx).
+  const estimatedRvnFee = (rvnFee * 1000) / 1e8;
+
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableRvnCoin = () =>
+    calculateMaxSendable(
+      walletBalanceRvn,
+      estimatedRvnFee,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableRvnCoin: number = parseFloat(
-      `${integer}.${truncated}`
-    );
-    return truncatedMaxSendableRvnCoin;
-  };
 
   const handleOpenAddressBook = () => {
     setOpenRvnAddressBook(true);
@@ -233,7 +232,10 @@ export default function RavencoinWallet() {
   };
 
   const disableCanSendRvn = () =>
-    rvnAmount <= 0 || rvnRecipient === EMPTY_STRING || addressFormatError;
+    rvnAmount <= 0 ||
+    rvnRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    rvnAmount > maxSendableRvnCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -430,6 +432,12 @@ export default function RavencoinWallet() {
   };
 
   const sendRvnRequest = async () => {
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (rvnAmount <= 0 || rvnAmount > maxSendableRvnCoin()) {
+      setOpenSendRvnError(true);
+      return;
+    }
     setOpenTxRvnSubmit(true);
     const rvnFeeCalculated = Number(rvnFee / 1e8).toFixed(DECIMAL_ROUND_UP);
     try {

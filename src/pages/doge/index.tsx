@@ -40,6 +40,7 @@ import {
   DECIMAL_ROUND_UP,
   DOGE_FEE,
   EMPTY_STRING,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -55,6 +56,7 @@ import {
 import { FeeManager } from '../../components/FeeManager';
 import { Coin } from 'qapp-core';
 import { validateDogeAddress } from '../../utils/addressValidation';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -170,18 +172,19 @@ export default function DogecoinWallet() {
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(DECIMAL_ROUND_UP);
   const estimatedFeeCalculated = +dogeFeeCalculated * DOGE_FEE;
 
-  const maxSendableDogeCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceDoge - estimatedFeeCalculated).toString();
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableDogeCoin: number = parseFloat(
-      `${integer}.${truncated}`
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableDogeCoin = () =>
+    calculateMaxSendable(
+      walletBalanceDoge,
+      estimatedFeeCalculated,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    return truncatedMaxSendableDogeCoin;
-  };
+
+  const emptyRows =
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - transactionsDoge.length)
+      : 0;
 
   const handleOpenAddressBook = () => {
     setOpenDogeAddressBook(true);
@@ -211,7 +214,10 @@ export default function DogecoinWallet() {
   };
 
   const disableCanSendDoge = () =>
-    dogeAmount <= 0 || dogeRecipient === EMPTY_STRING || addressFormatError;
+    dogeAmount <= 0 ||
+    dogeRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    dogeAmount > maxSendableDogeCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -398,6 +404,12 @@ export default function DogecoinWallet() {
 
   const sendDogeRequest = async () => {
     if (!dogeFeeCalculated) return;
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (dogeAmount <= 0 || dogeAmount > maxSendableDogeCoin()) {
+      setOpenSendDogeError(true);
+      return;
+    }
 
     setOpenTxDogeSubmit(true);
     try {

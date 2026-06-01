@@ -30,6 +30,7 @@ import {
   BTC_FEE,
   DECIMAL_ROUND_UP,
   EMPTY_STRING,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -44,6 +45,7 @@ import {
 } from '../../styles/page-styles';
 import { Coin } from 'qapp-core';
 import { validateBtcAddress } from '../../utils/addressValidation';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 import {
   WalletExternalTransactionsList,
@@ -168,18 +170,14 @@ export default function BitcoinWallet() {
   const btcFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(DECIMAL_ROUND_UP);
   const estimatedFeeCalculated = +btcFeeCalculated * BTC_FEE;
 
-  const maxSendableBtcCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceBtc - estimatedFeeCalculated).toString();
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableBtcCoin: number = parseFloat(
-      `${integer}.${truncated}`
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableBtcCoin = () =>
+    calculateMaxSendable(
+      walletBalanceBtc,
+      estimatedFeeCalculated,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    return truncatedMaxSendableBtcCoin;
-  };
 
   const handleOpenAddressBook = () => {
     setOpenBtcAddressBook(true);
@@ -211,7 +209,10 @@ export default function BitcoinWallet() {
   };
 
   const disableCanSendBtc = () =>
-    btcAmount <= 0 || btcRecipient === EMPTY_STRING || addressFormatError;
+    btcAmount <= 0 ||
+    btcRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    btcAmount > maxSendableBtcCoin();
 
   const handleRecipientChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -399,6 +400,12 @@ export default function BitcoinWallet() {
 
   const sendBtcRequest = async () => {
     if (!btcFeeCalculated) return;
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (btcAmount <= 0 || btcAmount > maxSendableBtcCoin()) {
+      setOpenSendBtcError(true);
+      return;
+    }
     setOpenTxBtcSubmit(true);
     try {
       const sendRequest = await qortalRequest({

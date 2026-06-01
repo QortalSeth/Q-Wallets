@@ -49,6 +49,7 @@ import {
   ARRR_FEE,
   DECIMAL_ROUND_UP,
   EMPTY_STRING,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_2,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
@@ -71,6 +72,7 @@ import {
   ExternalSendForm,
   sendCoinDialogPaperSx,
 } from '../../components/ExternalSendForm';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -189,18 +191,15 @@ export default function PirateWallet() {
   const [receivePanelOpen, setReceivePanelOpen] = useState(false);
   const [_retry, setRetry] = useState(false);
 
-  const maxSendableArrrCoin = () => {
-    // manage the correct round up
-    const value = Math.max(0, walletBalanceArrr - ARRR_FEE).toString();
-    const [integer, decimal = ''] = value.split('.');
-    const truncated = decimal
-      .substring(0, DECIMAL_ROUND_UP)
-      .padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableArrrCoin: number = parseFloat(
-      `${integer}.${truncated}`
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableArrrCoin = () =>
+    calculateMaxSendable(
+      walletBalanceArrr,
+      ARRR_FEE,
+      SEND_MAX_SAFETY_BUFFER_SATS
     );
-    return truncatedMaxSendableArrrCoin;
-  };
+
   const arrrSendLabelSx = {
     color: 'rgba(228,238,248,0.9)',
     fontSize: { xs: 14.5, sm: 15 },
@@ -255,6 +254,11 @@ export default function PirateWallet() {
     opacity: 0.82,
   } as const;
 
+  const emptyRows =
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - transactionsArrr.length)
+      : 0;
+
   const handleCloseArrrLightwallet = () => {
     setOpenArrrLightwallet(false);
   };
@@ -292,7 +296,10 @@ export default function PirateWallet() {
   };
 
   const disableCanSendArrr = () =>
-    arrrAmount <= 0 || arrrRecipient === EMPTY_STRING || addressFormatError;
+    arrrAmount <= 0 ||
+    arrrRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    arrrAmount > maxSendableArrrCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -374,6 +381,12 @@ export default function PirateWallet() {
   };
 
   const sendArrrRequest = async () => {
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (arrrAmount <= 0 || arrrAmount > maxSendableArrrCoin()) {
+      setOpenSendArrrError(true);
+      return;
+    }
     setOpenTxArrrSubmit(true);
     try {
       const sendRequest = await qortalRequest({

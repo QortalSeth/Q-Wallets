@@ -52,6 +52,18 @@ describe('calculateMaxSendable', () => {
     expect(calculateMaxSendable(Infinity, 0.0005)).toBe(0);
   });
 
+  it('coerces numeric-string inputs (host returns balance as a string)', () => {
+    // Regression: Number.isFinite('700') === false, so an un-coerced guard
+    // would wrongly return 0 for a string balance.
+    expect(calculateMaxSendable('700', '0.0001', 1000)).toBe(699.99989);
+    expect(calculateMaxSendable('1', '0.0005')).toBe(0.9995);
+  });
+
+  it('returns 0 for non-numeric-string inputs', () => {
+    expect(calculateMaxSendable('abc', 0.0005)).toBe(0);
+    expect(calculateMaxSendable('', 0.0005)).toBe(0);
+  });
+
   it('truncates to 8 decimal places', () => {
     const result = calculateMaxSendable(0.123456789, 0);
     expect(result).toBe(0.12345679); // rounded at satoshi precision

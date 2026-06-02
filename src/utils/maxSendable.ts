@@ -19,23 +19,29 @@ const SATS_PER_COIN = 1e8;
  *  2. Hold back a small safety buffer so the result stays strictly within the
  *     balance, absorbing fee-estimate and serialization slack.
  *
- * @param balance    Wallet balance, in whole coins.
+ * @param balance    Wallet balance, in whole coins. The host
+ *                   `GET_WALLET_BALANCE` request returns this as a numeric
+ *                   string, so string inputs are coerced to a number.
  * @param fee        Estimated fee to reserve, in whole coins.
  * @param bufferSats Extra satoshis to hold back as a safety margin (default 0).
  * @returns The max sendable amount in whole coins (never negative), truncated
  *          to {@link DECIMAL_ROUND_UP} decimal places.
  */
 export const calculateMaxSendable = (
-  balance: number,
-  fee: number,
+  balance: number | string,
+  fee: number | string,
   bufferSats: number = 0
 ): number => {
-  if (!Number.isFinite(balance) || !Number.isFinite(fee)) {
+  // Coerce first: the wallet balance arrives as a numeric string, and
+  // Number.isFinite() does not coerce (Number.isFinite('700') === false).
+  const balanceNum = Number(balance);
+  const feeNum = Number(fee);
+  if (!Number.isFinite(balanceNum) || !Number.isFinite(feeNum)) {
     return 0;
   }
 
-  const balanceSats = Math.round(balance * SATS_PER_COIN);
-  const feeSats = Math.round(fee * SATS_PER_COIN);
+  const balanceSats = Math.round(balanceNum * SATS_PER_COIN);
+  const feeSats = Math.round(feeNum * SATS_PER_COIN);
   const buffer = Math.max(0, Math.trunc(bufferSats));
 
   const maxSats = balanceSats - feeSats - buffer;

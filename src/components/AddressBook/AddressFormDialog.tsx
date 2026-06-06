@@ -692,9 +692,6 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <TextField
               required
               fullWidth
-              aria-label={t('core:address_book_name', {
-                postProcess: 'capitalizeFirstChar',
-              })}
               placeholder={t('core:address_book_ui.enter_name')}
               value={name}
               onChange={handleNameChange}
@@ -703,6 +700,9 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
               slotProps={{
                 htmlInput: {
                   maxLength: ADDRESSBOOK_NAME_LENGTH,
+                  'aria-label': t('core:address_book_name', {
+                    postProcess: 'capitalizeFirstChar',
+                  }),
                 },
                 input: {
                   startAdornment: (
@@ -863,9 +863,6 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <TextField
               required
               fullWidth
-              aria-label={t('core:address_book_address', {
-                postProcess: 'capitalizeFirstChar',
-              })}
               placeholder={t('core:address_book_ui.enter_symbol_address', {
                 symbol: coinType,
               })}
@@ -881,6 +878,11 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                   : EMPTY_STRING)
               }
               slotProps={{
+                htmlInput: {
+                  'aria-label': t('core:address_book_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  }),
+                },
                 input: {
                   endAdornment:
                     coinType === Coin.QORT ? (
@@ -959,9 +961,6 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
             <Box sx={{ position: 'relative' }}>
               <TextField
                 fullWidth
-                aria-label={t('core:address_book_note', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
                 placeholder={t('core:address_book_ui.add_note_optional')}
                 value={note}
                 onChange={handleNoteChange}
@@ -972,6 +971,9 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
                 slotProps={{
                   htmlInput: {
                     maxLength: ADDRESSBOOK_NOTE_LENGTH,
+                    'aria-label': t('core:address_book_note', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
                   },
                 }}
                 sx={{

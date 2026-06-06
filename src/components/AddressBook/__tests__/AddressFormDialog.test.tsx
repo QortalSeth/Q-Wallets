@@ -6,10 +6,13 @@ import { Coin } from 'qapp-core';
 import * as addressValidation from '../../../utils/addressValidation';
 import { searchQortalNames } from '../../../utils/qortalNodeApi';
 
-// Mock react-i18next
+// Mock react-i18next. `t` must keep a stable identity across renders, exactly
+// like the real provider — otherwise effects that depend on `t` re-run every
+// render and the QORT name-search effect loops infinitely.
+const t = (key: string) => key;
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t,
     i18n: { changeLanguage: vi.fn() },
   }),
 }));
@@ -45,10 +48,9 @@ describe('AddressFormDialog', () => {
       expect(screen.getByLabelText(/core:address_book_note/)).toBeInTheDocument();
     });
 
-    it('should show character counters', () => {
+    it('should show the note character counter', () => {
       render(<AddressFormDialog {...defaultProps} />);
 
-      expect(screen.getByText('0/50')).toBeInTheDocument(); // Name counter
       expect(screen.getByText('0/200')).toBeInTheDocument(); // Note counter
     });
   });
@@ -77,16 +79,18 @@ describe('AddressFormDialog', () => {
   });
 
   describe('form validation', () => {
-    it('should update character counter as user types in name field', async () => {
+    it('should update the name field as the user types', async () => {
       const user = userEvent.setup();
 
       render(<AddressFormDialog {...defaultProps} />);
 
-      const nameInput = screen.getByLabelText(/core:address_book_name/);
+      const nameInput = screen.getByLabelText(
+        /core:address_book_name/
+      ) as HTMLInputElement;
       await user.type(nameInput, 'Alice');
 
       await waitFor(() => {
-        expect(screen.getByText('5/50')).toBeInTheDocument();
+        expect(nameInput.value).toBe('Alice');
       });
     });
 

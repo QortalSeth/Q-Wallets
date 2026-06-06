@@ -199,11 +199,6 @@ export default function DigibyteWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsDgb.length)
-      : 0;
-
   const handleOpenAddressBook = () => {
     setOpenDgbAddressBook(true);
   };

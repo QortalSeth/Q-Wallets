@@ -198,11 +198,6 @@ export default function RavencoinWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsRvn.length)
-      : 0;
-
   const handleOpenAddressBook = () => {
     setOpenRvnAddressBook(true);
   };

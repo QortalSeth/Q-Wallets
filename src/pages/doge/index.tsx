@@ -181,11 +181,6 @@ export default function DogecoinWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsDoge.length)
-      : 0;
-
   const handleOpenAddressBook = () => {
     setOpenDogeAddressBook(true);
   };

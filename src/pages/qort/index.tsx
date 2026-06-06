@@ -60,7 +60,6 @@ const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _Nu
 import QRCode from 'react-qr-code';
 import coinLogoQORT from '../../assets/qort.png';
 import {
-  DECIMAL_ROUND_UP,
   EMPTY_STRING,
   QORT_1_UNIT,
   TIME_MINUTES_1,
@@ -87,6 +86,7 @@ import {
   WalletCard,
 } from '../../styles/page-styles';
 import { SearchTransactionsResponse } from '../../utils/Types.tsx';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 
 interface TablePaginationActionsProps {
@@ -269,14 +269,11 @@ export default function QortalWallet() {
   const [recipientTouched, setRecipientTouched] = useState(false);
   const userName = useGlobal().auth.name;
   
-  const maxSendableQortCoin = () => {
-    // manage the correct round up
-    const value = (walletBalanceQort - qortTxFee).toString();
-    const [integer, decimal = EMPTY_STRING] = value.split('.');
-    const truncated = decimal.substring(0, DECIMAL_ROUND_UP).padEnd(DECIMAL_ROUND_UP, '0');
-    let truncatedMaxSendableQortCoin: number = parseFloat(`${integer}.${truncated}`);
-    return truncatedMaxSendableQortCoin;
-  };
+  // Safely-spendable max via integer-satoshi math (avoids the floating-point
+  // boundary error). QORT has a deterministic on-chain fee and an account
+  // model, so no extra safety buffer is needed.
+  const maxSendableQortCoin = () =>
+    calculateMaxSendable(walletBalanceQort, qortTxFee);
   
   const emptyRowsPayment =
     page > 0
@@ -3348,7 +3345,7 @@ export default function QortalWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(walletBalanceQort - qortTxFee).toFixed(DECIMAL_ROUND_UP) + ' QORT'}
+            {maxSendableQortCoin() + ' QORT'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button

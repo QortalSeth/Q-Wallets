@@ -4,10 +4,11 @@ import { EMPTY_STRING } from '../common/constants';
 /**
  * Validate Bitcoin (BTC) address format
  * Supports P2PKH (1...), P2SH (3...), and Bech32 (bc1...) addresses
+ * Bech32 uses charset: qpzry9x8gf2tvdw0s3jn54khce6mua7l (excludes 1, b, i, o)
  */
 export const validateBtcAddress = (address: string): boolean => {
   const pattern =
-    /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[02-9A-HJ-NP-Za-z]{39})$/;
+    /^(1[1-9A-HJ-NP-Za-km-z]{33}|3[1-9A-HJ-NP-Za-km-z]{33}|bc1[ac-hj-np-z02-9]{39,59})$/;
   return pattern.test(address.trim());
 };
 
@@ -43,10 +44,11 @@ export const validateRvnAddress = (address: string): boolean => {
 /**
  * Validate Digibyte (DGB) address format
  * Supports P2PKH (D...), P2SH (S...), and Bech32 (dgb1...) addresses
+ * Bech32 uses charset: qpzry9x8gf2tvdw0s3jn54khce6mua7l (excludes 1, b, i, o)
  */
 export const validateDgbAddress = (address: string): boolean => {
   const pattern =
-    /^(D[1-9A-HJ-NP-Za-km-z]{33}|S[1-9A-HJ-NP-Za-km-z]{33}|dgb1[2-9A-HJ-NP-Za-z]{39})$/;
+    /^(D[1-9A-HJ-NP-Za-km-z]{33}|S[1-9A-HJ-NP-Za-km-z]{33}|dgb1[ac-hj-np-z02-9]{39,59})$/;
   return pattern.test(address.trim());
 };
 

@@ -11,6 +11,12 @@ export const DECIMAL_ROUND_UP: number = 8;
 // QORT section
 export const QORT_1_UNIT: number = 100000000;
 
+// Satoshis held back by "SEND MAX" so the prefilled amount stays strictly
+// within the spendable balance (absorbs fee-estimate / serialization slack).
+// 1000 sats = 0.00001 coin — negligible to the user, enough to clear the
+// host's "Insufficient funds" boundary check.
+export const SEND_MAX_SAFETY_BUFFER_SATS: number = 1000;
+
 // Fees
 export const ARRR_FEE: number = 0.0001;
 export const BTC_FEE: number = 500;

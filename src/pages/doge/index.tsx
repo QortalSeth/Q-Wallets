@@ -56,6 +56,7 @@ import {
   DECIMAL_ROUND_UP,
   DOGE_FEE,
   EMPTY_STRING,
+  SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_3,
   TIME_MINUTES_5,
   TIME_SECONDS_2,
@@ -75,6 +76,7 @@ import {
 import { FeeManager } from '../../components/FeeManager';
 import { Coin } from 'qapp-core';
 import { validateDogeAddress } from '../../utils/addressValidation';
+import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -189,14 +191,14 @@ export default function DogecoinWallet() {
   const dogeFeeCalculated = +(+inputFee / 1000 / 1e8).toFixed(DECIMAL_ROUND_UP);
   const estimatedFeeCalculated = +dogeFeeCalculated * DOGE_FEE;
 
-  const maxSendableDogeCoin = () => {
-      // manage the correct round up
-      const value = (walletBalanceDoge - estimatedFeeCalculated).toString();
-      const [integer, decimal = ''] = value.split('.');
-      const truncated = decimal.substring(0, DECIMAL_ROUND_UP).padEnd(DECIMAL_ROUND_UP, '0');
-      let truncatedMaxSendableDogeCoin: number = parseFloat(`${integer}.${truncated}`);
-      return truncatedMaxSendableDogeCoin;
-    };
+  // Safely-spendable max: integer-satoshi math plus a small safety buffer so
+  // the prefilled amount never lands on/above the host's spendable cutoff.
+  const maxSendableDogeCoin = () =>
+    calculateMaxSendable(
+      walletBalanceDoge,
+      estimatedFeeCalculated,
+      SEND_MAX_SAFETY_BUFFER_SATS
+    );
 
   const emptyRows =
     page > 0
@@ -229,7 +231,10 @@ export default function DogecoinWallet() {
   };
 
   const disableCanSendDoge = () =>
-    dogeAmount <= 0 || dogeRecipient === EMPTY_STRING || addressFormatError;
+    dogeAmount <= 0 ||
+    dogeRecipient === EMPTY_STRING ||
+    addressFormatError ||
+    dogeAmount > maxSendableDogeCoin();
 
   const handleRecipientChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -407,6 +412,12 @@ export default function DogecoinWallet() {
 
   const sendDogeRequest = async () => {
     if (!dogeFeeCalculated) return;
+    // Conservative revalidation: never submit more than the safely-spendable
+    // max, even if state changed (e.g. balance refresh) after input.
+    if (dogeAmount <= 0 || dogeAmount > maxSendableDogeCoin()) {
+      setOpenSendDogeError(true);
+      return;
+    }
 
     setOpenTxDogeSubmit(true);
     try {
@@ -887,15 +898,7 @@ export default function DogecoinWallet() {
             align="center"
             sx={{ color: 'text.primary', fontWeight: 700 }}
           >
-            {(() => {
-              const newMaxDogeAmount =
-                +walletBalanceDoge - estimatedFeeCalculated;
-              if (newMaxDogeAmount < 0) {
-                return Number(0.0) + ' DOGE';
-              } else {
-                return newMaxDogeAmount + ' DOGE';
-              }
-            })()}
+            {maxSendableDogeCoin() + ' DOGE'}
           </Typography>
           <Box style={{ marginInlineStart: '15px' }}>
             <Button
@@ -934,7 +937,7 @@ export default function DogecoinWallet() {
             label="Amount (DOGE)"
             fullWidth
             isAllowed={(values) => {
-              const maxDogeCoin = +walletBalanceDoge - estimatedFeeCalculated;
+              const maxDogeCoin = maxSendableDogeCoin();
               const { formattedValue, floatValue } = values;
               return (
                 formattedValue === EMPTY_STRING ||

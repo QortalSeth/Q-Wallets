@@ -47,7 +47,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   ARRR_FEE,
-  DECIMAL_ROUND_UP,
   EMPTY_STRING,
   SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_2,
@@ -253,11 +252,6 @@ export default function PirateWallet() {
     fontSize: { xs: 14.5, sm: 15 },
     opacity: 0.82,
   } as const;
-
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsArrr.length)
-      : 0;
 
   const handleCloseArrrLightwallet = () => {
     setOpenArrrLightwallet(false);

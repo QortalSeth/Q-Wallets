@@ -85,13 +85,18 @@ export const WalletSendDialog = styled(Dialog)(
           : 'rgba(15, 23, 42, 0.32)',
     },
     '& .MuiDialog-paper': {
-      backgroundColor: 'rgba(4, 18, 31, 0.98)',
+      backgroundColor:
+        theme.palette.mode === 'dark' ? 'rgba(4, 18, 31, 0.98)' : '#ffffff',
       backgroundImage:
-        'radial-gradient(circle at 18% 0%, rgba(24, 189, 242, 0.1), transparent 36%), linear-gradient(180deg, rgba(7, 27, 42, 0.98) 0%, rgba(4, 13, 23, 0.99) 100%)',
+        theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle at 18% 0%, rgba(24, 189, 242, 0.1), transparent 36%), linear-gradient(180deg, rgba(7, 27, 42, 0.98) 0%, rgba(4, 13, 23, 0.99) 100%)'
+          : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
       border: `1px solid ${theme.palette.divider}`,
       borderRadius: 8,
       boxShadow:
-        '0 28px 72px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255,255,255,0.04)',
+        theme.palette.mode === 'dark'
+          ? '0 28px 72px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255,255,255,0.04)'
+          : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
       maxHeight: 'calc(100dvh - 48px)',
       overflowX: 'hidden',
     },

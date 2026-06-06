@@ -2,7 +2,6 @@
 
 All notable changes to Q-Wallets will be documented in this file.
 
-<<<<<<< HEAD
 ## [1.3.4] - 2026-06-06
 
 ### Changed
@@ -26,9 +25,6 @@ All notable changes to Q-Wallets will be documented in this file.
 [![Q-Wallets before redesign](/changelog/q-wallets-before-redesign.png)](/changelog/q-wallets-before-redesign.png) [![Q-Wallets after redesign](/changelog/q-wallets-after-redesign-1-3-3.png)](/changelog/q-wallets-after-redesign-1-3-3.png)
 
 ## [1.3.3] - 2026-06-06
-=======
-## [1.3.3]
->>>>>>> f246ba2 (Set version)
 
 ### Added
 

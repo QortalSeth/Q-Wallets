@@ -179,6 +179,11 @@ export default function BitcoinWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
+  const emptyRows =
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - transactionsBtc.length)
+      : 0;
+
   const handleOpenAddressBook = () => {
     setOpenBtcAddressBook(true);
   };

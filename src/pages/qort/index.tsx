@@ -87,6 +87,7 @@ import {
   Transition,
   WalletSendDialog,
 } from '../../styles/page-styles';
+import { SearchTransactionsResponse } from '../../utils/Types.tsx';
 import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 import { NameText } from '../../components/NameText';

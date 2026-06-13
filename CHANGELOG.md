@@ -2,7 +2,7 @@
 
 All notable changes to Q-Wallets will be documented in this file.
 
-## [1.3.4] - 2026-06-06
+## [1.3.4] - 2026-06-13
 
 ### Changed
 

@@ -3511,13 +3511,6 @@ export default function QortalWallet() {
               ?.label ?? 'Filtered')
           : `${activeFilterValues.length} filters`;
     const advancedFilterOpen = Boolean(advancedFilterAnchor);
-    const transactionGridColumns = {
-      xs: '42px minmax(82px, 0.55fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(95px, 0.72fr) minmax(76px, 0.55fr) minmax(88px, 0.58fr)',
-      xl: '54px minmax(110px, 0.7fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(118px, 0.78fr) minmax(92px, 0.62fr) minmax(112px, 0.66fr)',
-    } as const;
-    const transactionAmountFeeShiftSx = {
-      transform: { xs: 'translateX(-34px)', xl: 'translateX(-44px)' },
-    } as const;
     const transactionHeaderSx = {
       color: 'text.secondary',
       fontSize: 11,
@@ -3728,6 +3721,544 @@ export default function QortalWallet() {
       );
     };
 
+    // Context-aware "Info" cell: shows the column that used to be dedicated per
+    // transaction type before the unified table — identifier/size for ARBITRARY,
+    // poll name for polls, the human-readable action for NAME/GROUP txs, and the
+    // reward-share created/removed state.
+    const infoTextSx = {
+      color: 'text.secondary',
+      fontSize: 13,
+      fontWeight: 400,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    } as const;
+
+    const renderTransactionInfo = (row: any): ReactNode => {
+      const type = row?.type;
+      const infoText = (content: ReactNode, title?: string) => {
+        const node = <Typography sx={infoTextSx}>{content}</Typography>;
+        return title ? (
+          <CustomWidthTooltip placement="top" title={title}>
+            {node}
+          </CustomWidthTooltip>
+        ) : (
+          node
+        );
+      };
+
+      // NAME transactions
+      if (type === 'REGISTER_NAME') {
+        return infoText(
+          t('core:qortal.registered_name', {
+            name: row?.name,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'UPDATE_NAME') {
+        return infoText(
+          t('core:qortal.old_new_name', {
+            oldName: row?.name,
+            newName: row?.newName,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'SELL_NAME') {
+        return infoText(
+          t('core:qortal.name_to_sell', {
+            name: row?.name,
+            amount: row?.amount,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'CANCEL_SELL_NAME') {
+        return infoText(
+          t('core:qortal.cancelled_name_sale', {
+            name: row?.name,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'BUY_NAME') {
+        return infoText(
+          t('core:qortal.seller', {
+            seller: row?.seller,
+            amount: row?.amount,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+
+      // REWARD_SHARE / TRANSFER_PRIVS / PRESENCE -> created/removed
+      if (
+        type === 'REWARD_SHARE' ||
+        type === 'TRANSFER_PRIVS' ||
+        type === 'PRESENCE'
+      ) {
+        if (!row?.sharePercent) return null;
+        const removed = String(row.sharePercent).startsWith('-');
+        const mintingKeyTitle =
+          row?.recipient === row?.creatorAddress || row?.recipient === userName
+            ? 'Minting Key: ' + row?.rewardSharePublicKey
+            : EMPTY_STRING;
+        return (
+          <Box
+            sx={{
+              alignItems: 'center',
+              color: removed ? 'error.main' : 'success.main',
+              display: 'flex',
+              fontSize: 13,
+              fontWeight: 400,
+              minWidth: 0,
+            }}
+          >
+            {removed
+              ? t('core:qortal.removed', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:qortal.created', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+            {mintingKeyTitle ? (
+              <CustomWidthTooltip placement="top" title={mintingKeyTitle}>
+                <InfoOutlined
+                  sx={{ color: 'info.main', fontSize: 14, ml: 1 }}
+                />
+              </CustomWidthTooltip>
+            ) : null}
+          </Box>
+        );
+      }
+
+      // GROUP transactions
+      const groupId = row?.groupId;
+      if (type === 'CREATE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.create_group', {
+            groupName: row?.groupName,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'UPDATE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.update_group', {
+            newDescription: row?.newDescription,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'ADD_GROUP_ADMIN') {
+        return infoText(
+          t('core:message.group_actions.add_group_admin', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'REMOVE_GROUP_ADMIN') {
+        return infoText(
+          t('core:message.group_actions.remove_group_admin', {
+            admn: row?.admin,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_BAN') {
+        return infoText(
+          t('core:message.group_actions.group_ban', {
+            offender: row?.offender,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'CANCEL_GROUP_BAN') {
+        return infoText(
+          t('core:message.group_actions.cancel_group_ban', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_KICK') {
+        return infoText(
+          t('core:message.group_actions.group_kick', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_INVITE') {
+        if (row?.invitee === address) {
+          return (
+            <Typography sx={infoTextSx}>
+              <Trans
+                i18nKey="message.group_actions.group_invite"
+                values={{ invitee: row?.invitee, id: groupId }}
+                components={{
+                  blue: (
+                    <span
+                      style={{
+                        color: theme.palette.info.main,
+                        marginLeft: '5px',
+                        marginRight: '5px',
+                      }}
+                    />
+                  ),
+                }}
+              />
+            </Typography>
+          );
+        }
+        return infoText('Invitee: ' + row?.invitee + ' ID: ' + groupId);
+      }
+      if (type === 'CANCEL_GROUP_INVITE' || type === 'GROUP_APPROVAL') {
+        return infoText(
+          t('core:message.group_actions.reference', {
+            reference: row?.reference,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'JOIN_GROUP') {
+        return infoText(
+          t('core:message.group_actions.join_group', {
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'LEAVE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.leave_group', {
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+
+      return null;
+    };
+
+    const renderIdentifierCell = (row: any) => {
+      const identifier = row?.identifier
+        ? String(row.identifier)
+        : EMPTY_STRING;
+      if (!identifier) return <Typography sx={infoTextSx}>-</Typography>;
+      return (
+        <CustomWidthTooltip placement="top" title={identifier}>
+          <Typography sx={infoTextSx}>{cropString(identifier)}</Typography>
+        </CustomWidthTooltip>
+      );
+    };
+
+    const renderSizeCell = (row: any) => (
+      <Typography sx={{ ...infoTextSx, textAlign: 'right' }}>
+        {row?.size > 0 ? humanFileSize(row.size, true, 2) : '-'}
+      </Typography>
+    );
+
+    const renderPollNameCell = (row: any) => (
+      <Typography sx={infoTextSx}>{row?.pollName || '-'}</Typography>
+    );
+
+    const renderTypeCell = (row: any) => (
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          fontSize: 13,
+          fontWeight: 400,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {formatTransactionType(row?.type)}
+      </Typography>
+    );
+
+    const renderFeeCell = (row: any) => (
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          fontSize: 13,
+          fontWeight: 400,
+          textAlign: 'right',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {row?.fee !== undefined && row?.fee !== null
+          ? `${formatQortFee(row.fee)} QORT`
+          : '-'}
+      </Typography>
+    );
+
+    const renderTimeCell = (row: any) => (
+      <CustomWidthTooltip
+        placement="top"
+        title={new Date(row?.timestamp).toLocaleString()}
+      >
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: 13,
+            fontWeight: 400,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
+        </Typography>
+      </CustomWidthTooltip>
+    );
+
+    const renderInfoCell = (row: any) =>
+      renderTransactionInfo(row) ?? <Typography sx={infoTextSx}>-</Typography>;
+
+    // Mobile detail = the most relevant per-type value (info, identifier/size,
+    // or poll name) collapsed into one card field.
+    const renderTransactionDetail = (row: any): ReactNode => {
+      const info = renderTransactionInfo(row);
+      if (info) return info;
+      const identifier = row?.identifier
+        ? String(row.identifier)
+        : EMPTY_STRING;
+      const size =
+        row?.size > 0 ? humanFileSize(row.size, true, 2) : EMPTY_STRING;
+      if (identifier || size) {
+        return (
+          <Typography sx={{ ...infoTextSx, whiteSpace: 'normal' }}>
+            {[identifier ? cropString(identifier) : EMPTY_STRING, size]
+              .filter(Boolean)
+              .join(' · ')}
+          </Typography>
+        );
+      }
+      if (row?.pollName) {
+        return <Typography sx={infoTextSx}>{row.pollName}</Typography>;
+      }
+      return null;
+    };
+
+    // Each filter exposes its own ordered column set; the visible columns are the
+    // union of the selected filters (canonical order), so columns appear/disappear
+    // with the filter selection. ALL shows the full superset.
+    type TransactionColumnId =
+      | 'status'
+      | 'type'
+      | 'creator'
+      | 'identifier'
+      | 'size'
+      | 'recipient'
+      | 'amount'
+      | 'info'
+      | 'pollName'
+      | 'fee'
+      | 'time';
+
+    const transactionColumnConfig: Record<
+      TransactionColumnId,
+      {
+        headerKey: string;
+        align: 'left' | 'center' | 'right';
+        widthXs: string;
+        widthXl: string;
+        minPx: number;
+        renderCell: (row: any) => ReactNode;
+      }
+    > = {
+      status: {
+        headerKey: 'core:status',
+        align: 'center',
+        widthXs: '42px',
+        widthXl: '54px',
+        minPx: 42,
+        renderCell: (row) => (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            {renderStatusIcon(row)}
+          </Box>
+        ),
+      },
+      type: {
+        headerKey: 'core:type',
+        align: 'left',
+        widthXs: 'minmax(82px, 0.55fr)',
+        widthXl: 'minmax(110px, 0.7fr)',
+        minPx: 82,
+        renderCell: renderTypeCell,
+      },
+      creator: {
+        headerKey: 'core:creator',
+        align: 'left',
+        widthXs: 'minmax(120px, 1fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: (row) => renderAddressCell(row, 'creator'),
+      },
+      identifier: {
+        headerKey: 'core:identifier',
+        align: 'left',
+        widthXs: 'minmax(120px, 0.9fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: renderIdentifierCell,
+      },
+      size: {
+        headerKey: 'core:size',
+        align: 'right',
+        widthXs: 'minmax(72px, 0.5fr)',
+        widthXl: 'minmax(90px, 0.55fr)',
+        minPx: 72,
+        renderCell: renderSizeCell,
+      },
+      recipient: {
+        headerKey: 'core:recipient',
+        align: 'left',
+        widthXs: 'minmax(120px, 1fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: (row) => renderAddressCell(row, 'recipient'),
+      },
+      amount: {
+        headerKey: 'core:amount',
+        align: 'right',
+        widthXs: 'minmax(95px, 0.72fr)',
+        widthXl: 'minmax(118px, 0.78fr)',
+        minPx: 95,
+        renderCell: (row) => (
+          <Box sx={{ textAlign: 'right' }}>{renderAmountCell(row)}</Box>
+        ),
+      },
+      info: {
+        headerKey: 'core:info',
+        align: 'left',
+        widthXs: 'minmax(132px, 1.1fr)',
+        widthXl: 'minmax(160px, 1.15fr)',
+        minPx: 132,
+        renderCell: renderInfoCell,
+      },
+      pollName: {
+        headerKey: 'core:poll_name',
+        align: 'left',
+        widthXs: 'minmax(120px, 0.9fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: renderPollNameCell,
+      },
+      fee: {
+        headerKey: 'core:fee.fee',
+        align: 'right',
+        widthXs: 'minmax(76px, 0.55fr)',
+        widthXl: 'minmax(92px, 0.62fr)',
+        minPx: 76,
+        renderCell: renderFeeCell,
+      },
+      time: {
+        headerKey: 'core:time',
+        align: 'left',
+        widthXs: 'minmax(88px, 0.58fr)',
+        widthXl: 'minmax(112px, 0.66fr)',
+        minPx: 88,
+        renderCell: renderTimeCell,
+      },
+    };
+
+    const transactionColumnOrder: TransactionColumnId[] = [
+      'status',
+      'type',
+      'creator',
+      'identifier',
+      'size',
+      'recipient',
+      'amount',
+      'info',
+      'pollName',
+      'fee',
+      'time',
+    ];
+
+    const filterColumnSets: Record<string, TransactionColumnId[]> = {
+      all: transactionColumnOrder,
+      activity: transactionColumnOrder,
+      payments: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'amount',
+        'fee',
+        'time',
+      ],
+      arbitrary: [
+        'status',
+        'type',
+        'creator',
+        'identifier',
+        'size',
+        'fee',
+        'time',
+      ],
+      at: ['status', 'type', 'creator', 'recipient', 'amount', 'fee', 'time'],
+      group: ['status', 'type', 'creator', 'info', 'fee', 'time'],
+      name: ['status', 'type', 'creator', 'info', 'fee', 'time'],
+      asset: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'amount',
+        'fee',
+        'time',
+      ],
+      poll: ['status', 'type', 'creator', 'pollName', 'fee', 'time'],
+      rewards: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'info',
+        'fee',
+        'time',
+      ],
+    };
+
+    const visibleColumnIds: TransactionColumnId[] = (() => {
+      if (isAllFiltersSelected) return transactionColumnOrder;
+      const visible = new Set<TransactionColumnId>();
+      activeFilterValues.forEach((value) => {
+        (filterColumnSets[value] ?? []).forEach((id) => visible.add(id));
+      });
+      const ordered = transactionColumnOrder.filter((id) => visible.has(id));
+      return ordered.length > 0
+        ? ordered
+        : ['status', 'type', 'creator', 'fee', 'time'];
+    })();
+
+    const transactionGridColumns = {
+      xs: visibleColumnIds
+        .map((id) => transactionColumnConfig[id].widthXs)
+        .join(' '),
+      xl: visibleColumnIds
+        .map((id) => transactionColumnConfig[id].widthXl)
+        .join(' '),
+    };
+
+    const transactionGridMinWidth =
+      visibleColumnIds.reduce(
+        (sum, id) => sum + transactionColumnConfig[id].minPx,
+        0
+      ) +
+      8 * Math.max(0, visibleColumnIds.length - 1);
+
     const renderTransactionRows = (rows: any[]) => {
       if (!rows || rows.length === 0) {
         return (
@@ -3912,6 +4443,17 @@ export default function QortalWallet() {
                     </Typography>
                   )}
                 </Box>
+
+                {renderTransactionDetail(row) && (
+                  <Box sx={{ minWidth: 0 }}>
+                    {renderMobileField(
+                      t('core:info', { postProcess: 'capitalizeFirstChar' }),
+                      <Box sx={{ minWidth: 0, whiteSpace: 'normal' }}>
+                        {renderTransactionDetail(row)}
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </Box>
             ))}
           </Box>
@@ -3930,7 +4472,7 @@ export default function QortalWallet() {
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            <Box sx={{ width: 'max(100%, 760px)' }}>
+            <Box sx={{ width: `max(100%, ${transactionGridMinWidth}px)` }}>
               <Box
                 aria-hidden
                 sx={{
@@ -3948,43 +4490,19 @@ export default function QortalWallet() {
                   py: 1.15,
                 }}
               >
-                <Typography
-                  sx={{ ...transactionHeaderSx, textAlign: 'center' }}
-                >
-                  {t('core:status', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
-                <Typography sx={transactionHeaderSx}>
-                  {t('core:type', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
-                <Typography sx={transactionHeaderSx}>
-                  {t('core:creator', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
-                <Typography sx={transactionHeaderSx}>
-                  {t('core:recipient', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-                <Typography
-                  sx={{
-                    ...transactionHeaderSx,
-                    ...transactionAmountFeeShiftSx,
-                    textAlign: 'right',
-                  }}
-                >
-                  {t('core:amount', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
-                <Typography
-                  sx={{
-                    ...transactionHeaderSx,
-                    ...transactionAmountFeeShiftSx,
-                    textAlign: 'right',
-                  }}
-                >
-                  {t('core:fee.fee', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
-                <Typography sx={transactionHeaderSx}>
-                  {t('core:time', { postProcess: 'capitalizeFirstChar' })}
-                </Typography>
+                {visibleColumnIds.map((id) => {
+                  const column = transactionColumnConfig[id];
+                  return (
+                    <Typography
+                      key={id}
+                      sx={{ ...transactionHeaderSx, textAlign: column.align }}
+                    >
+                      {t(column.headerKey, {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </Typography>
+                  );
+                })}
               </Box>
 
               <Box sx={{ display: 'grid', gap: 0, px: { md: 0.4 }, py: 0.35 }}>
@@ -4015,60 +4533,11 @@ export default function QortalWallet() {
                         'background-color 150ms ease, border-color 150ms ease',
                     }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      {renderStatusIcon(row)}
-                    </Box>
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 13,
-                        fontWeight: 400,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {formatTransactionType(row?.type)}
-                    </Typography>
-                    {renderAddressCell(row, 'creator')}
-                    {renderAddressCell(row, 'recipient')}
-                    <Box
-                      sx={{
-                        ...transactionAmountFeeShiftSx,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {renderAmountCell(row)}
-                    </Box>
-                    <Typography
-                      sx={{
-                        ...transactionAmountFeeShiftSx,
-                        color: 'text.secondary',
-                        fontSize: 13,
-                        fontWeight: 400,
-                        textAlign: 'right',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {row?.fee !== undefined && row?.fee !== null
-                        ? `${formatQortFee(row.fee)} QORT`
-                        : '-'}
-                    </Typography>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={new Date(row?.timestamp).toLocaleString()}
-                    >
-                      <Typography
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: 13,
-                          fontWeight: 400,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
-                      </Typography>
-                    </CustomWidthTooltip>
+                    {visibleColumnIds.map((id) => (
+                      <Box key={id} sx={{ minWidth: 0 }}>
+                        {transactionColumnConfig[id].renderCell(row)}
+                      </Box>
+                    ))}
                   </Box>
                 ))}
               </Box>

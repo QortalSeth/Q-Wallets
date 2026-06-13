@@ -807,8 +807,10 @@ export function WalletSummaryCard({
           gap: { xs: 2.25, md: 2.5 },
           gridTemplateColumns: {
             xs: '1fr',
-            md: 'minmax(150px, 0.46fr) minmax(220px, 0.68fr) minmax(280px, 0.86fr)',
-            xl: 'minmax(250px, 0.55fr) minmax(285px, 0.72fr) minmax(380px, 0.95fr)',
+            // Use a 0px floor so the summary can shrink to its grid track instead
+            // of overflowing (with overflow: visible) over the right-hand column.
+            md: 'minmax(0, 0.46fr) minmax(0, 0.68fr) minmax(0, 0.86fr)',
+            xl: 'minmax(0, 0.55fr) minmax(0, 0.72fr) minmax(0, 0.95fr)',
           },
           minHeight: { md: 250 },
           pb: { xs: 2.25, md: 2.45 },
@@ -3272,7 +3274,10 @@ export function WalletWorkspace({
           gap: { xs: 1.8, md: 2 },
           minWidth: 0,
           position: 'relative',
-          zIndex: 1,
+          // Keep the main column (summary + transactions + filter controls) above
+          // the right-hand panels so the filter/refresh controls always remain
+          // clickable even if the columns visually abut.
+          zIndex: 2,
         }}
       >
         <WalletSummaryCard

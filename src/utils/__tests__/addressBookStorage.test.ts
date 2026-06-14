@@ -2,21 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Coin } from 'qapp-core';
 import {
   getAddressBook,
+  getAddressBookStorageKey,
   addAddress,
   updateAddress,
   deleteAddress,
   searchAddresses,
+  setAddressBookAccountScope,
 } from '../addressBookStorage';
 import type { AddressBookEntry } from '../Types';
-
-// Mock the QDN module to prevent actual syncing during tests
-vi.mock('../addressBookQDN', () => ({
-  debouncedPublishToQDN: vi.fn(),
-}));
 
 describe('addressBookStorage', () => {
   beforeEach(() => {
     localStorage.clear();
+    setAddressBookAccountScope(null);
     vi.clearAllMocks();
   });
 
@@ -96,7 +94,10 @@ describe('addressBookStorage', () => {
           createdAt: Date.now(),
         },
       ];
-      localStorage.setItem('q-wallets-addressbook-BTC', JSON.stringify(oldFormatData));
+      localStorage.setItem(
+        'q-wallets-addressbook-BTC',
+        JSON.stringify(oldFormatData)
+      );
 
       const result = getAddressBook(Coin.BTC);
       expect(result).toHaveLength(1);
@@ -112,7 +113,7 @@ describe('addressBookStorage', () => {
     it('migration sets lastUpdated to 0 so QDN is always treated as newer', () => {
       // Root cause 3 fix: old-format data must migrate with lastUpdated:0 so
       // that any valid QDN timestamp (> 0) takes precedence on startup sync,
-      // avoiding a spurious "local is newer" publish proposal.
+      // avoiding a spurious "local is newer" manual sync prompt.
       const oldFormatData = [
         {
           id: 'test-1',
@@ -123,13 +124,71 @@ describe('addressBookStorage', () => {
           createdAt: 1000,
         },
       ];
-      localStorage.setItem('q-wallets-addressbook-BTC', JSON.stringify(oldFormatData));
+      localStorage.setItem(
+        'q-wallets-addressbook-BTC',
+        JSON.stringify(oldFormatData)
+      );
 
       getAddressBook(Coin.BTC);
 
       const stored = localStorage.getItem('q-wallets-addressbook-BTC');
       const parsed = JSON.parse(stored!);
       expect(parsed.lastUpdated).toBe(0);
+    });
+
+    it('keeps address books isolated by account scope', () => {
+      setAddressBookAccountScope('Qaccount111111111111111111111111111111');
+      addAddress({
+        name: 'Alice',
+        address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+        note: '',
+        coinType: Coin.BTC,
+      });
+
+      setAddressBookAccountScope('Qaccount222222222222222222222222222222');
+      expect(getAddressBook(Coin.BTC)).toEqual([]);
+
+      addAddress({
+        name: 'Bob',
+        address: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
+        note: '',
+        coinType: Coin.BTC,
+      });
+
+      expect(getAddressBook(Coin.BTC)[0].name).toBe('Bob');
+
+      setAddressBookAccountScope('Qaccount111111111111111111111111111111');
+      expect(getAddressBook(Coin.BTC)[0].name).toBe('Alice');
+    });
+
+    it('migrates legacy unscoped storage into the current account only once', () => {
+      const legacyData = {
+        entries: [
+          {
+            id: 'test-1',
+            name: 'Alice',
+            address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+            note: '',
+            coinType: Coin.BTC,
+            createdAt: 1000,
+          },
+        ],
+        lastUpdated: 1000,
+      };
+      localStorage.setItem(
+        'q-wallets-addressbook-BTC',
+        JSON.stringify(legacyData)
+      );
+
+      setAddressBookAccountScope('Qaccount111111111111111111111111111111');
+      expect(getAddressBook(Coin.BTC)).toHaveLength(1);
+      expect(
+        localStorage.getItem(getAddressBookStorageKey(Coin.BTC))
+      ).not.toBeNull();
+      expect(localStorage.getItem('q-wallets-addressbook-BTC')).toBeNull();
+
+      setAddressBookAccountScope('Qaccount222222222222222222222222222222');
+      expect(getAddressBook(Coin.BTC)).toEqual([]);
     });
   });
 

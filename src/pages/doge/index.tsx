@@ -1,54 +1,38 @@
 import {
   ChangeEvent,
-  Key,
   MouseEvent,
   SyntheticEvent,
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
+import { timeoutDelay, copyToClipboard } from '../../common/functions';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import {
+  WalletExternalTransactionsList,
+  WalletTransactionsCard,
+  WalletTransactionsLoader,
+  WalletWorkspace,
+} from '../../components/WalletWorkspace';
+import {
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
-  AppBar,
-  Avatar,
   Box,
-  Button,
-  Dialog,
   DialogContent,
-  Grid,
   IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableContainer,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Toolbar,
   Typography,
 } from '@mui/material';
-import { NumericFormat as _NumericFormat } from 'react-number-format';
-const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>>;
-import TableCell from '@mui/material/TableCell';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
-import QRCode from 'react-qr-code';
 import {
-  Close,
-  CopyAllTwoTone,
   FirstPage,
-  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  Refresh,
-  Send,
 } from '@mui/icons-material';
 import coinLogoDOGE from '../../assets/doge.png';
 import { useTranslation } from 'react-i18next';
@@ -64,14 +48,10 @@ import {
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
-  CustomWidthTooltip,
   SlideTransition,
-  StyledTableCell,
-  StyledTableRow,
   SubmitDialog,
   Transition,
-  WalletButtons,
-  WalletCard,
+  WalletSendDialog,
 } from '../../styles/page-styles';
 import { FeeManager } from '../../components/FeeManager';
 import { Coin } from 'qapp-core';
@@ -158,8 +138,6 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function DogecoinWallet() {
   const { t } = useTranslation(['core']);
-  const theme = useTheme();
-
   const [walletInfoDoge, setWalletInfoDoge] = useState<any>({});
   const [walletBalanceDoge, setWalletBalanceDoge] = useState<any>(0);
   const [_isLoadingWalletInfoDoge, setIsLoadingWalletInfoDoge] =
@@ -170,17 +148,20 @@ export default function DogecoinWallet() {
   const [isLoadingDogeTransactions, setIsLoadingDogeTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyDogeTxHash, setCopyDogeTxHash] = useState(EMPTY_STRING);
   const [openDogeSend, setOpenDogeSend] = useState(false);
   const [dogeAmount, setDogeAmount] = useState<number>(0);
   const [dogeRecipient, setDogeRecipient] = useState(EMPTY_STRING);
+  const [dogeRecipientDisplayName, setDogeRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshDoge, setLoadingRefreshDoge] = useState(false);
   const [openTxDogeSubmit, setOpenTxDogeSubmit] = useState(false);
   const [openSendDogeSuccess, setOpenSendDogeSuccess] = useState(false);
   const [openSendDogeError, setOpenSendDogeError] = useState(false);
   const [openDogeAddressBook, setOpenDogeAddressBook] = useState(false);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
 
   const [inputFee, setInputFee] = useState(0);
   const [_walletInfoError, setWalletInfoError] = useState<string | null>(null);
@@ -200,11 +181,6 @@ export default function DogecoinWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsDoge.length)
-      : 0;
-
   const handleOpenAddressBook = () => {
     setOpenDogeAddressBook(true);
   };
@@ -213,8 +189,9 @@ export default function DogecoinWallet() {
     setOpenDogeAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setDogeRecipient(address);
+    setDogeRecipientDisplayName(name || EMPTY_STRING);
     setDogeAmount(0);
     setOpenDogeAddressBook(false);
     setOpenDogeSend(true);
@@ -225,6 +202,7 @@ export default function DogecoinWallet() {
   const handleOpenDogeSend = () => {
     setDogeAmount(0);
     setDogeRecipient(EMPTY_STRING);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setOpenDogeSend(true);
     setAddressFormatError(false);
     setOpenSendDogeError(false);
@@ -241,6 +219,7 @@ export default function DogecoinWallet() {
   ) => {
     const value = e.target.value.trim();
     setDogeRecipient(value);
+    setDogeRecipientDisplayName(EMPTY_STRING);
 
     if (validateDogeAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
@@ -251,7 +230,15 @@ export default function DogecoinWallet() {
 
   const handleCloseDogeSend = () => {
     setDogeAmount(0);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setOpenDogeSend(false);
+    setAddressFormatError(false);
+    setOpenSendDogeError(false);
+  };
+
+  const handleClearDogeRecipient = () => {
+    setDogeRecipient(EMPTY_STRING);
+    setDogeRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setOpenSendDogeError(false);
   };
@@ -402,7 +389,7 @@ export default function DogecoinWallet() {
     setLoadingRefreshDoge(false);
   };
 
-  const handleSendMaxDoge = () => {        
+  const handleSendMaxDoge = () => {
     if (maxSendableDogeCoin() <= 0) {
       setDogeAmount(0);
     } else {
@@ -431,6 +418,7 @@ export default function DogecoinWallet() {
       if (!sendRequest?.error) {
         setDogeAmount(0);
         setDogeRecipient(EMPTY_STRING);
+        setDogeRecipientDisplayName(EMPTY_STRING);
         setOpenTxDogeSubmit(false);
         setOpenSendDogeSuccess(true);
         setIsLoadingWalletBalanceDoge(true);
@@ -440,6 +428,7 @@ export default function DogecoinWallet() {
     } catch (error) {
       setDogeAmount(0);
       setDogeRecipient(EMPTY_STRING);
+      setDogeRecipientDisplayName(EMPTY_STRING);
       setOpenTxDogeSubmit(false);
       setOpenSendDogeError(true);
       setIsLoadingWalletBalanceDoge(true);
@@ -451,264 +440,86 @@ export default function DogecoinWallet() {
 
   const tableLoader = () => {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-          >
-            {t('core:message.generic.loading_transactions', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Box>
+      <WalletTransactionsLoader
+        label={t('core:message.generic.loading_transactions', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+      />
     );
   };
 
-  const transactionsTable = () => {
-    return (
-      <TableContainer component={Paper}>
-        <Table
-          stickyHeader
-          sx={{ width: '100%' }}
-          aria-label="transactions table"
-        >
-          <TableHead>
-            <TableRow>
-              <StyledTableCell align="left">
-                {t('core:sender', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:receiver', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:transaction_hash', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:total_amount', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:fee.fee', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:time', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(rowsPerPage > 0
-              ? transactionsDoge.slice(
-                  page * rowsPerPage,
-                  page * rowsPerPage + rowsPerPage
-                )
-              : transactionsDoge
-            )?.map(
-              (
-                row: {
-                  inputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  outputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  txHash: string;
-                  totalAmount: any;
-                  feeAmount: any;
-                  timestamp: number;
-                },
-                k: Key
-              ) => (
-                <StyledTableRow key={k}>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.inputs.map((input, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: input.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {input.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(input.amount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.outputs.map((output, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: output.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {output.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(output.amount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {cropString(row?.txHash)}
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        copyDogeTxHash
-                          ? copyDogeTxHash
-                          : t('core:action.copy_hash', {
-                              hash: row?.txHash,
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <IconButton
-                        aria-label="copy"
-                        size="small"
-                        onClick={() => {
-                          copyToClipboard(row?.txHash);
-                          changeCopyDogeTxHash();
-                        }}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.totalAmount > 0 ? (
-                      <Box style={{ color: theme.palette.success.main }}>
-                        +{(Number(row?.totalAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        {(Number(row?.totalAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="right">
-                    {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        -{(Number(row?.feeAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: 'grey' }}>
-                        -{(Number(row?.feeAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        row?.timestamp
-                          ? new Date(row?.timestamp).toLocaleString()
-                          : t('core:message.generic.waiting_confirmation', {
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <Box>
-                        {row?.timestamp
-                          ? epochToAgo(row?.timestamp)
-                          : t('core:message.generic.unconfirmed_transaction', {
-                              postProcess: 'capitalizeFirstChar',
-                            })}
-                      </Box>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                </StyledTableRow>
-              )
-            )}
-            {emptyRows > 0 && (
-              <TableRow style={{ height: 53 * emptyRows }}>
-                <TableCell colSpan={6} />
-              </TableRow>
-            )}
-          </TableBody>
-          <TableFooter sx={{ width: '100%' }}>
-            <TableRow>
-              <TablePagination
-                labelRowsPerPage={t('core:rows_per_page', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                colSpan={6}
-                count={transactionsDoge.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      'aria-label': 'rows per page',
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={TablePaginationActions}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-    );
-  };
+  const transactionsTable = () => (
+    <WalletExternalTransactionsList
+      ActionsComponent={TablePaginationActions}
+      coin="DOGE"
+      copyHashLabel={copyDogeTxHash || undefined}
+      labels={{
+        copyHash: (hash) =>
+          t('core:action.copy_hash', {
+            hash,
+            postProcess: 'capitalizeFirstChar',
+          }),
+        fee: t('core:fee.fee', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        noTransactions: 'No transactions.',
+        receiver: t('core:receiver', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        rowsPerPage: t('core:rows_per_page', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        sender: t('core:sender', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        time: t('core:time', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        totalAmount: t('core:total_amount', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        transactionHash: t('core:transaction_hash', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        waitingConfirmation: t('core:message.generic.waiting_confirmation', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+      }}
+      onCopyHash={(hash) => {
+        copyToClipboard(hash);
+        changeCopyDogeTxHash();
+      }}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      page={page}
+      rows={transactionsDoge}
+      rowsPerPage={rowsPerPage}
+    />
+  );
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      <Dialog
-        fullScreen
+      <WalletSendDialog
         open={openDogeSend}
         onClose={handleCloseDogeSend}
         slots={{ transition: Transition }}
+        maxWidth={false}
+        fullWidth
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        slotProps={{
+          paper: {
+            sx: sendCoinDialogPaperSx,
+          },
+        }}
       >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxDogeSubmit}>
+        <SubmitDialog
+          fullWidth={true}
+          maxWidth="xs"
+          open={openTxDogeSubmit}
+          disableScrollLock
+        >
           <DialogContent>
             <Box
               sx={{
@@ -785,195 +596,42 @@ export default function DogecoinWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseDogeSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="DOGE Logo"
-              src={coinLogoDOGE}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.DOGE,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendDoge()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-doge"
-              onClick={sendDogeRequest}
-              sx={{
-                backgroundcolor: 'action.main',
-                color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceDoge ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : walletBalanceError ? (
-              walletBalanceError
-            ) : (
-              walletBalanceDoge + ' DOGE'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {maxSendableDogeCoin() + ' DOGE'}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxDoge}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={dogeAmount}
-            allowNegative={false}
-            customInput={TextField as React.ComponentType<any>}
-            valueIsNumericString
-            label="Amount (DOGE)"
-            fullWidth
-            isAllowed={(values) => {
-              const maxDogeCoin = maxSendableDogeCoin();
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue ?? 0) <= maxDogeCoin
-              );
-            }}
-            onValueChange={(values) => {
-              setDogeAmount(values.floatValue ?? 0);
-            }}
-            required
-          />
-
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="doge-address"
-            margin="normal"
-            value={dogeRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            fullWidth
-            helperText={
-              addressFormatError
-                ? t('core:message.error.doge_address_invalid', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-                : t('core:message.generic.doge_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          />
-        </Box>
-        <FeeManager coin="DOGE" onChange={setInputFee} />
-      </Dialog>
+        <ExternalSendForm
+          addressError={addressFormatError}
+          addressHelperText={
+            addressFormatError
+              ? t('core:message.error.doge_address_invalid', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:message.generic.doge_address', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+          }
+          addressInputId="doge-address"
+          amount={dogeAmount}
+          balance={walletBalanceDoge}
+          balanceError={walletBalanceError}
+          coinLogo={coinLogoDOGE}
+          feeContent={<FeeManager coin="DOGE" onChange={setInputFee} />}
+          isBalanceLoading={isLoadingWalletBalanceDoge}
+          maxSendable={maxSendableDogeCoin()}
+          onAmountChange={setDogeAmount}
+          onClearRecipient={handleClearDogeRecipient}
+          onClose={handleCloseDogeSend}
+          onOpenAddressBook={handleOpenAddressBook}
+          onRecipientChange={handleRecipientChange}
+          onSend={sendDogeRequest}
+          onSendMax={handleSendMaxDoge}
+          recipient={dogeRecipient}
+          recipientDisplayName={dogeRecipientDisplayName}
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'DOGE',
+          })}
+          sendDisabled={disableCanSendDoge()}
+          showAddressBookButton
+          symbol="DOGE"
+        />
+      </WalletSendDialog>
 
       <AddressBookDialog
         open={openDogeAddressBook}
@@ -982,241 +640,32 @@ export default function DogecoinWallet() {
         onSelectAddress={handleSelectAddress}
       />
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
+      <WalletWorkspace
+        address={walletInfoDoge?.address ?? EMPTY_STRING}
+        addressBookRefreshKey={openDogeAddressBook}
+        balance={walletBalanceDoge}
+        balanceDecimals={8}
+        balanceError={walletBalanceError}
+        coin="DOGE"
+        isBalanceLoading={isLoadingWalletBalanceDoge}
+        onAddContact={handleOpenAddressBook}
+        onSelectAddress={handleSelectAddress}
+        onSend={handleOpenDogeSend}
+        onToggleReceive={() => setReceivePanelOpen((prev) => !prev)}
+        receiveOpen={receivePanelOpen}
+        transactions={
+          <WalletTransactionsCard
+            isRefreshing={loadingRefreshDoge}
+            onRefresh={handleLoadingRefreshDoge}
           >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
-              sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
-              }}
-            >
-              <Box sx={{ display: 'grid', alignItems: 'center' }}>
-                <Box
-                  component="img"
-                  alt="DOGE Logo"
-                  src={coinLogoDOGE}
-                  sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
-                  }}
-                />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {t('core:message.generic.dogecoin_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
-                }}
-              >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
-                  >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {walletBalanceDoge ? (
-                      `${walletBalanceDoge} DOGE`
-                    ) : isLoadingWalletBalanceDoge ? (
-                      <LinearProgress />
-                    ) : undefined}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
-                      }}
-                    >
-                      {walletInfoDoge?.address}
-                    </Typography>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={t('core:action.copy_address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          copyToClipboard(
-                            walletInfoDoge?.address ?? EMPTY_STRING
-                          )
-                        }
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
-                      display: 'flex',
-                      height: '100%',
-                      justifyContent: 'center',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
-                    }}
-                  >
-                    <QRCode
-                      value={walletInfoDoge?.address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid size={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
-                }}
-              >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenDogeSend}
-                >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.DOGE,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshDoge}
-                  loading={loadingRefreshDoge}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
-                </Button>
-              </Box>
-
-              {isLoadingDogeTransactions ? (
-                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
-              ) : (
-                <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+            {isLoadingDogeTransactions || loadingRefreshDoge ? (
+              tableLoader()
+            ) : (
+              <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
+            )}
+          </WalletTransactionsCard>
+        }
+      />
     </Box>
   );
 }

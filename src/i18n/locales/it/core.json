@@ -16,7 +16,10 @@
     "send": "invia",
     "send_max": "invia massimo",
     "show_qrcode": "mostra codice QR",
-    "transfer_coin": "trasferisci {{ coin }}"
+    "transfer_coin": "trasferisci {{ coin }}",
+    "clear_recipient": "Cancella destinatario",
+    "open_address_book": "Apri rubrica",
+    "confirming": "conferma in corso"
   },
   "address": "indirizzo:",
   "address_book": "rubrica",
@@ -138,7 +141,8 @@
       "recipient_not_found": "Destinatario non trovato",
       "recipient_required": "Destinatario richiesto",
       "recipient_too_short": "Indirizzo del destinatario troppo breve",
-      "something_went_wrong": "Qualcosa è andato storto. Riprova."
+      "something_went_wrong": "Qualcosa è andato storto. Riprova.",
+      "invisible_qortal_name": "I nomi Qortal con caratteri invisibili non possono essere usati."
     },
     "success": {
       "qdn_sync": "rubrica {{coinType}} sincronizzata con successo su QDN"
@@ -191,5 +195,96 @@
   "total_amount": "importo totale",
   "transactions": "elenco delle transazioni",
   "transaction_hash": "Hash TX",
-  "wallets": "portafogli"
+  "wallets": "portafogli",
+  "wallet": {
+    "available_balance": "Saldo disponibile",
+    "your_address": "Il tuo indirizzo",
+    "no_transactions": "Nessuna transazione.",
+    "loading_transactions": "Caricamento transazioni",
+    "transactions": "Transazioni",
+    "encrypted_sync": "Sincronizzazione cifrata",
+    "local_address_book": "Rubrica locale",
+    "sync_now": "Sincronizza ora",
+    "sync_description": "Mantiene i tuoi contatti salvati e sincronizzati nel tuo account Qortal.",
+    "receive_symbol": "Ricevi {{symbol}}",
+    "transfer_symbol": "Trasferisci {{symbol}}",
+    "close_receive_qr_dialog": "Chiudi finestra QR di ricezione",
+    "no_address_available": "Nessun indirizzo disponibile",
+    "address_book_for_symbol": "Rubrica ({{symbol}})",
+    "qortal_user": "Utente Qortal",
+    "receive": "ricevi",
+    "hide_qr": "Nascondi QR"
+  },
+  "send": {
+    "to": "A",
+    "address_label": "Indirizzo:",
+    "max_sendable": "Massimo inviabile {{ amount }} {{ symbol }}",
+    "max_sendable_tooltip": "Importo massimo disponibile dopo aver riservato la commissione di invio",
+    "double_check_address": "Controlla sempre l’indirizzo prima di inviare.",
+    "irreversible": "Le transazioni non possono essere annullate dopo la trasmissione.",
+    "secure_private_decentralized": "Sicuro • Privato • Decentralizzato",
+    "secure_decentralized": "Sicuro • Decentralizzato",
+    "fee_per_byte": "Commissione per byte",
+    "confirmation_speed": "La velocità di conferma dipende dalla commissione selezionata",
+    "qort_address_or_name": "Indirizzo QORT o nome",
+    "receiver_address_or_name": "Indirizzo o nome del destinatario",
+    "max_sendable_loading": "Massimo inviabile in caricamento",
+    "symbol_amount": "Importo {{symbol}}",
+    "network_fee": "Commissione di rete",
+    "network_fee_max_tooltip": "Commissione di rete dedotta dall'importo massimo inviabile",
+    "current_network_fee_tooltip": "Commissione di rete corrente per l'invio. Questo importo viene riservato dal saldo massimo inviabile.",
+    "memo": "Memo",
+    "optional_memo": "Memo opzionale",
+    "symbol_memo": "Memo {{symbol}}",
+    "symbol_address_placeholder": "Indirizzo {{symbol}}",
+    "symbol_receiver_address": "Indirizzo destinatario {{symbol}}"
+  },
+  "filters": {
+    "all": "Tutto",
+    "payments": "Pagamenti",
+    "rewards": "Ricompense",
+    "activity": "Attività",
+    "arbitrary": "Arbitrary",
+    "at": "AT",
+    "group": "Gruppo",
+    "name": "Nome",
+    "asset": "Asset",
+    "poll": "Sondaggio",
+    "advanced": "Filtri avanzati"
+  },
+  "transaction_signature": "Firma",
+  "transaction_status": {
+    "pending_confirmation": "Conferma in sospeso",
+    "pending_confirmations": "In sospeso, {{ count }} di 3 conferme",
+    "confirmed": "Confermata"
+  },
+  "common": {
+    "or": "O",
+    "optional_parenthetical": "(opzionale)"
+  },
+  "max": "Max",
+  "address_book_ui": {
+    "search_placeholder": "Cerca per nome, indirizzo o nota",
+    "add_contact": "Aggiungi contatto",
+    "edit_contact": "Modifica contatto",
+    "favorite": "Preferito",
+    "remove_favorite": "Rimuovi preferito",
+    "contact": "Contatto della rubrica",
+    "symbol_contact": "Contatto rubrica {{symbol}}",
+    "enter_name": "Inserisci nome",
+    "already_in_list": "(gia nella lista)",
+    "enter_symbol_address": "Inserisci indirizzo {{symbol}}",
+    "address_confirmed": "Indirizzo confermato",
+    "confirm_address_before_saving": "Conferma questo indirizzo prima di salvare.",
+    "confirm_address": "Conferma indirizzo",
+    "add_note_optional": "Aggiungi una nota (opzionale)"
+  },
+  "app": {
+    "changelog": "REGISTRO MODIFICHE",
+    "close_changelog": "Chiudi registro modifiche",
+    "close_image_preview": "Chiudi anteprima immagine",
+    "q_wallets_before_redesign": "Q-Wallets prima del redesign",
+    "q_wallets_after_redesign": "Q-Wallets dopo il redesign",
+    "open_image_preview": "Apri {{alt}}"
+  }
 }

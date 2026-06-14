@@ -16,7 +16,10 @@
     "send": "发送",
     "send_max": "最大发送",
     "show_qrcode": "显示二维码",
-    "transfer_coin": "转移 {{ coin }}"
+    "transfer_coin": "转移 {{ coin }}",
+    "clear_recipient": "清除收款人",
+    "open_address_book": "打开地址簿",
+    "confirming": "确认中"
   },
   "address": "地址：",
   "address_book": "地址簿",
@@ -139,7 +142,8 @@
       "recipient_not_found": "未找到收件人",
       "recipient_required": "收件人不能为空",
       "recipient_too_short": "收件人地址过短",
-      "something_went_wrong": "发生错误。请重试。"
+      "something_went_wrong": "发生错误。请重试。",
+      "invisible_qortal_name": "不能使用包含不可见字符的 Qortal 名称。"
     },
     "success": {
       "qdn_sync": "{{coinType}}地址簿已成功同步至QDN"
@@ -192,5 +196,96 @@
   "total_amount": "总金额",
   "transactions": "交易列表",
   "transaction_hash": "TX 哈希",
-  "wallets": "钱包"
+  "wallets": "钱包",
+  "wallet": {
+    "available_balance": "可用余额",
+    "your_address": "你的地址",
+    "no_transactions": "没有交易。",
+    "loading_transactions": "正在加载交易",
+    "transactions": "交易",
+    "encrypted_sync": "加密同步",
+    "local_address_book": "本地地址簿",
+    "sync_now": "立即同步",
+    "sync_description": "备份你的联系人并在你的 Qortal 账户中同步。",
+    "receive_symbol": "接收 {{symbol}}",
+    "transfer_symbol": "转账 {{symbol}}",
+    "close_receive_qr_dialog": "关闭接收 QR 对话框",
+    "no_address_available": "没有可用地址",
+    "address_book_for_symbol": "地址簿 ({{symbol}})",
+    "qortal_user": "Qortal 用户",
+    "receive": "接收",
+    "hide_qr": "隐藏 QR"
+  },
+  "send": {
+    "to": "收款人",
+    "address_label": "地址：",
+    "max_sendable": "最多可发送 {{ amount }} {{ symbol }}",
+    "max_sendable_tooltip": "预留发送手续费后的最大可用金额",
+    "double_check_address": "发送前请务必仔细检查地址。",
+    "irreversible": "交易广播后无法撤销。",
+    "secure_private_decentralized": "安全 • 私密 • 去中心化",
+    "secure_decentralized": "安全 • 去中心化",
+    "fee_per_byte": "每字节费用",
+    "confirmation_speed": "确认速度取决于所选费用",
+    "qort_address_or_name": "QORT 地址或名称",
+    "receiver_address_or_name": "接收者地址或名称",
+    "max_sendable_loading": "正在加载最大可发送金额",
+    "symbol_amount": "{{symbol}} 金额",
+    "network_fee": "网络费用",
+    "network_fee_max_tooltip": "从最大可发送金额中扣除的网络费用",
+    "current_network_fee_tooltip": "当前网络发送费用。此金额会从最大可发送余额中预留。",
+    "memo": "备注",
+    "optional_memo": "可选备注",
+    "symbol_memo": "{{symbol}} 备注",
+    "symbol_address_placeholder": "{{symbol}} 地址",
+    "symbol_receiver_address": "{{symbol}} 接收地址"
+  },
+  "filters": {
+    "all": "全部",
+    "payments": "付款",
+    "rewards": "奖励",
+    "activity": "活动",
+    "arbitrary": "Arbitrary",
+    "at": "AT",
+    "group": "群组",
+    "name": "名称",
+    "asset": "资产",
+    "poll": "投票",
+    "advanced": "高级筛选"
+  },
+  "transaction_signature": "签名",
+  "transaction_status": {
+    "pending_confirmation": "等待确认",
+    "pending_confirmations": "等待中，3 个确认中的 {{ count }} 个",
+    "confirmed": "已确认"
+  },
+  "common": {
+    "or": "或",
+    "optional_parenthetical": "(可选)"
+  },
+  "max": "最大",
+  "address_book_ui": {
+    "search_placeholder": "按名称、地址或备注搜索",
+    "add_contact": "添加联系人",
+    "edit_contact": "编辑联系人",
+    "favorite": "收藏",
+    "remove_favorite": "取消收藏",
+    "contact": "地址簿联系人",
+    "symbol_contact": "{{symbol}} 地址簿联系人",
+    "enter_name": "输入名称",
+    "already_in_list": "(已在列表中)",
+    "enter_symbol_address": "输入 {{symbol}} 地址",
+    "address_confirmed": "地址已确认",
+    "confirm_address_before_saving": "保存前请确认此地址。",
+    "confirm_address": "确认地址",
+    "add_note_optional": "添加备注 (可选)"
+  },
+  "app": {
+    "changelog": "更新日志",
+    "close_changelog": "关闭更新日志",
+    "close_image_preview": "关闭图片预览",
+    "q_wallets_before_redesign": "重新设计前的 Q-Wallets",
+    "q_wallets_after_redesign": "重新设计后的 Q-Wallets",
+    "open_image_preview": "打开 {{alt}}"
+  }
 }

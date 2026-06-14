@@ -35,6 +35,7 @@ interface QortalRequestOptions {
   name?: string;
   offset?: number;
   port?: number;
+  prefix?: boolean;
   query?: string;
   recipient?: string;
   resources?: any[];

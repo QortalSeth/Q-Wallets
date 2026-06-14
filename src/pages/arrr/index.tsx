@@ -1,55 +1,38 @@
 import WalletContext from '../../contexts/walletContext';
-import {
-  copyToClipboard,
-  cropString,
-  epochToAgo,
-  timeoutDelay,
-} from '../../common/functions';
+import { copyToClipboard, timeoutDelay } from '../../common/functions';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import {
+  WalletExternalTransactionsList,
+  WalletTransactionsCard,
+  WalletTransactionsLoader,
+  WalletWorkspace,
+} from '../../components/WalletWorkspace';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
-  AppBar,
-  Avatar,
   Box,
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   List,
   ListItemButton,
   ListItemText,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
-  Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { NumericFormat } from 'react-number-format';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
-import QRCode from 'react-qr-code';
 import {
-  Close,
-  CopyAllTwoTone,
   FirstPage,
-  ImportContacts,
+  InfoOutlined,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  Send,
 } from '@mui/icons-material';
 import coinLogoARRR from '../../assets/arrr.png';
 import {
@@ -62,10 +45,8 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Refresh } from '@mui/icons-material';
 import {
   ARRR_FEE,
-  DECIMAL_ROUND_UP,
   EMPTY_STRING,
   SEND_MAX_SAFETY_BUFFER_SATS,
   TIME_MINUTES_2,
@@ -77,18 +58,19 @@ import {
   TIME_SECONDS_5,
 } from '../../common/constants';
 import {
-  CustomWidthTooltip,
   LightwalletDialog,
   SlideTransition,
-  StyledTableCell,
-  StyledTableRow,
   SubmitDialog,
   Transition,
-  WalletButtons,
   WalletCard,
+  WalletSendDialog,
 } from '../../styles/page-styles';
 import { Coin } from 'qapp-core';
 import { validateArrrAddress } from '../../utils/addressValidation';
+import {
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 import { calculateMaxSendable } from '../../utils/maxSendable';
 
 interface TablePaginationActionsProps {
@@ -171,7 +153,6 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function PirateWallet() {
   const { t } = useTranslation(['core']);
-  const theme = useTheme();
   const { isUsingGateway } = useContext(WalletContext);
   const [isSynced, setIsSynced] = useState(false);
   const [syncStatus, setSyncStatus] = useState(EMPTY_STRING);
@@ -191,19 +172,22 @@ export default function PirateWallet() {
   const [isLoadingArrrTransactions, setIsLoadingArrrTransactions] =
     useState<boolean>(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyArrrTxHash, setCopyArrrTxHash] = useState(EMPTY_STRING);
   const [openArrrLightwallet, setOpenArrrLightwallet] = useState(false);
   const [openArrrServerChange, setOpenArrrServerChange] = useState(false);
   const [openArrrSend, setOpenArrrSend] = useState(false);
   const [arrrAmount, setArrrAmount] = useState<number>(0);
   const [arrrRecipient, setArrrRecipient] = useState(EMPTY_STRING);
+  const [arrrRecipientDisplayName, setArrrRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [loadingRefreshArrr, setLoadingRefreshArrr] = useState(false);
   const [openTxArrrSubmit, setOpenTxArrrSubmit] = useState(false);
   const [openSendArrrSuccess, setOpenSendArrrSuccess] = useState(false);
   const [openSendArrrError, setOpenSendArrrError] = useState(false);
   const [openArrrAddressBook, setOpenArrrAddressBook] = useState(false);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
   const [_retry, setRetry] = useState(false);
 
   // Safely-spendable max: integer-satoshi math plus a small safety buffer so
@@ -215,10 +199,59 @@ export default function PirateWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsArrr.length)
-      : 0;
+  const arrrSendLabelSx = {
+    color: 'rgba(228,238,248,0.9)',
+    fontSize: { xs: 14.5, sm: 15 },
+    fontWeight: 700,
+    lineHeight: 1.2,
+  } as const;
+  const arrrHelperSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 12.5, sm: 13 },
+    fontWeight: 500,
+    lineHeight: 1.45,
+    ml: 1.6,
+    mt: 0.85,
+  } as const;
+  const arrrFieldSx = {
+    '& .MuiFormHelperText-root': arrrHelperSx,
+    '& .MuiOutlinedInput-root': {
+      bgcolor: 'rgba(0,8,16,0.2)',
+      borderRadius: 1.35,
+      minHeight: { xs: 54, sm: 56 },
+      px: { xs: 1.2, sm: 1.35 },
+      transition: 'background-color 160ms ease',
+      '& fieldset': {
+        borderColor: 'rgba(116,158,180,0.16)',
+      },
+      '&:hover fieldset': {
+        borderColor: 'rgba(116,158,180,0.3)',
+      },
+      '&.Mui-focused': {
+        bgcolor: 'rgba(0,8,16,0.2)',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'rgba(24,189,242,0.62)',
+        borderWidth: 1,
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      color: 'text.primary',
+      fontSize: { xs: 16, sm: 16.5 },
+      fontWeight: 500,
+      py: 0,
+      '&::placeholder': {
+        color: 'text.secondary',
+        fontWeight: 400,
+        opacity: 0.58,
+      },
+    },
+  } as const;
+  const arrrSendInfoIconSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 14.5, sm: 15 },
+    opacity: 0.82,
+  } as const;
 
   const handleCloseArrrLightwallet = () => {
     setOpenArrrLightwallet(false);
@@ -236,10 +269,10 @@ export default function PirateWallet() {
     setOpenArrrAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setArrrRecipient(address);
+    setArrrRecipientDisplayName(name || EMPTY_STRING);
     setArrrAmount(0);
-    setArrrMemo(EMPTY_STRING);
     setOpenArrrAddressBook(false);
     setOpenArrrSend(true);
     setAddressFormatError(false);
@@ -249,6 +282,7 @@ export default function PirateWallet() {
   const handleOpenArrrSend = () => {
     setArrrAmount(0);
     setArrrRecipient(EMPTY_STRING);
+    setArrrRecipientDisplayName(EMPTY_STRING);
     setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(true);
     setAddressFormatError(false);
@@ -261,10 +295,13 @@ export default function PirateWallet() {
     addressFormatError ||
     arrrAmount > maxSendableArrrCoin();
 
-  const handleRecipientChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleRecipientChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = e.target.value.trim();
     setArrrRecipient(value);
-    
+    setArrrRecipientDisplayName(EMPTY_STRING);
+
     if (validateArrrAddress(value) || value === EMPTY_STRING) {
       setAddressFormatError(false);
     } else {
@@ -275,8 +312,16 @@ export default function PirateWallet() {
   const handleCloseArrrSend = () => {
     setArrrAmount(0);
     setArrrRecipient(EMPTY_STRING);
+    setArrrRecipientDisplayName(EMPTY_STRING);
     setArrrMemo(EMPTY_STRING);
     setOpenArrrSend(false);
+    setAddressFormatError(false);
+    setOpenSendArrrError(false);
+  };
+
+  const handleClearArrrRecipient = () => {
+    setArrrRecipient(EMPTY_STRING);
+    setArrrRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setOpenSendArrrError(false);
   };
@@ -348,6 +393,7 @@ export default function PirateWallet() {
       if (!sendRequest?.error) {
         setArrrAmount(0);
         setArrrRecipient(EMPTY_STRING);
+        setArrrRecipientDisplayName(EMPTY_STRING);
         setArrrMemo(EMPTY_STRING);
         setOpenTxArrrSubmit(false);
         setOpenSendArrrSuccess(true);
@@ -358,6 +404,7 @@ export default function PirateWallet() {
     } catch (error) {
       setArrrAmount(0);
       setArrrRecipient(EMPTY_STRING);
+      setArrrRecipientDisplayName(EMPTY_STRING);
       setArrrMemo(EMPTY_STRING);
       setOpenTxArrrSubmit(false);
       setOpenSendArrrError(true);
@@ -637,261 +684,66 @@ export default function PirateWallet() {
 
   const ArrrTableLoader = () => {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-          >
-            {t('core:message.generic.loading_transactions', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Box>
+      <WalletTransactionsLoader
+        label={t('core:message.generic.loading_transactions', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+      />
     );
   };
 
-  const ArrrTransactionsTable = () => {
-    return (
-      <TableContainer component={Paper}>
-        <Table
-          stickyHeader
-          sx={{ width: '100%' }}
-          aria-label="transactions table"
-        >
-          <TableHead>
-            <TableRow>
-              <StyledTableCell align="left">
-                {t('core:sender', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:receiver', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:transaction_hash', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:memo', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:total_amount', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:fee.fee', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:time', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(rowsPerPage > 0
-              ? transactionsArrr.slice(
-                  page * rowsPerPage,
-                  page * rowsPerPage + rowsPerPage
-                )
-              : transactionsArrr
-            ).map(
-              (
-                row: {
-                  inputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  outputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: number;
-                  }[];
-                  txHash: string;
-                  totalAmount: any;
-                  feeAmount: any;
-                  memo: string;
-                  timestamp: number;
-                },
-                k: Key
-              ) => (
-                <StyledTableRow key={k}>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.inputs.map((input, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: input.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {cropString(input.address)}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(input.amount) / 1e8).toFixed(
-                            DECIMAL_ROUND_UP
-                          )}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.outputs.map((output, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: output.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {cropString(output.address)}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(output.amount) / 1e8).toFixed(
-                            DECIMAL_ROUND_UP
-                          )}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {cropString(row?.txHash)}
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        copyArrrTxHash
-                          ? copyArrrTxHash
-                          : t('core:action.copy_hash', {
-                              hash: row?.txHash,
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <IconButton
-                        aria-label="copy"
-                        size="small"
-                        onClick={() => {
-                          copyToClipboard(row?.txHash);
-                          changeCopyArrrTxHash();
-                        }}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.memo ? row?.memo : EMPTY_STRING}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.totalAmount > 0 ? (
-                      <Box style={{ color: theme.palette.success.main }}>
-                        +
-                        {(Number(row?.totalAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        {(Number(row?.totalAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="right">
-                    {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        -
-                        {(Number(row?.feeAmount) / 1e8).toFixed(
-                          DECIMAL_ROUND_UP
-                        )}
-                      </Box>
-                    ) : (
-                      <Box></Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={new Date(row?.timestamp).toLocaleString()}
-                    >
-                      <Box>{epochToAgo(row?.timestamp)}</Box>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                </StyledTableRow>
-              )
-            )}
-            {emptyRows > 0 && (
-              <TableRow style={{ height: 53 * emptyRows }}>
-                <TableCell colSpan={6} />
-              </TableRow>
-            )}
-          </TableBody>
-          <TableFooter sx={{ width: '100%' }}>
-            <TableRow>
-              <TablePagination
-                labelRowsPerPage={t('core:rows_per_page', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                colSpan={6}
-                count={transactionsArrr.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      'aria-label': 'rows per page',
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={TablePaginationActions}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-    );
-  };
+  const ArrrTransactionsTable = () => (
+    <WalletExternalTransactionsList
+      ActionsComponent={TablePaginationActions}
+      coin="ARRR"
+      copyHashLabel={copyArrrTxHash || undefined}
+      labels={{
+        copyHash: (hash) =>
+          t('core:action.copy_hash', {
+            hash,
+            postProcess: 'capitalizeFirstChar',
+          }),
+        fee: t('core:fee.fee', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        memo: t('core:memo', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        noTransactions: 'No transactions.',
+        receiver: t('core:receiver', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        rowsPerPage: t('core:rows_per_page', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        sender: t('core:sender', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        time: t('core:time', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        totalAmount: t('core:total_amount', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        transactionHash: t('core:transaction_hash', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        waitingConfirmation: t('core:message.generic.waiting_confirmation', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+      }}
+      onCopyHash={(hash) => {
+        copyToClipboard(hash);
+        changeCopyArrrTxHash();
+      }}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      page={page}
+      rows={transactionsArrr}
+      rowsPerPage={rowsPerPage}
+      showMemo
+    />
+  );
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
@@ -971,13 +823,27 @@ export default function PirateWallet() {
         </DialogActions>
       </LightwalletDialog>
 
-      <Dialog
-        fullScreen
+      <WalletSendDialog
         open={openArrrSend}
         onClose={handleCloseArrrSend}
         slots={{ transition: Transition }}
+        maxWidth={false}
+        fullWidth
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        slotProps={{
+          paper: {
+            sx: sendCoinDialogPaperSx,
+          },
+        }}
       >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxArrrSubmit}>
+        <SubmitDialog
+          fullWidth={true}
+          maxWidth="xs"
+          open={openTxArrrSubmit}
+          disableScrollLock
+        >
           <DialogContent>
             <Box
               sx={{
@@ -1054,224 +920,102 @@ export default function PirateWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseArrrSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="ARRR Logo"
-              src={coinLogoARRR}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.ARRR,
-                postProcess: 'capitalizeAll',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendArrr()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-arrr"
-              onClick={sendArrrRequest}
-              sx={{
-                backgroundcolor: 'action.main',
-                color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceArrr ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
+        <ExternalSendForm
+          addressError={addressFormatError}
+          addressHelperText={
+            t('core:message.generic.pirate_chain_address', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          }
+          addressInputId="arrr-address"
+          afterRecipientContent={
+            <Box sx={{ display: 'grid', gap: 0.85 }}>
+              <Typography sx={arrrSendLabelSx}>{t('core:send.memo')}</Typography>
+              <TextField
+                id="arrr-memo"
+                value={arrrMemo}
+                fullWidth
+                placeholder={t('core:send.optional_memo')}
+                slotProps={{
+                  htmlInput: {
+                    'aria-label': t('core:send.symbol_memo', {
+                      symbol: 'ARRR',
+                    }),
+                    maxLength: 40,
+                  },
+                }}
+                onChange={(
+                  e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                ) => setArrrMemo(e.target.value)}
+                sx={arrrFieldSx}
+              />
+            </Box>
+          }
+          amount={arrrAmount}
+          balance={walletBalanceArrr}
+          balanceError={null}
+          coinLogo={coinLogoARRR}
+          feeContent={
+            <Tooltip title={t('core:send.current_network_fee_tooltip')}>
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  color: 'text.secondary',
+                  display: 'grid',
+                  gap: 0.75,
+                  gridTemplateColumns: 'auto auto minmax(80px, auto)',
+                  justifySelf: 'end',
+                  mt: -0.3,
+                  opacity: 0.78,
+                  px: 0.4,
+                }}
+              >
+                <InfoOutlined sx={arrrSendInfoIconSx} />
+                <Typography
+                  sx={{
+                    fontSize: { xs: 12.5, sm: 13 },
+                    fontWeight: 500,
+                  }}
+                >
+                  {t('core:send.network_fee')}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { xs: 14, sm: 14.5 },
+                    fontWeight: 700,
+                    textAlign: 'right',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {ARRR_FEE} ARRR
+                </Typography>
               </Box>
-            ) : (
-              walletBalanceArrr + ' ARRR'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
+            </Tooltip>
+          }
+          isBalanceLoading={isLoadingWalletBalanceArrr}
+          maxSendable={maxSendableArrrCoin()}
+          onAmountChange={setArrrAmount}
+          onClearRecipient={handleClearArrrRecipient}
+          onClose={handleCloseArrrSend}
+          onOpenAddressBook={handleOpenAddressBook}
+          onRecipientChange={handleRecipientChange}
+          onSend={sendArrrRequest}
+          onSendMax={handleSendMaxArrr}
+          recipient={arrrRecipient}
+          recipientDisplayName={arrrRecipientDisplayName}
+          recipientInputProps={{
+            maxLength: 78,
+            minLength: 78,
           }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {maxSendableArrrCoin() + ' ARRR'}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxArrr}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={arrrAmount}
-            allowNegative={false}
-            customInput={TextField}
-            valueIsNumericString
-            {...({ label: 'Amount (ARRR)' } as any)}
-            fullWidth
-            isAllowed={(values) => {
-              const maxArrrCoin = maxSendableArrrCoin();
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (floatValue !== undefined && floatValue <= maxArrrCoin)
-              );
-            }}
-            onValueChange={(values) => {
-              setArrrAmount(values.floatValue ?? 0);
-            }}
-            slotProps={{
-              input: {
-                variant: 'outlined',
-              },
-            }}
-            required
-          />
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="arrr-address"
-            margin="normal"
-            value={arrrRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            fullWidth
-            helperText={t('core:message.generic.pirate_chain_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            slotProps={{ htmlInput: { maxLength: 78, minLength: 78 } }}
-          />
-          <TextField
-            label={t('core:memo', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="arrr-memo"
-            margin="normal"
-            value={arrrMemo}
-            fullWidth
-            helperText={t('core:message.generic.pirate_chain_max_chars', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            slotProps={{ htmlInput: { maxLength: 40, minLength: 40 } }}
-            onChange={(e: any) => setArrrMemo(e.target.value)}
-          />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            align="center"
-            sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-          >
-            {t('core:message.generic.sending_fee', {
-              quantity: ARRR_FEE,
-              coin: Coin.ARRR,
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Dialog>
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'ARRR',
+          })}
+          sendDisabled={disableCanSendArrr()}
+          showAddressBookButton
+          symbol="ARRR"
+        />
+      </WalletSendDialog>
 
       <LightwalletDialog
         onClose={handleCloseArrrServerChange}
@@ -1342,310 +1086,76 @@ export default function PirateWallet() {
         </DialogActions>
       </LightwalletDialog>
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
-          >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
-              sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'grid',
-                  alignItems: 'center',
-                  justifyItems: { xs: 'center', md: 'start' },
-                  gap: 1,
-                }}
-              >
-                <Box
-                  component="img"
-                  alt="ARRR Logo"
-                  src={coinLogoARRR}
-                  sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
-                  }}
-                />
+      <WalletWorkspace
+        address={walletInfoArrr?.address ?? EMPTY_STRING}
+        addressBookRefreshKey={openArrrAddressBook}
+        balance={walletBalanceArrr}
+        balanceDecimals={8}
+        coin="ARRR"
+        isBalanceLoading={isLoadingWalletBalanceArrr}
+        onAddContact={handleOpenAddressBook}
+        onSelectAddress={handleSelectAddress}
+        onSend={handleOpenArrrSend}
+        onToggleReceive={() => setReceivePanelOpen((prev) => !prev)}
+        receiveOpen={receivePanelOpen}
+        rightColumnAfter={
+          <WalletCard sx={{ overflow: 'hidden', width: '100%' }}>
+            <Box sx={{ display: 'grid', gap: 1.5, p: { xs: 2, md: 2.25 } }}>
+              <Typography sx={{ fontWeight: 600 }}>
+                Lightwallet server
+              </Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Current server
+                </Typography>
                 <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
+                  sx={{
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  {t('core:message.generic.pirate_chain_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
+                  {currentLightwalletServerArrr[0]?.hostName ? (
+                    currentLightwalletServerArrr[0]?.hostName +
+                    ':' +
+                    currentLightwalletServerArrr[0]?.port
+                  ) : (
+                    <LinearProgress />
+                  )}
                 </Typography>
               </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(4, auto)', md: '1fr 1fr' },
-                }}
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {syncStatus}
+              </Typography>
+              <Button
+                fullWidth
+                onClick={handleOpenArrrServerChange}
+                variant="outlined"
               >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  justifyContent={{ xs: 'center', md: 'flex-start' }}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
-                  >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {walletBalanceArrr ? (
-                      `${walletBalanceArrr} ARRR`
-                    ) : (
-                      <LinearProgress />
-                    )}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
-                      }}
-                    >
-                      {walletInfoArrr?.address}
-                    </Typography>
-
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={t('core:action.copy_address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          copyToClipboard(
-                            walletInfoArrr?.address ?? EMPTY_STRING
-                          )
-                        }
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1 / span 2', md: '1 / span 2' },
-                    gridRow: { xs: '3', md: '3' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      align="center"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:message.generic.lightwallet_server', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      align="center"
-                      sx={{ color: 'text.primary', fontWeight: 700 }}
-                    >
-                      {currentLightwalletServerArrr[0]?.hostName ? (
-                        currentLightwalletServerArrr[0]?.hostName +
-                        ':' +
-                        currentLightwalletServerArrr[0]?.port
-                      ) : (
-                        <Box sx={{ width: '175px' }}>
-                          <LinearProgress />
-                        </Box>
-                      )}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle1">{syncStatus}</Typography>
-                    {!isSynced && !isLoadingWalletBalanceArrr && (
-                      <Button
-                        variant="contained"
-                        startIcon={<Send style={{ marginBottom: 2 }} />}
-                        aria-label="Change Server"
-                        onClick={handleRetry}
-                      >
-                        {t('core:action.retry', {
-                          postProcess: 'capitalizeFirstChar',
-                        })}
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
-
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '4', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t: any) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t: any) => t.shadows[2],
-                      display: 'flex',
-                      height: '100%',
-                      justifyContent: 'center',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
-                    }}
-                  >
-                    <QRCode
-                      value={walletInfoArrr?.address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid size={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
-                }}
-              >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenArrrSend}
-                >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.ARRR,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Change Server"
-                  onClick={handleOpenArrrServerChange}
-                >
-                  {t('core:action.change_server', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshArrr}
-                  loading={loadingRefreshArrr}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
+                Change server
+              </Button>
+              {!isSynced && !isLoadingWalletBalanceArrr && (
+                <Button fullWidth onClick={handleRetry} variant="contained">
+                  Retry
                 </Button>
-              </Box>
-
-              {isLoadingArrrTransactions ? (
-                <Box sx={{ width: '100%' }}>{ArrrTableLoader()}</Box>
-              ) : (
-                <Box sx={{ width: '100%' }}>{ArrrTransactionsTable()}</Box>
               )}
             </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+          </WalletCard>
+        }
+        transactions={
+          <WalletTransactionsCard
+            isRefreshing={loadingRefreshArrr}
+            onRefresh={handleLoadingRefreshArrr}
+          >
+            {isLoadingArrrTransactions || loadingRefreshArrr ? (
+              ArrrTableLoader()
+            ) : (
+              <Box sx={{ width: '100%' }}>{ArrrTransactionsTable()}</Box>
+            )}
+          </WalletTransactionsCard>
+        }
+      />
     </Box>
   );
 }

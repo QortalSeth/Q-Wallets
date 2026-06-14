@@ -1,55 +1,39 @@
 import {
   ChangeEvent,
-  Key,
   MouseEvent,
   SyntheticEvent,
   useEffect,
   useState,
 } from 'react';
-import { epochToAgo, timeoutDelay, cropString, copyToClipboard } from '../../common/functions';
+import { timeoutDelay, copyToClipboard } from '../../common/functions';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import {
+  WalletExternalTransactionsList,
+  WalletTransactionsCard,
+  WalletTransactionsLoader,
+  WalletWorkspace,
+} from '../../components/WalletWorkspace';
+import {
+  ExternalFeeSlider,
+  ExternalSendForm,
+  sendCoinDialogPaperSx,
+} from '../../components/ExternalSendForm';
 import { useTheme } from '@mui/material/styles';
 import {
   Alert,
-  AppBar,
-  Avatar,
   Box,
-  Button,
-  Dialog,
   DialogContent,
-  Grid,
   IconButton,
-  Paper,
-  Slider,
-  Table,
-  TableBody,
-  TableContainer,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Toolbar,
   Typography,
 } from '@mui/material';
-import { NumericFormat as _NumericFormat } from 'react-number-format';
-const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>>;
-import TableCell from '@mui/material/TableCell';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
 import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
-import QRCode from 'react-qr-code';
 import {
-  Close,
-  CopyAllTwoTone,
   FirstPage,
-  ImportContacts,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  Refresh,
-  Send,
 } from '@mui/icons-material';
 import coinLogoDGB from '../../assets/dgb.png';
 import { useTranslation } from 'react-i18next';
@@ -65,14 +49,10 @@ import {
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
-  CustomWidthTooltip,
   SlideTransition,
-  StyledTableCell,
-  StyledTableRow,
   SubmitDialog,
   Transition,
-  WalletButtons,
-  WalletCard,
+  WalletSendDialog,
 } from '../../styles/page-styles';
 import { Coin } from 'qapp-core';
 import { validateDgbAddress } from '../../utils/addressValidation';
@@ -177,8 +157,6 @@ function valueTextDgb(value: number) {
 
 export default function DigibyteWallet() {
   const { t } = useTranslation(['core']);
-  const theme = useTheme();
-
   const [walletInfoDgb, setWalletInfoDgb] = useState<any>({});
   const [walletBalanceDgb, setWalletBalanceDgb] = useState<any>(0);
   const [_isLoadingWalletInfoDgb, setIsLoadingWalletInfoDgb] =
@@ -193,11 +171,13 @@ export default function DigibyteWallet() {
     null
   );
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [copyDgbTxHash, setCopyDgbTxHash] = useState(EMPTY_STRING);
   const [openDgbSend, setOpenDgbSend] = useState(false);
   const [dgbAmount, setDgbAmount] = useState<number>(0);
   const [dgbRecipient, setDgbRecipient] = useState(EMPTY_STRING);
+  const [dgbRecipientDisplayName, setDgbRecipientDisplayName] =
+    useState(EMPTY_STRING);
   const [addressFormatError, setAddressFormatError] = useState(false);
   const [dgbFee, setDgbFee] = useState<number>(0);
   const [loadingRefreshDgb, setLoadingRefreshDgb] = useState(false);
@@ -205,6 +185,7 @@ export default function DigibyteWallet() {
   const [openSendDgbSuccess, setOpenSendDgbSuccess] = useState(false);
   const [openSendDgbError, setOpenSendDgbError] = useState(false);
   const [openDgbAddressBook, setOpenDgbAddressBook] = useState(false);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
 
   // Estimated fee in whole coins (fee rate applied to a ~1000-byte tx).
   const estimatedDgbFee = (dgbFee * 1000) / 1e8;
@@ -218,11 +199,6 @@ export default function DigibyteWallet() {
       SEND_MAX_SAFETY_BUFFER_SATS
     );
 
-  const emptyRows =
-    page > 0
-      ? Math.max(0, (1 + page) * rowsPerPage - transactionsDgb.length)
-      : 0;
-
   const handleOpenAddressBook = () => {
     setOpenDgbAddressBook(true);
   };
@@ -231,8 +207,9 @@ export default function DigibyteWallet() {
     setOpenDgbAddressBook(false);
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleSelectAddress = (address: string, name: string) => {
     setDgbRecipient(address);
+    setDgbRecipientDisplayName(name || EMPTY_STRING);
     setDgbAmount(0);
     setDgbFee(DGB_FEE);
     setOpenDgbAddressBook(false);
@@ -244,6 +221,7 @@ export default function DigibyteWallet() {
   const handleOpenDgbSend = () => {
     setDgbAmount(0);
     setDgbRecipient(EMPTY_STRING);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setDgbFee(DGB_FEE);
     setOpenDgbSend(true);
     setAddressFormatError(false);
@@ -261,9 +239,10 @@ export default function DigibyteWallet() {
   ) => {
     const value = e.target.value.trim();
     setDgbRecipient(value);
-    
+    setDgbRecipientDisplayName(EMPTY_STRING);
+
     if (validateDgbAddress(value) || value === EMPTY_STRING) {
-      setAddressFormatError(false);      
+      setAddressFormatError(false);
     } else {
       setAddressFormatError(true);
     }
@@ -272,7 +251,15 @@ export default function DigibyteWallet() {
   const handleCloseDgbSend = () => {
     setDgbAmount(0);
     setDgbFee(0);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setOpenDgbSend(false);
+    setAddressFormatError(false);
+    setOpenSendDgbError(false);
+  };
+
+  const handleClearDgbRecipient = () => {
+    setDgbRecipient(EMPTY_STRING);
+    setDgbRecipientDisplayName(EMPTY_STRING);
     setAddressFormatError(false);
     setOpenSendDgbError(false);
   };
@@ -427,7 +414,7 @@ export default function DigibyteWallet() {
     setLoadingRefreshDgb(false);
   };
 
-  const handleSendMaxDgb = () => {   
+  const handleSendMaxDgb = () => {
     if (maxSendableDbgCoin() <= 0) {
       setDgbAmount(0);
     } else {
@@ -455,6 +442,7 @@ export default function DigibyteWallet() {
       if (!sendRequest?.error) {
         setDgbAmount(0);
         setDgbRecipient(EMPTY_STRING);
+        setDgbRecipientDisplayName(EMPTY_STRING);
         setDgbFee(DGB_FEE);
         setOpenTxDgbSubmit(false);
         setOpenSendDgbSuccess(true);
@@ -465,6 +453,7 @@ export default function DigibyteWallet() {
     } catch (error) {
       setDgbAmount(0);
       setDgbRecipient(EMPTY_STRING);
+      setDgbRecipientDisplayName(EMPTY_STRING);
       setDgbFee(DGB_FEE);
       setOpenTxDgbSubmit(false);
       setOpenSendDgbError(true);
@@ -477,264 +466,86 @@ export default function DigibyteWallet() {
 
   const tableLoader = () => {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-          >
-            {t('core:message.generic.loading_transactions', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Box>
+      <WalletTransactionsLoader
+        label={t('core:message.generic.loading_transactions', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+      />
     );
   };
 
-  const transactionsTable = () => {
-    return (
-      <TableContainer component={Paper}>
-        <Table
-          stickyHeader
-          sx={{ width: '100%' }}
-          aria-label="transactions table"
-        >
-          <TableHead>
-            <TableRow>
-              <StyledTableCell align="left">
-                {t('core:sender', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:receiver', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:transaction_hash', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:total_amount', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:fee.fee', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-              <StyledTableCell align="left">
-                {t('core:time', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-              </StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(rowsPerPage > 0
-              ? transactionsDgb.slice(
-                  page * rowsPerPage,
-                  page * rowsPerPage + rowsPerPage
-                )
-              : transactionsDgb
-            ).map(
-              (
-                row: {
-                  inputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: any;
-                  }[];
-                  outputs: {
-                    address: any;
-                    addressInWallet: boolean;
-                    amount: any;
-                  }[];
-                  txHash: string;
-                  totalAmount: any;
-                  feeAmount: any;
-                  timestamp: number;
-                },
-                k: Key
-              ) => (
-                <StyledTableRow key={k}>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.inputs.map((input, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: input.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {input.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(input.amount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row.outputs.map((output, index) => (
-                      <Box
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          color: output.addressInWallet
-                            ? undefined
-                            : theme.palette.info.main,
-                        }}
-                      >
-                        <span style={{ flex: 1, textAlign: 'left' }}>
-                          {output.address}
-                        </span>
-                        <span style={{ flex: 1, textAlign: 'right' }}>
-                          {(Number(output.amount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                        </span>
-                      </Box>
-                    ))}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {cropString(row?.txHash)}
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        copyDgbTxHash
-                          ? copyDgbTxHash
-                          : t('core:action.copy_hash', {
-                              hash: row?.txHash,
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <IconButton
-                        aria-label="copy"
-                        size="small"
-                        onClick={() => {
-                          copyToClipboard(row?.txHash);
-                          changeCopyDgbTxHash();
-                        }}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    {row?.totalAmount > 0 ? (
-                      <Box style={{ color: theme.palette.success.main }}>
-                        +{(Number(row?.totalAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        {(Number(row?.totalAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="right">
-                    {row?.totalAmount <= 0 ? (
-                      <Box style={{ color: theme.palette.error.main }}>
-                        -{(Number(row?.feeAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    ) : (
-                      <Box style={{ color: 'grey' }}>
-                        -{(Number(row?.feeAmount) / 1e8).toFixed(DECIMAL_ROUND_UP)}
-                      </Box>
-                    )}
-                  </StyledTableCell>
-                  <StyledTableCell style={{ width: 'auto' }} align="left">
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={
-                        row?.timestamp
-                          ? new Date(row?.timestamp).toLocaleString()
-                          : t('core:message.generic.waiting_confirmation', {
-                              postProcess: 'capitalizeFirstChar',
-                            })
-                      }
-                    >
-                      <Box>
-                        {row?.timestamp
-                          ? epochToAgo(row?.timestamp)
-                          : t('core:message.generic.unconfirmed_transaction', {
-                              postProcess: 'capitalizeFirstChar',
-                            })}
-                      </Box>
-                    </CustomWidthTooltip>
-                  </StyledTableCell>
-                </StyledTableRow>
-              )
-            )}
-            {emptyRows > 0 && (
-              <TableRow style={{ height: 53 * emptyRows }}>
-                <TableCell colSpan={6} />
-              </TableRow>
-            )}
-          </TableBody>
-          <TableFooter sx={{ width: '100%' }}>
-            <TableRow>
-              <TablePagination
-                labelRowsPerPage={t('core:rows_per_page', {
-                  postProcess: 'capitalizeFirstChar',
-                })}
-                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-                colSpan={6}
-                count={transactionsDgb.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      'aria-label': 'rows per page',
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={TablePaginationActions}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-    );
-  };
+  const transactionsTable = () => (
+    <WalletExternalTransactionsList
+      ActionsComponent={TablePaginationActions}
+      coin="DGB"
+      copyHashLabel={copyDgbTxHash || undefined}
+      labels={{
+        copyHash: (hash) =>
+          t('core:action.copy_hash', {
+            hash,
+            postProcess: 'capitalizeFirstChar',
+          }),
+        fee: t('core:fee.fee', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        noTransactions: 'No transactions.',
+        receiver: t('core:receiver', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        rowsPerPage: t('core:rows_per_page', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        sender: t('core:sender', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        time: t('core:time', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        totalAmount: t('core:total_amount', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        transactionHash: t('core:transaction_hash', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+        waitingConfirmation: t('core:message.generic.waiting_confirmation', {
+          postProcess: 'capitalizeFirstChar',
+        }),
+      }}
+      onCopyHash={(hash) => {
+        copyToClipboard(hash);
+        changeCopyDgbTxHash();
+      }}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      page={page}
+      rows={transactionsDgb}
+      rowsPerPage={rowsPerPage}
+    />
+  );
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      <Dialog
-        fullScreen
+      <WalletSendDialog
         open={openDgbSend}
         onClose={handleCloseDgbSend}
         slots={{ transition: Transition }}
+        maxWidth={false}
+        fullWidth
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        slotProps={{
+          paper: {
+            sx: sendCoinDialogPaperSx,
+          },
+        }}
       >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxDgbSubmit}>
+        <SubmitDialog
+          fullWidth={true}
+          maxWidth="xs"
+          open={openTxDgbSubmit}
+          disableScrollLock
+        >
           <DialogContent>
             <Box
               sx={{
@@ -811,243 +622,55 @@ export default function DigibyteWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseDgbSend}
-              aria-label="close"
-            >
-              <Close />
-            </IconButton>
-            <Avatar
-              sx={{ width: 28, height: 28 }}
-              alt="DGB Logo"
-              src={coinLogoDGB}
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{
-                flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
-              }}
-            >
-              {t('core:action.transfer_coin', {
-                coin: Coin.DGB,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Button
-              disabled={disableCanSendDgb()}
-              variant="contained"
-              startIcon={<Send />}
-              aria-label="send-dgb"
-              onClick={sendDgbRequest}
-              sx={{
-                backgroundcolor: 'action.main',
-                color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
-              }}
-            >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceDgb ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
-            ) : walletBalanceError ? (
-              walletBalanceError
-            ) : (
-              walletBalanceDgb + ' DGB'
-            )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeAll',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {maxSendableDbgCoin() + ' DGB'}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxDgb}
-              style={{ borderRadius: 50 }}
-            >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={dgbAmount}
-            allowNegative={false}
-            customInput={TextField as React.ComponentType<any>}
-            valueIsNumericString
-            label="Amount (DGB)"
-            fullWidth
-            isAllowed={(values) => {
-              const maxDgbCoin = maxSendableDbgCoin();
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING ||
-                (typeof floatValue === 'number' && floatValue <= maxDgbCoin)
-              );
-            }}
-            onValueChange={(values) => {
-              setDgbAmount(values.floatValue ?? 0);
-            }}
-            required
-          />
-          <TextField
-            required
-            label={t('core:receiver_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="dgb-address"
-            margin="normal"
-            value={dgbRecipient}
-            onChange={handleRecipientChange}
-            error={addressFormatError}
-            fullWidth
-            helperText={
-              addressFormatError
-                ? t('core:message.error.digibyte_address_invalid', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-                : t('core:message.generic.digibyte_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-          />
-        </Box>
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 2, sm: 1 },
-          }}
-        >
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
-            <Typography id="dgb-fee-slider" gutterBottom>
-              {t('core:message.generic.current_fee', {
-                fee: dgbFee,
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-            <Slider
-              track={false}
-              step={5}
-              min={1}
-              max={100}
-              valueLabelDisplay="auto"
-              aria-labelledby="dgb-fee-slider"
-              getAriaValueText={valueTextDgb}
+        <ExternalSendForm
+          addressError={addressFormatError}
+          addressHelperText={
+            addressFormatError
+              ? t('core:message.error.digibyte_address_invalid', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:message.generic.digibyte_address', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+          }
+          addressInputId="dgb-address"
+          amount={dgbAmount}
+          balance={walletBalanceDgb}
+          balanceError={walletBalanceError}
+          coinLogo={coinLogoDGB}
+          feeContent={
+            <ExternalFeeSlider
               defaultValue={10}
+              fee={dgbFee}
+              getAriaValueText={valueTextDgb}
               marks={dgbMarks}
+              max={100}
+              min={1}
               onChange={handleChangeDgbFee}
+              sliderId="dgb-fee-slider"
+              step={5}
             />
-            <Typography
-              align="center"
-              sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-            >
-              {t('core:message.generic.low_fee_transation', {
-                postProcess: 'capitalizeFirstChar',
-              })}
-            </Typography>
-          </Box>
-        </Box>
-      </Dialog>
+          }
+          isBalanceLoading={isLoadingWalletBalanceDgb}
+          maxSendable={maxSendableDbgCoin()}
+          onAmountChange={setDgbAmount}
+          onClearRecipient={handleClearDgbRecipient}
+          onClose={handleCloseDgbSend}
+          onOpenAddressBook={handleOpenAddressBook}
+          onRecipientChange={handleRecipientChange}
+          onSend={sendDgbRequest}
+          onSendMax={handleSendMaxDgb}
+          recipient={dgbRecipient}
+          recipientDisplayName={dgbRecipientDisplayName}
+          recipientSubtitle={t('core:address_book_ui.symbol_contact', {
+            symbol: 'DGB',
+          })}
+          sendDisabled={disableCanSendDgb()}
+          showAddressBookButton
+          showBalanceMeter
+          symbol="DGB"
+        />
+      </WalletSendDialog>
 
       <AddressBookDialog
         open={openDgbAddressBook}
@@ -1056,241 +679,32 @@ export default function DigibyteWallet() {
         onSelectAddress={handleSelectAddress}
       />
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
+      <WalletWorkspace
+        address={walletInfoDgb?.address ?? EMPTY_STRING}
+        addressBookRefreshKey={openDgbAddressBook}
+        balance={walletBalanceDgb}
+        balanceDecimals={8}
+        balanceError={walletBalanceError}
+        coin="DGB"
+        isBalanceLoading={isLoadingWalletBalanceDgb}
+        onAddContact={handleOpenAddressBook}
+        onSelectAddress={handleSelectAddress}
+        onSend={handleOpenDgbSend}
+        onToggleReceive={() => setReceivePanelOpen((prev) => !prev)}
+        receiveOpen={receivePanelOpen}
+        transactions={
+          <WalletTransactionsCard
+            isRefreshing={loadingRefreshDgb}
+            onRefresh={handleLoadingRefreshDgb}
           >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
-              sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
-              }}
-            >
-              <Box sx={{ display: 'grid', alignItems: 'center' }}>
-                <Box
-                  component="img"
-                  alt="DGB Logo"
-                  src={coinLogoDGB}
-                  sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
-                  }}
-                />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {t('core:message.generic.digibyte_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
-                }}
-              >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
-                  >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {walletBalanceDgb ? (
-                      `${walletBalanceDgb} DGB`
-                    ) : isLoadingWalletBalanceDgb ? (
-                      <LinearProgress />
-                    ) : undefined}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box display={'flex'} alignItems={'center'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
-                      }}
-                    >
-                      {walletInfoDgb?.address}
-                    </Typography>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={t('core:action.copy_address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          copyToClipboard(
-                            walletInfoDgb?.address ?? EMPTY_STRING
-                          )
-                        }
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
-                      display: 'flex',
-                      height: '100%',
-                      justifyContent: 'center',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
-                    }}
-                  >
-                    <QRCode
-                      value={walletInfoDgb?.address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid size={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
-                }}
-              >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenDgbSend}
-                >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.DGB,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshDgb}
-                  loading={loadingRefreshDgb}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
-                </Button>
-              </Box>
-
-              {isLoadingDgbTransactions ? (
-                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
-              ) : (
-                <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+            {isLoadingDgbTransactions || loadingRefreshDgb ? (
+              tableLoader()
+            ) : (
+              <Box sx={{ width: '100%' }}>{transactionsTable()}</Box>
+            )}
+          </WalletTransactionsCard>
+        }
+      />
     </Box>
   );
 }

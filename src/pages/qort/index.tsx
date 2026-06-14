@@ -1,30 +1,32 @@
 import {
   CheckCircleOutline,
   Close,
-  CopyAllTwoTone,
+  ExpandMore,
   FirstPage,
   HistoryToggleOff,
-  ImportContacts,
   InfoOutlined,
   KeyboardArrowLeft,
   KeyboardArrowRight,
   LastPage,
-  Refresh,
-  Send,
+  LockOutlined,
+  NorthEast,
+  PersonOutline,
+  ShieldOutlined,
 } from '@mui/icons-material';
-import { TabContext, TabList, TabPanel } from '@mui/lab';
 import {
   Alert,
   AppBar,
   Avatar,
   Box,
   Button,
-  Dialog,
+  Checkbox,
+  ClickAwayListener,
   DialogContent,
-  Grid,
   IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
   Paper,
-  Tab,
   Table,
   TableBody,
   TableContainer,
@@ -38,16 +40,17 @@ import {
   Typography,
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
 import Snackbar from '@mui/material/Snackbar';
 type SnackbarCloseReason = 'timeout' | 'clickaway' | 'escapeKeyDown';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import TableCell from '@mui/material/TableCell';
+import { useAtom } from 'jotai';
 import { Coin, RequestQueueWithPromise, useGlobal } from 'qapp-core';
 import {
   ChangeEvent,
   Key,
   MouseEvent,
+  ReactNode,
   SyntheticEvent,
   useCallback,
   useContext,
@@ -56,25 +59,25 @@ import {
 } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { NumericFormat as _NumericFormat } from 'react-number-format';
-const NumericFormat = _NumericFormat as React.FC<React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>>;
-import QRCode from 'react-qr-code';
+const NumericFormat = _NumericFormat as React.FC<
+  React.ComponentProps<typeof _NumericFormat> & Record<string, unknown>
+>;
 import coinLogoQORT from '../../assets/qort.png';
 import {
   EMPTY_STRING,
   QORT_1_UNIT,
   TIME_MINUTES_1,
-  
   TIME_SECONDS_3,
   TIME_SECONDS_4,
 } from '../../common/constants';
 import {
-  copyToClipboard,
   cropString,
   epochToAgo,
   humanFileSize,
   timeoutDelay,
 } from '../../common/functions';
 import WalletContext from '../../contexts/walletContext';
+import { qortTransactionFiltersAtom } from '../../state/global/qort';
 import {
   CustomWidthTooltip,
   SlideTransition,
@@ -82,12 +85,39 @@ import {
   StyledTableRow,
   SubmitDialog,
   Transition,
-  WalletButtons,
-  WalletCard,
+  WalletSendDialog,
 } from '../../styles/page-styles';
-import { SearchTransactionsResponse } from '../../utils/Types.tsx';
 import { calculateMaxSendable } from '../../utils/maxSendable';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import { NameText } from '../../components/NameText';
+import {
+  WalletSyncCard,
+  WalletTransactionsCard,
+  WalletTransactionsLoader,
+  WalletWorkspace,
+} from '../../components/WalletWorkspace';
+import {
+  AddressBookEntry,
+  SearchTransactionsResponse,
+} from '../../utils/Types';
+import {
+  ADDRESS_BOOK_STORAGE_EVENT,
+  createAddressBookSyncSignature,
+  getAddressBook,
+  getAddressBookSyncBaselineKey,
+  getAddressBookSyncRequiredKey,
+  saveAddressBookSnapshot,
+} from '../../utils/addressBookStorage';
+import { publishToQDN } from '../../utils/addressBookQDN';
+import {
+  getAddressBookAvatarColor,
+  getAddressBookAvatarSx,
+} from '../../components/AddressBook/avatarPalette';
+import {
+  searchQortalNames,
+  type QortalNameSearchResult,
+} from '../../utils/qortalNodeApi';
+import { hasInvisibleCharacters } from '../../utils/invisibleCharacters';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -96,10 +126,15 @@ interface TablePaginationActionsProps {
   onPageChange: (event: MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
 
+type QortAddressBookSyncStatus = 'idle' | 'success' | 'dirty' | 'error';
+
+const QORT_ADDRESS_PATTERN = /^Q[1-9A-HJ-NP-Za-km-z]{33}$/;
+const QORT_BALANCE_REFRESH_INTERVAL_MS = 2.5 * TIME_MINUTES_1;
+
 const addressToPrimaryName: any = {};
 const requestQueueGetPrimaryName = new RequestQueueWithPromise(10);
 
-export const getPrimaryAccountName = async (address: string) => {
+const getPrimaryAccountName = async (address: string) => {
   if (addressToPrimaryName[address]) return addressToPrimaryName[address];
   try {
     const primaryName = await requestQueueGetPrimaryName.enqueue(() =>
@@ -113,7 +148,7 @@ export const getPrimaryAccountName = async (address: string) => {
   return EMPTY_STRING;
 };
 
-export const replaceAddressesWithNames = async (
+const replaceAddressesWithNames = async (
   data: SearchTransactionsResponse[]
 ) => {
   if (!data || data.length === 0) return;
@@ -155,6 +190,13 @@ export const replaceAddressesWithNames = async (
       recipientOriginal: d.recipient,
     } as SearchTransactionsResponse;
   });
+};
+
+const saveQortAddressBookSyncBaseline = (entries: AddressBookEntry[]) => {
+  localStorage.setItem(
+    getAddressBookSyncBaselineKey(Coin.QORT),
+    createAddressBookSyncSignature(entries)
+  );
 };
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
@@ -230,7 +272,7 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 export default function QortalWallet() {
   const ADDRESS_MIN_LENGTH = 3;
-  const ADDRESS_LOOKUP_DEBOUNCE_MS = 1000;
+  const ADDRESS_LOOKUP_DEBOUNCE_MS = 350;
 
   const { t } = useTranslation(['core']);
   const theme = useTheme();
@@ -240,7 +282,7 @@ export default function QortalWallet() {
   const [isLoadingWalletBalanceQort, setIsLoadingWalletBalanceQort] =
     useState<boolean>(true);
   const [paymentInfo, setPaymentInfo] = useState<any>([]);
-  const [qortTxFee, setQortTxFee] = useState<number>(0);
+  const [qortTxFee, setQortTxFee] = useState<number>(0.01);
   const [arbitraryInfo, setArbitraryInfo] = useState<any>([]);
   const [atInfo, setAtInfo] = useState<any>([]);
   const [groupInfo, setGroupInfo] = useState<any>([]);
@@ -249,11 +291,28 @@ export default function QortalWallet() {
   const [pollInfo, setPollInfo] = useState<any>([]);
   const [rewardshareInfo, setRewardshareInfo] = useState<any>([]);
   const [allInfo, setAllInfo] = useState<any>([]);
-  const [value, setValue] = useState('One');
+  const [selectedTransactionFilters, setSelectedTransactionFilters] = useAtom(
+    qortTransactionFiltersAtom
+  );
+  const [advancedFilterAnchor, setAdvancedFilterAnchor] =
+    useState<null | HTMLElement>(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openQortAddressBook, setOpenQortAddressBook] = useState(false);
-  const [addressBookPrefill, setAddressBookPrefill] = useState<{name: string, address: string} | null>(null);
+  const [receivePanelOpen, setReceivePanelOpen] = useState(false);
+  const [qortAddressBookEntries, setQortAddressBookEntries] = useState<
+    AddressBookEntry[]
+  >([]);
+  const [qortAddressBookSyncing, setQortAddressBookSyncing] = useState(false);
+  const [qortAddressBookSyncStatus, setQortAddressBookSyncStatus] =
+    useState<QortAddressBookSyncStatus>('idle');
+  const [qortAddressBookLastSync, setQortAddressBookLastSync] = useState<
+    number | null
+  >(null);
+  const [addressBookPrefill, setAddressBookPrefill] = useState<{
+    name: string;
+    address: string;
+  } | null>(null);
   const [loadingRefreshQort, setLoadingRefreshQort] = useState(false);
   const [openQortSend, setOpenQortSend] = useState(false);
   const [openTxQortSubmit, setOpenTxQortSubmit] = useState(false);
@@ -261,13 +320,40 @@ export default function QortalWallet() {
   const [openSendQortError, setOpenSendQortError] = useState(false);
   const [qortAmount, setQortAmount] = useState<number | undefined>(undefined);
   const [qortRecipient, setQortRecipient] = useState<string>(EMPTY_STRING);
+  const [qortRecipientDisplayName, setQortRecipientDisplayName] =
+    useState<string>(EMPTY_STRING);
   const [sendDisabled, setSendDisabled] = useState<boolean>(true);
   const [amountError, setAmountError] = useState<string | null>(null);
   const [recipientError, setRecipientError] = useState<string | null>(null);
   const [addressValidating, setAddressValidating] = useState(false);
+  const [qortNameSearchOpen, setQortNameSearchOpen] = useState(false);
+  const [qortNameSuggestions, setQortNameSuggestions] = useState<
+    QortalNameSearchResult[]
+  >([]);
   const [amountTouched, setAmountTouched] = useState(false);
   const [recipientTouched, setRecipientTouched] = useState(false);
   const userName = useGlobal().auth.name;
+
+  const toFiniteNumber = (value: unknown) => {
+    const parsed =
+      typeof value === 'number' ? value : Number.parseFloat(String(value ?? 0));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const formatDecimal = (
+    value: unknown,
+    minimumFractionDigits = 2,
+    maximumFractionDigits = 2
+  ) => {
+    return toFiniteNumber(value).toLocaleString(undefined, {
+      minimumFractionDigits,
+      maximumFractionDigits,
+    });
+  };
+
+  const formatQortAmount = (value: unknown) => formatDecimal(value, 2, 2);
+  const formatQortFee = (value: unknown) => formatDecimal(value, 2, 4);
+
   
   // Safely-spendable max via integer-satoshi math (avoids the floating-point
   // boundary error). QORT has a deterministic on-chain fee and an account
@@ -312,7 +398,41 @@ export default function QortalWallet() {
     setOpenQortAddressBook(true);
   };
 
-  const handleOpenAddressBookWithData = (name: string, addressValue: string) => {
+  const loadQortAddressBookEntries = useCallback(() => {
+    const entries = getAddressBook(Coin.QORT);
+    setQortAddressBookEntries(entries);
+    return entries;
+  }, []);
+
+  const refreshQortAddressBookSyncState = useCallback(
+    (entries: AddressBookEntry[]) => {
+      const cleanBaseline = localStorage.getItem(
+        getAddressBookSyncBaselineKey(Coin.QORT)
+      );
+
+      if (
+        cleanBaseline &&
+        createAddressBookSyncSignature(entries) === cleanBaseline
+      ) {
+        localStorage.removeItem(getAddressBookSyncRequiredKey(Coin.QORT));
+        setQortAddressBookSyncStatus('success');
+        return;
+      }
+
+      localStorage.setItem(getAddressBookSyncRequiredKey(Coin.QORT), 'true');
+      setQortAddressBookSyncStatus('dirty');
+    },
+    []
+  );
+
+  const handleToggleReceivePanel = () => {
+    setReceivePanelOpen((prev) => !prev);
+  };
+
+  const handleOpenAddressBookWithData = (
+    name: string,
+    addressValue: string
+  ) => {
     setAddressBookPrefill({ name, address: addressValue });
     setOpenQortAddressBook(true);
   };
@@ -320,22 +440,175 @@ export default function QortalWallet() {
   const handleCloseAddressBook = () => {
     setOpenQortAddressBook(false);
     setAddressBookPrefill(null);
+    loadQortAddressBookEntries();
   };
 
-  const handleSelectAddress = (address: string, _name: string) => {
+  const handleQortAddressBookChange = useCallback(() => {
+    const entries = loadQortAddressBookEntries();
+    refreshQortAddressBookSyncState(entries);
+  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+
+  const refreshQortAddressBookFromStorage = useCallback(() => {
+    const entries = loadQortAddressBookEntries();
+    if (
+      localStorage.getItem(getAddressBookSyncRequiredKey(Coin.QORT)) === 'true'
+    ) {
+      refreshQortAddressBookSyncState(entries);
+      return;
+    }
+
+    saveQortAddressBookSyncBaseline(entries);
+    setQortAddressBookSyncStatus('success');
+  }, [loadQortAddressBookEntries, refreshQortAddressBookSyncState]);
+
+  const handleSyncQortAddressBook = async () => {
+    const hadRequiredSync =
+      qortAddressBookSyncStatus === 'dirty' ||
+      localStorage.getItem(getAddressBookSyncRequiredKey(Coin.QORT)) === 'true';
+
+    setQortAddressBookSyncing(true);
+    try {
+      const entries = getAddressBook(Coin.QORT);
+      const publishedAt = await publishToQDN(
+        Coin.QORT,
+        entries,
+        userName || undefined
+      );
+      if (publishedAt) {
+        saveAddressBookSnapshot(Coin.QORT, entries, publishedAt);
+        saveQortAddressBookSyncBaseline(entries);
+        localStorage.removeItem(getAddressBookSyncRequiredKey(Coin.QORT));
+        setQortAddressBookLastSync(publishedAt);
+        setQortAddressBookSyncStatus('success');
+      } else {
+        setQortAddressBookSyncStatus(hadRequiredSync ? 'dirty' : 'error');
+      }
+    } catch (error) {
+      console.error('Failed to sync QORT address book:', error);
+      setQortAddressBookSyncStatus(hadRequiredSync ? 'dirty' : 'error');
+    } finally {
+      setQortAddressBookSyncing(false);
+      loadQortAddressBookEntries();
+    }
+  };
+
+  useEffect(() => {
+    refreshQortAddressBookFromStorage();
+  }, [address, openQortAddressBook, refreshQortAddressBookFromStorage]);
+
+  useEffect(() => {
+    const handleAddressBookStorage = () => {
+      refreshQortAddressBookFromStorage();
+    };
+
+    window.addEventListener(
+      ADDRESS_BOOK_STORAGE_EVENT,
+      handleAddressBookStorage
+    );
+    return () => {
+      window.removeEventListener(
+        ADDRESS_BOOK_STORAGE_EVENT,
+        handleAddressBookStorage
+      );
+    };
+  }, [refreshQortAddressBookFromStorage]);
+
+  const handleSelectAddress = (address: string, name: string) => {
     setQortRecipient(address);
-    setQortAmount(0);
+    setQortRecipientDisplayName(name || EMPTY_STRING);
     setOpenQortAddressBook(false);
     setOpenQortSend(true);
-    setAmountError(null);
-    setAmountTouched(false);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(true); // Trigger validation for QORT addresses
   };
 
-  const handleChange = (_event: SyntheticEvent, newValue: string) => {
-    setValue(newValue);
+  const handleSelectQortNameSuggestion = (
+    suggestion: QortalNameSearchResult
+  ) => {
+    if (
+      hasInvisibleCharacters(suggestion.name) ||
+      !QORT_ADDRESS_PATTERN.test(suggestion.owner)
+    ) {
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      setQortNameSearchOpen(false);
+      return;
+    }
+
+    setQortRecipient(suggestion.owner);
+    setQortRecipientDisplayName(suggestion.name);
+    setRecipientError(null);
+    setRecipientTouched(true);
+    setAddressValidating(false);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
+  };
+
+  const handleClearQortRecipient = () => {
+    setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
+    setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
+    setRecipientTouched(false);
+  };
+
+  const openUserLookup = async (addressOrName: string) => {
+    const value = addressOrName?.trim();
+    if (!value || value === '-') return;
+
+    qortalRequest({
+      action: 'OPEN_USER_LOOKUP',
+      user: value,
+    }).catch((error) => console.error(error));
+  };
+
+  const handleTransactionFiltersChange = (newValues: string[]) => {
+    setSelectedTransactionFilters(newValues);
     setPage(0);
+  };
+
+  const handleAdvancedFilterClick = (event: MouseEvent<HTMLElement>) => {
+    setAdvancedFilterAnchor(event.currentTarget);
+  };
+
+  const handleAdvancedFilterClose = () => {
+    setAdvancedFilterAnchor(null);
+  };
+
+  const handleAdvancedFilterSelect = (newValue: string) => {
+    const nonAllFilterValues = [
+      'payments',
+      'rewards',
+      'arbitrary',
+      'at',
+      'group',
+      'name',
+      'asset',
+      'poll',
+    ];
+
+    if (newValue === 'all') {
+      const allFiltersAreActive =
+        selectedTransactionFilters.includes('all') ||
+        nonAllFilterValues.every((filterValue) =>
+          selectedTransactionFilters.includes(filterValue)
+        );
+      handleTransactionFiltersChange(allFiltersAreActive ? [] : ['all']);
+      return;
+    }
+
+    const activeValues = selectedTransactionFilters.includes('all')
+      ? nonAllFilterValues
+      : selectedTransactionFilters;
+    const nextValues = activeValues.includes(newValue)
+      ? activeValues.filter((filterValue) => filterValue !== newValue)
+      : [...activeValues, newValue];
+
+    handleTransactionFiltersChange(
+      nextValues.length === nonAllFilterValues.length ? ['all'] : nextValues
+    );
   };
 
   const handleChangePage = (
@@ -355,20 +628,26 @@ export default function QortalWallet() {
   const handleOpenQortSend = () => {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
     setOpenQortSend(true);
     setAmountError(null);
     setAmountTouched(false);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(false);
   };
 
   const handleCloseQortSend = () => {
     setQortAmount(0);
     setQortRecipient(EMPTY_STRING);
+    setQortRecipientDisplayName(EMPTY_STRING);
     setOpenQortSend(false);
     setAmountError(null);
     setAmountTouched(false);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
+    setQortNameSuggestions([]);
     setRecipientTouched(false);
   };
 
@@ -428,64 +707,86 @@ export default function QortalWallet() {
     [walletBalanceQort, qortTxFee, t]
   );
 
-  // address lookup with debounce + cancel
+  // QORT recipient validation plus debounced name search.
   useEffect(() => {
+    const recipientValue = qortRecipient.trim();
+
     // Early exit: if recipient not touched, no validation needed
     if (!recipientTouched) {
       setRecipientError(null);
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
     // Synchronous validations
-    if (qortRecipient === EMPTY_STRING) {
+    if (recipientValue === EMPTY_STRING) {
       setRecipientError(t('core:message.error.recipient_required'));
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
-    if (qortRecipient.length < ADDRESS_MIN_LENGTH) {
+    if (recipientValue.length < ADDRESS_MIN_LENGTH) {
       setRecipientError(t('core:message.error.recipient_too_short'));
       setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       return;
     }
 
-    // Perform debounced network lookup
+    if (
+      hasInvisibleCharacters(recipientValue) ||
+      hasInvisibleCharacters(qortRecipientDisplayName)
+    ) {
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
+      return;
+    }
+
+    if (QORT_ADDRESS_PATTERN.test(recipientValue)) {
+      setRecipientError(null);
+      setAddressValidating(false);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
+      return;
+    }
+
+    // Search registered names, but let the user choose the intended recipient.
     setAddressValidating(true);
     setRecipientError(null);
+    setQortNameSearchOpen(false);
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
-        const [addrRes, nameRes] = await Promise.all([
-          fetch(`/addresses/validate/${encodeURIComponent(qortRecipient)}`, {
-            signal: controller.signal,
-          }).then(async (r) => {
-            const json = await r.json();
-            if (!json) {
-              console.warn(`Invalid address format: ${qortRecipient}`);
-              return { error: 'Invalid address' };
-            }
-            return json;
-          }),
-          fetch(`/names/${encodeURIComponent(qortRecipient)}`, {
-            signal: controller.signal,
-          }).then(async (r) => {
-            if (!r.ok) {
-              console.warn(`No name found: ${qortRecipient}`);
-              return { error: 'Name not found' };
-            }
-            return r.json();
-          }),
-        ]);
-        if (!addrRes?.error || !nameRes?.error) {
-          setRecipientError(null);
-        } else {
-          setRecipientError(t('core:message.error.recipient_not_found'));
-        }
+        const results = await searchQortalNames(
+          recipientValue,
+          10,
+          controller.signal
+        );
+        const safeResults = results.filter(
+          (result) =>
+            !hasInvisibleCharacters(result.name) &&
+            QORT_ADDRESS_PATTERN.test(result.owner)
+        );
+
+        setQortNameSuggestions(safeResults);
+        setQortNameSearchOpen(safeResults.length > 0);
+        setRecipientError(
+          safeResults.length === 0
+            ? t('core:message.error.recipient_not_found')
+            : null
+        );
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         console.error('Recipient lookup failed:', err.message);
+        setQortNameSuggestions([]);
+        setQortNameSearchOpen(false);
         setRecipientError(t('core:message.error.recipient_lookup_failed'));
       } finally {
         setAddressValidating(false);
@@ -496,24 +797,32 @@ export default function QortalWallet() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [qortRecipient, recipientTouched, t]);
+  }, [qortRecipient, qortRecipientDisplayName, recipientTouched, t]);
 
   // Consolidated send button enablement - derived from all validation states
   useEffect(() => {
     const amountValid = validateAmountLocal(qortAmount);
+    const recipientValue = qortRecipient.trim();
     const recipientLocallyValid =
-      !!qortRecipient && qortRecipient.length >= ADDRESS_MIN_LENGTH;
+      !!recipientValue && recipientValue.length >= ADDRESS_MIN_LENGTH;
+    const recipientNameSafe =
+      !hasInvisibleCharacters(qortRecipient) &&
+      !hasInvisibleCharacters(qortRecipientDisplayName);
+    const recipientAddressValid = QORT_ADDRESS_PATTERN.test(recipientValue);
     const addressFound =
       !addressValidating &&
       recipientError === null &&
       recipientTouched &&
-      recipientLocallyValid;
+      recipientLocallyValid &&
+      recipientAddressValid;
 
-    const finalEnabled = amountValid && recipientLocallyValid && addressFound;
+    const finalEnabled =
+      amountValid && recipientLocallyValid && recipientNameSafe && addressFound;
     setSendDisabled(!finalEnabled);
   }, [
     qortAmount,
     qortRecipient,
+    qortRecipientDisplayName,
     addressValidating,
     recipientError,
     recipientTouched,
@@ -770,7 +1079,7 @@ export default function QortalWallet() {
     const controller = new AbortController();
     const intervalGetWalletBalance = setInterval(() => {
       getWalletBalanceQort();
-    }, TIME_MINUTES_1);
+    }, QORT_BALANCE_REFRESH_INTERVAL_MS);
     getWalletBalanceQort(controller.signal);
 
     return () => {
@@ -788,7 +1097,7 @@ export default function QortalWallet() {
         const rawFee = await res.json();
 
         if (!cancelled && typeof rawFee === 'number' && rawFee > 0) {
-          setQortTxFee(rawFee / QORT_1_UNIT);
+          setQortTxFee(Math.max(rawFee / QORT_1_UNIT, 0.01));
         }
       } catch (err) {
         console.error('Failed to fetch QORT tx fee', err);
@@ -813,12 +1122,23 @@ export default function QortalWallet() {
   }, [address, getQortalTransactions]);
 
   const sendQortRequest = async () => {
+    const recipientValue = qortRecipient.trim();
+
+    if (
+      hasInvisibleCharacters(recipientValue) ||
+      hasInvisibleCharacters(qortRecipientDisplayName)
+    ) {
+      setRecipientTouched(true);
+      setRecipientError(t('core:message.error.invisible_qortal_name'));
+      return;
+    }
+
     setOpenTxQortSubmit(true);
     try {
       const sendRequest = await qortalRequest({
         action: 'SEND_COIN',
         coin: Coin.QORT,
-        recipient: qortRecipient,
+        recipient: recipientValue,
         amount: qortAmount,
       });
       if (!sendRequest?.error) {
@@ -829,6 +1149,9 @@ export default function QortalWallet() {
 
         setQortAmount(0);
         setQortRecipient(EMPTY_STRING);
+        setQortRecipientDisplayName(EMPTY_STRING);
+        setQortNameSearchOpen(false);
+        setQortNameSuggestions([]);
         setOpenTxQortSubmit(false);
         setOpenSendQortSuccess(true);
 
@@ -839,6 +1162,9 @@ export default function QortalWallet() {
     } catch (error) {
       setQortAmount(0);
       setQortRecipient(EMPTY_STRING);
+      setQortRecipientDisplayName(EMPTY_STRING);
+      setQortNameSearchOpen(false);
+      setQortNameSuggestions([]);
       setOpenTxQortSubmit(false);
       setOpenSendQortError(true);
       await timeoutDelay(TIME_SECONDS_3);
@@ -979,8 +1305,18 @@ export default function QortalWallet() {
                       <StyledTableCell
                         style={{ width: 'auto', cursor: 'pointer' }}
                         align="left"
-                        title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                        onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                        title={t('core:action.double_click_addressbook', {
+                          address:
+                            row?.creatorAddressOriginal || row?.creatorAddress,
+                        })}
+                        onDoubleClick={() =>
+                          handleOpenAddressBookWithData(
+                            row?.creatorAddress || EMPTY_STRING,
+                            row?.creatorAddressOriginal ||
+                              row?.creatorAddress ||
+                              EMPTY_STRING
+                          )
+                        }
                       >
                         {row?.creatorAddress === address ||
                         row?.creatorAddress === userName ? (
@@ -994,8 +1330,17 @@ export default function QortalWallet() {
                       <StyledTableCell
                         style={{ width: 'auto', cursor: 'pointer' }}
                         align="left"
-                        title={t('core:action.double_click_addressbook', { address: row?.recipientOriginal || row?.recipient })}
-                        onDoubleClick={() => handleOpenAddressBookWithData(row?.recipient || EMPTY_STRING, row?.recipientOriginal || row?.recipient || EMPTY_STRING)}
+                        title={t('core:action.double_click_addressbook', {
+                          address: row?.recipientOriginal || row?.recipient,
+                        })}
+                        onDoubleClick={() =>
+                          handleOpenAddressBookWithData(
+                            row?.recipient || EMPTY_STRING,
+                            row?.recipientOriginal ||
+                              row?.recipient ||
+                              EMPTY_STRING
+                          )
+                        }
                       >
                         {row?.recipient === address ||
                         row?.recipient === userName ? (
@@ -1045,7 +1390,7 @@ export default function QortalWallet() {
             labelRowsPerPage={t('core:rows_per_page', {
               postProcess: 'capitalizeFirstChar',
             })}
-            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            rowsPerPageOptions={[5, 10, 25]}
             count={paymentInfo.length}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -1193,8 +1538,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -1239,7 +1594,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={arbitraryInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -1397,8 +1752,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -1410,10 +1775,30 @@ export default function QortalWallet() {
                       )}
                     </StyledTableCell>
                     <StyledTableCell
-                      style={{ width: 'auto', cursor: row?.recipientOriginal || row?.recipient ? 'pointer' : 'default' }}
+                      style={{
+                        width: 'auto',
+                        cursor:
+                          row?.recipientOriginal || row?.recipient
+                            ? 'pointer'
+                            : 'default',
+                      }}
                       align="left"
-                      title={(row?.recipientOriginal || row?.recipient) ? t('core:action.double_click_addressbook', { address: row?.recipientOriginal || row?.recipient }) : undefined}
-                      onDoubleClick={() => (row?.recipientOriginal || row?.recipient) && handleOpenAddressBookWithData(row?.recipient || EMPTY_STRING, row?.recipientOriginal || row?.recipient || EMPTY_STRING)}
+                      title={
+                        row?.recipientOriginal || row?.recipient
+                          ? t('core:action.double_click_addressbook', {
+                              address: row?.recipientOriginal || row?.recipient,
+                            })
+                          : undefined
+                      }
+                      onDoubleClick={() =>
+                        (row?.recipientOriginal || row?.recipient) &&
+                        handleOpenAddressBookWithData(
+                          row?.recipient || EMPTY_STRING,
+                          row?.recipientOriginal ||
+                            row?.recipient ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {(() => {
                         if (row?.recipient) {
@@ -1474,7 +1859,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={atInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -1631,8 +2016,18 @@ export default function QortalWallet() {
                     <StyledTableCell
                       style={{ width: 'auto', cursor: 'pointer' }}
                       align="left"
-                      title={t('core:action.double_click_addressbook', { address: row?.creatorAddressOriginal || row?.creatorAddress })}
-                      onDoubleClick={() => handleOpenAddressBookWithData(row?.creatorAddress || EMPTY_STRING, row?.creatorAddressOriginal || row?.creatorAddress || EMPTY_STRING)}
+                      title={t('core:action.double_click_addressbook', {
+                        address:
+                          row?.creatorAddressOriginal || row?.creatorAddress,
+                      })}
+                      onDoubleClick={() =>
+                        handleOpenAddressBookWithData(
+                          row?.creatorAddress || EMPTY_STRING,
+                          row?.creatorAddressOriginal ||
+                            row?.creatorAddress ||
+                            EMPTY_STRING
+                        )
+                      }
                     >
                       {row?.creatorAddress === address ||
                       row?.creatorAddress === userName ? (
@@ -1779,7 +2174,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={groupInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -1997,7 +2392,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={nameInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2210,7 +2605,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={assetInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2309,7 +2704,7 @@ export default function QortalWallet() {
                   <StyledTableRow key={g}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number =
+                        const confirmations: number =
                           nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
@@ -2395,7 +2790,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={6}
                   count={pollInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -2658,7 +3053,7 @@ export default function QortalWallet() {
                   labelRowsPerPage={t('core:rows_per_page', {
                     postProcess: 'capitalizeFirstChar',
                   })}
-                  rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                  rowsPerPageOptions={[5, 10, 25]}
                   colSpan={7}
                   count={rewardshareInfo.length}
                   rowsPerPage={rowsPerPage}
@@ -3027,7 +3422,7 @@ export default function QortalWallet() {
             labelRowsPerPage={t('core:rows_per_page', {
               postProcess: 'capitalizeFirstChar',
             })}
-            rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+            rowsPerPageOptions={[5, 10, 25]}
             count={allInfo.length}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -3053,111 +3448,1409 @@ export default function QortalWallet() {
     }
   };
 
+  // Retain the legacy per-type renderers while the unified table handles the visible UX.
+  void tablePayment;
+  void tableArbitrary;
+  void tableAt;
+  void tableGroup;
+  void tableName;
+  void tableAsset;
+  void tablePoll;
+  void tableRewardshare;
+  void tableAll;
+
   const qortalTables = () => {
-    return (
-      <Box sx={{ width: '100%' }}>
-        <TabContext value={value}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <TabList
-              onChange={handleChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="Qortal Transactions"
-            >
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ALL</span>}
-                value="Nine"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>PAYMENT</span>}
-                value="One"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ARBITRARY</span>}
-                value="Two"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>AT</span>}
-                value="Three"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>GROUP</span>}
-                value="Four"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>NAME</span>}
-                value="Five"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>ASSET</span>}
-                value="Six"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>POLL</span>}
-                value="Seven"
-              />
-              <Tab
-                label={<span style={{ fontSize: '14px' }}>REWARDSHARE</span>}
-                value="Eight"
-              />
-            </TabList>
+    const safeAllInfo = Array.isArray(allInfo) ? allInfo : [];
+    const filters = [
+      { label: t('core:filters.all'), rows: safeAllInfo, value: 'all' },
+      {
+        label: t('core:filters.payments'),
+        rows: paymentInfo,
+        value: 'payments',
+      },
+      {
+        label: t('core:filters.rewards'),
+        rows: rewardshareInfo,
+        value: 'rewards',
+      },
+      {
+        label: t('core:filters.arbitrary'),
+        rows: arbitraryInfo,
+        value: 'arbitrary',
+      },
+      { label: t('core:filters.at'), rows: atInfo, value: 'at' },
+      { label: t('core:filters.group'), rows: groupInfo, value: 'group' },
+      { label: t('core:filters.name'), rows: nameInfo, value: 'name' },
+      { label: t('core:filters.asset'), rows: assetInfo, value: 'asset' },
+      { label: t('core:filters.poll'), rows: pollInfo, value: 'poll' },
+    ];
+    const nonAllFilters = filters.filter((filter) => filter.value !== 'all');
+    const isAllFiltersSelected =
+      selectedTransactionFilters.includes('all') ||
+      selectedTransactionFilters.length === nonAllFilters.length;
+    const activeFilterValues = isAllFiltersSelected
+      ? nonAllFilters.map((filter) => filter.value)
+      : selectedTransactionFilters;
+    const selectedFilterLabel = isAllFiltersSelected
+      ? 'All'
+      : activeFilterValues.length === 0
+        ? 'No filters'
+        : activeFilterValues.length === 1
+          ? (filters.find((filter) => filter.value === activeFilterValues[0])
+              ?.label ?? 'Filtered')
+          : `${activeFilterValues.length} filters`;
+    const advancedFilterOpen = Boolean(advancedFilterAnchor);
+    const transactionHeaderSx = {
+      color: 'text.secondary',
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 0,
+      lineHeight: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      textTransform: 'uppercase',
+      whiteSpace: 'nowrap',
+    } as const;
+    const transactionRowHoverSx = {
+      overflow: 'hidden',
+      position: 'relative',
+      '&::before': {
+        background: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, rgba(24,189,242,0.07), rgba(24,189,242,0.025))'
+            : 'linear-gradient(90deg, rgba(11,143,211,0.08), rgba(11,143,211,0.025))',
+        content: '""',
+        inset: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        transition: 'opacity 520ms ease-out',
+        zIndex: 0,
+      },
+      '&:hover::before': {
+        opacity: 1,
+        transitionDuration: '90ms',
+      },
+      '& > *': {
+        position: 'relative',
+        zIndex: 1,
+      },
+    } as const;
+
+    const formatTransactionType = (type?: string) => {
+      if (!type) return '-';
+      return type
+        .toLowerCase()
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    };
+
+    const getTransactionKey = (row: any) =>
+      row?.signature ||
+      [
+        row?.type,
+        row?.timestamp,
+        row?.creatorAddress,
+        row?.recipient,
+        row?.amount,
+        row?.fee,
+      ].join(':');
+    const getFilterRows = (rows: unknown) => (Array.isArray(rows) ? rows : []);
+
+    const selectedRowKeys = new Set<string>();
+
+    filters.forEach((filter) => {
+      if (filter.value === 'all') return;
+      if (!activeFilterValues.includes(filter.value)) return;
+      getFilterRows(filter.rows).forEach((row: any) =>
+        selectedRowKeys.add(getTransactionKey(row))
+      );
+    });
+    const selectedRows = isAllFiltersSelected
+      ? safeAllInfo
+      : safeAllInfo.filter((row: any) => {
+          const key = getTransactionKey(row);
+          return selectedRowKeys.has(key);
+        });
+
+    const getDisplayAddress = (row: any, field: 'creator' | 'recipient') => {
+      if (field === 'creator') {
+        return row?.creatorAddress || row?.sender || row?.owner || '-';
+      }
+
+      return row?.recipient || row?.recipientAddress || row?.atAddress || '-';
+    };
+
+    const getRawAddress = (row: any, field: 'creator' | 'recipient') => {
+      if (field === 'creator') {
+        return row?.creatorAddressOriginal || row?.creatorAddress || '';
+      }
+
+      return (
+        row?.recipientOriginal || row?.recipientAddress || row?.recipient || ''
+      );
+    };
+
+    const renderAddressCell = (row: any, field: 'creator' | 'recipient') => {
+      const displayAddress = getDisplayAddress(row, field);
+      const rawAddress = getRawAddress(row, field);
+      const lookupValue = rawAddress || displayAddress;
+      const canLookup = lookupValue && lookupValue !== '-';
+      const isCurrentUser =
+        displayAddress === address ||
+        displayAddress === userName ||
+        rawAddress === address;
+      const isDisplayedQortalName =
+        typeof displayAddress === 'string' &&
+        displayAddress !== '-' &&
+        !QORT_ADDRESS_PATTERN.test(displayAddress);
+
+      return (
+        <NameText
+          component="span"
+          name={isDisplayedQortalName ? displayAddress : undefined}
+          fallback={displayAddress}
+          role={canLookup ? 'button' : undefined}
+          tabIndex={canLookup ? 0 : undefined}
+          title={canLookup ? 'Open in User Search' : undefined}
+          onClick={() => openUserLookup(lookupValue)}
+          onKeyDown={(event) => {
+            if (!canLookup) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openUserLookup(lookupValue);
+            }
+          }}
+          sx={{
+            color: isCurrentUser ? 'info.main' : 'text.primary',
+            cursor: canLookup ? 'pointer' : 'default',
+            display: 'block',
+            fontSize: 13,
+            fontWeight: isCurrentUser ? 600 : 400,
+            maxWidth: 156,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            '&:hover': canLookup
+              ? {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                }
+              : undefined,
+          }}
+        />
+      );
+    };
+
+    const renderStatusIcon = (row: any) => {
+      const confirmations =
+        typeof row?.blockHeight === 'number' &&
+        typeof nodeInfo?.height === 'number'
+          ? nodeInfo.height - row.blockHeight
+          : null;
+      const isPending = confirmations == null || confirmations < 3;
+
+      return (
+        <Tooltip
+          placement="top"
+          title={
+            confirmations == null
+              ? t('core:transaction_status.pending_confirmation')
+              : isPending
+                ? t('core:transaction_status.pending_confirmations', {
+                    count: confirmations,
+                  })
+                : t('core:transaction_status.confirmed')
+          }
+        >
+          {isPending ? (
+            <HistoryToggleOff sx={{ color: 'error.main', fontSize: 16 }} />
+          ) : (
+            <CheckCircleOutline sx={{ color: 'success.main', fontSize: 16 }} />
+          )}
+        </Tooltip>
+      );
+    };
+
+    const renderAmountCell = (row: any) => {
+      const hasAmount = row?.amount !== undefined && row?.amount !== null;
+      if (!hasAmount) {
+        return (
+          <Typography
+            sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 400 }}
+          >
+            -
+          </Typography>
+        );
+      }
+
+      const amount = Math.abs(toFiniteNumber(row.amount));
+      const rawRecipient = getRawAddress(row, 'recipient');
+      const displayRecipient = getDisplayAddress(row, 'recipient');
+      const isIncoming =
+        rawRecipient === address ||
+        displayRecipient === address ||
+        displayRecipient === userName;
+
+      return (
+        <Typography
+          sx={{
+            color: isIncoming ? 'success.main' : 'error.main',
+            fontSize: 13,
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isIncoming ? '+' : '-'}
+          {formatQortAmount(amount)} QORT
+        </Typography>
+      );
+    };
+
+    // Context-aware "Info" cell: shows the column that used to be dedicated per
+    // transaction type before the unified table — identifier/size for ARBITRARY,
+    // poll name for polls, the human-readable action for NAME/GROUP txs, and the
+    // reward-share created/removed state.
+    const infoTextSx = {
+      color: 'text.secondary',
+      fontSize: 13,
+      fontWeight: 400,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    } as const;
+
+    const renderTransactionInfo = (row: any): ReactNode => {
+      const type = row?.type;
+      const infoText = (content: ReactNode, title?: string) => {
+        const node = <Typography sx={infoTextSx}>{content}</Typography>;
+        return title ? (
+          <CustomWidthTooltip placement="top" title={title}>
+            {node}
+          </CustomWidthTooltip>
+        ) : (
+          node
+        );
+      };
+
+      // NAME transactions
+      if (type === 'REGISTER_NAME') {
+        return infoText(
+          t('core:qortal.registered_name', {
+            name: row?.name,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'UPDATE_NAME') {
+        return infoText(
+          t('core:qortal.old_new_name', {
+            oldName: row?.name,
+            newName: row?.newName,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'SELL_NAME') {
+        return infoText(
+          t('core:qortal.name_to_sell', {
+            name: row?.name,
+            amount: row?.amount,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'CANCEL_SELL_NAME') {
+        return infoText(
+          t('core:qortal.cancelled_name_sale', {
+            name: row?.name,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'BUY_NAME') {
+        return infoText(
+          t('core:qortal.seller', {
+            seller: row?.seller,
+            amount: row?.amount,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+
+      // REWARD_SHARE / TRANSFER_PRIVS / PRESENCE -> created/removed
+      if (
+        type === 'REWARD_SHARE' ||
+        type === 'TRANSFER_PRIVS' ||
+        type === 'PRESENCE'
+      ) {
+        if (!row?.sharePercent) return null;
+        const removed = String(row.sharePercent).startsWith('-');
+        const mintingKeyTitle =
+          row?.recipient === row?.creatorAddress || row?.recipient === userName
+            ? 'Minting Key: ' + row?.rewardSharePublicKey
+            : EMPTY_STRING;
+        return (
+          <Box
+            sx={{
+              alignItems: 'center',
+              color: removed ? 'error.main' : 'success.main',
+              display: 'flex',
+              fontSize: 13,
+              fontWeight: 400,
+              minWidth: 0,
+            }}
+          >
+            {removed
+              ? t('core:qortal.removed', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:qortal.created', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+            {mintingKeyTitle ? (
+              <CustomWidthTooltip placement="top" title={mintingKeyTitle}>
+                <InfoOutlined
+                  sx={{ color: 'info.main', fontSize: 14, ml: 1 }}
+                />
+              </CustomWidthTooltip>
+            ) : null}
           </Box>
-          <TabPanel value="Nine">{tableAll()}</TabPanel>
-          <TabPanel value="One">{tablePayment()}</TabPanel>
-          <TabPanel value="Two">{tableArbitrary()}</TabPanel>
-          <TabPanel value="Three">{tableAt()}</TabPanel>
-          <TabPanel value="Four">{tableGroup()}</TabPanel>
-          <TabPanel value="Five">{tableName()}</TabPanel>
-          <TabPanel value="Six">{tableAsset()}</TabPanel>
-          <TabPanel value="Seven">{tablePoll()}</TabPanel>
-          <TabPanel value="Eight">{tableRewardshare()}</TabPanel>
-        </TabContext>
-      </Box>
+        );
+      }
+
+      // GROUP transactions
+      const groupId = row?.groupId;
+      if (type === 'CREATE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.create_group', {
+            groupName: row?.groupName,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'UPDATE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.update_group', {
+            newDescription: row?.newDescription,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'ADD_GROUP_ADMIN') {
+        return infoText(
+          t('core:message.group_actions.add_group_admin', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'REMOVE_GROUP_ADMIN') {
+        return infoText(
+          t('core:message.group_actions.remove_group_admin', {
+            admn: row?.admin,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_BAN') {
+        return infoText(
+          t('core:message.group_actions.group_ban', {
+            offender: row?.offender,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'CANCEL_GROUP_BAN') {
+        return infoText(
+          t('core:message.group_actions.cancel_group_ban', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_KICK') {
+        return infoText(
+          t('core:message.group_actions.group_kick', {
+            member: row?.member,
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'GROUP_INVITE') {
+        if (row?.invitee === address) {
+          return (
+            <Typography sx={infoTextSx}>
+              <Trans
+                i18nKey="message.group_actions.group_invite"
+                values={{ invitee: row?.invitee, id: groupId }}
+                components={{
+                  blue: (
+                    <span
+                      style={{
+                        color: theme.palette.info.main,
+                        marginLeft: '5px',
+                        marginRight: '5px',
+                      }}
+                    />
+                  ),
+                }}
+              />
+            </Typography>
+          );
+        }
+        return infoText('Invitee: ' + row?.invitee + ' ID: ' + groupId);
+      }
+      if (type === 'CANCEL_GROUP_INVITE' || type === 'GROUP_APPROVAL') {
+        return infoText(
+          t('core:message.group_actions.reference', {
+            reference: row?.reference,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'JOIN_GROUP') {
+        return infoText(
+          t('core:message.group_actions.join_group', {
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+      if (type === 'LEAVE_GROUP') {
+        return infoText(
+          t('core:message.group_actions.leave_group', {
+            id: groupId,
+            postProcess: 'capitalizeFirstChar',
+          })
+        );
+      }
+
+      return null;
+    };
+
+    const renderIdentifierCell = (row: any) => {
+      const identifier = row?.identifier
+        ? String(row.identifier)
+        : EMPTY_STRING;
+      if (!identifier) return <Typography sx={infoTextSx}>-</Typography>;
+      return (
+        <CustomWidthTooltip placement="top" title={identifier}>
+          <Typography sx={infoTextSx}>{cropString(identifier)}</Typography>
+        </CustomWidthTooltip>
+      );
+    };
+
+    const renderSizeCell = (row: any) => (
+      <Typography sx={{ ...infoTextSx, textAlign: 'right' }}>
+        {row?.size > 0 ? humanFileSize(row.size, true, 2) : '-'}
+      </Typography>
     );
+
+    const renderPollNameCell = (row: any) => (
+      <Typography sx={infoTextSx}>{row?.pollName || '-'}</Typography>
+    );
+
+    const renderTypeCell = (row: any) => (
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          fontSize: 13,
+          fontWeight: 400,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {formatTransactionType(row?.type)}
+      </Typography>
+    );
+
+    const renderFeeCell = (row: any) => (
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          fontSize: 13,
+          fontWeight: 400,
+          textAlign: 'right',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {row?.fee !== undefined && row?.fee !== null
+          ? `${formatQortFee(row.fee)} QORT`
+          : '-'}
+      </Typography>
+    );
+
+    const renderTimeCell = (row: any) => (
+      <CustomWidthTooltip
+        placement="top"
+        title={new Date(row?.timestamp).toLocaleString()}
+      >
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: 13,
+            fontWeight: 400,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
+        </Typography>
+      </CustomWidthTooltip>
+    );
+
+    const renderInfoCell = (row: any) =>
+      renderTransactionInfo(row) ?? <Typography sx={infoTextSx}>-</Typography>;
+
+    // Mobile detail = the most relevant per-type value (info, identifier/size,
+    // or poll name) collapsed into one card field.
+    const renderTransactionDetail = (row: any): ReactNode => {
+      const info = renderTransactionInfo(row);
+      if (info) return info;
+      const identifier = row?.identifier
+        ? String(row.identifier)
+        : EMPTY_STRING;
+      const size =
+        row?.size > 0 ? humanFileSize(row.size, true, 2) : EMPTY_STRING;
+      if (identifier || size) {
+        return (
+          <Typography sx={{ ...infoTextSx, whiteSpace: 'normal' }}>
+            {[identifier ? cropString(identifier) : EMPTY_STRING, size]
+              .filter(Boolean)
+              .join(' · ')}
+          </Typography>
+        );
+      }
+      if (row?.pollName) {
+        return <Typography sx={infoTextSx}>{row.pollName}</Typography>;
+      }
+      return null;
+    };
+
+    // Each filter exposes its own ordered column set; the visible columns are the
+    // union of the selected filters (canonical order), so columns appear/disappear
+    // with the filter selection. ALL shows the full superset.
+    type TransactionColumnId =
+      | 'status'
+      | 'type'
+      | 'creator'
+      | 'identifier'
+      | 'size'
+      | 'recipient'
+      | 'amount'
+      | 'info'
+      | 'pollName'
+      | 'fee'
+      | 'time';
+
+    const transactionColumnConfig: Record<
+      TransactionColumnId,
+      {
+        headerKey: string;
+        align: 'left' | 'center' | 'right';
+        widthXs: string;
+        widthXl: string;
+        minPx: number;
+        renderCell: (row: any) => ReactNode;
+      }
+    > = {
+      status: {
+        headerKey: 'core:status',
+        align: 'center',
+        widthXs: '42px',
+        widthXl: '54px',
+        minPx: 42,
+        renderCell: (row) => (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            {renderStatusIcon(row)}
+          </Box>
+        ),
+      },
+      type: {
+        headerKey: 'core:type',
+        align: 'left',
+        widthXs: 'minmax(82px, 0.55fr)',
+        widthXl: 'minmax(110px, 0.7fr)',
+        minPx: 82,
+        renderCell: renderTypeCell,
+      },
+      creator: {
+        headerKey: 'core:creator',
+        align: 'left',
+        widthXs: 'minmax(120px, 1fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: (row) => renderAddressCell(row, 'creator'),
+      },
+      identifier: {
+        headerKey: 'core:identifier',
+        align: 'left',
+        widthXs: 'minmax(120px, 0.9fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: renderIdentifierCell,
+      },
+      size: {
+        headerKey: 'core:size',
+        align: 'right',
+        widthXs: 'minmax(72px, 0.5fr)',
+        widthXl: 'minmax(90px, 0.55fr)',
+        minPx: 72,
+        renderCell: renderSizeCell,
+      },
+      recipient: {
+        headerKey: 'core:recipient',
+        align: 'left',
+        widthXs: 'minmax(120px, 1fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: (row) => renderAddressCell(row, 'recipient'),
+      },
+      amount: {
+        headerKey: 'core:amount',
+        align: 'right',
+        widthXs: 'minmax(95px, 0.72fr)',
+        widthXl: 'minmax(118px, 0.78fr)',
+        minPx: 95,
+        renderCell: (row) => (
+          <Box sx={{ textAlign: 'right' }}>{renderAmountCell(row)}</Box>
+        ),
+      },
+      info: {
+        headerKey: 'core:info',
+        align: 'left',
+        widthXs: 'minmax(132px, 1.1fr)',
+        widthXl: 'minmax(160px, 1.15fr)',
+        minPx: 132,
+        renderCell: renderInfoCell,
+      },
+      pollName: {
+        headerKey: 'core:poll_name',
+        align: 'left',
+        widthXs: 'minmax(120px, 0.9fr)',
+        widthXl: 'minmax(150px, 1fr)',
+        minPx: 120,
+        renderCell: renderPollNameCell,
+      },
+      fee: {
+        headerKey: 'core:fee.fee',
+        align: 'right',
+        widthXs: 'minmax(76px, 0.55fr)',
+        widthXl: 'minmax(92px, 0.62fr)',
+        minPx: 76,
+        renderCell: renderFeeCell,
+      },
+      time: {
+        headerKey: 'core:time',
+        align: 'left',
+        widthXs: 'minmax(88px, 0.58fr)',
+        widthXl: 'minmax(112px, 0.66fr)',
+        minPx: 88,
+        renderCell: renderTimeCell,
+      },
+    };
+
+    const transactionColumnOrder: TransactionColumnId[] = [
+      'status',
+      'type',
+      'creator',
+      'identifier',
+      'size',
+      'recipient',
+      'amount',
+      'info',
+      'pollName',
+      'fee',
+      'time',
+    ];
+
+    const filterColumnSets: Record<string, TransactionColumnId[]> = {
+      all: transactionColumnOrder,
+      payments: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'amount',
+        'fee',
+        'time',
+      ],
+      arbitrary: [
+        'status',
+        'type',
+        'creator',
+        'identifier',
+        'size',
+        'fee',
+        'time',
+      ],
+      at: ['status', 'type', 'creator', 'recipient', 'amount', 'fee', 'time'],
+      group: ['status', 'type', 'creator', 'info', 'fee', 'time'],
+      name: ['status', 'type', 'creator', 'info', 'fee', 'time'],
+      asset: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'amount',
+        'fee',
+        'time',
+      ],
+      poll: ['status', 'type', 'creator', 'pollName', 'fee', 'time'],
+      rewards: [
+        'status',
+        'type',
+        'creator',
+        'recipient',
+        'info',
+        'fee',
+        'time',
+      ],
+    };
+
+    const visibleColumnIds: TransactionColumnId[] = (() => {
+      if (isAllFiltersSelected) return transactionColumnOrder;
+      const visible = new Set<TransactionColumnId>();
+      activeFilterValues.forEach((value) => {
+        (filterColumnSets[value] ?? []).forEach((id) => visible.add(id));
+      });
+      const ordered = transactionColumnOrder.filter((id) => visible.has(id));
+      return ordered.length > 0
+        ? ordered
+        : ['status', 'type', 'creator', 'fee', 'time'];
+    })();
+
+    // "Fit" mode: keep min widths only for the compact/numeric columns so they
+    // stay readable; let the wide text columns shrink toward 0 (their content
+    // already ellipsizes) so every visible column fits without horizontal
+    // scrolling and Fee/Time (the rightmost columns) never fall off-screen.
+    const fitProtectedColumns = new Set<TransactionColumnId>([
+      'status',
+      'size',
+      'amount',
+      'fee',
+      'time',
+    ]);
+    const toFitTrack = (width: string, id: TransactionColumnId) =>
+      fitProtectedColumns.has(id)
+        ? width
+        : width.replace(/minmax\(\d+px,/, 'minmax(0px,');
+    const transactionGridColumns = {
+      xs: visibleColumnIds
+        .map((id) => toFitTrack(transactionColumnConfig[id].widthXs, id))
+        .join(' '),
+      xl: visibleColumnIds
+        .map((id) => toFitTrack(transactionColumnConfig[id].widthXl, id))
+        .join(' '),
+    };
+
+    const renderTransactionRows = (rows: any[]) => {
+      if (!rows || rows.length === 0) {
+        return (
+          <Box
+            sx={{
+              bgcolor: 'transparent',
+              borderRadius: 1,
+              color: 'text.secondary',
+              px: 2,
+              py: 4,
+              textAlign: 'center',
+            }}
+          >
+            <Typography sx={{ fontWeight: 600 }}>
+              {t('core:wallet.no_transactions')}
+            </Typography>
+          </Box>
+        );
+      }
+
+      const pagedRows =
+        rowsPerPage > 0
+          ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          : rows;
+
+      const renderMobileField = (label: string, content: ReactNode) => (
+        <Box sx={{ display: 'grid', gap: 0.45, minWidth: 0 }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: 0,
+              lineHeight: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            {label}
+          </Typography>
+          <Box sx={{ minWidth: 0 }}>{content}</Box>
+        </Box>
+      );
+
+      return (
+        <>
+          <Box
+            sx={{
+              display: { xs: 'grid', sm: 'none' },
+              gap: 0.85,
+              minWidth: 0,
+              p: 1,
+            }}
+          >
+            {pagedRows.map((row: any, index: Key) => (
+              <Box
+                key={row?.signature || index}
+                sx={{
+                  bgcolor: 'rgba(4, 22, 38, 0.22)',
+                  border: (t) =>
+                    `1px solid ${
+                      t.palette.mode === 'dark'
+                        ? 'rgba(116,158,180,0.11)'
+                        : 'rgba(17,24,39,0.08)'
+                    }`,
+                  borderRadius: 1,
+                  display: 'grid',
+                  gap: 1.1,
+                  minWidth: 0,
+                  p: 1.15,
+                }}
+              >
+                <Box
+                  sx={{
+                    alignItems: 'start',
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                    minWidth: 0,
+                  }}
+                >
+                  <Box sx={{ pt: 0.15 }}>{renderStatusIcon(row)}</Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        lineHeight: 1.2,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {formatTransactionType(row?.type)}
+                    </Typography>
+                    <CustomWidthTooltip
+                      placement="top"
+                      title={
+                        row?.timestamp
+                          ? new Date(row.timestamp).toLocaleString()
+                          : t('core:transaction_status.pending_confirmation')
+                      }
+                    >
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          mt: 0.35,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {row?.timestamp ? epochToAgo(row.timestamp) : '-'}
+                      </Typography>
+                    </CustomWidthTooltip>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>{renderAmountCell(row)}</Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                    minWidth: 0,
+                  }}
+                >
+                  {renderMobileField(
+                    t('core:creator', { postProcess: 'capitalizeFirstChar' }),
+                    renderAddressCell(row, 'creator')
+                  )}
+                  {renderMobileField(
+                    t('core:recipient', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                    renderAddressCell(row, 'recipient')
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    alignItems: 'end',
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                    minWidth: 0,
+                  }}
+                >
+                  {renderMobileField(
+                    t('core:fee.fee', { postProcess: 'capitalizeFirstChar' }),
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row?.fee !== undefined && row?.fee !== null
+                        ? `${formatQortFee(row.fee)} QORT`
+                        : '-'}
+                    </Typography>
+                  )}
+                  {renderMobileField(
+                    t('core:transaction_signature', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                    <Typography
+                      title={row?.signature}
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row?.signature ? cropString(row.signature) : '-'}
+                    </Typography>
+                  )}
+                </Box>
+
+                {renderTransactionDetail(row) && (
+                  <Box sx={{ minWidth: 0 }}>
+                    {renderMobileField(
+                      t('core:info', { postProcess: 'capitalizeFirstChar' }),
+                      <Box sx={{ minWidth: 0, whiteSpace: 'normal' }}>
+                        {renderTransactionDetail(row)}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Box>
+
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              minWidth: 0,
+              width: '100%',
+              maxWidth: '100%',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              overscrollBehaviorX: 'contain',
+              pb: 0.75,
+              touchAction: 'pan-x pan-y',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            <Box sx={{ width: '100%' }}>
+              <Box
+                aria-hidden
+                sx={{
+                  alignItems: 'center',
+                  borderBottom: (t) =>
+                    `1px solid ${
+                      t.palette.mode === 'dark'
+                        ? 'rgba(116,158,180,0.15)'
+                        : 'rgba(17,24,39,0.08)'
+                    }`,
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: transactionGridColumns,
+                  px: { xs: 1.25, md: 2 },
+                  py: 1.15,
+                }}
+              >
+                {visibleColumnIds.map((id) => {
+                  const column = transactionColumnConfig[id];
+                  return (
+                    <Typography
+                      key={id}
+                      sx={{ ...transactionHeaderSx, textAlign: column.align }}
+                    >
+                      {t(column.headerKey, {
+                        postProcess: 'capitalizeFirstChar',
+                      })}
+                    </Typography>
+                  );
+                })}
+              </Box>
+
+              <Box sx={{ display: 'grid', gap: 0, px: { md: 0.4 }, py: 0.35 }}>
+                {pagedRows.map((row: any, index: Key) => (
+                  <Box
+                    key={row?.signature || index}
+                    sx={{
+                      ...transactionRowHoverSx,
+                      alignItems: 'center',
+                      bgcolor: (t) =>
+                        t.palette.mode === 'dark'
+                          ? 'rgba(4, 22, 38, 0.16)'
+                          : 'rgba(255,255,255,0.58)',
+                      borderBottom: (t) =>
+                        `1px solid ${
+                          t.palette.mode === 'dark'
+                            ? 'rgba(116,158,180,0.06)'
+                            : 'rgba(17,24,39,0.06)'
+                        }`,
+                      borderRadius: 0.65,
+                      display: 'grid',
+                      gap: 1,
+                      gridTemplateColumns: transactionGridColumns,
+                      minHeight: 46,
+                      px: { xs: 1.25, md: 1.6 },
+                      py: 0.85,
+                      transition:
+                        'background-color 150ms ease, border-color 150ms ease',
+                    }}
+                  >
+                    {visibleColumnIds.map((id) => (
+                      <Box key={id} sx={{ minWidth: 0 }}>
+                        {transactionColumnConfig[id].renderCell(row)}
+                      </Box>
+                    ))}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+          <TablePagination
+            component="div"
+            labelRowsPerPage={t('core:rows_per_page', {
+              postProcess: 'capitalizeFirstChar',
+            })}
+            rowsPerPageOptions={[5, 10, 25]}
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            slotProps={{
+              select: {
+                MenuProps: {
+                  disableScrollLock: true,
+                },
+              },
+            }}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={TablePaginationActions}
+            sx={{
+              color: 'text.secondary',
+              mt: 0.5,
+              '& .MuiTablePagination-toolbar': {
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                minHeight: 44,
+                px: { xs: 1, sm: 0 },
+                rowGap: 0.5,
+              },
+              '& .MuiTablePagination-spacer': {
+                display: { xs: 'none', sm: 'block' },
+              },
+              '& .MuiTablePagination-selectLabel': {
+                display: { xs: 'none', sm: 'block' },
+              },
+              '& .MuiTablePagination-input': {
+                display: { xs: 'none', sm: 'inline-flex' },
+              },
+              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
+                {
+                  color: 'text.secondary',
+                  fontSize: 13,
+                },
+            }}
+          />
+        </>
+      );
+    };
+
+    const filterActions = (
+      <>
+        <Button
+          aria-controls={
+            advancedFilterOpen ? 'advanced-filter-menu' : undefined
+          }
+          aria-haspopup="true"
+          aria-expanded={advancedFilterOpen ? 'true' : undefined}
+          endIcon={<ExpandMore sx={{ fontSize: 18 }} />}
+          onClick={handleAdvancedFilterClick}
+          size="small"
+          variant={isAllFiltersSelected ? 'text' : 'outlined'}
+          sx={{
+            borderRadius: 1,
+            color: isAllFiltersSelected ? 'text.secondary' : 'primary.main',
+            fontSize: 13,
+            fontWeight: 700,
+            minHeight: 34,
+            px: 1,
+            whiteSpace: 'nowrap',
+            '& .MuiButton-endIcon': {
+              ml: 0.65,
+            },
+          }}
+        >
+          {isAllFiltersSelected
+            ? t('core:filters.advanced')
+            : selectedFilterLabel}
+        </Button>
+        <Menu
+          id="advanced-filter-menu"
+          anchorEl={advancedFilterAnchor}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          open={advancedFilterOpen}
+          onClose={handleAdvancedFilterClose}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          disableScrollLock
+          slotProps={{
+            paper: {
+              sx: {
+                maxWidth: 'calc(100vw - 32px)',
+                mt: 0.5,
+                minWidth: 180,
+                overflowX: 'hidden',
+              },
+            },
+          }}
+        >
+          {filters.map((filter) => (
+            <MenuItem
+              key={filter.value}
+              onClick={() => handleAdvancedFilterSelect(filter.value)}
+              sx={{
+                gap: 2,
+                justifyContent: 'space-between',
+                minWidth: 220,
+              }}
+            >
+              <Typography sx={{ fontWeight: 600 }}>{filter.label}</Typography>
+              <Checkbox
+                checked={
+                  filter.value === 'all'
+                    ? isAllFiltersSelected
+                    : activeFilterValues.includes(filter.value)
+                }
+                edge="end"
+                size="small"
+                tabIndex={-1}
+                sx={{ ml: 'auto', p: 0.25 }}
+              />
+            </MenuItem>
+          ))}
+        </Menu>
+      </>
+    );
+
+    return {
+      actions: filterActions,
+      content: (
+        <Box sx={{ pt: 0.75, width: '100%' }}>
+          {renderTransactionRows(selectedRows)}
+        </Box>
+      ),
+    };
   };
 
   const tableLoader = () => {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Box
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-        <Box
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '20px',
-            width: '100%',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: 'primary.main', fontStyle: 'italic', fontWeight: 700 }}
-          >
-            {t('core:message.generic.loading_transactions', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Box>
+      <WalletTransactionsLoader
+        label={t('core:message.generic.loading_transactions', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+      />
     );
   };
 
+  const qortAddress = address ?? EMPTY_STRING;
+  const qortAddressBookNeedsSync = qortAddressBookSyncStatus === 'dirty';
+  const qortAddressBookNeedsAttention =
+    qortAddressBookNeedsSync || qortAddressBookSyncStatus === 'error';
+  const syncStatusLabel = qortAddressBookSyncing
+    ? 'Syncing...'
+    : qortAddressBookNeedsSync
+      ? 'Sync required'
+      : qortAddressBookSyncStatus === 'error'
+        ? 'Sync failed'
+        : 'Up to date';
+  const syncStatusTooltip = qortAddressBookNeedsSync
+    ? 'Local contacts changed. Sync to publish the latest encrypted address book backup.'
+    : qortAddressBookSyncStatus === 'error'
+      ? 'The last sync did not complete.'
+      : qortAddressBookSyncStatus === 'success' && qortAddressBookLastSync
+        ? `Last sync: ${new Intl.DateTimeFormat(undefined, {
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }).format(new Date(qortAddressBookLastSync))}`
+        : syncStatusLabel;
+  const qortalTableView = openQortSend
+    ? { actions: null, content: null }
+    : qortalTables();
+  const qortSendLabelSx = {
+    color: (t: Theme) =>
+      t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
+    fontSize: { xs: 14.5, md: 15 },
+    fontWeight: 700,
+    lineHeight: 1.2,
+  } as const;
+  const qortSendHelperSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 12.5, md: 13 },
+    fontWeight: 500,
+    lineHeight: 1.45,
+    ml: 1.6,
+    mt: 0.85,
+  } as const;
+  const qortSendFieldSx = {
+    '& .MuiFormHelperText-root': qortSendHelperSx,
+    '& .MuiOutlinedInput-root': {
+      bgcolor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(0,8,16,0.2)'
+          : 'rgba(255,255,255,0.72)',
+      borderRadius: 1.35,
+      minHeight: { xs: 54, md: 56 },
+      px: { xs: 1.2, md: 1.35 },
+      transition: 'background-color 160ms ease',
+      '& fieldset': {
+        borderColor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.15)'
+            : 'rgba(11,143,211,0.16)',
+      },
+      '&:hover fieldset': {
+        borderColor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(116,158,180,0.3)'
+            : 'rgba(11,143,211,0.32)',
+      },
+      '&.Mui-focused': {
+        bgcolor: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'rgba(0,8,16,0.2)'
+            : 'rgba(255,255,255,0.86)',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'rgba(24,189,242,0.62)',
+        borderWidth: 1,
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      color: 'text.primary',
+      fontSize: { xs: 15.5, md: 16 },
+      fontWeight: 500,
+      py: 0,
+      '&::placeholder': {
+        color: 'text.secondary',
+        fontWeight: 400,
+        opacity: 0.58,
+      },
+    },
+  } as const;
+  const qortSendInfoIconSx = {
+    color: 'text.secondary',
+    fontSize: { xs: 14.5, md: 15 },
+    opacity: 0.82,
+  } as const;
+  const qortRecipientInitials =
+    qortRecipientDisplayName
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || Coin.QORT[0];
+  const qortRecipientAvatarColor = getAddressBookAvatarColor(
+    `${qortRecipientDisplayName}-${qortRecipient}`
+  );
+  const qortSendConfirming =
+    addressValidating && recipientTouched && qortRecipient !== EMPTY_STRING;
+
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      <Dialog
-        fullScreen
+      <WalletSendDialog
         open={openQortSend}
         onClose={handleCloseQortSend}
         slots={{ transition: Transition }}
+        maxWidth={false}
+        fullWidth
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        slotProps={{
+          paper: {
+            sx: {
+              '&&': {
+                backgroundColor: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? 'rgba(3, 17, 29, 0.985)'
+                    : '#ffffff',
+                backgroundImage: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                    : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
+                border: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? '1px solid rgba(91,132,158,0.28)'
+                    : '1px solid rgba(11,143,211,0.14)',
+                boxShadow: (t: Theme) =>
+                  t.palette.mode === 'dark'
+                    ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                    : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+              },
+              backgroundColor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(3, 17, 29, 0.985)'
+                  : '#ffffff',
+              backgroundImage: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                  : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.12), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,251,253,0.99) 100%)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(91,132,158,0.28)'
+                  : '1px solid rgba(11,143,211,0.14)',
+              borderRadius: 2,
+              boxShadow: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+              minHeight: 'min(590px, calc(100dvh - 32px))',
+              width: 'min(592px, calc(100vw - 24px))',
+            },
+          },
+        }}
       >
-        <SubmitDialog fullWidth={true} maxWidth="xs" open={openTxQortSubmit}>
+        <SubmitDialog
+          fullWidth={true}
+          maxWidth="xs"
+          open={openTxQortSubmit}
+          disableScrollLock
+        >
           <DialogContent>
             <Box
               sx={{
@@ -3234,18 +4927,48 @@ export default function QortalWallet() {
             })}
           </Alert>
         </Snackbar>
-        <AppBar sx={{ position: 'static' }}>
-          <Toolbar>
+        <AppBar
+          sx={{
+            bgcolor: 'transparent',
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
+            borderBottom: 'none',
+            boxShadow: 'none',
+            color: 'text.primary',
+            position: 'static',
+          }}
+        >
+          <Toolbar
+            sx={{
+              minHeight: '78px !important',
+              px: { xs: 2.35, md: 2.55 },
+            }}
+          >
             <IconButton
-              edge="start"
               color="inherit"
               onClick={handleCloseQortSend}
               aria-label="close"
+              sx={{
+                color: 'text.secondary',
+                mr: { xs: 1.25, md: 1.45 },
+                p: 0.35,
+                '& svg': { fontSize: 28 },
+                '&:hover': {
+                  bgcolor: 'rgba(116,158,180,0.08)',
+                  color: 'text.primary',
+                },
+              }}
             >
               <Close />
             </IconButton>
             <Avatar
-              sx={{ width: 28, height: 28 }}
+              sx={{
+                bgcolor: 'primary.main',
+                boxShadow: '0 0 20px rgba(24,189,242,0.24)',
+                height: { xs: 34, md: 36 },
+                mr: { xs: 1.65, md: 1.8 },
+                width: { xs: 34, md: 36 },
+              }}
               alt="QORT Logo"
               src={coinLogoQORT}
             />
@@ -3254,13 +4977,12 @@ export default function QortalWallet() {
               noWrap
               component="div"
               sx={{
+                color: 'text.primary',
                 flexGrow: 1,
-                display: {
-                  xs: 'none',
-                  sm: 'block',
-                  paddingLeft: '10px',
-                  paddingTop: '3px',
-                },
+                fontSize: { xs: 18, md: 19 },
+                fontWeight: 700,
+                letterSpacing: 0,
+                lineHeight: 1,
               }}
             >
               {t('core:action.transfer_coin', {
@@ -3271,432 +4993,741 @@ export default function QortalWallet() {
             <Button
               disabled={sendDisabled}
               variant="contained"
-              startIcon={<Send />}
+              startIcon={
+                qortSendConfirming ? (
+                  <CircularProgress color="inherit" size={16} thickness={4.2} />
+                ) : (
+                  <NorthEast />
+                )
+              }
               aria-label="send-qort"
               onClick={sendQortRequest}
               sx={{
-                backgroundcolor: theme.palette.info.main,
+                bgcolor: '#0a9eff',
+                backgroundImage:
+                  'linear-gradient(180deg, rgba(24,174,255,0.98), rgba(4,126,220,0.98))',
+                border: '1px solid rgba(85,205,255,0.32)',
+                borderRadius: 1.4,
+                boxShadow:
+                  '0 10px 26px rgba(3,139,236,0.34), inset 0 1px 0 rgba(255,255,255,0.18)',
                 color: 'white',
-                '&:hover': { backgroundcolor: 'action.hover' },
+                fontSize: { xs: 14, md: 14.5 },
+                fontWeight: 700,
+                justifySelf: 'end',
+                minHeight: { xs: 38, md: 40 },
+                minWidth: qortSendConfirming
+                  ? { xs: 126, md: 134 }
+                  : { xs: 92, md: 98 },
+                px: { xs: 1.65, md: 1.9 },
+                transition:
+                  'min-width 180ms ease, background-color 160ms ease, box-shadow 160ms ease',
+                '& .MuiButton-startIcon svg': {
+                  fontSize: 19,
+                },
+                '&:hover': {
+                  bgcolor: '#16baf2',
+                  boxShadow: '0 18px 44px rgba(24,189,242,0.38)',
+                },
+                '&:disabled': {
+                  bgcolor: qortSendConfirming
+                    ? 'rgba(24,158,255,0.56)'
+                    : 'rgba(116,158,180,0.18)',
+                  backgroundImage: qortSendConfirming
+                    ? 'linear-gradient(180deg, rgba(24,174,255,0.72), rgba(4,126,220,0.72))'
+                    : 'none',
+                  borderColor: qortSendConfirming
+                    ? 'rgba(85,205,255,0.22)'
+                    : 'rgba(116,158,180,0.1)',
+                  boxShadow: qortSendConfirming
+                    ? '0 10px 24px rgba(3,139,236,0.16), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : 'none',
+                  color: qortSendConfirming
+                    ? 'rgba(255,255,255,0.78)'
+                    : 'rgba(255,255,255,0.44)',
+                },
               }}
             >
-              {t('core:action.send', {
-                postProcess: 'capitalizeAll',
-              })}
+              {qortSendConfirming
+                ? t('core:action.confirming', {
+                    postProcess: 'capitalizeFirstChar',
+                  })
+                : t('core:action.send', {
+                    postProcess: 'capitalizeFirstChar',
+                  })}
             </Button>
           </Toolbar>
         </AppBar>
         <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
+          sx={{
+            display: 'grid',
+            gap: { xs: 2.85, md: 3.05 },
+            minHeight: { xs: 472, md: 484 },
+            px: { xs: 2.75, md: 3 },
+            pb: { xs: 2.85, md: 3 },
+            pt: { xs: 0.4, md: 0.55 },
           }}
         >
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:balance_available', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            gutterBottom
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {isLoadingWalletBalanceQort ? (
-              <Box sx={{ width: '175px' }}>
-                <LinearProgress />
-              </Box>
+          <Box sx={{ display: 'grid', gap: 0.85 }}>
+            <Typography sx={qortSendLabelSx}>{t('core:send.to')}</Typography>
+            {qortRecipientDisplayName ? (
+              <>
+                <Box
+                  sx={{
+                    bgcolor: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(0,8,16,0.18)'
+                        : 'rgba(255,255,255,0.76)',
+                    border: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '1px solid rgba(116,158,180,0.15)'
+                        : '1px solid rgba(11,143,211,0.16)',
+                    borderRadius: 1.55,
+                    display: 'grid',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      display: 'grid',
+                      gap: 1.25,
+                      gridTemplateColumns: 'auto minmax(0, 1fr) auto auto',
+                      minHeight: { xs: 70, md: 72 },
+                      px: { xs: 1.65, md: 1.75 },
+                      py: { xs: 0.85, md: 0.95 },
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        ...getAddressBookAvatarSx(qortRecipientAvatarColor),
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 700,
+                        height: { xs: 42, md: 44 },
+                        width: { xs: 42, md: 44 },
+                      }}
+                    >
+                      {qortRecipientInitials}
+                    </Avatar>
+                    <Box sx={{ display: 'grid', gap: 0.35, minWidth: 0 }}>
+                      <NameText
+                        noWrap
+                        name={qortRecipientDisplayName}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: 18, md: 18.5 },
+                          fontWeight: 700,
+                          lineHeight: 1.05,
+                        }}
+                      />
+                      <Typography
+                        noWrap
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: 13.2, md: 13.6 },
+                          fontWeight: 500,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {t('core:wallet.qortal_user')}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      aria-label={t('core:action.clear_recipient')}
+                      onClick={handleClearQortRecipient}
+                      sx={{
+                        color: 'text.secondary',
+                        height: { xs: 32, md: 34 },
+                        width: { xs: 32, md: 34 },
+                        '& svg': { fontSize: { xs: 20, md: 21 } },
+                        '&:hover': {
+                          bgcolor: 'rgba(116,158,180,0.08)',
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      <Close />
+                    </IconButton>
+                    <IconButton
+                      aria-label={t('core:action.open_address_book')}
+                      onClick={handleOpenAddressBook}
+                      sx={{
+                        border: '1px solid rgba(116,158,180,0.12)',
+                        borderRadius: 1.2,
+                        color: 'primary.main',
+                        height: { xs: 34, md: 36 },
+                        width: { xs: 34, md: 36 },
+                        '&:hover': {
+                          bgcolor: 'rgba(24,189,242,0.08)',
+                          borderColor: 'rgba(24,189,242,0.34)',
+                          color: '#37d0ff',
+                        },
+                      }}
+                    >
+                      <PersonOutline sx={{ fontSize: { xs: 19, md: 20 } }} />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      borderTop: (t: Theme) =>
+                        t.palette.mode === 'dark'
+                          ? '1px solid rgba(116,158,180,0.115)'
+                          : '1px solid rgba(11,143,211,0.12)',
+                      display: 'flex',
+                      gap: 0.85,
+                      minHeight: { xs: 40, md: 42 },
+                      minWidth: 0,
+                      px: { xs: 1.65, md: 1.75 },
+                      py: 0.65,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        flexShrink: 0,
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 600,
+                      }}
+                    >
+                      {t('core:send.address_label')}
+                    </Typography>
+                    <Typography
+                      noWrap
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: 13, md: 13.5 },
+                        fontWeight: 500,
+                        minWidth: 0,
+                      }}
+                    >
+                      {qortRecipient}
+                    </Typography>
+                  </Box>
+                </Box>
+                {recipientTouched && recipientError ? (
+                  <Typography
+                    sx={{
+                      ...qortSendHelperSx,
+                      color: 'error.main',
+                    }}
+                  >
+                    {recipientError}
+                  </Typography>
+                ) : null}
+              </>
             ) : (
-              walletBalanceQort + ' QORT'
+              <ClickAwayListener
+                onClickAway={() => setQortNameSearchOpen(false)}
+              >
+                <Box sx={{ position: 'relative' }}>
+                  <TextField
+                    required
+                    autoComplete="new-password"
+                    id="qort-recipient-manual"
+                    placeholder={t('core:send.qort_address_or_name')}
+                    value={qortRecipient}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const input = e.currentTarget;
+                      setQortRecipientDisplayName(EMPTY_STRING);
+                      setQortRecipient(e.target.value);
+                      setQortNameSearchOpen(false);
+                      setRecipientTouched(true);
+                      window.requestAnimationFrame(() => {
+                        if (document.activeElement === input) {
+                          const end = input.value.length;
+                          input.setSelectionRange(end, end);
+                        }
+                      });
+                    }}
+                    onBlur={onRecipientBlur}
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                      const input = e.currentTarget;
+                      if (qortNameSuggestions.length > 0) {
+                        setQortNameSearchOpen(true);
+                      }
+                      window.requestAnimationFrame(() => {
+                        const end = input.value.length;
+                        input.setSelectionRange(end, end);
+                      });
+                    }}
+                    slotProps={{
+                      htmlInput: {
+                        'aria-label': t('core:send.receiver_address_or_name'),
+                        autoCapitalize: 'none',
+                        autoComplete: 'new-password',
+                        autoCorrect: 'off',
+                        minLength: 3,
+                        name: 'qort-recipient-manual-no-autofill',
+                        spellCheck: false,
+                      },
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={t('core:action.open_address_book')}
+                              onClick={handleOpenAddressBook}
+                              sx={{
+                                border: '1px solid rgba(116,158,180,0.12)',
+                                borderRadius: 1,
+                                color: 'primary.main',
+                                height: { xs: 31, md: 32 },
+                                ml: { xs: 0.8, md: 1 },
+                                width: { xs: 31, md: 32 },
+                                '&:hover': {
+                                  bgcolor: 'rgba(24,189,242,0.08)',
+                                  borderColor: 'rgba(24,189,242,0.34)',
+                                  color: '#37d0ff',
+                                },
+                              }}
+                            >
+                              <PersonOutline
+                                sx={{ fontSize: { xs: 18, md: 19 } }}
+                              />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    fullWidth
+                    helperText={
+                      recipientTouched && recipientError
+                        ? recipientError
+                        : undefined
+                    }
+                    error={recipientTouched && !!recipientError}
+                    sx={{
+                      ...qortSendFieldSx,
+                      '& .MuiFormHelperText-root': {
+                        ...qortSendHelperSx,
+                        color:
+                          recipientTouched && recipientError
+                            ? 'error.main'
+                            : 'text.secondary',
+                      },
+                    }}
+                  />
+                  {qortNameSearchOpen && qortNameSuggestions.length > 0 ? (
+                    <Box
+                      sx={{
+                        bgcolor: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? 'rgba(5, 16, 27, 0.98)'
+                            : 'rgba(255,255,255,0.98)',
+                        border: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? '1px solid rgba(116,158,180,0.2)'
+                            : '1px solid rgba(11,143,211,0.18)',
+                        borderRadius: 1,
+                        boxShadow: (t: Theme) =>
+                          t.palette.mode === 'dark'
+                            ? '0 18px 40px rgba(0,0,0,0.32)'
+                            : '0 18px 40px rgba(15,74,106,0.16)',
+                        left: 0,
+                        maxHeight: 216,
+                        overflowY: 'auto',
+                        position: 'absolute',
+                        right: 0,
+                        top: 'calc(100% + 6px)',
+                        zIndex: 1500,
+                      }}
+                    >
+                      {qortNameSuggestions.map((suggestion) => (
+                        <Box
+                          component="button"
+                          type="button"
+                          key={`${suggestion.name}-${suggestion.owner}`}
+                          onClick={() =>
+                            handleSelectQortNameSuggestion(suggestion)
+                          }
+                          sx={{
+                            alignItems: 'center',
+                            appearance: 'none',
+                            bgcolor: 'transparent',
+                            border: 0,
+                            color: 'text.primary',
+                            cursor: 'pointer',
+                            display: 'grid',
+                            font: 'inherit',
+                            gap: 0.35,
+                            justifyItems: 'start',
+                            px: 2,
+                            py: 1.1,
+                            textAlign: 'left',
+                            width: '100%',
+                            '&:hover': {
+                              bgcolor: 'rgba(24,189,242,0.08)',
+                            },
+                          }}
+                        >
+                          <NameText
+                            component="span"
+                            name={suggestion.name}
+                            sx={{ fontSize: 14, fontWeight: 700 }}
+                          />
+                          <Typography
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: 12,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%',
+                            }}
+                          >
+                            {suggestion.owner}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : null}
+                </Box>
+              </ClickAwayListener>
             )}
-          </Typography>
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '20px',
-          }}
-        >
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'primary.main', fontWeight: 700 }}
-          >
-            {t('core:max_sendable', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            &nbsp;&nbsp;
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: 'text.primary', fontWeight: 700 }}
-          >
-            {maxSendableQortCoin() + ' QORT'}
-          </Typography>
-          <Box style={{ marginInlineStart: '15px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSendMaxQort}
-              style={{ borderRadius: 50 }}
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: 1.05 }}>
+            <Box
+              sx={{
+                alignItems: 'center',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 0.9,
+                justifyContent: 'space-between',
+              }}
             >
-              {t('core:action.send_max', {
-                postProcess: 'capitalizeAll',
-              })}
-            </Button>
+              <Typography sx={qortSendLabelSx}>{t('core:amount')}</Typography>
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  display: 'inline-flex',
+                  gap: 0.75,
+                  minHeight: 26,
+                }}
+              >
+                <Tooltip title={t('core:send.max_sendable_tooltip')}>
+                  <Box
+                    sx={{
+                      alignItems: 'center',
+                      color: 'text.secondary',
+                      display: 'inline-flex',
+                      gap: 0.45,
+                    }}
+                  >
+                    <InfoOutlined sx={qortSendInfoIconSx} />
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: 13.2, md: 13.6 },
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {isLoadingWalletBalanceQort
+                        ? t('core:send.max_sendable_loading')
+                        : t('core:send.max_sendable', {
+                            amount: formatQortAmount(maxSendableQortCoin()),
+                            symbol: 'QORT',
+                          })}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+                <Button
+                  variant="text"
+                  onClick={handleSendMaxQort}
+                  sx={{
+                    color: 'primary.main',
+                    fontSize: { xs: 13.8, md: 14.2 },
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    minHeight: 24,
+                    minWidth: 0,
+                    px: 0.35,
+                    py: 0,
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      color: '#37d0ff',
+                    },
+                  }}
+                >
+                  {t('core:max')}
+                </Button>
+              </Box>
+            </Box>
+            <NumericFormat
+              decimalScale={8}
+              defaultValue={0}
+              value={
+                qortAmount === 0 ? EMPTY_STRING : (qortAmount ?? EMPTY_STRING)
+              }
+              allowNegative={false}
+              customInput={TextField as React.ComponentType<any>}
+              valueIsNumericString
+              placeholder="0.00"
+              fullWidth
+              isAllowed={(values) => {
+                const max = maxSendableQortCoin();
+                const { formattedValue, floatValue } = values;
+                return (
+                  formattedValue === EMPTY_STRING || (floatValue ?? 0) <= max
+                );
+              }}
+              onValueChange={onAmountChange}
+              onBlur={onAmountBlur}
+              required
+              helperText={
+                amountTouched && amountError ? amountError : undefined
+              }
+              error={amountTouched && !!amountError}
+              slotProps={{
+                htmlInput: {
+                  'aria-label': t('core:send.symbol_amount', {
+                    symbol: 'QORT',
+                  }),
+                },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: 14.5, md: 15 },
+                          fontWeight: 700,
+                          letterSpacing: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        QORT
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{
+                ...qortSendFieldSx,
+                '& .MuiFormHelperText-root': {
+                  ...qortSendHelperSx,
+                  color:
+                    amountTouched && amountError
+                      ? 'error.main'
+                      : 'text.secondary',
+                },
+                '& .MuiOutlinedInput-root': {
+                  ...qortSendFieldSx['& .MuiOutlinedInput-root'],
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(0,8,16,0.2)'
+                      : 'rgba(255,255,255,0.86)',
+                  borderRadius: 1.55,
+                  minHeight: { xs: 54, md: 56 },
+                  px: { xs: 1.45, md: 1.6 },
+                  '& fieldset': {
+                    borderColor:
+                      amountTouched && amountError
+                        ? 'error.main'
+                        : 'rgba(24,158,255,0.9)',
+                    boxShadow:
+                      amountTouched && amountError
+                        ? 'none'
+                        : '0 0 18px rgba(24,158,255,0.18)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor:
+                      amountTouched && amountError
+                        ? 'error.main'
+                        : 'rgba(24,174,255,0.96)',
+                  },
+                },
+                '& .MuiOutlinedInput-input': {
+                  color: 'text.primary',
+                  fontSize: { xs: 23, md: 24 },
+                  fontWeight: 400,
+                  py: 0,
+                  textAlign: 'left',
+                  '&::placeholder': {
+                    color: 'text.secondary',
+                    fontWeight: 400,
+                    opacity: 0.86,
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          <Tooltip title={t('core:send.network_fee_max_tooltip')}>
+            <Box
+              sx={{
+                alignItems: 'center',
+                color: 'text.secondary',
+                display: 'grid',
+                gap: 0.75,
+                gridTemplateColumns: 'auto auto minmax(80px, auto)',
+                justifySelf: 'end',
+                mt: -0.3,
+                opacity: 0.78,
+                px: 0.4,
+              }}
+            >
+              <InfoOutlined sx={qortSendInfoIconSx} />
+              <Typography
+                sx={{
+                  fontSize: { xs: 12.5, md: 13 },
+                  fontWeight: 500,
+                }}
+              >
+                {t('core:send.network_fee')}
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontSize: { xs: 14, md: 14.5 },
+                  fontWeight: 700,
+                  textAlign: 'right',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {formatQortAmount(qortTxFee)} QORT
+              </Typography>
+            </Box>
+          </Tooltip>
+
+          <Box
+            sx={{
+              alignItems: 'flex-start',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(8, 57, 52, 0.34)'
+                  : 'rgba(232, 248, 241, 0.9)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(34, 227, 138, 0.11)'
+                  : '1px solid rgba(26, 140, 86, 0.18)',
+              borderRadius: 1.55,
+              display: 'flex',
+              gap: 1.6,
+              mt: 0.1,
+              px: { xs: 1.7, md: 1.85 },
+              py: { xs: 2.05, md: 2.2 },
+            }}
+          >
+            <ShieldOutlined
+              sx={{ color: 'success.main', fontSize: { xs: 29, md: 31 } }}
+            />
+            <Box sx={{ display: 'grid', gap: 0.35 }}>
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontSize: { xs: 13.5, md: 14 },
+                  fontWeight: 700,
+                  lineHeight: 1.25,
+                }}
+              >
+                Always double-check the address before sending.
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: 12.8, md: 13.2 },
+                  fontWeight: 400,
+                  lineHeight: 1.35,
+                }}
+              >
+                Transactions on the Qortal network are irreversible.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              alignItems: 'center',
+              bgcolor: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(0,8,16,0.12)'
+                  : 'rgba(246,250,252,0.78)',
+              border: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? '1px solid rgba(116,158,180,0.09)'
+                  : '1px solid rgba(11,143,211,0.12)',
+              borderRadius: 1.35,
+              color: 'text.secondary',
+              display: 'flex',
+              gap: 0.75,
+              justifyContent: 'center',
+              minHeight: { xs: 40, md: 42 },
+              mt: -0.1,
+              px: 1.4,
+            }}
+          >
+            <LockOutlined sx={{ fontSize: { xs: 14, md: 15 } }} />
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: 12.5, md: 13 },
+                fontWeight: 600,
+                lineHeight: 1,
+                textAlign: 'center',
+              }}
+            >
+              Secure &bull; Decentralized
+            </Typography>
           </Box>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            gap: 2,
-            mt: 2.5,
-            mx: 'auto',
-            width: '100%',
-            maxWidth: 420,
-            px: { xs: 0, sm: 1 },
-          }}
-        >
-          <NumericFormat
-            decimalScale={8}
-            defaultValue={0}
-            value={qortAmount ?? EMPTY_STRING}
-            allowNegative={false}
-            customInput={TextField as React.ComponentType<any>}
-            valueIsNumericString
-            label={
-              t('core:amount', { postProcess: 'capitalizeAll' }) + '(QORT)'
-            }
-            fullWidth
-            isAllowed={(values) => {
-              const max = maxSendableQortCoin();
-              const { formattedValue, floatValue } = values;
-              return (
-                formattedValue === EMPTY_STRING || (floatValue ?? 0) <= max
-              );
-            }}
-            onValueChange={onAmountChange}
-            onBlur={onAmountBlur}
-            required
-            helperText={
-              amountTouched ? amountError || EMPTY_STRING : EMPTY_STRING
-            } // show only when touched
-            error={amountTouched && !!amountError}
-          />
-
-          <TextField
-            required
-            label={t('core:receiver_address_name', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            id="qort-address"
-            margin="normal"
-            value={qortRecipient}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              setQortRecipient(e.target.value.trim());
-              setRecipientTouched(true);
-            }}
-            onBlur={onRecipientBlur}
-            slotProps={{ htmlInput: { maxLength: 34, minLength: 3 } }}
-            fullWidth
-            helperText={
-              recipientTouched
-                ? addressValidating
-                  ? t('core:message.generic.validating', {
-                      postProcess: 'capitalizeFirstChar',
-                    })
-                  : recipientError || EMPTY_STRING
-                : t('core:message.generic.qortal_address', {
-                    postProcess: 'capitalizeFirstChar',
-                  })
-            }
-            error={recipientTouched && !!recipientError}
-          />
-        </Box>
-        <Box
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            align="center"
-            sx={{ fontWeight: 600, fontSize: '14px', marginTop: '15px' }}
-          >
-            {t('core:message.generic.sending_fee', {
-              quantity: 0.01,
-              coin: Coin.QORT,
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Typography>
-        </Box>
-      </Dialog>
+      </WalletSendDialog>
 
       <AddressBookDialog
         open={openQortAddressBook}
         onClose={handleCloseAddressBook}
         coinType={Coin.QORT}
         onSelectAddress={handleSelectAddress}
+        onAddressBookChange={handleQortAddressBookChange}
         prefillData={addressBookPrefill}
       />
 
-      <WalletCard sx={{ p: { xs: 2, md: 3 }, width: '100%' }}>
-        <Grid container rowSpacing={{ xs: 2, md: 3 }} columnSpacing={2}>
-          <Grid
-            container
-            alignItems="center"
-            columnSpacing={4}
-            rowSpacing={{ xs: 12, md: 0 }}
+      <WalletWorkspace
+        address={qortAddress}
+        addressBookRefreshKey={`${openQortAddressBook}-${qortAddressBookEntries.length}-${qortAddressBookSyncStatus}`}
+        balance={walletBalanceQort}
+        balanceDecimals={2}
+        coin="QORT"
+        isBalanceLoading={isLoadingWalletBalanceQort}
+        noAddressLabel={t('core:message.generic.no_address', {
+          postProcess: 'capitalizeFirstChar',
+        })}
+        onAddContact={handleOpenAddressBook}
+        onAddressBookChange={handleQortAddressBookChange}
+        onSelectAddress={handleSelectAddress}
+        onSend={handleOpenQortSend}
+        onToggleReceive={handleToggleReceivePanel}
+        receiveOpen={receivePanelOpen}
+        rightColumnAfter={
+          <WalletSyncCard
+            isSyncing={qortAddressBookSyncing}
+            onSync={handleSyncQortAddressBook}
+            statusLabel={syncStatusLabel}
+            statusTone={qortAddressBookNeedsAttention ? 'error' : 'success'}
+            statusTooltip={syncStatusTooltip}
+          />
+        }
+        transactions={
+          <WalletTransactionsCard
+            actions={qortalTableView.actions}
+            isRefreshing={loadingRefreshQort}
+            onRefresh={handleLoadingRefreshQort}
           >
-            <Grid
-              container
-              size={12}
-              justifyContent="space-around"
-              alignItems="center"
+            <Box
               sx={{
-                flexDirection: { xs: 'column', md: 'row' },
-                textAlign: { xs: 'center', md: 'left' },
-                gap: { xs: 3, md: 0 },
+                alignItems: loadingRefreshQort ? 'center' : undefined,
+                display: loadingRefreshQort ? 'grid' : 'block',
+                minHeight: rowsPerPage === 10 ? { md: 548 } : undefined,
+                minWidth: 0,
+                maxWidth: '100%',
               }}
             >
-              <Box
-                sx={{
-                  display: 'grid',
-                  alignItems: 'center',
-                  justifyItems: { xs: 'center', md: 'start' },
-                  gap: 1,
-                }}
-              >
-                <Box
-                  component="img"
-                  alt="QORT Logo"
-                  src={coinLogoQORT}
-                  sx={{
-                    width: { xs: 96, sm: 110, md: 120 },
-                    height: { xs: 96, sm: 110, md: 120 },
-                    mr: { md: 1 },
-                  }}
-                />
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {t('core:message.generic.qortal_wallet', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </Typography>
-              </Box>
-
-              <Grid
-                sx={{
-                  display: 'grid',
-                  gap: { xs: 2, md: 1 },
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'minmax(0, 1fr) minmax(0, 0.6fr)',
-                  },
-                  gridTemplateRows: { xs: 'repeat(3, auto)', md: '1fr 1fr' },
-                }}
-              >
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '1', md: '1' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  gap={1}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{ color: 'primary.main', fontWeight: 700 }}
-                  >
-                    {t('core:balance', {
-                      postProcess: 'capitalizeFirstChar',
-                    })}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {isLoadingWalletBalanceQort ? (
-                      <LinearProgress />
-                    ) : (
-                      `${walletBalanceQort} QORT`
-                    )}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  sx={{
-                    gridColumn: { xs: '1', md: '1' },
-                    gridRow: { xs: '2', md: '2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box alignItems={'center'} display={'flex'} gap={1}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: 'primary.main', fontWeight: 700 }}
-                    >
-                      {t('core:address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        color: 'text.primary',
-                        fontWeight: 700,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: {
-                          xs: '100%',
-                          sm: '220px',
-                          md: '200px',
-                          lg: '370px',
-                        },
-                      }}
-                    >
-                      {address}
-                    </Typography>
-                    <CustomWidthTooltip
-                      placement="top"
-                      title={t('core:action.copy_address', {
-                        postProcess: 'capitalizeFirstChar',
-                      })}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() => copyToClipboard(address ?? EMPTY_STRING)}
-                      >
-                        <CopyAllTwoTone fontSize="small" />
-                      </IconButton>
-                    </CustomWidthTooltip>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  alignContent={'center'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  sx={{
-                    gridColumn: { xs: '1', md: '2' },
-                    gridRow: { xs: '3', md: '1 / span 2' },
-                    p: { xs: 1.5, md: 2 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      alignItems: 'center',
-                      aspectRatio: '1 / 1',
-                      bgcolor: '#fff',
-                      border: (t) => `1px solid ${t.palette.divider}`,
-                      borderRadius: 1,
-                      boxShadow: (t) => t.shadows[2],
-                      display: 'flex',
-                      justifyContent: 'center',
-                      height: '100%',
-                      maxHeight: { xs: 200, md: 150 },
-                      maxWidth: { xs: 200, md: 150 },
-                      p: 0.5,
-                    }}
-                  >
-                    <QRCode
-                      value={address ?? EMPTY_STRING}
-                      size={200}
-                      fgColor="#000000"
-                      bgColor="#ffffff"
-                      level="H"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid size={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 3,
-                  mt: { xs: 1, md: 2 },
-                  flexWrap: 'wrap',
-                }}
-              >
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<Send style={{ marginBottom: 2 }} />}
-                  aria-label="Transfer"
-                  onClick={handleOpenQortSend}
-                >
-                  {t('core:action.transfer_coin', {
-                    coin: Coin.QORT,
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-
-                <WalletButtons
-                  variant="contained"
-                  startIcon={<ImportContacts style={{ marginBottom: 2 }} />}
-                  aria-label="AddressBook"
-                  onClick={handleOpenAddressBook}
-                >
-                  {t('core:address_book', {
-                    postProcess: 'capitalizeFirstChar',
-                  })}
-                </WalletButtons>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Grid size={12}>
-            <Box sx={{ width: '100%', mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <Button
-                  size="large"
-                  onClick={handleLoadingRefreshQort}
-                  loading={loadingRefreshQort}
-                  loadingPosition="start"
-                  startIcon={<Refresh style={{ marginBottom: 2 }} />}
-                  variant="text"
-                  sx={{ borderRadius: 50 }}
-                >
-                  <span>
-                    {t('core:transactions', { postProcess: 'capitalizeAll' })}
-                  </span>
-                </Button>
-              </Box>
-
-              {loadingRefreshQort ? (
-                <Box sx={{ width: '100%' }}>{tableLoader()}</Box>
-              ) : (
-                <Box sx={{ width: '100%' }}>{qortalTables()}</Box>
-              )}
+              {loadingRefreshQort ? tableLoader() : qortalTableView.content}
             </Box>
-          </Grid>
-        </Grid>
-      </WalletCard>
+          </WalletTransactionsCard>
+        }
+      />
     </Box>
   );
 }

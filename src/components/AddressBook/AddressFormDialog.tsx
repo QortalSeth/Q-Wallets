@@ -1,23 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
   Box,
+  Button,
   CircularProgress,
+  ClickAwayListener,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   InputAdornment,
+  TextField,
+  Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
+import Check from '@mui/icons-material/Check';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import Close from '@mui/icons-material/Close';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 import { Coin } from 'qapp-core';
 import { useTranslation } from 'react-i18next';
-import { DialogGeneral } from '../../styles/page-styles';
+import {
+  DialogGeneral,
+  FAST_DIALOG_TRANSITION_MS,
+  Transition,
+} from '../../styles/page-styles';
 import { AddressBookEntry } from '../../utils/Types';
+import { getAddressBook } from '../../utils/addressBookStorage';
 import { validateAddress } from '../../utils/addressValidation';
-import { ADDRESSBOOK_NAME_LENGTH, ADDRESSBOOK_NOTE_LENGTH, EMPTY_STRING } from '../../common/constants';
+import {
+  ADDRESSBOOK_NAME_LENGTH,
+  ADDRESSBOOK_NOTE_LENGTH,
+  EMPTY_STRING,
+} from '../../common/constants';
+import {
+  searchQortalNames,
+  type QortalNameSearchResult,
+} from '../../utils/qortalNodeApi';
+import { NameText } from '../NameText';
+import { hasInvisibleCharacters } from '../../utils/invisibleCharacters';
+import coinLogoARRR from '../../assets/arrr.png';
+import coinLogoBTC from '../../assets/btc.png';
+import coinLogoDGB from '../../assets/dgb.png';
+import coinLogoDOGE from '../../assets/doge.png';
+import coinLogoLTC from '../../assets/ltc.png';
+import coinLogoQORT from '../../assets/qort.png';
+import coinLogoRVN from '../../assets/rvn.png';
 
-const ADDRESS_LOOKUP_DEBOUNCE_MS = 1000;
+const ADDRESS_LOOKUP_DEBOUNCE_MS = 350;
 const ADDRESS_MIN_LENGTH = 3;
+const QORT_ADDRESS_PATTERN = /^Q[1-9A-HJ-NP-Za-km-z]{33}$/;
+
+type QortResolvedContact = {
+  address: string;
+  name: string;
+};
+
+const coinLogos: Partial<Record<Coin, string>> = {
+  [Coin.ARRR]: coinLogoARRR,
+  [Coin.BTC]: coinLogoBTC,
+  [Coin.DGB]: coinLogoDGB,
+  [Coin.DOGE]: coinLogoDOGE,
+  [Coin.LTC]: coinLogoLTC,
+  [Coin.QORT]: coinLogoQORT,
+  [Coin.RVN]: coinLogoRVN,
+};
+
+const fieldLabelSx = {
+  color: (t: Theme) =>
+    t.palette.mode === 'dark' ? 'rgba(228,238,248,0.9)' : 'text.primary',
+  fontSize: { xs: 14.5, sm: 15 },
+  fontWeight: 700,
+  letterSpacing: 0,
+  lineHeight: 1.2,
+  mb: 0.85,
+} as const;
+
+const formFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    bgcolor: (t: Theme) =>
+      t.palette.mode === 'dark'
+        ? 'rgba(0,8,16,0.2)'
+        : 'rgba(255,255,255,0.76)',
+    borderRadius: 1.35,
+    minHeight: { xs: 54, sm: 56 },
+    px: { xs: 1.2, sm: 1.35 },
+    '& fieldset': {
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.16)'
+          : 'rgba(11,143,211,0.18)',
+    },
+    '&:hover fieldset': {
+      borderColor: (t: Theme) =>
+        t.palette.mode === 'dark'
+          ? 'rgba(116,158,180,0.3)'
+          : 'rgba(11,143,211,0.32)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'rgba(24,189,242,0.62)',
+      borderWidth: 1,
+    },
+  },
+  '& .MuiOutlinedInput-input': {
+    color: 'text.primary',
+    fontSize: { xs: 15.5, sm: 16 },
+    fontWeight: 500,
+    py: 0,
+    '&::placeholder': {
+      color: 'text.secondary',
+      fontWeight: 400,
+      opacity: 0.58,
+    },
+  },
+  '& .MuiFormHelperText-root': {
+    color: 'text.secondary',
+    fontSize: 12.5,
+    fontWeight: 600,
+    lineHeight: 1.25,
+    ml: 1.2,
+    mt: 0.85,
+  },
+} as const;
 
 interface AddressFormDialogProps {
   open: boolean;
@@ -25,9 +129,12 @@ interface AddressFormDialogProps {
   coinType: Coin;
   entry?: AddressBookEntry;
   onSave: (entry: Omit<AddressBookEntry, 'id' | 'createdAt'>) => void;
+  onDelete?: (entry: AddressBookEntry) => void;
   prefillName?: string;
   prefillAddress?: string;
   saveError?: string;
+  disableRestoreFocus?: boolean;
+  onExited?: () => void;
 }
 
 export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
@@ -36,11 +143,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   coinType,
   entry,
   onSave,
+  onDelete,
   prefillName,
   prefillAddress,
   saveError,
+  disableRestoreFocus,
+  onExited,
 }) => {
   const { t } = useTranslation(['core']);
+  const coinLogo = coinLogos[coinType] || coinLogoQORT;
 
   const [name, setName] = useState(EMPTY_STRING);
   const [address, setAddress] = useState(EMPTY_STRING);
@@ -52,20 +163,54 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
   // QORT-specific state for username resolution
   const [addressValidating, setAddressValidating] = useState(false);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [addressLookupEnabled, setAddressLookupEnabled] = useState(false);
+  const [saveConfirmPromptActive, setSaveConfirmPromptActive] = useState(false);
+  const [nameLookupEnabled, setNameLookupEnabled] = useState(false);
+  const [nameSearchOpen, setNameSearchOpen] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState<
+    QortalNameSearchResult[]
+  >([]);
+  const [qortResolvedContact, setQortResolvedContact] =
+    useState<QortResolvedContact | null>(null);
 
   const isEditMode = !!entry;
+  const existingQortContacts = useMemo(() => {
+    if (coinType !== Coin.QORT || !open) return [];
+    return getAddressBook(Coin.QORT).filter(
+      (contact) => contact.id !== entry?.id
+    );
+  }, [coinType, entry?.id, open]);
+
+  const isNameSuggestionAlreadySaved = (
+    suggestion: QortalNameSearchResult
+  ) => {
+    const suggestionName = suggestion.name.trim().toLowerCase();
+    const suggestionOwner = (suggestion.owner || EMPTY_STRING).trim();
+
+    return existingQortContacts.some(
+      (contact) =>
+        contact.address.trim() === suggestionOwner ||
+        contact.name.trim().toLowerCase() === suggestionName
+    );
+  };
 
   // Load entry data when editing
   useEffect(() => {
     if (open) {
+      const nextName = entry ? entry.name : prefillName || EMPTY_STRING;
+      const nextAddress = entry
+        ? entry.address
+        : prefillAddress || EMPTY_STRING;
+
       if (entry) {
-        setName(entry.name);
-        setAddress(entry.address);
+        setName(nextName);
+        setAddress(nextAddress);
         setNote(entry.note);
       } else {
         // Reset form for new entry or use prefill data
-        setName(prefillName || EMPTY_STRING);
-        setAddress(prefillAddress || EMPTY_STRING);
+        setName(nextName);
+        setAddress(nextAddress);
         setNote(EMPTY_STRING);
       }
       // Clear errors when dialog opens
@@ -73,49 +218,151 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       setAddressError(EMPTY_STRING);
       setNoteError(EMPTY_STRING);
       setAddressValidating(false);
+      setAddressLookupEnabled(false);
+      setAddressConfirmed(!!entry);
+      setSaveConfirmPromptActive(false);
+      setNameLookupEnabled(false);
+      setNameSearchOpen(false);
+      setNameSuggestions([]);
+      setQortResolvedContact(
+        coinType === Coin.QORT && nextName.trim() && nextAddress.trim()
+          ? {
+              address: nextAddress.trim(),
+              name: nextName.trim(),
+            }
+          : null
+      );
     }
-  }, [open, entry, prefillName, prefillAddress]);
+  }, [open, entry, prefillName, prefillAddress, coinType]);
 
-  // QORT username resolution - validate and auto-fill address from username
+  // QORT name search - lets users choose a registered name and then confirm its owner address.
   useEffect(() => {
-    if (coinType !== Coin.QORT || !name || name.length < ADDRESS_MIN_LENGTH) {
+    const query = name.trim();
+
+    if (
+      coinType !== Coin.QORT ||
+      !nameLookupEnabled ||
+      !query ||
+      query.length < ADDRESS_MIN_LENGTH
+    ) {
+      setNameSuggestions([]);
+      setNameSearchOpen(false);
+      setAddressValidating(false);
       return;
     }
 
     setAddressValidating(true);
+    let cancelled = false;
     const controller = new AbortController();
 
     const timeout = setTimeout(async () => {
       try {
-        const nameRes = await fetch(`/names/${encodeURIComponent(name)}`, {
-          signal: controller.signal,
-        }).then(async (r) => {
-          if (!r.ok) {
-            console.warn(`No name found: ${name}`);
-            return { error: 'Name not found' };
-          }
-          return r.json();
-        });
+        const results = await searchQortalNames(query, 10, controller.signal);
 
-        // If name was found, update address field with the owner address
-        if (!nameRes?.error && nameRes?.owner) {
-          console.log(`QORT name resolved: ${name} -> ${nameRes.owner}`);
-          setAddress(nameRes.owner);
-          setAddressError(EMPTY_STRING);
-        }
+        if (cancelled) return;
+        setNameSuggestions(results);
+        setNameSearchOpen(results.length > 0);
+        setNameError(
+          results.length === 0
+            ? t('core:message.error.recipient_not_found', {
+                postProcess: 'capitalizeFirstChar',
+              })
+            : EMPTY_STRING
+        );
       } catch (err: any) {
-        if (err.name === 'AbortError') return;
-        console.error('Name lookup failed:', err.message);
+        if (!cancelled && err.name !== 'AbortError') {
+          console.error('Name lookup failed:', err.message);
+          setNameSuggestions([]);
+          setNameSearchOpen(false);
+          setNameError(
+            t('core:message.error.recipient_lookup_failed', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
+        }
       } finally {
-        setAddressValidating(false);
+        if (!cancelled) {
+          setAddressValidating(false);
+        }
       }
     }, ADDRESS_LOOKUP_DEBOUNCE_MS);
 
     return () => {
+      cancelled = true;
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [name, coinType, t]);
+  }, [name, coinType, nameLookupEnabled, t]);
+
+  useEffect(() => {
+    const addressQuery = address.trim();
+
+    if (
+      coinType !== Coin.QORT ||
+      !addressLookupEnabled ||
+      !addressQuery ||
+      !QORT_ADDRESS_PATTERN.test(addressQuery)
+    ) {
+      if (addressLookupEnabled) {
+        setAddressValidating(false);
+      }
+      return;
+    }
+
+    setAddressValidating(true);
+    let cancelled = false;
+
+    const timeout = setTimeout(async () => {
+      try {
+        if (typeof qortalRequest !== 'function') return;
+
+        const primaryName = await qortalRequest({
+          action: 'GET_PRIMARY_NAME',
+          address: addressQuery,
+        });
+
+        if (cancelled) return;
+
+        if (typeof primaryName === 'string' && primaryName.trim()) {
+          const resolvedName = primaryName.trim();
+          setName(resolvedName);
+          setNameError(EMPTY_STRING);
+          setQortResolvedContact({
+            address: addressQuery,
+            name: resolvedName,
+          });
+        } else {
+          setName(EMPTY_STRING);
+          setNameError(
+            t('core:message.error.recipient_not_found', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
+          setQortResolvedContact(null);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Address owner lookup failed:', err.message);
+          setName(EMPTY_STRING);
+          setNameError(
+            t('core:message.error.recipient_lookup_failed', {
+              postProcess: 'capitalizeFirstChar',
+            })
+          );
+          setQortResolvedContact(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setAddressValidating(false);
+        }
+      }
+    }, ADDRESS_LOOKUP_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [address, addressLookupEnabled, coinType, t]);
 
   const validateName = (value: string): boolean => {
     if (!value.trim()) {
@@ -129,6 +376,14 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
     if (value.length > ADDRESSBOOK_NAME_LENGTH) {
       setNameError(
         t('core:address_book_name_max_length', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return false;
+    }
+    if (coinType === Coin.QORT && hasInvisibleCharacters(value)) {
+      setNameError(
+        t('core:message.error.invisible_qortal_name', {
           postProcess: 'capitalizeFirstChar',
         })
       );
@@ -148,6 +403,15 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
       return false;
     }
     if (!validateAddress(coinType, value)) {
+      setAddressError(
+        t('core:address_book_address_invalid', {
+          coinType: coinType,
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return false;
+    }
+    if (coinType === Coin.QORT && !QORT_ADDRESS_PATTERN.test(value.trim())) {
       setAddressError(
         t('core:address_book_address_invalid', {
           coinType: coinType,
@@ -176,13 +440,31 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setNameLookupEnabled(true);
     setName(value);
+    if (coinType === Coin.QORT) {
+      setAddressLookupEnabled(false);
+      setAddress(EMPTY_STRING);
+      setAddressConfirmed(false);
+      setAddressError(EMPTY_STRING);
+      setQortResolvedContact(null);
+    }
     validateName(value);
   };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.trim();
+    if (coinType === Coin.QORT) {
+      setName(EMPTY_STRING);
+      setNameError(EMPTY_STRING);
+      setNameLookupEnabled(false);
+      setNameSearchOpen(false);
+      setNameSuggestions([]);
+      setAddressLookupEnabled(true);
+      setQortResolvedContact(null);
+    }
     setAddress(value);
+    setAddressConfirmed(false);
     validateAddressField(value);
   };
 
@@ -208,135 +490,669 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
     }
   };
 
+  const handleSelectNameSuggestion = (suggestion: QortalNameSearchResult) => {
+    if (hasInvisibleCharacters(suggestion.name)) {
+      setNameError(
+        t('core:message.error.invisible_qortal_name', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return;
+    }
+
+    const resolvedAddress = suggestion.owner ?? EMPTY_STRING;
+    setNameLookupEnabled(false);
+    setAddressLookupEnabled(false);
+    setName(suggestion.name);
+    setAddress(resolvedAddress);
+    setAddressConfirmed(false);
+    setQortResolvedContact({
+      address: resolvedAddress.trim(),
+      name: suggestion.name.trim(),
+    });
+    setNameSearchOpen(false);
+    setNameSuggestions([]);
+    validateName(suggestion.name);
+    validateAddressField(resolvedAddress);
+  };
+
+  const handleConfirmAddress = () => {
+    if (
+      coinType === Coin.QORT &&
+      (!qortResolvedContact ||
+        qortResolvedContact.address !== address.trim() ||
+        qortResolvedContact.name !== name.trim())
+    ) {
+      setAddressConfirmed(false);
+      setAddressError(
+        t('core:message.error.recipient_not_found', {
+          postProcess: 'capitalizeFirstChar',
+        })
+      );
+      return;
+    }
+
+    if (validateAddressField(address)) {
+      setAddressConfirmed(true);
+      setSaveConfirmPromptActive(false);
+    }
+  };
+
+  const isQortResolvedContactCurrent =
+    coinType !== Coin.QORT ||
+    (!!qortResolvedContact &&
+      qortResolvedContact.address === address.trim() &&
+      qortResolvedContact.name === name.trim());
   const isFormValid =
     name.trim() !== EMPTY_STRING &&
     address.trim() !== EMPTY_STRING &&
     !nameError &&
     !addressError &&
     !noteError &&
-    (coinType === Coin.QORT ? !addressValidating : true);
+    (coinType === Coin.QORT
+      ? !addressValidating && addressConfirmed && isQortResolvedContactCurrent
+      : true);
+  const shouldGlowAddressConfirmText =
+    coinType === Coin.QORT &&
+    !addressConfirmed &&
+    !addressError &&
+    saveConfirmPromptActive;
 
   return (
-    <DialogGeneral open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{textAlign: 'center'}} variant="h4">
-        {isEditMode
-          ? t('core:address_book_edit', {
-              postProcess: 'capitalizeFirstChar',
-            })
-          : t('core:address_book_add_new', {
-              postProcess: 'capitalizeFirstChar',
-            })}
+    <DialogGeneral
+      open={open}
+      onClose={onClose}
+      maxWidth={false}
+      fullWidth
+      disableScrollLock
+      disableRestoreFocus={disableRestoreFocus}
+      slots={{ transition: Transition }}
+      slotProps={{
+        transition: {
+          onExited,
+          timeout: FAST_DIALOG_TRANSITION_MS,
+        },
+        paper: {
+          sx: {
+            bgcolor: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'rgba(3, 17, 29, 0.985)'
+                : '#ffffff',
+            backgroundImage: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? 'radial-gradient(circle at 13% 6%, rgba(24,189,242,0.13), transparent 30%), linear-gradient(180deg, rgba(5,24,39,0.99) 0%, rgba(3,13,23,0.995) 100%)'
+                : 'radial-gradient(circle at 13% 6%, rgba(11,143,211,0.08), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(246,250,252,0.995) 100%)',
+            border: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '1px solid rgba(91,132,158,0.28)'
+                : '1px solid rgba(11,143,211,0.16)',
+            borderRadius: 2,
+            boxShadow: (t: Theme) =>
+              t.palette.mode === 'dark'
+                ? '0 28px 72px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 24px 70px rgba(15,74,106,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+            overflow: 'hidden',
+            width: 'min(592px, calc(100vw - 24px))',
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          alignItems: 'center',
+          bgcolor: 'transparent',
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          borderBottom: 'none',
+          display: 'flex',
+          minHeight: { xs: 76, sm: 78 },
+          px: { xs: 2.35, sm: 2.55 },
+          py: 0,
+          position: 'relative',
+        }}
+      >
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            flexGrow: 1,
+            gap: { xs: 1.45, sm: 1.65 },
+            minWidth: 0,
+          }}
+        >
+          <Box
+            component="img"
+            src={coinLogo}
+            alt=""
+            sx={{
+              filter: 'drop-shadow(0 0 16px rgba(24,189,242,0.45))',
+              height: { xs: 34, sm: 36 },
+              width: { xs: 34, sm: 36 },
+            }}
+          />
+          <Typography
+            sx={{
+              color: 'text.primary',
+              fontSize: { xs: 18, sm: 19 },
+              fontWeight: 700,
+              letterSpacing: 0,
+              lineHeight: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isEditMode
+              ? t('core:address_book_edit', {
+                  postProcess: 'capitalizeFirstChar',
+                })
+              : t('core:address_book_add_new', {
+                  postProcess: 'capitalizeFirstChar',
+                })}
+          </Typography>
+        </Box>
+        <IconButton
+          aria-label={t('core:action.close', {
+            postProcess: 'capitalizeFirstChar',
+          })}
+          onClick={onClose}
+          sx={{
+            color: 'text.secondary',
+            ml: 1.2,
+            p: 0.35,
+            '&:hover': {
+              bgcolor: 'rgba(116,158,180,0.08)',
+              color: 'text.primary',
+            },
+            '& svg': {
+              fontSize: 25,
+            },
+          }}
+        >
+          <Close />
+        </IconButton>
       </DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          {/* Name Field */}
-          <TextField
-            required
-            fullWidth
-            label={t('core:address_book_name', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            value={name}
-            onChange={handleNameChange}
-            error={!!nameError}
-            helperText={
-              nameError || (coinType === Coin.QORT && addressValidating
-                ? t('core:message.generic.validating')
-                : (
-                  <Box
-                    component="span"
-                    sx={{ display: 'flex', justifyContent: 'space-between' }}
-                  >
-                    <span></span>
-                    <span style={{ fontSize: '0.75rem' }}>{name.length}/{ADDRESSBOOK_NAME_LENGTH}</span>
-                  </Box>
-                ))
-            }
-            slotProps={{
-              htmlInput: {
-                maxLength: ADDRESSBOOK_NAME_LENGTH,
-              },
-              input: {
-                endAdornment: coinType === Coin.QORT && addressValidating ? (
-                  <InputAdornment position="end">
-                    <CircularProgress size={20} />
-                  </InputAdornment>
-                ) : undefined,
-              },
-            }}
-          />
 
-          {/* Address Field */}
-          <TextField
-            required
-            fullWidth
-            label={t('core:address_book_address', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            value={address}
-            onChange={handleAddressChange}
-            error={!!addressError}
-            helperText={addressError}
-          />
-
-          {/* Note Field */}
-          <TextField
-            fullWidth
-            label={t('core:address_book_note', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-            value={note}
-            onChange={handleNoteChange}
-            error={!!noteError}
-            helperText={
-              noteError || (
+      <DialogContent
+        sx={{
+          overflow: 'visible',
+          px: { xs: '20px !important', sm: '28px !important' },
+          pb: { xs: '20px !important', sm: '22px !important' },
+          pt: { xs: '0px !important', sm: '2px !important' },
+        }}
+      >
+        <Box sx={{ display: 'grid', gap: { xs: 2.25, sm: 2.45 } }}>
+          <Box sx={{ position: 'relative' }}>
+            <Typography sx={fieldLabelSx}>
+              {t('core:address_book_name', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+            <TextField
+              required
+              fullWidth
+              placeholder={t('core:address_book_ui.enter_name')}
+              value={name}
+              onChange={handleNameChange}
+              error={!!nameError}
+              helperText={nameError || EMPTY_STRING}
+              slotProps={{
+                htmlInput: {
+                  maxLength: ADDRESSBOOK_NAME_LENGTH,
+                  'aria-label': t('core:address_book_name', {
+                    postProcess: 'capitalizeFirstChar',
+                  }),
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonOutline
+                        sx={{ color: 'text.secondary', fontSize: 22 }}
+                      />
+                    </InputAdornment>
+                  ),
+                  endAdornment:
+                    coinType === Coin.QORT && addressValidating ? (
+                      <InputAdornment position="end">
+                        <CircularProgress size={16} />
+                      </InputAdornment>
+                    ) : undefined,
+                },
+              }}
+              sx={formFieldSx}
+            />
+            {coinType === Coin.QORT && nameSearchOpen && (
+              <ClickAwayListener
+                onClickAway={() => setNameSearchOpen(false)}
+              >
                 <Box
-                  component="span"
-                  sx={{ display: 'flex', justifyContent: 'space-between' }}
+                  sx={{
+                    bgcolor: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? 'rgba(5, 16, 27, 0.98)'
+                        : 'rgba(255,255,255,0.98)',
+                    border: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '1px solid rgba(116,158,180,0.2)'
+                        : '1px solid rgba(11,143,211,0.18)',
+                    borderRadius: 1,
+                    boxShadow: (t: Theme) =>
+                      t.palette.mode === 'dark'
+                        ? '0 18px 40px rgba(0,0,0,0.32)'
+                        : '0 18px 40px rgba(15,74,106,0.16)',
+                    left: 0,
+                    maxHeight: 216,
+                    overflowY: 'auto',
+                    position: 'absolute',
+                    right: 0,
+                    top: 'calc(100% + 6px)',
+                    zIndex: 1500,
+                  }}
                 >
-                  <span></span>
-                  <span style={{ fontSize: '0.75rem' }}>{note.length}/{ADDRESSBOOK_NOTE_LENGTH}</span>
+                  {nameSuggestions.map((suggestion) => {
+                    const alreadySaved =
+                      isNameSuggestionAlreadySaved(suggestion);
+
+                    return (
+                      <Box
+                        component="button"
+                        type="button"
+                        key={`${suggestion.name}-${suggestion.owner}`}
+                        onClick={() => handleSelectNameSuggestion(suggestion)}
+                        sx={{
+                          alignItems: 'center',
+                          appearance: 'none',
+                          bgcolor: 'transparent',
+                          border: 0,
+                          color: 'text.primary',
+                          cursor: 'pointer',
+                          display: 'grid',
+                          font: 'inherit',
+                          gap: 0.35,
+                          justifyItems: 'start',
+                          px: 2,
+                          py: 1.1,
+                          textAlign: 'left',
+                          width: '100%',
+                          '&:hover': {
+                            bgcolor: 'rgba(24,189,242,0.08)',
+                          },
+                        }}
+                      >
+                        <NameText
+                          component="span"
+                          name={suggestion.name}
+                          sx={{ fontSize: 14, fontWeight: 700 }}
+                        >
+                          {alreadySaved ? (
+                            <Box
+                              component="span"
+                              sx={{
+                                color: 'error.main',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                ml: 0.75,
+                              }}
+                            >
+                              {t('core:address_book_ui.already_in_list')}
+                            </Box>
+                          ) : null}
+                        </NameText>
+                        <Typography
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: 12,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: '100%',
+                          }}
+                        >
+                          {suggestion.owner}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
                 </Box>
-              )
-            }
-            multiline
-            rows={5}
-            slotProps={{
-              htmlInput: {
-                maxLength: ADDRESSBOOK_NOTE_LENGTH,
-              },
-            }}
-          />
+              </ClickAwayListener>
+            )}
+          </Box>
+
+          {coinType === Coin.QORT && (
+            <Box sx={{ alignItems: 'center', display: 'flex', gap: 2 }}>
+              <Box
+                sx={{
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.1)'
+                      : 'rgba(11,143,211,0.14)',
+                  flex: 1,
+                  height: '1px',
+                }}
+              />
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: 0,
+                }}
+              >
+                {t('core:common.or')}
+              </Typography>
+              <Box
+                sx={{
+                  bgcolor: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'rgba(116,158,180,0.1)'
+                      : 'rgba(11,143,211,0.14)',
+                  flex: 1,
+                  height: '1px',
+                }}
+              />
+            </Box>
+          )}
+
+          <Box>
+            <Typography sx={fieldLabelSx}>
+              {t('core:address_book_address', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Typography>
+            <TextField
+              required
+              fullWidth
+              placeholder={t('core:address_book_ui.enter_symbol_address', {
+                symbol: coinType,
+              })}
+              value={address}
+              onChange={handleAddressChange}
+              error={!!addressError}
+              helperText={
+                addressError ||
+                (coinType === Coin.QORT
+                  ? addressConfirmed
+                    ? t('core:address_book_ui.address_confirmed')
+                    : t('core:address_book_ui.confirm_address_before_saving')
+                  : EMPTY_STRING)
+              }
+              slotProps={{
+                htmlInput: {
+                  'aria-label': t('core:address_book_address', {
+                    postProcess: 'capitalizeFirstChar',
+                  }),
+                },
+                input: {
+                  endAdornment:
+                    coinType === Coin.QORT ? (
+                      <InputAdornment
+                        position="end"
+                        sx={{
+                          ml: 1,
+                          mr: 0,
+                        }}
+                      >
+                        <IconButton
+                          aria-label={t('core:address_book_ui.confirm_address')}
+                          disabled={!address.trim() || !!addressError}
+                          onClick={handleConfirmAddress}
+                          sx={{
+                            color: addressConfirmed
+                              ? 'success.main'
+                              : 'primary.main',
+                            height: { xs: 38, sm: 40 },
+                            width: { xs: 38, sm: 40 },
+                            '&:disabled': {
+                              color: 'text.disabled',
+                            },
+                          }}
+                        >
+                          {addressConfirmed ? (
+                            <CheckCircleOutline sx={{ fontSize: 22 }} />
+                          ) : (
+                            <Check sx={{ fontSize: 22 }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ) : undefined,
+                },
+              }}
+              sx={{
+                ...formFieldSx,
+                '& .MuiFormHelperText-root': {
+                  ...formFieldSx['& .MuiFormHelperText-root'],
+                  animation: shouldGlowAddressConfirmText
+                    ? 'addressConfirmWarningPulse 900ms ease-in-out infinite'
+                    : 'none',
+                  color: addressError
+                    ? 'error.main'
+                    : addressConfirmed
+                      ? 'success.main'
+                      : coinType === Coin.QORT
+                        ? 'error.main'
+                        : 'text.secondary',
+                  textShadow: shouldGlowAddressConfirmText
+                    ? '0 0 10px rgba(255,90,104,0.42)'
+                    : 'none',
+                  '@keyframes addressConfirmWarningPulse': {
+                    '0%, 100%': {
+                      color: '#ff4d5e',
+                      textShadow: '0 0 0 rgba(255,90,104,0)',
+                    },
+                    '50%': {
+                      color: '#ffffff',
+                      textShadow:
+                        '0 0 12px rgba(255,90,104,0.7), 0 0 22px rgba(255,90,104,0.34)',
+                    },
+                  },
+                },
+              }}
+            />
+          </Box>
+
+          <Box>
+            <Typography sx={fieldLabelSx}>
+              {t('core:address_book_note', {
+                postProcess: 'capitalizeFirstChar',
+              })}{' '}
+              {t('core:common.optional_parenthetical')}
+            </Typography>
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                fullWidth
+                placeholder={t('core:address_book_ui.add_note_optional')}
+                value={note}
+                onChange={handleNoteChange}
+                error={!!noteError}
+                helperText={noteError || EMPTY_STRING}
+                multiline
+                rows={3}
+                slotProps={{
+                  htmlInput: {
+                    maxLength: ADDRESSBOOK_NOTE_LENGTH,
+                    'aria-label': t('core:address_book_note', {
+                      postProcess: 'capitalizeFirstChar',
+                    }),
+                  },
+                }}
+                sx={{
+                  ...formFieldSx,
+                  '& .MuiOutlinedInput-root': {
+                    ...formFieldSx['& .MuiOutlinedInput-root'],
+                    alignItems: 'flex-start',
+                    minHeight: 94,
+                    pb: 2.2,
+                    pt: 1.05,
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    ...formFieldSx['& .MuiOutlinedInput-input'],
+                    fontSize: { xs: 14.5, sm: 15 },
+                    fontWeight: 400,
+                    lineHeight: 1.45,
+                    pr: 7,
+                    '&::placeholder': {
+                      color: 'text.secondary',
+                      fontWeight: 400,
+                      opacity: 0.48,
+                    },
+                  },
+                }}
+              />
+              <Typography
+                sx={{
+                  bottom: noteError ? 30 : 10,
+                  color: 'text.secondary',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  position: 'absolute',
+                  right: 16,
+                }}
+              >
+                {note.length}/{ADDRESSBOOK_NOTE_LENGTH}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ ml: 1, px: 3, pb: 2, justifyContent: 'space-between' }}>
-        <Box sx={{ color: 'error.main', fontSize: '1rem', maxWidth: '60%' }}>
-          {saveError}
+
+      <DialogActions
+        sx={{
+          borderTop: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? '1px solid rgba(116,158,180,0.12)'
+              : '1px solid rgba(11,143,211,0.12)',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1.1, sm: 1.4 },
+          justifyContent: 'space-between',
+          pb: { xs: '14px !important', sm: '12px !important' },
+          pt: '12px !important',
+          px: { xs: '20px !important', sm: '28px !important' },
+        }}
+      >
+        <Box
+          sx={{
+            alignItems: { xs: 'stretch', sm: 'center' },
+            color: 'error.main',
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            fontSize: 13,
+            fontWeight: 600,
+            gap: 1.2,
+            maxWidth: { xs: '100%', sm: '48%' },
+            minHeight: { xs: saveError ? 'auto' : 0, sm: 'auto' },
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
+          {entry && onDelete ? (
+            <Button
+              color="error"
+              onClick={() => onDelete(entry)}
+              startIcon={<DeleteOutline />}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(255,91,105,0.28)',
+                borderRadius: 1.35,
+                fontSize: { xs: 14, sm: 14.5 },
+                fontWeight: 700,
+                minHeight: { xs: 38, sm: 40 },
+                minWidth: { xs: 0, sm: 92 },
+                px: 2,
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': {
+                  bgcolor: 'rgba(255,91,105,0.08)',
+                  borderColor: 'rgba(255,91,105,0.48)',
+                },
+              }}
+            >
+              {t('core:address_book_delete', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Button>
+          ) : null}
+          {saveError ? <Box sx={{ minWidth: 0 }}>{saveError}</Box> : null}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button onClick={onClose}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1.2,
+            justifyContent: { xs: 'stretch', sm: 'flex-end' },
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            sx={{
+              borderColor: 'rgba(116,158,180,0.22)',
+              borderRadius: 1.35,
+              color: 'primary.main',
+              fontSize: { xs: 14, sm: 14.5 },
+              fontWeight: 700,
+              minHeight: { xs: 38, sm: 40 },
+              minWidth: { xs: 0, sm: 86 },
+              px: 2,
+              width: { xs: '100%', sm: 'auto' },
+              '&:hover': {
+                bgcolor: 'rgba(116,158,180,0.08)',
+                borderColor: 'rgba(116,158,180,0.38)',
+              },
+            }}
+          >
             {t('core:address_book_cancel', {
               postProcess: 'capitalizeFirstChar',
             })}
           </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            disabled={!isFormValid}
+          <Box
+            component="span"
+            onMouseEnter={() => {
+              if (coinType === Coin.QORT && !addressConfirmed) {
+                setSaveConfirmPromptActive(true);
+              }
+            }}
+            onMouseLeave={() => setSaveConfirmPromptActive(false)}
             sx={{
-              backgroundColor: '#05a2e4',
-              '&:hover': {
-                backgroundColor: '#02648d',
-              },
-              '&:disabled': {
-                backgroundColor: 'rgba(0, 0, 0, 0.12)',
-              },
+              display: 'inline-flex',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
-            {t('core:address_book_save', {
-              postProcess: 'capitalizeFirstChar',
-            })}
-          </Button>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              disabled={!isFormValid}
+              sx={{
+                bgcolor: '#0a9eff',
+                backgroundImage:
+                  'linear-gradient(180deg, rgba(24,174,255,0.98), rgba(4,126,220,0.98))',
+                border: '1px solid rgba(85,205,255,0.32)',
+                borderRadius: 1.35,
+                boxShadow:
+                  '0 10px 26px rgba(3,139,236,0.28), inset 0 1px 0 rgba(255,255,255,0.18)',
+                color: 'white',
+                fontSize: { xs: 14, sm: 14.5 },
+                fontWeight: 700,
+                minHeight: { xs: 38, sm: 40 },
+                minWidth: { xs: 0, sm: 86 },
+                px: 2,
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': {
+                  bgcolor: '#16baf2',
+                  boxShadow: '0 14px 32px rgba(24,189,242,0.32)',
+                },
+                '&:disabled': {
+                  bgcolor: 'rgba(116,158,180,0.16)',
+                  backgroundImage: 'none',
+                  borderColor: 'rgba(116,158,180,0.08)',
+                  boxShadow: 'none',
+                  color: 'rgba(255,255,255,0.34)',
+                },
+              }}
+            >
+              {t('core:address_book_save', {
+                postProcess: 'capitalizeFirstChar',
+              })}
+            </Button>
+          </Box>
         </Box>
       </DialogActions>
     </DialogGeneral>

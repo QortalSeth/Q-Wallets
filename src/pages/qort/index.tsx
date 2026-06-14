@@ -581,7 +581,6 @@ export default function QortalWallet() {
     const nonAllFilterValues = [
       'payments',
       'rewards',
-      'activity',
       'arbitrary',
       'at',
       'group',
@@ -3461,12 +3460,7 @@ export default function QortalWallet() {
   void tableAll;
 
   const qortalTables = () => {
-    const rewardTypes = ['REWARD_SHARE', 'TRANSFER_PRIVS', 'PRESENCE'];
     const safeAllInfo = Array.isArray(allInfo) ? allInfo : [];
-    const activityInfo = safeAllInfo.filter(
-      (row: any) =>
-        row?.type && row.type !== 'PAYMENT' && !rewardTypes.includes(row.type)
-    );
     const filters = [
       { label: t('core:filters.all'), rows: safeAllInfo, value: 'all' },
       {
@@ -3478,11 +3472,6 @@ export default function QortalWallet() {
         label: t('core:filters.rewards'),
         rows: rewardshareInfo,
         value: 'rewards',
-      },
-      {
-        label: t('core:filters.activity'),
-        rows: activityInfo,
-        value: 'activity',
       },
       {
         label: t('core:filters.arbitrary'),
@@ -4188,7 +4177,6 @@ export default function QortalWallet() {
 
     const filterColumnSets: Record<string, TransactionColumnId[]> = {
       all: transactionColumnOrder,
-      activity: transactionColumnOrder,
       payments: [
         'status',
         'type',

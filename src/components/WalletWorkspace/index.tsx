@@ -110,7 +110,7 @@ type WalletVisual = {
   symbol: WalletCoinSymbol;
 };
 
-export const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
+const WALLET_VISUALS: Record<WalletCoinSymbol, WalletVisual> = {
   QORT: {
     accent: '#18bdf2',
     coinIcon: qortCoinIcon,
@@ -265,23 +265,6 @@ const walletInnerSurfaceSx = {
   bgcolor: (t: Theme) =>
     t.palette.mode === 'dark' ? 'rgba(17, 60, 86, 0.34)' : 'background.paper',
 } as const;
-
-export const formatWalletAmount = (
-  value: unknown,
-  symbol: WalletCoinSymbol,
-  decimals = WALLET_VISUALS[symbol].decimals
-) => {
-  if (value === null || value === undefined || value === '')
-    return `0 ${symbol}`;
-
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return `${String(value)} ${symbol}`;
-
-  return `${new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: decimals,
-    minimumFractionDigits: 0,
-  }).format(numeric)} ${symbol}`;
-};
 
 const WALLET_BALANCE_DISPLAY_LIMIT = '999,999.99'.length;
 
@@ -3317,6 +3300,10 @@ export function WalletWorkspace({
         ref={mainColumnRef}
         sx={{
           display: 'grid',
+          // Constrain children to the column's track (instead of the implicit
+          // auto/max-content track) so the summary and transaction table fit or
+          // scroll within it rather than overflowing under the side panels.
+          gridTemplateColumns: 'minmax(0, 1fr)',
           gap: { xs: 1.8, md: 2 },
           minWidth: 0,
           position: 'relative',

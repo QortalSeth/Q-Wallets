@@ -134,7 +134,7 @@ const QORT_BALANCE_REFRESH_INTERVAL_MS = 2.5 * TIME_MINUTES_1;
 const addressToPrimaryName: any = {};
 const requestQueueGetPrimaryName = new RequestQueueWithPromise(10);
 
-export const getPrimaryAccountName = async (address: string) => {
+const getPrimaryAccountName = async (address: string) => {
   if (addressToPrimaryName[address]) return addressToPrimaryName[address];
   try {
     const primaryName = await requestQueueGetPrimaryName.enqueue(() =>
@@ -148,7 +148,7 @@ export const getPrimaryAccountName = async (address: string) => {
   return EMPTY_STRING;
 };
 
-export const replaceAddressesWithNames = async (
+const replaceAddressesWithNames = async (
   data: SearchTransactionsResponse[]
 ) => {
   if (!data || data.length === 0) return;

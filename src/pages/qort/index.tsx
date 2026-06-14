@@ -2704,7 +2704,7 @@ export default function QortalWallet() {
                   <StyledTableRow key={g}>
                     <StyledTableCell style={{ width: 'auto' }} align="center">
                       {(() => {
-                        let confirmations: number =
+                        const confirmations: number =
                           nodeInfo?.height - row?.blockHeight;
                         if (confirmations < 3) {
                           return (
@@ -4231,21 +4231,29 @@ export default function QortalWallet() {
         : ['status', 'type', 'creator', 'fee', 'time'];
     })();
 
+    // "Fit" mode: keep min widths only for the compact/numeric columns so they
+    // stay readable; let the wide text columns shrink toward 0 (their content
+    // already ellipsizes) so every visible column fits without horizontal
+    // scrolling and Fee/Time (the rightmost columns) never fall off-screen.
+    const fitProtectedColumns = new Set<TransactionColumnId>([
+      'status',
+      'size',
+      'amount',
+      'fee',
+      'time',
+    ]);
+    const toFitTrack = (width: string, id: TransactionColumnId) =>
+      fitProtectedColumns.has(id)
+        ? width
+        : width.replace(/minmax\(\d+px,/, 'minmax(0px,');
     const transactionGridColumns = {
       xs: visibleColumnIds
-        .map((id) => transactionColumnConfig[id].widthXs)
+        .map((id) => toFitTrack(transactionColumnConfig[id].widthXs, id))
         .join(' '),
       xl: visibleColumnIds
-        .map((id) => transactionColumnConfig[id].widthXl)
+        .map((id) => toFitTrack(transactionColumnConfig[id].widthXl, id))
         .join(' '),
     };
-
-    const transactionGridMinWidth =
-      visibleColumnIds.reduce(
-        (sum, id) => sum + transactionColumnConfig[id].minPx,
-        0
-      ) +
-      8 * Math.max(0, visibleColumnIds.length - 1);
 
     const renderTransactionRows = (rows: any[]) => {
       if (!rows || rows.length === 0) {
@@ -4460,7 +4468,7 @@ export default function QortalWallet() {
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            <Box sx={{ width: `max(100%, ${transactionGridMinWidth}px)` }}>
+            <Box sx={{ width: '100%' }}>
               <Box
                 aria-hidden
                 sx={{

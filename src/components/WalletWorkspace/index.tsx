@@ -41,6 +41,7 @@ import {
   MouseEvent,
   ReactNode,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -807,10 +808,8 @@ export function WalletSummaryCard({
           gap: { xs: 2.25, md: 2.5 },
           gridTemplateColumns: {
             xs: '1fr',
-            // Use a 0px floor so the summary can shrink to its grid track instead
-            // of overflowing (with overflow: visible) over the right-hand column.
-            md: 'minmax(0, 0.46fr) minmax(0, 0.68fr) minmax(0, 0.86fr)',
-            xl: 'minmax(0, 0.55fr) minmax(0, 0.72fr) minmax(0, 0.95fr)',
+            md: 'minmax(150px, 0.46fr) minmax(220px, 0.68fr) minmax(280px, 0.86fr)',
+            xl: 'minmax(250px, 0.55fr) minmax(285px, 0.72fr) minmax(380px, 0.95fr)',
           },
           minHeight: { md: 250 },
           pb: { xs: 2.25, md: 2.45 },
@@ -3244,6 +3243,50 @@ export function WalletWorkspace({
   const visual = WALLET_VISUALS[coin];
   const [receiveQrDialogOpen, setReceiveQrDialogOpen] = useState(false);
 
+  // The wallet summary keeps its natural width; the Address book / Sync panels
+  // are only shown when they actually fit beside it. When the content would
+  // overlap them, they disappear and the main column takes the full width.
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
+  const mainColumnRef = useRef<HTMLDivElement | null>(null);
+  const requiredWidthRef = useRef(0);
+  const showSidePanelsRef = useRef(true);
+  const [showSidePanels, setShowSidePanels] = useState(true);
+
+  useLayoutEffect(() => {
+    const workspace = workspaceRef.current;
+    const mainColumn = mainColumnRef.current;
+    if (!workspace || !mainColumn) return;
+
+    const RIGHT_COLUMN_WIDTH = 424;
+    const COLUMN_GAP = 24;
+
+    const measure = () => {
+      const available = workspace.clientWidth;
+      // While the panels are shown the main column is constrained to its track.
+      // If its content (the wallet summary) is wider than that track it overflows,
+      // and scrollWidth then reveals how much total width the layout would need to
+      // also fit the side panels. (Only sampled while shown — when hidden the main
+      // column spans the full width and would no longer overflow.)
+      if (
+        showSidePanelsRef.current &&
+        mainColumn.scrollWidth > mainColumn.clientWidth + 1
+      ) {
+        requiredWidthRef.current =
+          mainColumn.scrollWidth + RIGHT_COLUMN_WIDTH + COLUMN_GAP;
+      }
+      const required = requiredWidthRef.current;
+      const next = required === 0 ? true : available >= required;
+      showSidePanelsRef.current = next;
+      setShowSidePanels(next);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(workspace);
+    observer.observe(mainColumn);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!receiveOpen) {
       setReceiveQrDialogOpen(false);
@@ -3252,32 +3295,32 @@ export function WalletWorkspace({
 
   return (
     <Box
+      ref={workspaceRef}
       sx={{
         ...getWalletVars(visual),
         ...WALLET_GLOW_CSS_VARS,
         alignItems: 'start',
         display: 'grid',
         gap: { xs: 1.8, lg: 2, xl: 3 },
-        gridTemplateColumns: {
-          xs: '1fr',
-          lg: 'minmax(0, 1fr) minmax(320px, 360px)',
-          xl: 'minmax(0, 1fr) minmax(404px, 424px)',
-        },
+        // Two columns only when the side panels measurably fit beside the main
+        // content (see showSidePanels); otherwise the main content spans the
+        // full width and the panels are hidden rather than overlapping it.
+        gridTemplateColumns: showSidePanels
+          ? 'minmax(0, 1fr) minmax(404px, 424px)'
+          : '1fr',
         isolation: 'isolate',
         position: 'relative',
         width: '100%',
       }}
     >
       <Box
+        ref={mainColumnRef}
         sx={{
           display: 'grid',
           gap: { xs: 1.8, md: 2 },
           minWidth: 0,
           position: 'relative',
-          // Keep the main column (summary + transactions + filter controls) above
-          // the right-hand panels so the filter/refresh controls always remain
-          // clickable even if the columns visually abut.
-          zIndex: 2,
+          zIndex: 1,
         }}
       >
         <WalletSummaryCard
@@ -3348,6 +3391,10 @@ export function WalletWorkspace({
 
         <Box
           sx={{
+            // Shown only when the panels measurably fit beside the main content
+            // (see showSidePanels); otherwise they are hidden so they never
+            // overlap the wallet and transaction content.
+            display: showSidePanels ? 'block' : 'none',
             position: 'relative',
             zIndex: 1,
           }}
